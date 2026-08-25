@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TL Loot — Гильдейский трекер</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ НАВБАР ═══════════════ -->
+  <nav class="navbar">
+    <a class="nav-brand" href="index.html">⚔️ TL Loot</a>
+
+    <div class="nav-links">
+      <a href="pages/players.html">Игроки</a>
+      <a href="pages/items.html">Шмотки</a>
+      <a href="pages/raids.html">Рейды</a>
+      <a href="pages/search.html">Поиск</a>
+      <a href="pages/stats.html">Статистика</a>
+
+      <!-- Только для модераторов и админов -->
+      <a href="pages/admin.html" data-role="moderator" class="hidden">Управление</a>
+      <!-- Только для админа -->
+      <a href="pages/settings.html" data-role="admin" class="hidden">Настройки</a>
+    </div>
+
+    <div class="nav-user">
+      <span id="nav-user-label">Гость</span>
+      <button id="btn-login"  class="btn btn-sm" onclick="location.href='pages/login.html'">Войти</button>
+      <button id="btn-logout" class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ ГЛАВНАЯ ═══════════════ -->
+  <main class="container">
+    <section class="hero">
+      <h1>Трекер лута гильдии</h1>
+      <p class="hero-sub">Throne & Liberty — справедливое распределение через прозрачные логи</p>
+
+      <div class="quick-links">
+        <a href="pages/raids.html" class="card-link">
+          <span class="icon">🗡️</span>
+          <strong>Рейды</strong>
+          <small>История и новый рейд</small>
+        </a>
+        <a href="pages/players.html" class="card-link">
+          <span class="icon">👥</span>
+          <strong>Игроки</strong>
+          <small>Профили и блокировки</small>
+        </a>
+        <a href="pages/search.html" class="card-link">
+          <span class="icon">🔍</span>
+          <strong>Поиск</strong>
+          <small>Игрок, босс, шмотка</small>
+        </a>
+        <a href="pages/stats.html" class="card-link">
+          <span class="icon">📊</span>
+          <strong>Статистика</strong>
+          <small>Лут в люцентах</small>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initAuth, logout } from "./js/modules/auth.js";
+    initAuth(() => {});
+    document.getElementById("btn-logout")
+      ?.addEventListener("click", () => logout().then(() => location.reload()));
+  </script>
+</body>
+</html>

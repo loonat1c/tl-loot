@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Хелперы ──────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getRole() == 'admin';
+    }
+
+    function isModerator() {
+      return isSignedIn() && (getRole() == 'moderator' || getRole() == 'admin');
+    }
+
+    // ── Настройки ─────────────────────────────────────────
+    // Читают все, меняет только админ
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Игроки ────────────────────────────────────────────
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update, delete: if isModerator();
+
+      match /locks/{slot} {
+        allow read: if true;
+        allow write: if isModerator();
+      }
+    }
+
+    // ── Шмотки ────────────────────────────────────────────
+    match /items/{itemId} {
+      allow read: if true;
+      allow write: if isModerator();
+    }
+
+    // ── Рейды и дропы ─────────────────────────────────────
+    match /raids/{raidId} {
+      allow read: if true;
+      allow write: if isModerator();
+
+      match /drops/{dropId} {
+        allow read: if true;
+        allow write: if isModerator();
+      }
+    }
+
+    // ── Плоский лог лута ──────────────────────────────────
+    match /loot_history/{recordId} {
+      allow read: if true;
+      allow write: if isModerator();
+    }
+
+    // ── Учётные записи ────────────────────────────────────
+    // Читать свой профиль может сам пользователь
+    // Список пользователей — только админ
+    match /users/{userId} {
+      allow read: if isAdmin() || request.auth.uid == userId;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

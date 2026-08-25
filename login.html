@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  </nav>
+
+  <main class="container">
+    <div class="login-wrap">
+      <div class="card">
+        <h2 style="margin-bottom:1.5rem">Вход в систему</h2>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="admin@guild.com" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Пароль</label>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
+
+        <div id="error-msg" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+
+        <button class="btn btn-primary mt-2" id="btn-submit" style="width:100%">
+          Войти
+        </button>
+
+        <p class="text-muted mt-2" style="text-align:center; font-size:0.8rem;">
+          Гости могут <a href="../index.html" style="color:var(--accent-soft)">просматривать</a> без входа
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { login, initAuth } from "../js/modules/auth.js";
+
+    // Если уже залогинен — редирект
+    initAuth((user) => {
+      if (user) location.href = "../index.html";
+    });
+
+    document.getElementById("btn-submit").addEventListener("click", async () => {
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const errEl    = document.getElementById("error-msg");
+      const btn      = document.getElementById("btn-submit");
+
+      errEl.style.display = "none";
+      btn.disabled = true;
+      btn.textContent = "Входим...";
+
+      try {
+        await login(email, password);
+        location.href = "../index.html";
+      } catch (e) {
+        errEl.textContent = "Неверный email или пароль";
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Войти";
+      }
+    });
+
+    // Enter для сабмита
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") document.getElementById("btn-submit").click();
+    });
+  </script>
+</body>
+</html>
