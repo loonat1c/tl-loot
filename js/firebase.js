@@ -9,12 +9,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC-FrBsAftRlfa3TZU-YOG4jeVixgxmgj8",
+  authDomain: "tl-loot.firebaseapp.com",
+  projectId: "tl-loot",
+  storageBucket: "tl-loot.firebasestorage.app",
+  messagingSenderId: "950256243462",
+  appId: "1:950256243462:web:d6fae5068501e778b8c487"
 };
 
 const app = initializeApp(firebaseConfig);
