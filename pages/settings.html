@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Настройки — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .settings-wrap { max-width: 560px; }
+
+    .settings-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.35rem;
+    }
+    .settings-card .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-of-type { border-bottom: none; }
+    .setting-label { font-size: 0.9rem; font-weight: 600; }
+    .setting-hint  { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .setting-input { width: 80px; text-align: center; }
+
+    .info-box {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .save-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    .saved-msg {
+      font-size: 0.82rem;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-msg.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Шмотки</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" class="active" data-role="admin">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>⚙️ Настройки</h2>
+  </div>
+
+  <div id="access-denied" class="hidden" style="text-align:center;padding:3rem;color:var(--text-muted)">
+    <div style="font-size:2rem">🔒</div>
+    <div class="mt-1">Доступ только для администратора</div>
+  </div>
+
+  <div id="settings-content" class="hidden settings-wrap">
+
+    <div class="info-box">
+      Настройки влияют на систему мягкого сброса блокировок. Изменения вступают в силу немедленно
+      и применяются при следующем закрытии рейда.
+    </div>
+
+    <!-- Правила лута -->
+    <div class="settings-card">
+      <h3>🔒 Правила блокировок слотов</h3>
+      <div class="card-desc">
+        После победы в основном ролле игрок блокируется в этом слоте. Блокировка снимается
+        когда игрок посетит нужное количество рейдов. Если игрок пропускает слишком много рейдов —
+        счётчик замораживается.
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Рейдов до сброса блокировки</div>
+          <div class="setting-hint">Сколько рейдов должно пройти чтобы слот разблокировался</div>
+        </div>
+        <input type="number" class="setting-input" id="s-reset-after" min="1" max="20" value="6" />
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Максимум пропусков</div>
+          <div class="setting-hint">Сколько рейдов можно пропустить — иначе счётчик замораживается</div>
+        </div>
+        <input type="number" class="setting-input" id="s-max-skip" min="0" max="10" value="2" />
+      </div>
+
+      <div class="save-bar">
+        <button class="btn btn-primary" id="btn-save-rules">Сохранить</button>
+        <span class="saved-msg" id="saved-rules-msg">✅ Сохранено</span>
+      </div>
+    </div>
+
+    <!-- Пример -->
+    <div class="settings-card">
+      <h3>📖 Как это работает</h3>
+      <div class="card-desc">
+        Пример с текущими настройками:
+      </div>
+      <div id="example-text" style="font-size:0.85rem;line-height:1.8;color:var(--text-muted)"></div>
+    </div>
+
+  </div>
+</main>
+
+<script type="module">
+  import { initAuth, isAdmin, logout } from "../js/modules/auth.js";
+  import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+
+  let rules = { reset_after_raids: 6, max_skip_raids: 2 };
+
+  initAuth(async (user, role) => {
+    if (!user || role !== "admin") {
+      document.getElementById("access-denied").classList.remove("hidden");
+      return;
+    }
+
+    document.getElementById("settings-content").classList.remove("hidden");
+
+    rules = await getLootRules();
+    document.getElementById("s-reset-after").value = rules.reset_after_raids;
+    document.getElementById("s-max-skip").value    = rules.max_skip_raids;
+    updateExample();
+  });
+
+  document.getElementById("btn-logout")
+    ?.addEventListener("click", () => logout().then(() => location.reload()));
+
+  // ── Сохранить ─────────────────────────────────────
+  document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
+    const resetAfter = Number(document.getElementById("s-reset-after").value);
+    const maxSkip    = Number(document.getElementById("s-max-skip").value);
+
+    if (resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
+      alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-save-rules");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      rules = await saveLootRules({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      const msg = document.getElementById("saved-rules-msg");
+      msg.classList.add("show");
+      setTimeout(() => msg.classList.remove("show"), 2500);
+      updateExample();
+    } catch(e) {
+      alert("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Сохранить";
+    }
+  });
+
+  // ── Обновлять пример при изменении ───────────────
+  ["s-reset-after", "s-max-skip"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", updateExample);
+  });
+
+  function updateExample() {
+    const n = Number(document.getElementById("s-reset-after")?.value || rules.reset_after_raids);
+    const m = Number(document.getElementById("s-max-skip")?.value    || rules.max_skip_raids);
+    const el = document.getElementById("example-text");
+    if (!el) return;
+    el.innerHTML = `
+      Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
+      Чтобы снова участвовать в основном ролле на перчатки, нужно:<br>
+      — посетить рейды так, чтобы прошло <strong>${n} рейдов</strong> с момента выигрыша<br>
+      — при этом пропустить не более <strong>${m} из ${n}</strong> рейдов<br><br>
+      Если игрок пропустит <strong>${m + 1} или больше</strong> рейдов подряд —
+      счётчик заморозится и не будет двигаться пока он не вернётся.<br><br>
+      <span style="color:var(--success)">✅ Разблокируется:</span> посетил ${n - m} из ${n} рейдов<br>
+      <span style="color:var(--warning)">⚠️ Заморожен:</span> пропустил более ${m} рейдов<br>
+      <span style="color:var(--danger)">🔒 Заблокирован:</span> только что выиграл
+    `;
+  }
+</script>
+</body>
+</html>

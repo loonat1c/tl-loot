@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Управление — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 700px) { .admin-grid { grid-template-columns: 1fr; } }
+
+    .admin-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .admin-section h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      gap: 0.5rem;
+    }
+    .user-row:last-child { border-bottom: none; }
+    .user-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-role-badge { flex-shrink: 0; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 440px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .btn-close:hover { color: var(--text); }
+
+    .lock-manage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+      gap: 0.5rem;
+    }
+    .lock-manage-info { flex: 1; min-width: 0; }
+    .lock-manage-name { font-weight: 600; }
+    .lock-manage-detail { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+
+    .player-select { margin-bottom: 0.75rem; }
+
+    .info-box {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Шмотки</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" class="active" data-role="moderator">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>⚙️ Управление</h2>
+  </div>
+
+  <div id="access-denied" class="hidden" style="text-align:center;padding:3rem;color:var(--text-muted)">
+    <div style="font-size:2rem">🔒</div>
+    <div class="mt-1">Доступ только для модераторов и администраторов</div>
+  </div>
+
+  <div id="admin-content" class="hidden">
+    <div class="admin-grid">
+
+      <!-- Управление блокировками -->
+      <div class="admin-section">
+        <h3>🔒 Блокировки слотов</h3>
+        <div class="info-box">
+          Здесь можно вручную снять блокировку с игрока если это необходимо по решению гильдии.
+        </div>
+        <div class="player-select">
+          <select id="lock-player-select" style="width:100%">
+            <option value="">— выбери игрока —</option>
+          </select>
+        </div>
+        <div id="lock-list">
+          <div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>
+        </div>
+      </div>
+
+      <!-- Управление пользователями (только админ) -->
+      <div class="admin-section" id="users-section">
+        <h3>👤 Пользователи системы</h3>
+        <div class="info-box">
+          Создавай учётные записи для модераторов. Первый админ создаётся вручную в консоли Firebase.
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-add-user" style="margin-bottom:1rem">
+          + Добавить модератора
+        </button>
+        <div id="users-list">
+          <div class="text-muted" style="font-size:0.85rem">Загрузка...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- ═══ МОДАЛКА: НОВЫЙ ПОЛЬЗОВАТЕЛЬ ═══ -->
+<div class="modal-overlay hidden" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Добавить модератора</h3>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="info-box">
+      Создаётся учётная запись в Firebase Auth + документ в Firestore с ролью moderator.
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="new-user-email" placeholder="moderator@guild.com" />
+    </div>
+    <div class="form-group">
+      <label>Пароль *</label>
+      <input type="password" id="new-user-password" placeholder="минимум 6 символов" />
+    </div>
+    <div id="user-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-create-user">Создать</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAuth, canWrite, isAdmin, logout, currentRole } from "../js/modules/auth.js";
+  import { getPlayers }    from "../js/modules/players.js";
+  import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
+  import { db, auth }      from "../js/firebase.js";
+  import { SLOTS }         from "../js/constants.js";
+  import {
+    collection, getDocs, doc, setDoc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  let allPlayers = [];
+
+  // ── Auth guard ────────────────────────────────────
+  initAuth(async (user, role) => {
+    if (!user || (role !== "admin" && role !== "moderator")) {
+      document.getElementById("access-denied").classList.remove("hidden");
+      return;
+    }
+
+    document.getElementById("admin-content").classList.remove("hidden");
+
+    // Секция пользователей — только для админа
+    if (role !== "admin") {
+      document.getElementById("users-section").style.display = "none";
+    } else {
+      loadUsers();
+    }
+
+    allPlayers = await getPlayers();
+    populatePlayerSelect();
+  });
+
+  document.getElementById("btn-logout")
+    ?.addEventListener("click", () => logout().then(() => location.reload()));
+
+  // ── Блокировки ────────────────────────────────────
+  function populatePlayerSelect() {
+    const sel = document.getElementById("lock-player-select");
+    sel.innerHTML = `<option value="">— выбери игрока —</option>`;
+    allPlayers.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
+    });
+  }
+
+  document.getElementById("lock-player-select").addEventListener("change", async (e) => {
+    const id = e.target.value;
+    if (!id) {
+      document.getElementById("lock-list").innerHTML = `<div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>`;
+      return;
+    }
+    await renderLocks(id);
+  });
+
+  async function renderLocks(playerId) {
+    const container = document.getElementById("lock-list");
+    container.innerHTML = `<div class="text-muted" style="font-size:0.82rem">Загрузка...</div>`;
+
+    const locks = await getPlayerLocks(playerId);
+    const entries = Object.entries(locks);
+
+    if (!entries.length) {
+      container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Блокировок нет</div>`;
+      return;
+    }
+
+    container.innerHTML = entries.map(([slot, lock]) => {
+      const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+      const frozen    = lock.raids_skipped > 2;
+      return `
+        <div class="lock-manage-row">
+          <div class="lock-manage-info">
+            <div class="lock-manage-name">
+              <span class="badge badge-${frozen ? "frozen" : "locked"}">${slotLabel}</span>
+            </div>
+            <div class="lock-manage-detail">
+              ${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов
+              ${frozen ? " · ⚠️ заморожено" : ""}
+            </div>
+          </div>
+          <button class="btn btn-danger btn-sm"
+            onclick="removeLock('${playerId}', '${slot}')">
+            Снять
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  window.removeLock = async (playerId, slot) => {
+    const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+    if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
+    await removeSlotLock(playerId, slot);
+    showToast("Блокировка снята");
+    await renderLocks(playerId);
+  };
+
+  // ── Пользователи ──────────────────────────────────
+  async function loadUsers() {
+    const container = document.getElementById("users-list");
+    try {
+      const snap = await getDocs(collection(db, "users"));
+      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      if (!users.length) {
+        container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Нет пользователей</div>`;
+        return;
+      }
+
+      container.innerHTML = users.map(u => `
+        <div class="user-row">
+          <div class="user-email">${u.email || u.id}</div>
+          <span class="badge badge-${u.role === "admin" ? "purple" : "free"} user-role-badge">
+            ${u.role === "admin" ? "Админ" : "Модератор"}
+          </span>
+          ${u.role !== "admin" ? `
+            <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}', '${u.email}')">
+              🗑️
+            </button>
+          ` : ""}
+        </div>
+      `).join("");
+    } catch(e) {
+      container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
+    }
+  }
+
+  // Создать модератора
+  document.getElementById("btn-add-user")?.addEventListener("click", () => {
+    document.getElementById("new-user-email").value    = "";
+    document.getElementById("new-user-password").value = "";
+    document.getElementById("user-error").style.display = "none";
+    document.getElementById("modal-user").classList.remove("hidden");
+  });
+
+  document.getElementById("btn-create-user")?.addEventListener("click", async () => {
+    const email    = document.getElementById("new-user-email").value.trim();
+    const password = document.getElementById("new-user-password").value;
+    const errEl    = document.getElementById("user-error");
+
+    if (!email || !password) {
+      errEl.textContent = "Заполни все поля";
+      errEl.style.display = "block";
+      return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = "Пароль минимум 6 символов";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const btn = document.getElementById("btn-create-user");
+    btn.disabled = true; btn.textContent = "Создание...";
+
+    try {
+      // Создаём в Firebase Auth
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      // Записываем роль в Firestore
+      await setDoc(doc(db, "users", cred.user.uid), {
+        email,
+        role: "moderator",
+        created_at: new Date().toISOString(),
+      });
+      closeModal();
+      showToast("Модератор создан");
+      loadUsers();
+    } catch(e) {
+      let msg = e.message;
+      if (e.code === "auth/email-already-in-use") msg = "Этот email уже используется";
+      if (e.code === "auth/invalid-email")        msg = "Некорректный email";
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+    } finally {
+      btn.disabled = false; btn.textContent = "Создать";
+    }
+  });
+
+  window.deleteUser = async (uid, email) => {
+    if (!confirm(`Удалить пользователя ${email}?`)) return;
+    await deleteDoc(doc(db, "users", uid));
+    showToast("Пользователь удалён из системы");
+    loadUsers();
+  };
+
+  window.closeModal = () => {
+    document.getElementById("modal-user").classList.add("hidden");
+  };
+
+  function showToast(msg, type = "success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>
