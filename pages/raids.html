@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Рейды — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .raids-layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 800px) { .raids-layout { grid-template-columns: 1fr; } }
+
+    .raid-list-item {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 0.5rem;
+    }
+    .raid-list-item:hover  { border-color: var(--accent); }
+    .raid-list-item.active { border-color: var(--accent); background: var(--accent-glow); }
+    .raid-date   { font-weight: 600; font-size: 0.95rem; }
+    .raid-meta   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+    .drop-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .drop-row:last-child { border-bottom: none; }
+    .drop-img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--bg-card2); }
+    .drop-info .drop-name   { font-weight: 600; font-size: 0.9rem; }
+    .drop-info .drop-detail { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .drop-winner { font-size: 0.85rem; text-align: right; }
+    .drop-winner strong { display: block; }
+    .drop-winner span   { font-size: 0.75rem; color: var(--text-muted); }
+
+    .attendance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .attendance-player {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .attendance-player.present {
+      border-color: var(--success);
+      background: rgba(34,197,94,0.1);
+      color: var(--success);
+    }
+    .attendance-player .check { font-size: 1rem; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .btn-close:hover { color: var(--text); }
+
+    .item-search-results {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 0.5rem;
+    }
+    .item-search-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border);
+    }
+    .item-search-row:last-child { border-bottom: none; }
+    .item-search-row:hover { background: var(--bg-card2); }
+    .item-search-row.selected { background: var(--accent-glow); border-left: 2px solid var(--accent); }
+    .item-search-img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
+
+    .player-select-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.4rem;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 0.5rem;
+    }
+    .player-select-btn {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card2);
+      color: var(--text);
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .player-select-btn:hover   { border-color: var(--accent); }
+    .player-select-btn.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
+
+    .section-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; margin-top: 1rem; }
+
+    .empty-raid { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .lock-warning { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: var(--radius); padding: 0.5rem 0.75rem; font-size: 0.82rem; color: var(--danger); margin-top: 0.5rem; display: none; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Шмотки</a>
+    <a href="raids.html" class="active">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>🗡️ Рейды</h2>
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-new-raid">+ Новый рейд</button>
+  </div>
+
+  <div class="raids-layout">
+    <!-- Левая колонка: список рейдов -->
+    <div>
+      <div id="raids-list"><div class="text-muted">Загрузка...</div></div>
+    </div>
+
+    <!-- Правая колонка: детали рейда -->
+    <div id="raid-detail">
+      <div class="empty-raid">
+        <div style="font-size:2rem">⚔️</div>
+        <div class="mt-1">Выбери рейд слева</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ МОДАЛКА: НОВЫЙ РЕЙД ═══ -->
+<div class="modal-overlay hidden" id="modal-raid">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Новый рейд</h3>
+      <button class="btn-close" onclick="closeModal('modal-raid')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Дата рейда *</label>
+      <input type="date" id="raid-date" />
+    </div>
+    <div class="form-group">
+      <label>Заметки</label>
+      <textarea id="raid-notes" rows="2" placeholder="Необязательно..."></textarea>
+    </div>
+    <div id="raid-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-create-raid">Создать</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-raid')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ МОДАЛКА: ДОБАВИТЬ ДРО ═══ -->
+<div class="modal-overlay hidden" id="modal-drop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Записать дроп</h3>
+      <button class="btn-close" onclick="closeModal('modal-drop')">✕</button>
+    </div>
+
+    <!-- Выбор шмотки -->
+    <div class="section-title">Шмотка</div>
+    <input type="text" id="item-search" placeholder="Поиск шмотки..." />
+    <div id="item-search-results" class="item-search-results"></div>
+    <input type="hidden" id="selected-item-id" />
+
+    <!-- Тип ролла -->
+    <div class="section-title">Тип ролла</div>
+    <div class="flex gap-1">
+      <button class="btn btn-ghost btn-sm roll-type-btn active-roll" data-type="main" id="roll-main">
+        🎯 Основной (для билда)
+      </button>
+      <button class="btn btn-ghost btn-sm roll-type-btn" data-type="open" id="roll-open">
+        🎲 Открытый (продажа)
+      </button>
+    </div>
+
+    <!-- Предупреждение о блокировке -->
+    <div class="lock-warning" id="lock-warning"></div>
+
+    <!-- Выбор победителя -->
+    <div class="section-title">Победитель</div>
+    <div id="player-select-grid" class="player-select-grid"></div>
+    <input type="hidden" id="selected-player-id" />
+
+    <div id="drop-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-save-drop">Записать</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-drop')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ МОДАЛКА: ЗАКРЫТЬ РЕЙД ═══ -->
+<div class="modal-overlay hidden" id="modal-close-raid">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Закрыть рейд</h3>
+      <button class="btn-close" onclick="closeModal('modal-close-raid')">✕</button>
+    </div>
+    <p class="text-muted" style="font-size:0.85rem; margin-bottom:0.75rem">
+      Отметь кто был в рейде. Это обновит посещаемость и счётчики блокировок.
+    </p>
+    <div id="attendance-grid" class="attendance-grid"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-confirm-close">Закрыть рейд</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-close-raid')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAuth, canWrite, logout } from "../js/modules/auth.js";
+  import { getRaids, getRaid, getRaidDrops, createRaid, addDrop, deleteDrop, closeRaid } from "../js/modules/raids.js";
+  import { getPlayers } from "../js/modules/players.js";
+  import { getItems } from "../js/modules/items.js";
+  import { getPlayerLocks } from "../js/modules/locks.js";
+  import { setItemImage } from "../js/modules/images.js";
+  import { SLOTS, ROLL_TYPE } from "../js/constants.js";
+
+  let allRaids   = [];
+  let allPlayers = [];
+  let allItems   = [];
+  let activeRaid = null;
+  let selectedItem   = null;
+  let selectedPlayer = null;
+  let selectedRollType = "main";
+  let playerLocks = {};
+
+  // ── Init ──────────────────────────────────────────
+  async function init() {
+    [allRaids, allPlayers, allItems] = await Promise.all([
+      getRaids(), getPlayers(), getItems()
+    ]);
+    renderRaidList();
+    if (allRaids.length) selectRaid(allRaids[0]);
+  }
+
+  // ── Список рейдов ─────────────────────────────────
+  function renderRaidList() {
+    const container = document.getElementById("raids-list");
+    if (!allRaids.length) {
+      container.innerHTML = `<div class="text-muted">Рейдов пока нет</div>`;
+      return;
+    }
+    container.innerHTML = "";
+    allRaids.forEach(r => {
+      const el = document.createElement("div");
+      el.className = `raid-list-item${activeRaid?.id === r.id ? " active" : ""}`;
+      el.innerHTML = `
+        <div class="raid-date">${formatDate(r.date)}</div>
+        <div class="raid-meta">
+          ${r.drop_count || 0} дропов &nbsp;·&nbsp;
+          <span class="badge badge-${r.status === "closed" ? "locked" : "free"}" style="font-size:0.7rem">
+            ${r.status === "closed" ? "Закрыт" : "Открыт"}
+          </span>
+        </div>
+      `;
+      el.addEventListener("click", () => selectRaid(r));
+      container.appendChild(el);
+    });
+  }
+
+  // ── Детали рейда ──────────────────────────────────
+  async function selectRaid(raid) {
+    activeRaid = raid;
+    renderRaidList();
+
+    const detail = document.getElementById("raid-detail");
+    detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
+
+    const drops = await getRaidDrops(raid.id);
+    const canEdit = canWrite() && raid.status === "open";
+
+    detail.innerHTML = `
+      <div class="card">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3>${formatDate(raid.date)}</h3>
+            <div class="text-muted" style="font-size:0.82rem; margin-top:2px">${raid.notes || ""}</div>
+          </div>
+          <div class="flex gap-1">
+            ${canEdit ? `
+              <button class="btn btn-primary btn-sm" id="btn-add-drop">+ Дроп</button>
+              <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
+            ` : ""}
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem">
+          ${drops.length ? drops.map(d => buildDropRow(d, raid.id, canEdit)).join("") : `
+            <div class="text-muted" style="padding:1.5rem 0; text-align:center">Дропов ещё нет</div>
+          `}
+        </div>
+      </div>
+    `;
+
+    // Вставляем картинки
+    drops.forEach(d => {
+      const img = document.getElementById(`drop-img-${d.id}`);
+      if (img) setItemImage(img, d.item_image);
+    });
+
+    // Кнопки
+    document.getElementById("btn-add-drop")?.addEventListener("click", openDropModal);
+    document.getElementById("btn-close-raid")?.addEventListener("click", openCloseRaidModal);
+  }
+
+  function buildDropRow(drop, raidId, canEdit) {
+    const slotLabel = SLOTS.find(s => s.id === drop.item_slot)?.label || drop.item_slot;
+    return `
+      <div class="drop-row">
+        <img class="drop-img" id="drop-img-${drop.id}" alt="${drop.item_name}" />
+        <div class="drop-info">
+          <div class="drop-name">${drop.item_name}</div>
+          <div class="drop-detail">
+            ${slotLabel} &nbsp;·&nbsp; 👹 ${drop.boss_name || "—"}
+            &nbsp;·&nbsp; 💰 ${(drop.lucent_value_snapshot || 0).toLocaleString()} L
+          </div>
+        </div>
+        <div class="drop-winner">
+          <strong>${drop.winner_nickname}</strong>
+          <span class="badge badge-${drop.roll_type === "main" ? "main" : "open"}" style="margin-top:2px">
+            ${drop.roll_type === "main" ? "Основной" : "Открытый"}
+          </span>
+        </div>
+        ${canEdit ? `
+        <button class="btn btn-danger btn-sm"
+          onclick="removeDropConfirm('${raidId}', '${drop.id}', '${drop.item_name.replace(/'/g,"\\'")}')">
+          🗑️
+        </button>` : ""}
+      </div>
+    `;
+  }
+
+  // ── Новый рейд ────────────────────────────────────
+  document.getElementById("btn-new-raid").addEventListener("click", () => {
+    document.getElementById("raid-date").value  = todayStr();
+    document.getElementById("raid-notes").value = "";
+    openModal("modal-raid");
+  });
+
+  document.getElementById("btn-create-raid").addEventListener("click", async () => {
+    const date  = document.getElementById("raid-date").value;
+    const notes = document.getElementById("raid-notes").value.trim();
+    if (!date) { document.getElementById("raid-error").textContent = "Выбери дату"; document.getElementById("raid-error").style.display = "block"; return; }
+
+    const btn = document.getElementById("btn-create-raid");
+    btn.disabled = true; btn.textContent = "Создание...";
+    try {
+      await createRaid({ date, notes });
+      closeModal("modal-raid");
+      allRaids = await getRaids();
+      renderRaidList();
+      if (allRaids.length) selectRaid(allRaids[0]);
+      showToast("Рейд создан");
+    } catch(e) {
+      document.getElementById("raid-error").textContent = e.message;
+      document.getElementById("raid-error").style.display = "block";
+    } finally {
+      btn.disabled = false; btn.textContent = "Создать";
+    }
+  });
+
+  // ── Дроп модалка ─────────────────────────────────
+  async function openDropModal() {
+    selectedItem   = null;
+    selectedPlayer = null;
+    selectedRollType = "main";
+    document.getElementById("item-search").value = "";
+    document.getElementById("selected-item-id").value = "";
+    document.getElementById("selected-player-id").value = "";
+    document.getElementById("item-search-results").innerHTML = "";
+    document.getElementById("lock-warning").style.display = "none";
+    document.getElementById("drop-error").style.display = "none";
+
+    // Загрузить блокировки всех игроков
+    playerLocks = {};
+    await Promise.all(allPlayers.map(async p => {
+      playerLocks[p.id] = await getPlayerLocks(p.id);
+    }));
+
+    setRollType("main");
+    renderPlayerSelect();
+    renderItemSearch("");
+    openModal("modal-drop");
+  }
+
+  // Поиск шмоток
+  document.getElementById("item-search").addEventListener("input", e => {
+    renderItemSearch(e.target.value.toLowerCase());
+  });
+
+  function renderItemSearch(query) {
+    const list = query
+      ? allItems.filter(i => i.name.toLowerCase().includes(query) || i.boss_name?.toLowerCase().includes(query))
+      : allItems;
+
+    const container = document.getElementById("item-search-results");
+    container.innerHTML = "";
+    list.slice(0, 20).forEach(item => {
+      const row = document.createElement("div");
+      row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
+      row.innerHTML = `
+        <img class="item-search-img" alt="${item.name}" />
+        <div>
+          <div style="font-size:0.88rem; font-weight:600">${item.name}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted)">${SLOTS.find(s=>s.id===item.slot)?.label || item.slot} · ${item.boss_name}</div>
+        </div>
+      `;
+      setItemImage(row.querySelector("img"), item.image);
+      row.addEventListener("click", () => selectItem(item));
+      container.appendChild(row);
+    });
+  }
+
+  function selectItem(item) {
+    selectedItem = item;
+    document.getElementById("selected-item-id").value = item.id;
+    renderItemSearch(document.getElementById("item-search").value.toLowerCase());
+    checkLocks();
+  }
+
+  // Тип ролла
+  document.querySelectorAll(".roll-type-btn").forEach(btn => {
+    btn.addEventListener("click", () => setRollType(btn.dataset.type));
+  });
+
+  function setRollType(type) {
+    selectedRollType = type;
+    document.querySelectorAll(".roll-type-btn").forEach(b => {
+      b.classList.toggle("active-roll", b.dataset.type === type);
+      b.style.borderColor = b.dataset.type === type ? "var(--accent)" : "";
+    });
+    renderPlayerSelect();
+    checkLocks();
+  }
+
+  // Выбор игрока
+  function renderPlayerSelect() {
+    const grid = document.getElementById("player-select-grid");
+    grid.innerHTML = "";
+    allPlayers.forEach(p => {
+      const btn = document.createElement("button");
+      btn.className = `player-select-btn${selectedPlayer?.id === p.id ? " selected" : ""}`;
+
+      // Проверить заблокирован ли слот для main ролла
+      const slot = selectedItem?.slot;
+      const isLocked = slot && selectedRollType === "main" && playerLocks[p.id]?.[slot]?.is_locked;
+
+      btn.innerHTML = `
+        <div style="font-weight:600">${p.nickname}</div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:1px">
+          ${isLocked ? "🔒 слот занят" : ""}
+        </div>
+      `;
+      if (isLocked) btn.style.opacity = "0.5";
+      btn.addEventListener("click", () => selectPlayer(p));
+      grid.appendChild(btn);
+    });
+  }
+
+  function selectPlayer(player) {
+    selectedPlayer = player;
+    document.getElementById("selected-player-id").value = player.id;
+    renderPlayerSelect();
+    checkLocks();
+  }
+
+  function checkLocks() {
+    const warning = document.getElementById("lock-warning");
+    if (!selectedItem || !selectedPlayer || selectedRollType !== "main") {
+      warning.style.display = "none";
+      return;
+    }
+    const lock = playerLocks[selectedPlayer.id]?.[selectedItem.slot];
+    if (lock?.is_locked) {
+      warning.textContent = `⚠️ ${selectedPlayer.nickname} уже получил ${selectedItem.slot === "weapon" ? "оружие" : SLOTS.find(s=>s.id===selectedItem.slot)?.label.toLowerCase()} в основном ролле (${lock.item_name}). Слот заблокирован.`;
+      warning.style.display = "block";
+    } else {
+      warning.style.display = "none";
+    }
+  }
+
+  // Сохранить дроп
+  document.getElementById("btn-save-drop").addEventListener("click", async () => {
+    if (!selectedItem)   return showDropError("Выбери шмотку");
+    if (!selectedPlayer) return showDropError("Выбери победителя");
+
+    const btn = document.getElementById("btn-save-drop");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      await addDrop(activeRaid.id, {
+        item_id:               selectedItem.id,
+        item_name:             selectedItem.name,
+        item_slot:             selectedItem.slot,
+        item_image:            selectedItem.image,
+        winner_player_id:      selectedPlayer.id,
+        winner_nickname:       selectedPlayer.nickname,
+        boss_name:             selectedItem.boss_name,
+        lucent_value_snapshot: selectedItem.lucent_value || 0,
+        roll_type:             selectedRollType,
+      });
+
+      closeModal("modal-drop");
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === activeRaid.id);
+      renderRaidList();
+      selectRaid(activeRaid);
+      showToast("Дроп записан");
+    } catch(e) {
+      showDropError("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Записать";
+    }
+  });
+
+  // ── Удалить дроп ──────────────────────────────────
+  window.removeDropConfirm = async (raidId, dropId, name) => {
+    if (!confirm(`Удалить дроп «${name}»?`)) return;
+    await deleteDrop(raidId, dropId);
+    allRaids = await getRaids();
+    activeRaid = allRaids.find(r => r.id === raidId);
+    renderRaidList();
+    selectRaid(activeRaid);
+    showToast("Дроп удалён");
+  };
+
+  // ── Закрыть рейд ──────────────────────────────────
+  async function openCloseRaidModal() {
+    const grid = document.getElementById("attendance-grid");
+    grid.innerHTML = "";
+
+    allPlayers.forEach(p => {
+      const el = document.createElement("div");
+      el.className = "attendance-player present";
+      el.dataset.id = p.id;
+      el.innerHTML = `<span class="check">✅</span> ${p.nickname}`;
+      el.addEventListener("click", () => {
+        el.classList.toggle("present");
+        el.querySelector(".check").textContent = el.classList.contains("present") ? "✅" : "⬜";
+      });
+      grid.appendChild(el);
+    });
+
+    openModal("modal-close-raid");
+  }
+
+  document.getElementById("btn-confirm-close").addEventListener("click", async () => {
+    const attendedIds = [...document.querySelectorAll(".attendance-player.present")]
+      .map(el => el.dataset.id);
+    const allIds = allPlayers.map(p => p.id);
+
+    const btn = document.getElementById("btn-confirm-close");
+    btn.disabled = true; btn.textContent = "Закрываем...";
+
+    try {
+      await closeRaid(activeRaid.id, attendedIds, allIds);
+      closeModal("modal-close-raid");
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === activeRaid.id);
+      allPlayers = await getPlayers();
+      renderRaidList();
+      selectRaid(activeRaid);
+      showToast("Рейд закрыт");
+    } catch(e) {
+      showToast("Ошибка: " + e.message, "error");
+    } finally {
+      btn.disabled = false; btn.textContent = "Закрыть рейд";
+    }
+  });
+
+  // ── Helpers ───────────────────────────────────────
+  function openModal(id)  { document.getElementById(id).classList.remove("hidden"); }
+  function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+  window.closeModal = closeModal;
+
+  function showDropError(msg) {
+    const el = document.getElementById("drop-error");
+    el.textContent = msg; el.style.display = "block";
+  }
+
+  function formatDate(str) {
+    if (!str) return "—";
+    const d = new Date(str);
+    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  }
+
+  function todayStr() {
+    return new Date().toISOString().split("T")[0];
+  }
+
+  function showToast(msg, type = "success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+
+  // ── Auth init ─────────────────────────────────────
+  initAuth(() => {});
+  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
+
+  init();
+</script>
+</body>
+</html>
