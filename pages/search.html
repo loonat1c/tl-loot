@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Поиск — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .search-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .search-bar input  { flex: 1; min-width: 200px; font-size: 1rem; padding: 0.6rem 1rem; }
+    .search-bar select { width: auto; }
+
+    .search-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.35rem 1rem;
+      border-radius: var(--radius);
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab-btn:hover  { color: var(--text); background: var(--bg-card2); }
+    .tab-btn.active { color: var(--accent-soft); background: var(--accent-glow); }
+
+    /* Карточка игрока */
+    .player-result {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .player-result-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .player-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .player-result-name { font-size: 1.1rem; font-weight: 700; }
+    .player-result-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 4px; }
+
+    .loot-table-wrap { overflow-x: auto; margin-top: 0.75rem; }
+
+    /* Карточка босса */
+    .boss-result {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .boss-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .boss-icon { font-size: 1.5rem; }
+    .boss-name { font-size: 1.1rem; font-weight: 700; }
+    .boss-stats { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Строка лута */
+    .loot-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .loot-row:last-child { border-bottom: none; }
+    .loot-row-img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
+
+    .empty-search {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+
+    .locks-section { margin-top: 1rem; }
+    .locks-section h4 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .locks-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Шмотки</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html" class="active">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>🔍 Поиск</h2>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Введи ник игрока, имя босса или название шмотки..." autofocus />
+  </div>
+
+  <div class="search-tabs">
+    <button class="tab-btn active" data-tab="players">👥 Игроки</button>
+    <button class="tab-btn" data-tab="bosses">👹 Боссы</button>
+    <button class="tab-btn" data-tab="items">🗡️ Шмотки</button>
+  </div>
+
+  <div id="search-results">
+    <div class="empty-search">
+      <div style="font-size:2rem">🔍</div>
+      <div class="mt-1">Начни вводить запрос</div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { initAuth, logout } from "../js/modules/auth.js";
+  import { getPlayers }       from "../js/modules/players.js";
+  import { getItems }         from "../js/modules/items.js";
+  import { getPlayerLocks }   from "../js/modules/locks.js";
+  import { setItemImage }     from "../js/modules/images.js";
+  import { SLOTS, ROLES, WEAPONS } from "../js/constants.js";
+  import {
+    collection, getDocs, query, where, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { db } from "../js/firebase.js";
+
+  let allPlayers = [];
+  let allItems   = [];
+  let history    = [];
+  let activeTab  = "players";
+
+  async function init() {
+    [allPlayers, allItems, history] = await Promise.all([
+      getPlayers(),
+      getItems(),
+      getLootHistory(),
+    ]);
+  }
+
+  async function getLootHistory() {
+    const snap = await getDocs(
+      query(collection(db, "loot_history"), orderBy("date", "desc"))
+    );
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // ── Табы ──────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeTab = btn.dataset.tab;
+      doSearch();
+    });
+  });
+
+  // ── Поиск ─────────────────────────────────────────
+  let searchTimeout;
+  document.getElementById("search-input").addEventListener("input", e => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => doSearch(e.target.value), 200);
+  });
+
+  function doSearch(q = document.getElementById("search-input").value) {
+    const term = q.trim().toLowerCase();
+    const container = document.getElementById("search-results");
+
+    if (!term) {
+      container.innerHTML = `<div class="empty-search"><div style="font-size:2rem">🔍</div><div class="mt-1">Начни вводить запрос</div></div>`;
+      return;
+    }
+
+    if (activeTab === "players") renderPlayers(term, container);
+    if (activeTab === "bosses")  renderBosses(term, container);
+    if (activeTab === "items")   renderItemsTab(term, container);
+  }
+
+  // ── Игроки ────────────────────────────────────────
+  async function renderPlayers(term, container) {
+    const found = allPlayers.filter(p =>
+      p.nickname.toLowerCase().includes(term) ||
+      p.name?.toLowerCase().includes(term)
+    );
+
+    if (!found.length) {
+      container.innerHTML = `<div class="empty-search">Игроки не найдены</div>`;
+      return;
+    }
+
+    container.innerHTML = "";
+
+    for (const p of found) {
+      const role    = ROLES.find(r => r.id === p.role);
+      const weapons = (p.weapon_pair || []).map(wid => WEAPONS.find(w => w.id === wid)?.label || wid);
+      const pLoot   = history.filter(h => h.player_id === p.id);
+      const totalL  = pLoot.reduce((s, h) => s + (h.lucent_value_snapshot || 0), 0);
+      const locks   = await getPlayerLocks(p.id);
+      const pct     = p.raids_total ? Math.round(p.raids_attended / p.raids_total * 100) : 0;
+
+      const card = document.createElement("div");
+      card.className = "player-result";
+      card.innerHTML = `
+        <div class="player-result-header">
+          <div class="player-avatar">👤</div>
+          <div>
+            <div class="player-result-name">${p.nickname}${p.name ? ` <span style="font-weight:400;color:var(--text-muted);font-size:0.9rem">(${p.name})</span>` : ""}</div>
+            <div class="player-result-meta">
+              <span class="badge badge-${p.role}">${role?.label || p.role}</span>
+              ${weapons.map(w => `<span class="weapon-tag" style="background:var(--bg-card2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:0.75rem;color:var(--text-muted)">${w}</span>`).join("")}
+            </div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:0.82rem;color:var(--warning)">💰 ${totalL.toLocaleString()} L</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">Посещаемость: ${pct}% (${p.raids_attended}/${p.raids_total})</div>
+          </div>
+        </div>
+
+        ${Object.keys(locks).length ? `
+        <div class="locks-section">
+          <h4>🔒 Заблокированные слоты</h4>
+          <div class="locks-row">
+            ${Object.entries(locks).map(([slot, lock]) => {
+              const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+              const frozen = lock.raids_skipped > 2;
+              return `<span class="badge badge-${frozen ? "frozen" : "locked"}" title="${lock.item_name}">
+                ${slotLabel} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped}
+              </span>`;
+            }).join("")}
+          </div>
+        </div>` : ""}
+
+        ${pLoot.length ? `
+        <div style="margin-top:1rem">
+          <h4 style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">📦 Полученный лут (${pLoot.length})</h4>
+          ${pLoot.slice(0, 5).map(h => `
+            <div class="loot-row">
+              <img class="loot-row-img" id="hi-${h.id}" alt="${h.item_name}" />
+              <div>
+                <div style="font-weight:600">${h.item_name}</div>
+                <div style="color:var(--text-muted);font-size:0.75rem">${SLOTS.find(s=>s.id===h.item_slot)?.label || h.item_slot} · ${formatDate(h.date)}</div>
+              </div>
+              <span class="badge badge-${h.roll_type === "main" ? "main" : "open"}">${h.roll_type === "main" ? "Основной" : "Открытый"}</span>
+              <div style="color:var(--warning);font-size:0.82rem">💰 ${(h.lucent_value_snapshot||0).toLocaleString()}</div>
+            </div>
+          `).join("")}
+          ${pLoot.length > 5 ? `<div class="text-muted" style="font-size:0.8rem;margin-top:0.5rem">+ещё ${pLoot.length - 5}</div>` : ""}
+        </div>` : `<div class="text-muted" style="font-size:0.85rem;margin-top:0.75rem">Лута ещё нет</div>`}
+      `;
+
+      // Картинки
+      pLoot.slice(0, 5).forEach(h => {
+        const img = card.querySelector(`#hi-${h.id}`);
+        if (img) setItemImage(img, h.item_image);
+      });
+
+      container.appendChild(card);
+    }
+  }
+
+  // ── Боссы ─────────────────────────────────────────
+  function renderBosses(term, container) {
+    const bossMap = {};
+    history.forEach(h => {
+      if (!h.boss_name) return;
+      if (!bossMap[h.boss_name]) bossMap[h.boss_name] = [];
+      bossMap[h.boss_name].push(h);
+    });
+
+    const found = Object.entries(bossMap).filter(([name]) =>
+      name.toLowerCase().includes(term)
+    );
+
+    if (!found.length) {
+      container.innerHTML = `<div class="empty-search">Боссы не найдены</div>`;
+      return;
+    }
+
+    container.innerHTML = "";
+    found.forEach(([bossName, drops]) => {
+      const totalL = drops.reduce((s, h) => s + (h.lucent_value_snapshot || 0), 0);
+      const card = document.createElement("div");
+      card.className = "boss-result";
+      card.innerHTML = `
+        <div class="boss-header">
+          <div class="boss-icon">👹</div>
+          <div>
+            <div class="boss-name">${bossName}</div>
+            <div class="boss-stats">${drops.length} дропов · 💰 ${totalL.toLocaleString()} L суммарно</div>
+          </div>
+        </div>
+        ${drops.slice(0, 8).map(h => `
+          <div class="loot-row">
+            <img class="loot-row-img" id="hb-${h.id}" alt="${h.item_name}" />
+            <div>
+              <div style="font-weight:600">${h.item_name}</div>
+              <div style="color:var(--text-muted);font-size:0.75rem">${SLOTS.find(s=>s.id===h.item_slot)?.label || h.item_slot} · ${formatDate(h.date)}</div>
+            </div>
+            <div style="font-weight:600">${h.player_nickname}</div>
+            <div style="color:var(--warning);font-size:0.82rem">💰 ${(h.lucent_value_snapshot||0).toLocaleString()}</div>
+          </div>
+        `).join("")}
+        ${drops.length > 8 ? `<div class="text-muted" style="font-size:0.8rem;margin-top:0.5rem">+ещё ${drops.length - 8}</div>` : ""}
+      `;
+      drops.slice(0, 8).forEach(h => {
+        const img = card.querySelector(`#hb-${h.id}`);
+        if (img) setItemImage(img, h.item_image);
+      });
+      container.appendChild(card);
+    });
+  }
+
+  // ── Шмотки ────────────────────────────────────────
+  function renderItemsTab(term, container) {
+    const found = allItems.filter(i =>
+      i.name.toLowerCase().includes(term) ||
+      i.boss_name?.toLowerCase().includes(term)
+    );
+
+    if (!found.length) {
+      container.innerHTML = `<div class="empty-search">Шмотки не найдены</div>`;
+      return;
+    }
+
+    container.innerHTML = "";
+    found.forEach(item => {
+      const drops = history.filter(h => h.item_id === item.id);
+      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+
+      const card = document.createElement("div");
+      card.className = "boss-result";
+      card.innerHTML = `
+        <div class="boss-header">
+          <img style="width:48px;height:48px;border-radius:6px;object-fit:cover;background:var(--bg-card2)" id="item-img-${item.id}" alt="${item.name}" />
+          <div>
+            <div class="boss-name">${item.name}</div>
+            <div class="boss-stats">
+              ${slotLabel} · 👹 ${item.boss_name || "—"} · 💰 ${(item.lucent_value||0).toLocaleString()} L
+            </div>
+          </div>
+        </div>
+        ${drops.length ? `
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem">Кто получил (${drops.length}):</div>
+          ${drops.map(h => `
+            <div class="loot-row" style="grid-template-columns:1fr auto auto">
+              <div style="font-weight:600">${h.player_nickname}</div>
+              <span class="badge badge-${h.roll_type === "main" ? "main" : "open"}">${h.roll_type === "main" ? "Основной" : "Открытый"}</span>
+              <div style="color:var(--text-muted);font-size:0.78rem">${formatDate(h.date)}</div>
+            </div>
+          `).join("")}
+        ` : `<div class="text-muted" style="font-size:0.85rem">Никто ещё не получал</div>`}
+      `;
+      setItemImage(card.querySelector(`#item-img-${item.id}`), item.image);
+      container.appendChild(card);
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────
+  function formatDate(str) {
+    if (!str) return "—";
+    return new Date(str).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  initAuth(() => {});
+  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
+  init();
+</script>
+</body>
+</html>

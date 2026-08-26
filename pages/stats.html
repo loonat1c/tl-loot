@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Статистика — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent-soft); }
+    .stat-label { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+
+    .section { margin-bottom: 2rem; }
+    .section h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.6rem 0.75rem;
+      border-radius: var(--radius);
+      margin-bottom: 0.35rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .rank-num { color: var(--text-muted); font-weight: 700; text-align: center; }
+    .rank-num.gold   { color: #f1c40f; }
+    .rank-num.silver { color: #bdc3c7; }
+    .rank-num.bronze { color: #cd7f32; }
+    .rank-name { font-weight: 600; }
+    .rank-sub  { font-size: 0.75rem; color: var(--text-muted); }
+    .rank-lucent { color: var(--warning); font-weight: 600; white-space: nowrap; }
+    .rank-count  { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; }
+
+    .bar-wrap { width: 100%; background: var(--border); border-radius: 4px; height: 6px; margin-top: 4px; }
+    .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.4s; }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
+    }
+    .slot-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+    }
+    .slot-card-name  { font-size: 0.85rem; font-weight: 600; }
+    .slot-card-count { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .slot-card-top   { font-size: 0.78rem; color: var(--accent-soft); margin-top: 4px; }
+
+    .period-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .period-btn {
+      padding: 0.3rem 0.9rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .period-btn:hover  { color: var(--text); border-color: var(--accent); }
+    .period-btn.active { background: var(--accent-glow); color: var(--accent-soft); border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Шмотки</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html" class="active">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>📊 Статистика</h2>
+  </div>
+
+  <!-- Фильтр периода -->
+  <div class="period-bar">
+    <button class="period-btn active" data-days="0">Всё время</button>
+    <button class="period-btn" data-days="30">30 дней</button>
+    <button class="period-btn" data-days="60">60 дней</button>
+    <button class="period-btn" data-days="90">90 дней</button>
+  </div>
+
+  <!-- Общие цифры -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="stat-raids">—</div>
+      <div class="stat-label">Рейдов проведено</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-drops">—</div>
+      <div class="stat-label">Дропов записано</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-lucent">—</div>
+      <div class="stat-label">Суммарно Lucent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-players">—</div>
+      <div class="stat-label">Активных игроков</div>
+    </div>
+  </div>
+
+  <!-- Топ игроков по луту -->
+  <div class="section">
+    <h3>🏆 Топ игроков по Lucent</h3>
+    <div id="top-players"></div>
+  </div>
+
+  <!-- Топ игроков по количеству дропов -->
+  <div class="section">
+    <h3>📦 Топ игроков по количеству дропов</h3>
+    <div id="top-drops"></div>
+  </div>
+
+  <!-- Статистика по слотам -->
+  <div class="section">
+    <h3>🎯 Распределение по слотам</h3>
+    <div id="slot-stats" class="slot-grid"></div>
+  </div>
+
+  <!-- Посещаемость -->
+  <div class="section">
+    <h3>📅 Посещаемость игроков</h3>
+    <div id="attendance-stats"></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initAuth, logout } from "../js/modules/auth.js";
+  import { getPlayers }       from "../js/modules/players.js";
+  import { getRaids }         from "../js/modules/raids.js";
+  import { SLOTS, ROLES }     from "../js/constants.js";
+  import {
+    collection, getDocs, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { db } from "../js/firebase.js";
+
+  let allPlayers = [];
+  let allRaids   = [];
+  let history    = [];
+  let activeDays = 0;
+
+  async function init() {
+    [allPlayers, allRaids, history] = await Promise.all([
+      getPlayers(),
+      getRaids(),
+      getLootHistory(),
+    ]);
+    render();
+  }
+
+  async function getLootHistory() {
+    const snap = await getDocs(
+      query(collection(db, "loot_history"), orderBy("date", "desc"))
+    );
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // ── Фильтр периода ────────────────────────────────
+  document.querySelectorAll(".period-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeDays = Number(btn.dataset.days);
+      render();
+    });
+  });
+
+  function filterByPeriod(list) {
+    if (!activeDays) return list;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - activeDays);
+    return list.filter(h => new Date(h.date) >= cutoff);
+  }
+
+  function filterRaidsByPeriod(list) {
+    if (!activeDays) return list;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - activeDays);
+    return list.filter(r => new Date(r.date) >= cutoff);
+  }
+
+  // ── Основной рендер ───────────────────────────────
+  function render() {
+    const h = filterByPeriod(history);
+    const r = filterRaidsByPeriod(allRaids);
+
+    renderSummary(h, r);
+    renderTopByLucent(h);
+    renderTopByDrops(h);
+    renderSlotStats(h);
+    renderAttendance();
+  }
+
+  function renderSummary(h, r) {
+    const totalL    = h.reduce((s, x) => s + (x.lucent_value_snapshot || 0), 0);
+    const activePls = new Set(h.map(x => x.player_id)).size;
+
+    document.getElementById("stat-raids").textContent   = r.length;
+    document.getElementById("stat-drops").textContent   = h.length;
+    document.getElementById("stat-lucent").textContent  = formatL(totalL);
+    document.getElementById("stat-players").textContent = activePls;
+  }
+
+  function renderTopByLucent(h) {
+    const map = {};
+    h.forEach(x => {
+      if (!map[x.player_id]) map[x.player_id] = { nickname: x.player_nickname, lucent: 0, count: 0 };
+      map[x.player_id].lucent += x.lucent_value_snapshot || 0;
+      map[x.player_id].count++;
+    });
+
+    const sorted = Object.values(map).sort((a, b) => b.lucent - a.lucent);
+    const max    = sorted[0]?.lucent || 1;
+    const container = document.getElementById("top-players");
+
+    if (!sorted.length) { container.innerHTML = `<div class="text-muted">Нет данных</div>`; return; }
+
+    container.innerHTML = sorted.slice(0, 10).map((p, i) => `
+      <div class="rank-row">
+        <div class="rank-num ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}">${i + 1}</div>
+        <div>
+          <div class="rank-name">${p.nickname}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(p.lucent/max*100)}%"></div></div>
+        </div>
+        <div class="rank-count">${p.count} дропов</div>
+        <div class="rank-lucent">💰 ${formatL(p.lucent)}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderTopByDrops(h) {
+    const map = {};
+    h.forEach(x => {
+      if (!map[x.player_id]) map[x.player_id] = { nickname: x.player_nickname, count: 0, lucent: 0 };
+      map[x.player_id].count++;
+      map[x.player_id].lucent += x.lucent_value_snapshot || 0;
+    });
+
+    const sorted = Object.values(map).sort((a, b) => b.count - a.count);
+    const max    = sorted[0]?.count || 1;
+    const container = document.getElementById("top-drops");
+
+    if (!sorted.length) { container.innerHTML = `<div class="text-muted">Нет данных</div>`; return; }
+
+    container.innerHTML = sorted.slice(0, 10).map((p, i) => `
+      <div class="rank-row">
+        <div class="rank-num ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}">${i + 1}</div>
+        <div>
+          <div class="rank-name">${p.nickname}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(p.count/max*100)}%"></div></div>
+        </div>
+        <div class="rank-lucent">💰 ${formatL(p.lucent)}</div>
+        <div class="rank-count">${p.count} шт.</div>
+      </div>
+    `).join("");
+  }
+
+  function renderSlotStats(h) {
+    const map = {};
+    SLOTS.forEach(s => map[s.id] = { label: s.label, count: 0, players: {} });
+
+    h.forEach(x => {
+      if (!map[x.item_slot]) return;
+      map[x.item_slot].count++;
+      map[x.item_slot].players[x.player_nickname] = (map[x.item_slot].players[x.player_nickname] || 0) + 1;
+    });
+
+    const container = document.getElementById("slot-stats");
+    container.innerHTML = SLOTS.map(s => {
+      const stat = map[s.id];
+      const topPlayer = Object.entries(stat.players).sort((a,b) => b[1]-a[1])[0];
+      return `
+        <div class="slot-card">
+          <div class="slot-card-name">${s.label}</div>
+          <div class="slot-card-count">${stat.count} дропов</div>
+          ${topPlayer ? `<div class="slot-card-top">👑 ${topPlayer[0]} (${topPlayer[1]})</div>` : ""}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderAttendance() {
+    const sorted = [...allPlayers].sort((a, b) => {
+      const pa = a.raids_total ? a.raids_attended / a.raids_total : 0;
+      const pb = b.raids_total ? b.raids_attended / b.raids_total : 0;
+      return pb - pa;
+    });
+
+    const container = document.getElementById("attendance-stats");
+    if (!sorted.length) { container.innerHTML = `<div class="text-muted">Нет данных</div>`; return; }
+
+    container.innerHTML = sorted.map((p, i) => {
+      const pct  = p.raids_total ? Math.round(p.raids_attended / p.raids_total * 100) : 0;
+      const role = ROLES.find(r => r.id === p.role);
+      return `
+        <div class="rank-row">
+          <div class="rank-num">${i + 1}</div>
+          <div>
+            <div class="rank-name">${p.nickname} <span class="badge badge-${p.role}" style="font-size:0.7rem">${role?.label || ""}</span></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:var(--success)"></div></div>
+          </div>
+          <div class="rank-count">${p.raids_attended}/${p.raids_total} рейдов</div>
+          <div style="font-weight:600;color:${pct >= 75 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--danger)"}">${pct}%</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // ── Helpers ───────────────────────────────────────
+  function formatL(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + "M";
+    if (n >= 1000)    return (n/1000).toFixed(1) + "K";
+    return n.toLocaleString();
+  }
+
+  initAuth(() => {});
+  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
+  init();
+</script>
+</body>
+</html>
