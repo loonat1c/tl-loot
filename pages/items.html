@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Шмотки — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      transition: border-color 0.15s;
+    }
+    .item-card:hover { border-color: var(--accent); }
+    .item-card.quality-purple { border-left: 3px solid #9b59b6; }
+    .item-img {
+      width: 64px; height: 64px;
+      border-radius: 6px; object-fit: cover;
+      background: var(--bg-card2); flex-shrink: 0;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 4px; }
+    .item-boss { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+    .item-lucent { font-size: 0.82rem; color: var(--warning); margin-top: 4px; }
+    .item-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .item-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .lucent-edit { display: flex; align-items: center; gap: 0.4rem; margin-top: 6px; }
+    .lucent-edit input { width: 90px; padding: 2px 6px; font-size: 0.8rem; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .btn-close:hover { color: var(--text); }
+    .image-upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+    .image-upload-area:hover { border-color: var(--accent); }
+    .image-preview { width: 96px; height: 96px; object-fit: cover; border-radius: 6px; margin: 0 auto 0.5rem; display: block; }
+    .upload-hint { font-size: 0.8rem; color: var(--text-muted); }
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .filter-bar input { max-width: 220px; }
+    .filter-bar select { width: auto; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html" class="active">Шмотки</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>🗡️ Шмотки</h2>
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-item">+ Добавить шмотку</button>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="filter-search" placeholder="Поиск по названию или боссу..." />
+    <select id="filter-slot"><option value="">Все слоты</option></select>
+    <select id="filter-boss"><option value="">Все боссы</option></select>
+  </div>
+
+  <div id="items-grid" class="items-grid">
+    <div class="text-muted">Загрузка...</div>
+  </div>
+</main>
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Добавить шмотку</h3>
+      <button class="btn-close" id="btn-modal-close">✕</button>
+    </div>
+    <input type="hidden" id="edit-id" />
+
+    <div class="form-group">
+      <label>Картинка</label>
+      <div class="image-upload-area" id="upload-area">
+        <img id="img-preview" class="image-preview hidden" alt="preview" />
+        <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Название *</label>
+      <input type="text" id="f-name" placeholder="Шлем Тени" />
+    </div>
+    <div class="form-group">
+      <label>Слот *</label>
+      <select id="f-slot"><option value="">— выбери слот —</option></select>
+    </div>
+    <div class="form-group">
+      <label>Качество</label>
+      <select id="f-quality"><option value="purple">🟣 Фиолетовая</option></select>
+    </div>
+    <div class="form-group">
+      <label>Босс *</label>
+      <input type="text" id="f-boss" placeholder="Теневой Дракон" />
+    </div>
+    <div class="form-group">
+      <label>Стоимость в Lucent</label>
+      <input type="number" id="f-lucent" placeholder="0" min="0" />
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea id="f-description" rows="3" placeholder="Характеристики, особенности..."></textarea>
+    </div>
+
+    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-save">Сохранить</button>
+      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAuth, canWrite, logout } from "../js/modules/auth.js";
+  import { getItems, addItem, updateItem, deleteItem, updateLucentValue } from "../js/modules/items.js";
+  import { compressImage, pickFile, setItemImage } from "../js/modules/images.js";
+  import { SLOTS } from "../js/constants.js";
+
+  const slotSelect = document.getElementById("f-slot");
+  const filterSlot = document.getElementById("filter-slot");
+  SLOTS.forEach(s => {
+    slotSelect.innerHTML += `<option value="${s.id}">${s.label}</option>`;
+    filterSlot.innerHTML += `<option value="${s.id}">${s.label}</option>`;
+  });
+
+  let allItems = [];
+  let currentImageBase64 = null;
+
+  async function loadItems() {
+    allItems = await getItems();
+    populateBossFilter();
+    renderItems();
+  }
+
+  function populateBossFilter() {
+    const bosses = [...new Set(allItems.map(i => i.boss_name).filter(Boolean))].sort();
+    const sel = document.getElementById("filter-boss");
+    sel.innerHTML = `<option value="">Все боссы</option>`;
+    bosses.forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`);
+  }
+
+  function renderItems() {
+    const search = document.getElementById("filter-search").value.toLowerCase();
+    const slot   = document.getElementById("filter-slot").value;
+    const boss   = document.getElementById("filter-boss").value;
+
+    let list = allItems.filter(item => {
+      if (search && !item.name.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
+      if (slot && item.slot !== slot) return false;
+      if (boss && item.boss_name !== boss) return false;
+      return true;
+    });
+
+    const grid = document.getElementById("items-grid");
+    if (!list.length) { grid.innerHTML = `<div class="text-muted">Шмоток не найдено</div>`; return; }
+
+    grid.innerHTML = "";
+    list.forEach(item => grid.appendChild(buildCard(item)));
+  }
+
+  function buildCard(item) {
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+    const canEdit   = canWrite();
+    const card      = document.createElement("div");
+    card.className  = `item-card quality-${item.quality || "purple"}`;
+    card.innerHTML  = `
+      <img class="item-img" id="img-${item.id}" alt="${item.name}" />
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-meta"><span class="badge badge-purple">${slotLabel}</span></div>
+        <div class="item-boss">👹 ${item.boss_name || "—"}</div>
+        <div class="item-lucent">💰 <span id="lucent-val-${item.id}">${(item.lucent_value || 0).toLocaleString()}</span> Lucent</div>
+        ${canEdit ? `<div class="lucent-edit">
+          <input type="number" id="lucent-input-${item.id}" value="${item.lucent_value || 0}" min="0" />
+          <button class="btn btn-ghost btn-sm" onclick="saveLucent('${item.id}')">💾</button>
+        </div>` : ""}
+        ${item.description ? `<div class="item-desc">${item.description}</div>` : ""}
+      </div>
+      ${canEdit ? `<div class="item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}', '${item.name.replace(/'/g, "\\'")}')">🗑️</button>
+      </div>` : ""}
+    `;
+    setItemImage(card.querySelector(`#img-${item.id}`), item.image);
+    return card;
+  }
+
+  window.saveLucent = async (id) => {
+    const val = Number(document.getElementById(`lucent-input-${id}`).value);
+    await updateLucentValue(id, val);
+    document.getElementById(`lucent-val-${id}`).textContent = val.toLocaleString();
+    showToast("Цена обновлена");
+  };
+
+  document.getElementById("upload-area").addEventListener("click", async () => {
+    const file = await pickFile();
+    if (!file) return;
+    const base64 = await compressImage(file);
+    currentImageBase64 = base64;
+    const preview = document.getElementById("img-preview");
+    preview.src = base64;
+    preview.classList.remove("hidden");
+    document.getElementById("upload-hint").style.display = "none";
+  });
+
+  const modal      = document.getElementById("modal");
+  const modalTitle = document.getElementById("modal-title");
+  const editId     = document.getElementById("edit-id");
+
+  function resetForm() {
+    editId.value = "";
+    currentImageBase64 = null;
+    ["f-name","f-boss","f-description"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("f-slot").value    = "";
+    document.getElementById("f-lucent").value  = "";
+    document.getElementById("f-quality").value = "purple";
+    document.getElementById("img-preview").classList.add("hidden");
+    document.getElementById("img-preview").src = "";
+    document.getElementById("upload-hint").style.display = "";
+    hideError();
+  }
+
+  window.openEdit = (id) => {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+    resetForm();
+    modalTitle.textContent = "Редактировать шмотку";
+    editId.value = id;
+    document.getElementById("f-name").value        = item.name        || "";
+    document.getElementById("f-slot").value        = item.slot        || "";
+    document.getElementById("f-boss").value        = item.boss_name   || "";
+    document.getElementById("f-lucent").value      = item.lucent_value || "";
+    document.getElementById("f-description").value = item.description || "";
+    document.getElementById("f-quality").value     = item.quality     || "purple";
+    if (item.image) {
+      currentImageBase64 = item.image;
+      const p = document.getElementById("img-preview");
+      p.src = item.image;
+      p.classList.remove("hidden");
+      document.getElementById("upload-hint").style.display = "none";
+    }
+    modal.classList.remove("hidden");
+  };
+
+  function openAdd() {
+    modalTitle.textContent = "Добавить шмотку";
+    resetForm();
+    modal.classList.remove("hidden");
+  }
+
+  function closeModal() { modal.classList.add("hidden"); resetForm(); }
+  document.getElementById("btn-modal-close").onclick = closeModal;
+  document.getElementById("btn-cancel").onclick      = closeModal;
+  document.getElementById("btn-add-item").onclick    = openAdd;
+
+  document.getElementById("btn-save").onclick = async () => {
+    const name    = document.getElementById("f-name").value.trim();
+    const slot    = document.getElementById("f-slot").value;
+    const boss    = document.getElementById("f-boss").value.trim();
+    const lucent  = document.getElementById("f-lucent").value;
+    const desc    = document.getElementById("f-description").value.trim();
+    const quality = document.getElementById("f-quality").value;
+
+    if (!name) return showError("Введи название");
+    if (!slot) return showError("Выбери слот");
+    if (!boss) return showError("Введи имя босса");
+
+    const btn = document.getElementById("btn-save");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      const data = { name, slot, quality, boss_name: boss, lucent_value: Number(lucent) || 0, description: desc, image: currentImageBase64 || null };
+      const id = editId.value;
+      if (id) { await updateItem(id, data); showToast("Шмотка обновлена"); }
+      else    { await addItem(data);        showToast("Шмотка добавлена"); }
+      closeModal();
+      await loadItems();
+    } catch (e) {
+      showError("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Сохранить";
+    }
+  };
+
+  window.confirmDelete = (id, name) => {
+    if (!confirm(`Удалить «${name}»?`)) return;
+    deleteItem(id).then(() => { showToast("Шмотка удалена"); loadItems(); });
+  };
+
+  document.getElementById("filter-search").addEventListener("input",  renderItems);
+  document.getElementById("filter-slot").addEventListener("change",   renderItems);
+  document.getElementById("filter-boss").addEventListener("change",   renderItems);
+
+  function showError(msg) { const el = document.getElementById("modal-error"); el.textContent = msg; el.style.display = "block"; }
+  function hideError()    { document.getElementById("modal-error").style.display = "none"; }
+  function showToast(msg, type = "success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+
+  initAuth(() => {});
+  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
+  loadItems();
+</script>
+</body>
+</html>
