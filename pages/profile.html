@@ -230,6 +230,7 @@
       margin-bottom: 0.5rem;
     }
 
+    /* ── Модальное окно ────────────────────────────── */
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -252,6 +253,8 @@
 
     .loot-selection {
       margin-top: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
     }
 
     .loot-selection .loot-slot {
@@ -259,15 +262,43 @@
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
+      padding: 0.4rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
     }
 
     .loot-selection .loot-slot label {
       min-width: 80px;
       font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .loot-selection .loot-slot .loot-search {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .loot-selection .loot-slot .loot-search input {
+      width: 100%;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+    }
+
+    .loot-selection .loot-slot .loot-search input:focus {
+      outline: none;
+      border-color: var(--accent);
     }
 
     .loot-selection .loot-slot select {
       flex: 1;
+      min-width: 0;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
     }
 
     .moderation-note {
@@ -277,6 +308,17 @@
     .moderation-note textarea {
       resize: vertical;
       min-height: 60px;
+    }
+
+    /* Оружие в модалке */
+    .weapon-slots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .weapon-slots .form-group {
+      margin-bottom: 0;
     }
 
     @media (max-width: 768px) {
@@ -296,6 +338,10 @@
 
       .loot-selection .loot-slot label {
         min-width: auto;
+      }
+
+      .weapon-slots {
+        grid-template-columns: 1fr;
       }
 
       .character-card .char-header {
@@ -368,20 +414,26 @@
       <input type="text" id="f-char-name" placeholder="Имя в гильдии" />
     </div>
 
-    <!-- Оружия -->
+    <!-- Оружия (два слота) -->
     <div class="form-group">
       <label>Оружие *</label>
-      <div class="weapon-select-group">
-        <select id="f-char-weapon1">
-          <option value="">— выбери основное оружие —</option>
-        </select>
-        <select id="f-char-weapon2">
-          <option value="">— выбери дополнительное оружие —</option>
-        </select>
+      <div class="weapon-slots">
+        <div class="form-group">
+          <label style="font-size:0.75rem; color:var(--text-muted);">Основное оружие</label>
+          <select id="f-char-weapon1">
+            <option value="">— выбери —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.75rem; color:var(--text-muted);">Дополнительное оружие</label>
+          <select id="f-char-weapon2">
+            <option value="">— выбери —</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- Желаемый лут -->
+    <!-- Желаемый лут с поиском -->
     <div class="form-group">
       <label>Желаемый лут</label>
       <div class="loot-selection" id="loot-selection">
@@ -429,8 +481,7 @@
     updateDoc, 
     deleteDoc,
     query,
-    where,
-    limit
+    where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
@@ -442,7 +493,6 @@
   initAuth();
   await authReady;
 
-  // Если не авторизован — перенаправить на вход
   if (!currentUser) {
     window.location.href = '/pages/login.html';
   }
@@ -468,6 +518,7 @@
       renderCharacters();
       populateWeaponSelects();
       populateLootSelects();
+      setupWeaponSync();
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
     }
@@ -476,16 +527,12 @@
   async function loadCharacters() {
     try {
       const charsRef = collection(db, 'characters');
-      const q = query(
-        charsRef,
-        where('user_id', '==', userId)
-      );
+      const q = query(charsRef, where('user_id', '==', userId));
       const querySnapshot = await getDocs(q);
       characters = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      // Сортируем вручную
       characters.sort((a, b) => {
         const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
         const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
@@ -519,13 +566,8 @@
     const container = document.getElementById('characters-list');
     const addBtn = document.getElementById('btn-add-character');
 
-    // Показываем/скрываем кнопку добавления
     if (addBtn) {
-      if (characters.length > 0) {
-        addBtn.style.display = 'none';
-      } else {
-        addBtn.style.display = 'inline-flex';
-      }
+      addBtn.style.display = characters.length > 0 ? 'none' : 'inline-flex';
     }
 
     if (!characters.length) {
@@ -604,7 +646,6 @@
       `;
     }).join('');
 
-    // Навешиваем обработчики через window
     window.editCharacter = (id) => {
       const char = characters.find(c => c.id === id);
       if (char) openEditCharacter(char);
@@ -637,7 +678,7 @@
       if (!select) return;
 
       const currentValue = select.value;
-      select.innerHTML = `<option value="">— выбери оружие —</option>`;
+      select.innerHTML = `<option value="">— выбери —</option>`;
 
       WEAPONS.forEach(weapon => {
         const option = document.createElement('option');
@@ -653,7 +694,41 @@
   }
 
   // ============================================
-  // ЗАПОЛНЕНИЕ SELECT ЖЕЛАЕМОГО ЛУТА
+  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ (нельзя выбрать одинаковые)
+  // ============================================
+
+  function setupWeaponSync() {
+    const weapon1 = document.getElementById('f-char-weapon1');
+    const weapon2 = document.getElementById('f-char-weapon2');
+
+    function syncWeapons() {
+      const val1 = weapon1.value;
+      const val2 = weapon2.value;
+
+      // Обновляем опции в weapon2
+      Array.from(weapon2.options).forEach(opt => {
+        if (opt.value && opt.value === val1) {
+          opt.disabled = true;
+        } else {
+          opt.disabled = false;
+        }
+      });
+
+      // Если weapon2 выбран тот же, что и weapon1 — сбрасываем
+      if (val2 && val2 === val1) {
+        weapon2.value = '';
+      }
+    }
+
+    weapon1.addEventListener('change', syncWeapons);
+    weapon2.addEventListener('change', syncWeapons);
+
+    // Инициализация
+    syncWeapons();
+  }
+
+  // ============================================
+  // ЗАПОЛНЕНИЕ SELECT ЖЕЛАЕМОГО ЛУТА С ПОИСКОМ
   // ============================================
 
   function populateLootSelects() {
@@ -661,20 +736,53 @@
     if (!container) return;
 
     container.innerHTML = SLOTS.map(slot => {
+      // Получаем предметы для этого слота
+      const slotItems = allItems.filter(item => item.slot === slot.id);
+      
       return `
         <div class="loot-slot">
           <label>${slot.label}</label>
-          <select data-slot="${slot.id}">
+          <div class="loot-search">
+            <input type="text" placeholder="🔍 Поиск..." class="loot-search-input" data-slot="${slot.id}" />
+          </div>
+          <select data-slot="${slot.id}" class="loot-select">
             <option value="">— не выбрано —</option>
-            ${allItems
-              .filter(item => item.slot === slot.id)
-              .map(item => `
-                <option value="${item.id}">${item.name}</option>
-              `).join('')}
+            ${slotItems.map(item => `
+              <option value="${item.id}">${item.name}</option>
+            `).join('')}
           </select>
         </div>
       `;
     }).join('');
+
+    // Навешиваем обработчики поиска
+    document.querySelectorAll('.loot-search-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const slotId = this.dataset.slot;
+        const searchValue = this.value.toLowerCase().trim();
+        const select = document.querySelector(`.loot-select[data-slot="${slotId}"]`);
+        
+        if (select) {
+          // Сохраняем текущее выбранное значение
+          const currentValue = select.value;
+          
+          // Показываем/скрываем опции
+          Array.from(select.options).forEach(opt => {
+            if (opt.value === '') {
+              opt.style.display = '';
+              return;
+            }
+            const text = opt.textContent.toLowerCase();
+            opt.style.display = text.includes(searchValue) ? '' : 'none';
+          });
+
+          // Восстанавливаем выбранное значение
+          if (currentValue) {
+            select.value = currentValue;
+          }
+        }
+      });
+    });
   }
 
   // ============================================
@@ -691,7 +799,6 @@
   const charError = document.getElementById('char-error');
 
   function openAddCharacter() {
-    // Проверяем, есть ли уже персонаж
     if (characters.length > 0) {
       showToast('У вас уже есть персонаж!', 'error');
       return;
@@ -704,12 +811,18 @@
     charWeapon2.value = '';
     charModerationNote.value = '';
     
-    document.querySelectorAll('#loot-selection select').forEach(select => {
+    document.querySelectorAll('.loot-select').forEach(select => {
       select.value = '';
+    });
+    document.querySelectorAll('.loot-search-input').forEach(input => {
+      input.value = '';
     });
 
     charError.style.display = 'none';
     modal.classList.remove('hidden');
+    
+    // Синхронизация оружия
+    setupWeaponSync();
   }
 
   function openEditCharacter(char) {
@@ -720,8 +833,9 @@
     charWeapon2.value = char.weapons?.[1] || '';
     charModerationNote.value = char.moderation_note || '';
 
+    // Устанавливаем выбранный лут
     if (char.desired_loot) {
-      document.querySelectorAll('#loot-selection select').forEach(select => {
+      document.querySelectorAll('.loot-select').forEach(select => {
         const slot = select.dataset.slot;
         select.value = char.desired_loot[slot] || '';
       });
@@ -729,6 +843,9 @@
 
     charError.style.display = 'none';
     modal.classList.remove('hidden');
+    
+    // Синхронизация оружия
+    setupWeaponSync();
   }
 
   function closeCharModal() {
@@ -761,7 +878,12 @@
       return;
     }
 
-    // Проверяем, есть ли уже персонаж (защита от дублирования)
+    if (weapon1 === weapon2) {
+      charError.textContent = 'Основное и дополнительное оружие не могут совпадать';
+      charError.style.display = 'block';
+      return;
+    }
+
     if (!editCharId.value && characters.length > 0) {
       charError.textContent = 'У вас уже есть персонаж!';
       charError.style.display = 'block';
@@ -769,7 +891,7 @@
     }
 
     const desiredLoot = {};
-    document.querySelectorAll('#loot-selection select').forEach(select => {
+    document.querySelectorAll('.loot-select').forEach(select => {
       const slot = select.dataset.slot;
       const value = select.value;
       if (value) {
