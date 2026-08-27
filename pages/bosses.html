@@ -55,24 +55,7 @@
   </style>
 </head>
 <body>
-<nav class="navbar">
-  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
-  <div class="nav-links">
-    <a href="players.html">Игроки</a>
-    <a href="items.html">Предметы</a>
-    <a href="bosses.html" class="active">Боссы</a>
-    <a href="raids.html">Рейды</a>
-    <a href="search.html">Поиск</a>
-    <a href="stats.html">Статистика</a>
-    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
-    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
-  </div>
-  <div class="nav-user">
-    <span id="nav-user-label">Гость</span>
-    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
-    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
-  </div>
-</nav>
+<nav class="navbar" id="main-nav"></nav>
 
 <main class="container">
   <div class="page-header">
@@ -133,7 +116,10 @@
 </div>
 
 <script type="module">
-  import { initAuth, canWrite, logout } from "../js/modules/auth.js";
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  initNavbar();
+
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
@@ -333,8 +319,6 @@
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
   }
 
-  initAuth(() => {});
-  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
   init();
 </script>
 </body>
