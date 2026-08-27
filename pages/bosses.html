@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Боссы — TL Loot</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .bosses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+    .boss-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    .boss-card:hover { border-color: var(--accent); }
+    .boss-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .boss-name { font-size: 1.05rem; font-weight: 700; color: var(--accent-soft); }
+    .boss-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 6px; }
+    .boss-items { margin-top: 1rem; }
+    .boss-items-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .boss-item-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .boss-item-tag {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 3px 8px; font-size: 0.78rem;
+    }
+    .boss-item-tag img { width: 20px; height: 20px; border-radius: 3px; object-fit: cover; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .btn-close:hover { color: var(--text); }
+
+    .items-picker { border: 1px solid var(--border); border-radius: var(--radius); max-height: 240px; overflow-y: auto; margin-top: 0.5rem; }
+    .item-pick-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0.75rem; cursor: pointer;
+      border-bottom: 1px solid var(--border); transition: background 0.15s;
+      font-size: 0.85rem;
+    }
+    .item-pick-row:last-child { border-bottom: none; }
+    .item-pick-row:hover { background: var(--bg-card2); }
+    .item-pick-row.selected { background: var(--accent-glow); }
+    .item-pick-row img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
+    .item-pick-check { margin-left: auto; color: var(--accent); font-size: 1rem; }
+
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .filter-bar input { max-width: 240px; }
+    .filter-bar select { width: auto; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
+  <div class="nav-links">
+    <a href="players.html">Игроки</a>
+    <a href="items.html">Предметы</a>
+    <a href="bosses.html" class="active">Боссы</a>
+    <a href="raids.html">Рейды</a>
+    <a href="search.html">Поиск</a>
+    <a href="stats.html">Статистика</a>
+    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
+    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-user-label">Гость</span>
+    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
+    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <h2>👹 Боссы</h2>
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-boss">+ Добавить босса</button>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="filter-search" placeholder="Поиск по имени..." />
+    <select id="filter-class">
+      <option value="">Все классы</option>
+    </select>
+  </div>
+
+  <div id="bosses-grid" class="bosses-grid">
+    <div class="text-muted">Загрузка...</div>
+  </div>
+</main>
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Добавить босса</h3>
+      <button class="btn-close" id="btn-modal-close">✕</button>
+    </div>
+    <input type="hidden" id="edit-id" />
+
+    <div class="form-group">
+      <label>Имя босса *</label>
+      <input type="text" id="f-name" placeholder="Теневой Дракон" />
+    </div>
+    <div class="form-group">
+      <label>Уровень</label>
+      <input type="text" id="f-level" placeholder="50" />
+    </div>
+    <div class="form-group">
+      <label>Класс босса</label>
+      <select id="f-class">
+        <option value="">— выбери класс —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea id="f-description" rows="2" placeholder="Необязательно..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Предметы с босса</label>
+      <input type="text" id="item-filter" placeholder="Поиск предметов..." style="margin-bottom:0.5rem" />
+      <div class="items-picker" id="items-picker"></div>
+    </div>
+
+    <div id="modal-error" class="text-danger mt-1" style="display:none;font-size:0.85rem;"></div>
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-save">Сохранить</button>
+      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAuth, canWrite, logout } from "../js/modules/auth.js";
+  import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
+  import { getItems } from "../js/modules/items.js";
+  import { setItemImage } from "../js/modules/images.js";
+  import { BOSS_CLASSES, SLOTS } from "../js/constants.js";
+
+  // Заполнить фильтр классов
+  const filterClass = document.getElementById("filter-class");
+  const fClass = document.getElementById("f-class");
+  BOSS_CLASSES.forEach(c => {
+    filterClass.innerHTML += `<option value="${c.id}">${c.label}</option>`;
+    fClass.innerHTML      += `<option value="${c.id}">${c.label}</option>`;
+  });
+
+  let allBosses = [];
+  let allItems  = [];
+  let selectedItemIds = [];
+
+  async function init() {
+    [allBosses, allItems] = await Promise.all([getBosses(), getItems()]);
+    renderBosses();
+  }
+
+  function renderBosses() {
+    const search = document.getElementById("filter-search").value.toLowerCase();
+    const cls    = document.getElementById("filter-class").value;
+    const list   = allBosses.filter(b => {
+      if (search && !b.name.toLowerCase().includes(search)) return false;
+      if (cls && b.boss_class !== cls) return false;
+      return true;
+    });
+
+    const grid = document.getElementById("bosses-grid");
+    if (!list.length) { grid.innerHTML = `<div class="text-muted">Боссов не найдено</div>`; return; }
+
+    grid.innerHTML = "";
+    list.forEach(b => grid.appendChild(buildCard(b)));
+  }
+
+  function buildCard(b) {
+    const cls      = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || "—";
+    const bItems   = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
+    const canEdit  = canWrite();
+
+    const card = document.createElement("div");
+    card.className = "boss-card";
+    card.innerHTML = `
+      <div class="boss-card-header">
+        <div>
+          <div class="boss-name">👹 ${b.name}</div>
+          <div class="boss-meta">
+            ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ""}
+            <span class="badge badge-open">${cls}</span>
+          </div>
+          ${b.description ? `<div class="text-muted" style="font-size:0.8rem;margin-top:6px">${b.description}</div>` : ""}
+        </div>
+        ${canEdit ? `
+        <div class="flex gap-1">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${b.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️</button>
+        </div>` : ""}
+      </div>
+      <div class="boss-items">
+        <div class="boss-items-title">Предметы (${bItems.length})</div>
+        <div class="boss-item-list" id="boss-items-${b.id}">
+          ${bItems.length ? "" : `<span class="text-muted" style="font-size:0.78rem">Не указаны</span>`}
+        </div>
+      </div>
+    `;
+
+    // Рендерим предметы с картинками
+    const itemList = card.querySelector(`#boss-items-${b.id}`);
+    bItems.forEach(item => {
+      const tag = document.createElement("div");
+      tag.className = "boss-item-tag";
+      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+      tag.innerHTML = `<img id="bi-${b.id}-${item.id}" alt="${item.name}" />${item.name} <span style="color:var(--text-muted);font-size:0.7rem">(${slotLabel})</span>`;
+      setItemImage(tag.querySelector("img"), item.image);
+      itemList.appendChild(tag);
+    });
+
+    return card;
+  }
+
+  // ── Пикер предметов ───────────────────────────────
+  function renderPicker(filter = "") {
+    const picker = document.getElementById("items-picker");
+    const list = filter
+      ? allItems.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()))
+      : allItems;
+
+    picker.innerHTML = "";
+    list.forEach(item => {
+      const row = document.createElement("div");
+      row.className = `item-pick-row${selectedItemIds.includes(item.id) ? " selected" : ""}`;
+      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+      row.innerHTML = `
+        <img alt="${item.name}" />
+        <div><div style="font-weight:600">${item.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div></div>
+        ${selectedItemIds.includes(item.id) ? `<span class="item-pick-check">✓</span>` : ""}
+      `;
+      setItemImage(row.querySelector("img"), item.image);
+      row.addEventListener("click", () => {
+        if (selectedItemIds.includes(item.id)) {
+          selectedItemIds = selectedItemIds.filter(id => id !== item.id);
+        } else {
+          selectedItemIds.push(item.id);
+        }
+        renderPicker(document.getElementById("item-filter").value);
+      });
+      picker.appendChild(row);
+    });
+  }
+
+  document.getElementById("item-filter").addEventListener("input", e => renderPicker(e.target.value));
+
+  // ── Модалка ───────────────────────────────────────
+  const modal = document.getElementById("modal");
+
+  function resetForm() {
+    document.getElementById("edit-id").value        = "";
+    document.getElementById("f-name").value         = "";
+    document.getElementById("f-level").value        = "";
+    document.getElementById("f-class").value        = "";
+    document.getElementById("f-description").value  = "";
+    document.getElementById("item-filter").value    = "";
+    document.getElementById("modal-error").style.display = "none";
+    selectedItemIds = [];
+    renderPicker();
+  }
+
+  function openAdd() {
+    document.getElementById("modal-title").textContent = "Добавить босса";
+    resetForm();
+    modal.classList.remove("hidden");
+  }
+
+  window.openEdit = (id) => {
+    const b = allBosses.find(x => x.id === id);
+    if (!b) return;
+    document.getElementById("modal-title").textContent = "Редактировать босса";
+    resetForm();
+    document.getElementById("edit-id").value       = id;
+    document.getElementById("f-name").value        = b.name         || "";
+    document.getElementById("f-level").value       = b.level        || "";
+    document.getElementById("f-class").value       = b.boss_class   || "";
+    document.getElementById("f-description").value = b.description  || "";
+    selectedItemIds = [...(b.item_ids || [])];
+    renderPicker();
+    modal.classList.remove("hidden");
+  };
+
+  function closeModal() { modal.classList.add("hidden"); }
+  document.getElementById("btn-modal-close").onclick = closeModal;
+  document.getElementById("btn-cancel").onclick      = closeModal;
+  document.getElementById("btn-add-boss").onclick    = openAdd;
+
+  document.getElementById("btn-save").onclick = async () => {
+    const name = document.getElementById("f-name").value.trim();
+    if (!name) return showError("Введи имя босса");
+
+    const btn = document.getElementById("btn-save");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+    try {
+      const data = {
+        name,
+        level:       document.getElementById("f-level").value.trim(),
+        boss_class:  document.getElementById("f-class").value,
+        description: document.getElementById("f-description").value.trim(),
+        item_ids:    selectedItemIds,
+      };
+      const id = document.getElementById("edit-id").value;
+      if (id) { await updateBoss(id, data); showToast("Босс обновлён"); }
+      else    { await addBoss(data);        showToast("Босс добавлен"); }
+      closeModal();
+      allBosses = await getBosses();
+      renderBosses();
+    } catch(e) { showError("Ошибка: " + e.message); }
+    finally { btn.disabled = false; btn.textContent = "Сохранить"; }
+  };
+
+  window.confirmDelete = (id, name) => {
+    if (!confirm(`Удалить босса «${name}»?`)) return;
+    deleteBoss(id).then(async () => {
+      showToast("Босс удалён");
+      allBosses = await getBosses();
+      renderBosses();
+    });
+  };
+
+  document.getElementById("filter-search").addEventListener("input", renderBosses);
+  document.getElementById("filter-class").addEventListener("change", renderBosses);
+
+  function showError(msg) { const el = document.getElementById("modal-error"); el.textContent = msg; el.style.display = "block"; }
+  function showToast(msg, type = "success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+
+  initAuth(() => {});
+  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
+  init();
+</script>
+</body>
+</html>
