@@ -274,6 +274,11 @@
     .btn-close:hover { color: var(--text); }
 
     .badge-purple { background: var(--accent); color: #fff; }
+    .badge-user { 
+      background: rgba(99, 102, 241, 0.2); 
+      color: #818cf8; 
+      border: 1px solid #818cf8; 
+    }
     
     .hidden { display: none !important; }
 
@@ -782,19 +787,39 @@
         return;
       }
 
-      container.innerHTML = users.map(u => `
-        <div class="user-row">
-          <div class="user-email">${u.email || u.id}</div>
-          <span class="badge ${u.role === "admin" ? "badge-purple" : "badge-free"} user-role-badge">
-            ${u.role === "admin" ? "Админ" : "Модератор"}
-          </span>
-          ${u.role !== "admin" ? `
-            <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
-              🗑️
-            </button>
-          ` : ""}
-        </div>
-      `).join("");
+      container.innerHTML = users.map(u => {
+        // Определяем отображаемую роль
+        let roleDisplay = 'Пользователь';
+        let badgeClass = 'badge-user';
+        
+        if (u.role === 'admin') {
+          roleDisplay = 'Админ';
+          badgeClass = 'badge-purple';
+        } else if (u.role === 'moderator') {
+          roleDisplay = 'Модератор';
+          badgeClass = 'badge-free';
+        } else {
+          roleDisplay = 'Пользователь';
+          badgeClass = 'badge-user';
+        }
+        
+        // Могут удалять только модераторов и пользователей (не админов)
+        const canDelete = u.role !== 'admin';
+        
+        return `
+          <div class="user-row">
+            <div class="user-email">${u.email || u.id}</div>
+            <span class="badge ${badgeClass} user-role-badge">
+              ${roleDisplay}
+            </span>
+            ${canDelete ? `
+              <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
+                🗑️
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
     } catch (e) {
       console.error("Ошибка загрузки пользователей:", e);
       container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
