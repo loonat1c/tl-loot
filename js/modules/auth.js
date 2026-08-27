@@ -18,6 +18,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,  // ← ДОБАВЛЕНО!
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
@@ -219,7 +220,9 @@ async function fetchRole(uid) {
       await setDoc(doc(db, "users", uid), {
         email: currentUser?.email || "",
         role: "user",
-        createdAt: new Date().toISOString(),
+        username: currentUser?.email?.split('@')[0] || "User",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
       console.log("✅ Создан новый документ пользователя с ролью user");
       return "user";
@@ -267,13 +270,16 @@ export async function register(email, password, username = null) {
 
     console.log("✅ Пользователь создан:", newUser.uid);
 
+    // Если username не указан — берём из email (до @)
+    const finalUsername = username || newUser.email?.split('@')[0] || 'User';
+
     // 2. Создаём документ в Firestore
     await setDoc(doc(db, "users", newUser.uid), {
       email: newUser.email,
       role: "user",
-      username: username || newUser.email?.split('@')[0] || "User",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      username: finalUsername,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
 
     console.log("📄 Документ пользователя создан");
