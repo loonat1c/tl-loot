@@ -33,7 +33,7 @@
     .item-card:hover {
       border-color: var(--accent);
       transform: translateY(-2px);
-      z-index: 10;
+      z-index: 100;
     }
 
     .item-card.quality-epic {
@@ -138,53 +138,94 @@
     }
 
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
+
     .item-card .full-card {
       display: none;
       position: absolute;
+
+      /* По умолчанию окно открывается ВПРАВО */
       left: calc(100% + 12px);
+      right: auto;
       top: 0;
+
       width: 440px;
       max-width: 80vw;
       max-height: 85vh;
+
       overflow-y: auto;
+
       background: var(--bg-card);
       border: 1px solid var(--accent);
       border-radius: var(--radius);
       padding: 1.25rem;
+
       box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
+
       z-index: 1000;
       pointer-events: none;
     }
 
-    .item-card:nth-child(4n) .full-card,
-    .item-card:nth-child(4n-1) .full-card {
+
+    /* ─────────────────────────────────────────────
+       ПРАВАЯ КАРТОЧКА В РЯДУ
+       Окно открывается ВЛЕВО
+       ───────────────────────────────────────────── */
+
+    .item-card:nth-child(3n) .full-card {
       left: auto;
       right: calc(100% + 12px);
     }
 
-    /* Стрелка у карточек, открывающихся вправо */
+
+    /* ─────────────────────────────────────────────
+       СТРЕЛКА ОКНА
+       ───────────────────────────────────────────── */
+
+    /* Обычные карточки — стрелка смотрит ВЛЕВО,
+       к карточке */
+
     .item-card .full-card::before {
       content: '';
+
       position: absolute;
+
       right: 100%;
+      left: auto;
+
       top: 20px;
+
+      width: 0;
+      height: 0;
+
       border: 8px solid transparent;
       border-right-color: var(--accent);
     }
 
-    /* Стрелка у карточек, открывающихся влево */
-    .item-card:nth-child(4n) .full-card::before,
-    .item-card:nth-child(4n-1) .full-card::before {
+
+    /* Правая карточка — окно слева,
+       поэтому стрелка смотрит ВПРАВО */
+
+    .item-card:nth-child(3n) .full-card::before {
       right: auto;
       left: 100%;
+
       border-right-color: transparent;
       border-left-color: var(--accent);
-      top: 20px;
     }
+
+
+    /* ─────────────────────────────────────────────
+       ПОКАЗ ПОЛНОЙ КАРТОЧКИ
+       ───────────────────────────────────────────── */
 
     .item-card:hover .full-card {
       display: block;
     }
+
+
+    /* ─────────────────────────────────────────────
+       SCROLLBAR
+       ───────────────────────────────────────────── */
 
     .full-card::-webkit-scrollbar {
       width: 4px;
@@ -198,6 +239,87 @@
     .full-card::-webkit-scrollbar-thumb {
       background: var(--accent);
       border-radius: 4px;
+    }
+
+
+    /* ─────────────────────────────────────────────
+       МОБИЛЬНЫЕ
+       ───────────────────────────────────────────── */
+
+    @media (max-width: 992px) {
+      .item-card .full-card {
+        position: fixed;
+
+        left: 50%;
+        right: auto;
+        top: 50%;
+
+        transform: translate(-50%, -50%);
+
+        width: 440px;
+        max-width: 92vw;
+        max-height: 80vh;
+      }
+
+      /* На мобильном стрелка не нужна */
+      .item-card .full-card::before {
+        display: none;
+      }
+    }
+
+    /* ─────────────────────────────────────────────
+       АДАПТАЦИЯ ДЛЯ 2 КОЛОНОК (ПЛАНШЕТЫ)
+       ───────────────────────────────────────────── */
+
+    @media (max-width: 768px) {
+      .items-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Для 2 колонок — каждая 2-я карточка открывается влево */
+      .item-card:nth-child(2n) .full-card {
+        left: auto;
+        right: calc(100% + 12px);
+      }
+
+      .item-card:nth-child(2n) .full-card::before {
+        right: auto;
+        left: 100%;
+        border-right-color: transparent;
+        border-left-color: var(--accent);
+      }
+
+      /* Отключаем 3n логику */
+      .item-card:nth-child(3n) .full-card {
+        left: calc(100% + 12px);
+        right: auto;
+      }
+
+      .item-card:nth-child(3n) .full-card::before {
+        right: 100%;
+        left: auto;
+        border-right-color: var(--accent);
+        border-left-color: transparent;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .items-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Для 1 колонки — все открываются вправо */
+      .item-card .full-card {
+        left: calc(100% + 12px);
+        right: auto;
+      }
+
+      .item-card .full-card::before {
+        right: 100%;
+        left: auto;
+        border-right-color: var(--accent);
+        border-left-color: transparent;
+      }
     }
 
     .full-card .fc-header {
@@ -791,27 +913,6 @@
     /* ── Скрытие полей ──────────────────────────────────── */
     .field-hidden {
       display: none !important;
-    }
-
-    /* ── Адаптация для мобильных ────────────────────────── */
-    @media (max-width: 992px) {
-      .item-card .full-card {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        right: auto;
-        max-width: 92vw;
-        max-height: 80vh;
-      }
-
-      .item-card .full-card::before {
-        display: none;
-      }
-
-      .full-card .fc-stats {
-        grid-template-columns: 1fr;
-      }
     }
 
     @media (max-width: 768px) {
