@@ -474,3 +474,33 @@ export function updateNavUI() {
       );
     });
 }
+
+// ====================================================
+// ОБНОВЛЕНИЕ ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ
+// ====================================================
+
+export async function updateUserProfile(data) {
+  if (!currentUser) {
+    return {
+      success: false,
+      error: 'Пользователь не авторизован'
+    };
+  }
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log('✅ Профиль обновлён в Firestore');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Ошибка обновления профиля:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
