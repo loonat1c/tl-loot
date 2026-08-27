@@ -34,6 +34,7 @@ function renderNav(nav) {
   const isPlayersPage = currentPath.includes('players.html');
   const isStatsPage = currentPath.includes('stats.html');
   const isSearchPage = currentPath.includes('search.html');
+  const isBossesPage = currentPath.includes('bosses.html');
   const isProfilePage = currentPath.includes('profile.html');
   
   // Главная страница
@@ -41,12 +42,16 @@ function renderNav(nav) {
                        currentPath.endsWith('/index.html') ||
                        currentPath === '/index.html';
 
+  // Кнопка профиля активна ТОЛЬКО когда мы на странице профиля
+  const isProfileActive = isProfilePage;
+
   nav.innerHTML = `
     <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
     
     <div class="nav-links">
       <a href="/index.html" class="${isIndexPage ? 'active' : ''}">Главная</a>
       <a href="/pages/items.html" class="${isItemsPage ? 'active' : ''}">Предметы</a>
+      <a href="/pages/bosses.html" class="${isBossesPage ? 'active' : ''}">Боссы</a>
       <a href="/pages/raids.html" class="${isRaidPage ? 'active' : ''}">Рейды</a>
       <a href="/pages/players.html" class="${isPlayersPage ? 'active' : ''}">Игроки</a>
       <a href="/pages/search.html" class="${isSearchPage ? 'active' : ''}">Поиск</a>
@@ -56,7 +61,7 @@ function renderNav(nav) {
     
     <div class="nav-user">
       ${isAuth ? `
-        <a href="/pages/profile.html" class="btn btn-ghost btn-sm btn-profile" id="btn-profile">
+        <a href="/pages/profile.html" class="btn btn-ghost btn-sm btn-profile ${isProfileActive ? 'active' : ''}" id="btn-profile">
           👤 Профиль
         </a>
         <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
@@ -74,14 +79,6 @@ function renderNav(nav) {
       await logout();
       window.location.href = "/index.html";
     });
-  }
-
-  // Добавляем подсветку активной страницы для профиля
-  if (isProfilePage) {
-    const profileBtn = document.getElementById("btn-profile");
-    if (profileBtn) {
-      profileBtn.classList.add("active");
-    }
   }
 }
 
