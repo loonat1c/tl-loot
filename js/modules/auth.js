@@ -3,6 +3,7 @@
 // ====================================================
 
 import { auth, db } from "../firebase.js";
+
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -10,163 +11,356 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 import {
-  doc, getDoc,
+  doc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ─── Состояние ──────────────────────────────────────────
+// ====================================================
+// Состояние
+// ====================================================
+
 export let currentUser = null;
 export let currentRole = "guest";
 
-// ─── Промис готовности ────────────────────────────────
-let _authReadyResolve = null;
+export let user = null;
+export let role = "guest";
+
+// ====================================================
+// Auth Ready
+// ====================================================
+
+let authReadyResolve;
+
 export const authReady = new Promise((resolve) => {
-  _authReadyResolve = resolve;
+  authReadyResolve = resolve;
 });
 
-// ─── Флаг инициализации ──────────────────────────────
 let isInitialized = false;
+let initializationPromise = null;
 
-// ─── Инициализация ──────────────────────────────────────
-export function initAuth(onReady) {
-  if (isInitialized) {
-    console.log("⚠️ Auth уже инициализирован");
-    return;
+// ====================================================
+// Инициализация Auth
+// ====================================================
+
+export function initAuth(onReady = null) {
+
+  // Если Auth уже запускается — возвращаем тот же Promise
+  if (initializationPromise) {
+    return initializationPromise;
   }
-  
-  console.log("🔄 Инициализация Auth...");
-  isInitialized = true;
-  
-  setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-  onAuthStateChanged(auth, async (user) => {
-    console.log("📡 onAuthStateChanged вызван, user:", user ? user.email : null);
-    
-    let result = { user: null, role: "guest" };
-    
-    if (user) {
-      currentUser = user;
-      console.log("👤 Пользователь найден:", user.email);
-      
-      // Загружаем роль из Firestore
-      const fresh = await fetchRole(user.uid);
-      currentRole = fresh;
-      console.log("🔄 Роль из Firestore:", currentRole);
-      sessionStorage.setItem(`role_${user.uid}`, fresh);
-      
-      result = { user: currentUser, role: currentRole };
-    } else {
-      console.log("👤 Пользователь не найден (guest)");
-      currentUser = null;
-      currentRole = "guest";
-      sessionStorage.clear();
-      result = { user: null, role: "guest" };
+  initializationPromise = new Promise(async (resolve) => {
+
+    console.log("🔄 Инициализация Auth...");
+
+    try {
+
+      // ВАЖНО:
+      // Сначала устанавливаем persistence
+      await setPersistence(auth, browserLocalPersistence);
+
+      console.log("💾 Firebase persistence установлена");
+
+    } catch (e) {
+
+      console.warn(
+        "⚠️ Не удалось установить persistence:",
+        e
+      );
+
     }
 
-    // Обновляем UI
-    updateNavUI();
-    
-    // Вызываем колбэк если есть
-    if (onReady) {
-      onReady(currentUser, currentRole);
-    }
-    
-    // Резолвим промис с данными
-    console.log("✅ authReady резолвится с:", result);
-    if (_authReadyResolve) {
-      _authReadyResolve(result);
-    }
+    isInitialized = true;
+
+    // ==================================================
+    // Слушаем изменение авторизации
+    // ==================================================
+
+    onAuthStateChanged(auth, async (firebaseUser) => {
+
+      console.log(
+        "📡 onAuthStateChanged:",
+        firebaseUser
+          ? firebaseUser.email
+          : "guest"
+      );
+
+      let roleValue = "guest";
+
+      // =================================================
+      // Пользователь авторизован
+      // =================================================
+
+      if (firebaseUser) {
+
+        currentUser = firebaseUser;
+
+        user = firebaseUser;
+
+        console.log(
+          "👤 Пользователь:",
+          firebaseUser.email
+        );
+
+        // Получаем роль
+        roleValue = await fetchRole(firebaseUser.uid);
+
+        currentRole = roleValue;
+        role = roleValue;
+
+        sessionStorage.setItem(
+          `role_${firebaseUser.uid}`,
+          roleValue
+        );
+
+        console.log(
+          "🔐 Роль:",
+          roleValue
+        );
+
+      }
+
+      // =================================================
+      // Пользователь не авторизован
+      // =================================================
+
+      else {
+
+        currentUser = null;
+        currentRole = "guest";
+
+        user = null;
+        role = "guest";
+
+        console.log(
+          "👤 Пользователь не авторизован"
+        );
+      }
+
+      // =================================================
+      // Обновляем Navbar
+      // =================================================
+
+      updateNavUI();
+
+      const result = {
+        user: currentUser,
+        role: currentRole,
+      };
+
+      console.log(
+        "✅ Auth готов:",
+        result
+      );
+
+      // Callback
+      if (onReady) {
+        try {
+          onReady(
+            currentUser,
+            currentRole
+          );
+        } catch (e) {
+          console.error(
+            "❌ Ошибка auth callback:",
+            e
+          );
+        }
+      }
+
+      // Promise authReady
+      authReadyResolve(result);
+
+      // Resolve initAuth()
+      resolve(result);
+
+    });
   });
+
+  return initializationPromise;
 }
 
+// ====================================================
+// Получение роли
+// ====================================================
+
 async function fetchRole(uid) {
+
   try {
-    const snap = await getDoc(doc(db, "users", uid));
+
+    const snap = await getDoc(
+      doc(db, "users", uid)
+    );
+
     if (snap.exists()) {
-      const role = snap.data().role || "guest";
-      console.log(`📋 Роль для ${uid}:`, role);
-      return role;
+
+      const roleValue =
+        snap.data().role || "guest";
+
+      console.log(
+        `📋 Роль пользователя ${uid}:`,
+        roleValue
+      );
+
+      return roleValue;
     }
-    console.log(`⚠️ Документ пользователя ${uid} не найден, роль: guest`);
+
+    console.warn(
+      `⚠️ Документ users/${uid} не найден`
+    );
+
   } catch (e) {
-    console.error("fetchRole error:", e);
+
+    console.error(
+      "❌ Ошибка получения роли:",
+      e
+    );
   }
+
   return "guest";
 }
 
-// ─── Публичная функция для получения роли ─────────────
+// ====================================================
+// Публичное получение роли
+// ====================================================
+
 export async function getUserRole(uid) {
   return await fetchRole(uid);
 }
 
-// ─── Аутентификация ────────────────────────────────────
+// ====================================================
+// Login
+// ====================================================
+
 export async function login(email, password) {
-  console.log("🔑 Попытка входа:", email);
-  await setPersistence(auth, browserLocalPersistence);
-  const cred = await signInWithEmailAndPassword(auth, email, password);
-  console.log("✅ Вход выполнен:", cred.user.email);
-  
-  // Ждем загрузки роли
-  await new Promise(resolve => setTimeout(resolve, 300));
-  const role = await fetchRole(cred.user.uid);
-  currentRole = role;
-  sessionStorage.setItem(`role_${cred.user.uid}`, role);
-  updateNavUI();
-  
-  return { user: cred.user, role: role };
+
+  console.log(
+    "🔑 Попытка входа:",
+    email
+  );
+
+  await setPersistence(
+    auth,
+    browserLocalPersistence
+  );
+
+  const cred =
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+  console.log(
+    "✅ Вход выполнен:",
+    cred.user.email
+  );
+
+  // onAuthStateChanged сам обновит
+  // currentUser/currentRole
+
+  return cred.user;
 }
 
-export function logout() {
-  console.log("🚪 Выход из системы");
+// ====================================================
+// Logout
+// ====================================================
+
+export async function logout() {
+
+  console.log(
+    "🚪 Выход из системы"
+  );
+
   sessionStorage.clear();
-  return signOut(auth);
+
+  await signOut(auth);
 }
 
-// ─── Проверки ролей ────────────────────────────────────
+// ====================================================
+// Проверка прав
+// ====================================================
+
 export function canWrite() {
-  const result = currentRole === "admin" || currentRole === "moderator";
-  console.log(`🔍 canWrite(): ${result} (role: ${currentRole})`);
-  return result;
+
+  return (
+    currentRole === "admin" ||
+    currentRole === "moderator"
+  );
 }
 
 export function isAdmin() {
-  const result = currentRole === "admin";
-  console.log(`🔍 isAdmin(): ${result} (role: ${currentRole})`);
-  return result;
+
+  return currentRole === "admin";
 }
 
-// ─── Синонимы для удобства ────────────────────────────
-export let user = currentUser;
-export let role = currentRole;
+// ====================================================
+// Navbar UI
+// ====================================================
 
-// Обновляем синонимы при изменении
-function updateCurrentUser() {
+export function updateNavUI() {
+
   user = currentUser;
   role = currentRole;
-}
 
-// ─── Обновление UI ─────────────────────────────────────
-export function updateNavUI() {
-  // Обновляем синонимы
-  updateCurrentUser();
-  
-  const loginBtn  = document.getElementById("btn-login");
-  const logoutBtn = document.getElementById("btn-logout");
-  const userLabel = document.getElementById("nav-user-label");
+  const loginBtn =
+    document.getElementById("btn-login");
 
-  if (loginBtn)  loginBtn.classList.toggle("hidden", !!currentUser);
-  if (logoutBtn) logoutBtn.classList.toggle("hidden", !currentUser);
+  const logoutBtn =
+    document.getElementById("btn-logout");
 
-  if (userLabel) {
-    userLabel.textContent = currentUser
-      ? `${currentUser.email} (${currentRole})`
-      : "Гость";
+  const userLabel =
+    document.getElementById(
+      "nav-user-label"
+    );
+
+  if (loginBtn) {
+
+    loginBtn.classList.toggle(
+      "hidden",
+      !!currentUser
+    );
   }
 
-  document.querySelectorAll("[data-role='admin']").forEach(el => {
-    el.classList.toggle("hidden", currentRole !== "admin");
-  });
-  document.querySelectorAll("[data-role='moderator']").forEach(el => {
-    el.classList.toggle("hidden", !canWrite());
-  });
+  if (logoutBtn) {
+
+    logoutBtn.classList.toggle(
+      "hidden",
+      !currentUser
+    );
+  }
+
+  if (userLabel) {
+
+    userLabel.textContent =
+      currentUser
+        ? `${currentUser.email} (${currentRole})`
+        : "Гость";
+  }
+
+  document
+    .querySelectorAll(
+      "[data-role='admin']"
+    )
+    .forEach((el) => {
+
+      el.classList.toggle(
+        "hidden",
+        currentRole !== "admin"
+      );
+    });
+
+  document
+    .querySelectorAll(
+      "[data-role='moderator']"
+    )
+    .forEach((el) => {
+
+      el.classList.toggle(
+        "hidden",
+        !canWrite()
+      );
+    });
 }
