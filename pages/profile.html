@@ -22,6 +22,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       margin-bottom: 2rem;
+      position: relative;
     }
 
     .profile-avatar {
@@ -38,9 +39,23 @@
       flex-shrink: 0;
     }
 
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-info .name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
     .profile-info h2 {
       font-size: 1.2rem;
       margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .profile-info .email {
@@ -61,6 +76,44 @@
       margin-top: 0.25rem;
     }
 
+    .btn-edit-name {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-edit-name:hover {
+      background: var(--bg-card2);
+      color: var(--text);
+    }
+
+    .name-edit-input {
+      display: none;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.3rem 0.6rem;
+      font-size: 1rem;
+      font-family: var(--font);
+      width: 200px;
+    }
+
+    .name-edit-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .name-edit-actions {
+      display: none;
+      gap: 0.3rem;
+    }
+
     .characters-section {
       margin-top: 2rem;
     }
@@ -79,7 +132,6 @@
       margin: 0;
     }
 
-    /* ── Карточка персонажа ──────────────────────────── */
     .character-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -245,7 +297,6 @@
       border-left: 3px solid var(--danger);
     }
 
-    /* ── Кнопка удаления ─────────────────────────────── */
     .btn-delete {
       display: inline-flex;
       align-items: center;
@@ -269,7 +320,7 @@
       transform: scale(0.95);
     }
 
-    .btn-edit {
+    .btn-edit-char {
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
@@ -284,16 +335,15 @@
       color: var(--text);
     }
 
-    .btn-edit:hover {
+    .btn-edit-char:hover {
       background: var(--bg-card);
       border-color: var(--accent);
     }
 
-    .btn-edit:active {
+    .btn-edit-char:active {
       transform: scale(0.95);
     }
 
-    /* ── Остальное ────────────────────────────────────── */
     .empty-state {
       text-align: center;
       padding: 3rem 2rem;
@@ -317,7 +367,6 @@
       font-size: 0.85rem;
     }
 
-    /* ── Модальное окно ────────────────────────────── */
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -487,6 +536,10 @@
         text-align: center;
       }
 
+      .profile-info .name-wrap {
+        justify-content: center;
+      }
+
       .modal .form-row {
         grid-template-columns: 1fr;
       }
@@ -526,7 +579,17 @@
   <div class="profile-header" id="profile-header">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
-      <h2 id="profile-name">Загрузка...</h2>
+      <div class="name-wrap">
+        <h2>
+          <span id="profile-name">Загрузка...</span>
+          <button class="btn-edit-name" id="btn-edit-name" title="Редактировать имя">✏️</button>
+        </h2>
+        <input type="text" class="name-edit-input" id="name-edit-input" maxlength="30" />
+        <div class="name-edit-actions" id="name-edit-actions">
+          <button class="btn btn-primary btn-sm" id="btn-name-save">Сохранить</button>
+          <button class="btn btn-ghost btn-sm" id="btn-name-cancel">Отмена</button>
+        </div>
+      </div>
       <div class="email" id="profile-email">—</div>
       <span class="role" id="profile-role">guest</span>
     </div>
@@ -622,7 +685,9 @@
     initAuth, 
     authReady, 
     currentUser, 
-    currentRole
+    currentRole,
+    isModerator,
+    updateUserProfile
   } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { WEAPONS, SLOTS } from "../js/constants.js";
@@ -634,7 +699,8 @@
     updateDoc, 
     deleteDoc,
     query,
-    where
+    where,
+    getDoc
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
@@ -658,6 +724,7 @@
   let characters = [];
   let editingCharId = null;
   const userId = currentUser?.uid;
+  const userIsModerator = isModerator();
 
   // ============================================
   // ЗАГРУЗКА ДАННЫХ
@@ -698,18 +765,108 @@
   }
 
   // ============================================
+  // ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+  // ============================================
+
+  async function loadUserData() {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Ошибка загрузки данных пользователя:', error);
+      return null;
+    }
+  }
+
+  // ============================================
   // ОТОБРАЖЕНИЕ ПРОФИЛЯ
   // ============================================
 
-  function renderProfile() {
-    const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
-    document.getElementById('profile-name').textContent = name;
+  async function renderProfile() {
+    const userData = await loadUserData();
+    const username = userData?.username || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
+    
+    document.getElementById('profile-name').textContent = username;
     document.getElementById('profile-email').textContent = currentUser?.email || '—';
     document.getElementById('profile-role').textContent = currentRole || 'guest';
 
     const avatar = document.getElementById('profile-avatar');
-    avatar.textContent = name.charAt(0).toUpperCase();
+    avatar.textContent = username.charAt(0).toUpperCase();
   }
+
+  // ============================================
+  // РЕДАКТИРОВАНИЕ ИМЕНИ
+  // ============================================
+
+  let isEditingName = false;
+
+  document.getElementById('btn-edit-name').addEventListener('click', () => {
+    const nameSpan = document.getElementById('profile-name');
+    const input = document.getElementById('name-edit-input');
+    const actions = document.getElementById('name-edit-actions');
+    
+    input.value = nameSpan.textContent;
+    nameSpan.style.display = 'none';
+    input.style.display = 'inline-block';
+    actions.style.display = 'inline-flex';
+    document.getElementById('btn-edit-name').style.display = 'none';
+    isEditingName = true;
+    input.focus();
+    input.select();
+  });
+
+  document.getElementById('btn-name-cancel').addEventListener('click', () => {
+    cancelNameEdit();
+  });
+
+  document.getElementById('btn-name-save').addEventListener('click', async () => {
+    const input = document.getElementById('name-edit-input');
+    const newName = input.value.trim();
+    
+    if (!newName) {
+      showToast('Имя не может быть пустым', 'error');
+      return;
+    }
+
+    try {
+      const result = await updateUserProfile({ username: newName });
+      if (result.success) {
+        showToast('Имя обновлено!');
+        cancelNameEdit();
+        renderProfile();
+      } else {
+        showToast('Ошибка: ' + result.error, 'error');
+      }
+    } catch (error) {
+      console.error('Ошибка обновления имени:', error);
+      showToast('Ошибка обновления имени', 'error');
+    }
+  });
+
+  function cancelNameEdit() {
+    const nameSpan = document.getElementById('profile-name');
+    const input = document.getElementById('name-edit-input');
+    const actions = document.getElementById('name-edit-actions');
+    
+    nameSpan.style.display = 'inline';
+    input.style.display = 'none';
+    actions.style.display = 'none';
+    document.getElementById('btn-edit-name').style.display = 'inline';
+    isEditingName = false;
+  }
+
+  // Enter для сохранения
+  document.getElementById('name-edit-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('btn-name-save').click();
+    }
+    if (e.key === 'Escape') {
+      document.getElementById('btn-name-cancel').click();
+    }
+  });
 
   // ============================================
   // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
@@ -745,13 +902,11 @@
       const canEdit = statusClass === 'pending' || statusClass === 'rejected';
       const canDelete = true;
 
-      // Оружие
       const weaponsHtml = char.weapons?.map(w => {
         const weapon = WEAPONS.find(wp => wp.id === w);
         return `<span class="weapon-tag">${weapon?.label || w}</span>`;
       }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
 
-      // Желаемый лут
       let lootHtml = '';
       if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
         const lootItems = Object.entries(char.desired_loot)
@@ -775,7 +930,6 @@
         }
       }
 
-      // Сообщение модератору
       let noteHtml = '';
       if (char.moderation_note) {
         noteHtml = `
@@ -785,7 +939,6 @@
         `;
       }
 
-      // Ответ модератора
       let feedbackHtml = '';
       if (char.moderation_feedback) {
         feedbackHtml = `
@@ -803,7 +956,7 @@
               <span class="char-status ${statusClass}">${statusLabel}</span>
             </div>
             <div class="char-actions">
-              ${canEdit ? `<button class="btn-edit" onclick="window.editCharacter('${char.id}')">✏️ Редактировать</button>` : ''}
+              ${canEdit ? `<button class="btn-edit-char" onclick="window.editCharacter('${char.id}')">✏️ Редактировать</button>` : ''}
               <button class="btn-delete" onclick="window.deleteCharacter('${char.id}')">🗑️ Удалить</button>
             </div>
           </div>
@@ -1166,17 +1319,21 @@
 
     const desiredLoot = getSelectedLoot();
 
+    // Если пользователь модератор или админ — сразу одобряем
+    const isModeratorOrAdmin = isModerator();
+    const status = isModeratorOrAdmin ? 'approved' : 'pending';
+
     const charData = {
       name,
       weapons: [weapon1, weapon2].filter(Boolean),
       desired_loot: desiredLoot,
       user_id: currentUser.uid,
       user_email: currentUser.email,
-      status: 'pending',
+      status: status,
       moderation_note: moderationNote || null,
       moderation_feedback: null,
-      moderated_by: null,
-      moderated_at: null,
+      moderated_by: isModeratorOrAdmin ? currentUser.uid : null,
+      moderated_at: isModeratorOrAdmin ? new Date().toISOString() : null,
       updated_at: new Date().toISOString()
     };
 
@@ -1185,19 +1342,19 @@
     try {
       if (id) {
         const existing = characters.find(c => c.id === id);
-        if (existing && existing.status === 'approved') {
+        if (existing && existing.status === 'approved' && !isModeratorOrAdmin) {
           charError.textContent = 'Нельзя редактировать одобренного персонажа';
           charError.style.display = 'block';
           return;
         }
         await updateDoc(doc(db, 'characters', id), charData);
-        showToast('Персонаж обновлён и отправлен на модерацию');
+        showToast(isModeratorOrAdmin ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
       } else {
         await addDoc(collection(db, 'characters'), {
           ...charData,
           created_at: new Date().toISOString()
         });
-        showToast('Персонаж отправлен на модерацию!');
+        showToast(isModeratorOrAdmin ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
       }
 
       closeCharModal();
