@@ -303,3 +303,11 @@ tr:hover td { background: var(--bg-card2); }
 }
 .lock-pip.done    { background: var(--accent); }
 .lock-pip.skipped { background: var(--warning); }
+
+#nav-admin-link {
+  display: none; /* по умолчанию скрыто */
+}
+
+#nav-admin-link.visible {
+  display: inline; /* или block, в зависимости от типа ссылки */
+}
