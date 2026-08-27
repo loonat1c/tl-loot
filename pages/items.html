@@ -8,12 +8,14 @@
   <link rel="stylesheet" href="../css/main.css" />
 
   <style>
+    /* ── Основная сетка ─────────────────────────────────── */
     .items-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 1rem;
     }
 
+    /* ── Карточка предмета ─────────────────────────────── */
     .item-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -22,21 +24,23 @@
       display: flex;
       gap: 0.75rem;
       align-items: flex-start;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      cursor: pointer;
     }
 
     .item-card:hover {
       border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+      z-index: 10;
     }
 
-    /* Качество предметов */
     .item-card.quality-epic {
       border-left: 3px solid #9b59b6;
     }
 
     .item-card.quality-epic_ii {
       border-left: 3px solid #8e44ad;
-      box-shadow: 0 0 16px rgba(142, 68, 173, 0.25);
     }
 
     .item-img {
@@ -78,11 +82,9 @@
       font-size: 0.78rem;
       color: var(--text-muted);
       margin-top: 6px;
-
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
-
       overflow: hidden;
     }
 
@@ -102,7 +104,6 @@
       border: 1px solid var(--border);
     }
 
-    /* Бейджи качества */
     .badge-quality-epic {
       background: rgba(155, 89, 182, 0.2);
       color: #9b59b6;
@@ -117,105 +118,189 @@
       font-weight: 700;
     }
 
-    /* Модальное окно */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 200;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: 1rem;
-    }
-
-    .modal {
+    /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
+    .item-card .full-card {
+      display: none;
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 420px;
+      max-width: 90vw;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1px solid var(--accent);
       border-radius: var(--radius);
-
-      padding: 1.5rem;
-
-      width: 100%;
-      max-width: 520px;
-
-      max-height: 90vh;
-      overflow-y: auto;
+      padding: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      pointer-events: none;
     }
 
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      margin-bottom: 1.25rem;
+    .item-card .full-card::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-right-color: var(--accent);
     }
 
-    .modal-header h3 {
-      font-size: 1.1rem;
-    }
-
-    .btn-close {
-      background: none;
-      border: none;
-
-      color: var(--text-muted);
-
-      font-size: 1.25rem;
-
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .btn-close:hover {
-      color: var(--text);
-    }
-
-    /* Загрузка картинки */
-    .image-upload-area {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-
-      padding: 1rem;
-
-      text-align: center;
-
-      cursor: pointer;
-
-      transition: border-color 0.15s;
-    }
-
-    .image-upload-area:hover {
-      border-color: var(--accent);
-    }
-
-    .image-preview {
-      width: 96px;
-      height: 96px;
-
-      object-fit: cover;
-
-      border-radius: 6px;
-
-      margin: 0 auto 0.5rem;
-
+    .item-card:hover .full-card {
       display: block;
     }
 
-    .upload-hint {
+    .full-card .fc-header {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .full-card .fc-header .fc-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .full-card .fc-header .fc-title {
+      flex: 1;
+    }
+
+    .full-card .fc-header .fc-title .fc-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .full-card .fc-header .fc-title .fc-quality {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .full-card .fc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem 1rem;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+    }
+
+    .full-card .fc-stats .stat {
       font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .full-card .fc-stats .stat .stat-label {
       color: var(--text-muted);
     }
 
-    /* Фильтры */
+    .full-card .fc-stats .stat .stat-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .full-card .fc-effect {
+      display: flex;
+      gap: 0.75rem;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: rgba(124, 58, 237, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-glow);
+    }
+
+    .full-card .fc-effect .effect-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .full-card .fc-effect .effect-info {
+      flex: 1;
+      font-size: 0.82rem;
+    }
+
+    .full-card .fc-effect .effect-info .effect-name {
+      font-weight: 600;
+      color: var(--accent-soft);
+    }
+
+    .full-card .fc-effect .effect-info .effect-desc {
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .full-card .fc-effect .effect-info .effect-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.8rem;
+      margin-top: 4px;
+    }
+
+    .full-card .fc-effect .effect-info .effect-stats .es-item {
+      font-size: 0.75rem;
+      color: var(--text);
+    }
+
+    .full-card .fc-effect .effect-info .effect-stats .es-item .es-label {
+      color: var(--text-muted);
+    }
+
+    .full-card .fc-properties {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .full-card .fc-properties .prop-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .full-card .fc-properties .prop-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+
+    .full-card .fc-properties .prop-list .prop-tag {
+      background: var(--bg-card2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .full-card .fc-flavor {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      padding-top: 0.5rem;
+    }
+
+    /* ── Фильтры ────────────────────────────────────────── */
     .filter-bar {
       display: flex;
       gap: 0.75rem;
-
       margin-bottom: 1.25rem;
-
       flex-wrap: wrap;
     }
 
@@ -230,192 +315,248 @@
     .hidden {
       display: none !important;
     }
+
+    /* ── Модальное окно ────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .btn-close:hover {
+      color: var(--text);
+    }
+
+    .image-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--accent);
+    }
+
+    .image-preview {
+      width: 96px;
+      height: 96px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin: 0 auto 0.5rem;
+      display: block;
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Динамические поля ────────────────────────────── */
+    .dynamic-fields {
+      margin-top: 0.25rem;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .field-row input {
+      flex: 1;
+      padding: 0.3rem 0.5rem;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
+    .field-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field-row .btn-remove-field {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0.3rem;
+      line-height: 1;
+    }
+
+    .field-row .btn-remove-field:hover {
+      opacity: 0.7;
+    }
+
+    .btn-add-field {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.6rem;
+      margin-top: 0.2rem;
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .btn-add-field:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .field-row .field-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      min-width: 60px;
+    }
+
+    .field-row .field-value {
+      flex: 2;
+    }
+
+    .field-row .field-value input {
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .item-card .full-card {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 92vw;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .item-card .full-card::before {
+        display: none;
+      }
+
+      .full-card .fc-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .field-row {
+        flex-wrap: wrap;
+      }
+
+      .field-row .field-label {
+        min-width: 100%;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-<!-- ═══════════════════════════════════════════
-     НАВБАР
-═══════════════════════════════════════════ -->
-
 <nav class="navbar" id="main-nav"></nav>
-
-
-<!-- ═══════════════════════════════════════════
-     ОСНОВНОЙ КОНТЕНТ
-═══════════════════════════════════════════ -->
 
 <main class="container">
 
   <div class="page-header">
-
     <h2>🗡️ Предметы</h2>
-
-    <button
-      class="btn btn-primary hidden"
-      data-role="moderator"
-      id="btn-add-item"
-    >
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-item">
       + Добавить предмет
     </button>
-
   </div>
-
-
-  <!-- ═══════════════════════════════════════
-       ФИЛЬТРЫ
-  ═══════════════════════════════════════ -->
 
   <div class="filter-bar">
-
-    <input
-      type="text"
-      id="filter-search"
-      placeholder="Поиск по названию..."
-    />
-
-    <select id="filter-slot">
-      <option value="">Все слоты</option>
-    </select>
-
-    <select id="filter-quality">
-      <option value="">Все качества</option>
-    </select>
-
-    <select id="filter-boss">
-      <option value="">Все боссы</option>
-    </select>
-
+    <input type="text" id="filter-search" placeholder="Поиск по названию..." />
+    <select id="filter-slot"><option value="">Все слоты</option></select>
+    <select id="filter-quality"><option value="">Все качества</option></select>
+    <select id="filter-boss"><option value="">Все боссы</option></select>
   </div>
 
-
-  <!-- ═══════════════════════════════════════
-       СПИСОК ПРЕДМЕТОВ
-  ═══════════════════════════════════════ -->
-
   <div id="items-grid" class="items-grid">
-
-    <div class="text-muted">
-      Загрузка...
-    </div>
-
+    <div class="text-muted">Загрузка...</div>
   </div>
 
 </main>
 
-
 <!-- ═══════════════════════════════════════════
-     МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ
+     МОДАЛЬНОЕ ОКНО
 ═══════════════════════════════════════════ -->
 
 <div class="modal-overlay hidden" id="modal">
-
   <div class="modal">
-
     <div class="modal-header">
-
-      <h3 id="modal-title">
-        Добавить предмет
-      </h3>
-
-      <button
-        class="btn-close"
-        id="btn-modal-close"
-      >
-        ✕
-      </button>
-
+      <h3 id="modal-title">Добавить предмет</h3>
+      <button class="btn-close" id="btn-modal-close">✕</button>
     </div>
 
-
-    <input
-      type="hidden"
-      id="edit-id"
-    />
-
+    <input type="hidden" id="edit-id" />
 
     <!-- Картинка -->
-
     <div class="form-group">
-
-      <label>
-        Картинка
-      </label>
-
-      <div
-        class="image-upload-area"
-        id="upload-area"
-      >
-
-        <img
-          id="img-preview"
-          class="image-preview hidden"
-          alt="preview"
-        />
-
-        <div
-          class="upload-hint"
-          id="upload-hint"
-        >
-          Нажми чтобы выбрать картинку
-          <br>
-          <small>
-            Сожмётся до 128×128
-          </small>
-        </div>
-
+      <label>Картинка</label>
+      <div class="image-upload-area" id="upload-area">
+        <img id="img-preview" class="image-preview hidden" alt="preview" />
+        <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
       </div>
-
     </div>
-
 
     <!-- Название -->
-
     <div class="form-group">
-
-      <label>
-        Название *
-      </label>
-
-      <input
-        type="text"
-        id="f-name"
-        placeholder="Шлем Тени"
-      />
-
+      <label>Название *</label>
+      <input type="text" id="f-name" placeholder="Шлем Тени" />
     </div>
-
 
     <!-- Слот -->
-
     <div class="form-group">
-
-      <label>
-        Слот *
-      </label>
-
-      <select id="f-slot">
-
-        <option value="">
-          — выбери слот —
-        </option>
-
-      </select>
-
+      <label>Слот *</label>
+      <select id="f-slot"><option value="">— выбери слот —</option></select>
     </div>
 
-
-    <!-- Тип оружия (показывается только для слота "weapon") -->
-
+    <!-- Тип оружия -->
     <div class="form-group" id="weapon-type-group" style="display:none;">
-      <label>
-        Тип оружия *
-      </label>
+      <label>Тип оружия *</label>
       <select id="f-weapon-type">
-        <option value="">
-          — выбери тип оружия —
-        </option>
+        <option value="">— выбери тип оружия —</option>
         <option value="bow">🏹 Лук</option>
         <option value="staff">🪄 Посох</option>
         <option value="twohand_sword">⚔️ Двуручный меч</option>
@@ -427,209 +568,127 @@
       </select>
     </div>
 
-
     <!-- Качество -->
-
     <div class="form-group">
-
-      <label>
-        Качество
-      </label>
-
+      <label>Качество</label>
       <select id="f-quality">
         <option value="epic">🟣 Эпическое</option>
         <option value="epic_ii">🟣 Эпическое II</option>
       </select>
-
     </div>
 
-
-    <!-- Босс (выбор из списка) -->
-
+    <!-- Босс -->
     <div class="form-group">
-
-      <label>
-        Босс *
-      </label>
-
-      <select id="f-boss">
-        <option value="">
-          — выбери босса —
-        </option>
-      </select>
-
+      <label>Босс *</label>
+      <select id="f-boss"><option value="">— выбери босса —</option></select>
     </div>
-
 
     <!-- Описание -->
-
     <div class="form-group">
-
-      <label>
-        Описание
-      </label>
-
-      <textarea
-        id="f-description"
-        rows="3"
-        placeholder="Характеристики, особенности..."
-      ></textarea>
-
+      <label>Описание</label>
+      <textarea id="f-description" rows="2" placeholder="Характеристики, особенности..."></textarea>
     </div>
 
+    <!-- Флейвор (цитата) -->
+    <div class="form-group">
+      <label>Флейвор (цитата)</label>
+      <input type="text" id="f-flavor" placeholder="«Цитата предмета...»" />
+    </div>
 
-    <!-- Ошибка -->
+    <!-- Характеристики (статы) — ГИБКИЕ ПОЛЯ -->
+    <div class="form-group">
+      <label>Характеристики</label>
+      <div class="dynamic-fields" id="stats-fields"></div>
+      <button class="btn-add-field" data-target="stats">+ Добавить характеристику</button>
+    </div>
 
-    <div
-      id="modal-error"
-      class="text-danger mt-1"
-      style="display:none; font-size:0.85rem;"
-    ></div>
+    <!-- Эффект -->
+    <div class="form-group">
+      <label>Эффект</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+        <input type="text" id="f-effect-name" placeholder="Название эффекта" />
+        <input type="text" id="f-effect-desc" placeholder="Описание эффекта" />
+      </div>
+      <div style="margin-bottom:0.5rem;">
+        <label style="font-size:0.8rem;">Картинка эффекта</label>
+        <div class="image-upload-area" id="effect-upload-area" style="padding:0.5rem;">
+          <img id="effect-preview" class="image-preview hidden" alt="effect" style="width:48px;height:48px;" />
+          <div class="upload-hint" id="effect-upload-hint" style="font-size:0.7rem;">Нажми чтобы выбрать картинку</div>
+        </div>
+      </div>
+      <label style="font-size:0.8rem;">Статы эффекта</label>
+      <div class="dynamic-fields" id="effect-stats-fields"></div>
+      <button class="btn-add-field" data-target="effect-stats">+ Добавить стат эффекта</button>
+    </div>
 
+    <!-- Возможные свойства — ГИБКИЕ ПОЛЯ -->
+    <div class="form-group">
+      <label>Возможные свойства</label>
+      <div class="dynamic-fields" id="properties-fields"></div>
+      <button class="btn-add-field" data-target="properties">+ Добавить свойство</button>
+    </div>
 
-    <!-- Кнопки -->
+    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
 
     <div class="flex gap-1 mt-3">
-
-      <button
-        class="btn btn-primary"
-        id="btn-save"
-      >
-        Сохранить
-      </button>
-
-      <button
-        class="btn btn-ghost"
-        id="btn-cancel"
-      >
-        Отмена
-      </button>
-
+      <button class="btn btn-primary" id="btn-save">Сохранить</button>
+      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
     </div>
-
   </div>
-
 </div>
 
-
-<!-- ═══════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════ -->
-
 <script type="module">
-  /* ==================================================
-     ИМПОРТЫ
-  ================================================== */
+  // ==================================================
+  // ИМПОРТЫ
+  // ==================================================
 
-  // Навбар и авторизация
   import { initNavbar } from "../js/modules/navbar.js";
-  import { 
-    initAuth, 
-    authReady, 
-    canWrite, 
-    currentRole,
-    currentUser 
-  } from "../js/modules/auth.js";
-
-  // API для работы с предметами
-  import {
-    getItems,
-    addItem,
-    updateItem,
-    deleteItem
-  } from "../js/modules/items.js";
-
-  // API для работы с боссами
+  import { initAuth, authReady, canWrite, currentRole, currentUser } from "../js/modules/auth.js";
+  import { getItems, addItem, updateItem, deleteItem } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
-
-  // Работа с изображениями
-  import {
-    compressImage,
-    pickFile,
-    setItemImage
-  } from "../js/modules/images.js";
-
-  // Константы
+  import { compressImage, pickFile, setItemImage } from "../js/modules/images.js";
   import { SLOTS, QUALITY } from "../js/constants.js";
 
+  // ==================================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ==================================================
 
-  /* ==================================================
-     ИНИЦИАЛИЗАЦИЯ (ЖДЕМ АВТОРИЗАЦИЮ!)
-  ================================================== */
-
-  // 1. Инициализируем навбар
   initNavbar();
-
-  // 2. Инициализируем авторизацию
   initAuth();
-
-  // 3. ЖДЕМ восстановления сессии!
   await authReady;
 
-  // 4. Отладка
   console.log('🔐 Авторизация на странице предметов:', {
     user: currentUser?.email || 'Нет',
     role: currentRole,
     canWrite: canWrite()
   });
 
-  // 5. Показываем/скрываем кнопку "Добавить предмет"
   const addBtn = document.getElementById('btn-add-item');
-  if (addBtn) {
-    addBtn.classList.toggle('hidden', !canWrite());
-  }
+  if (addBtn) addBtn.classList.toggle('hidden', !canWrite());
 
+  // ==================================================
+  // SELECT СЛОТОВ
+  // ==================================================
 
-  /* ==================================================
-     SELECT СЛОТОВ
-  ================================================== */
-
-  const slotSelect =
-    document.getElementById("f-slot");
-
-  const filterSlot =
-    document.getElementById("filter-slot");
-
-
+  const slotSelect = document.getElementById("f-slot");
+  const filterSlot = document.getElementById("filter-slot");
   SLOTS.forEach(slot => {
-
-    slotSelect.innerHTML += `
-      <option value="${slot.id}">
-        ${slot.label}
-      </option>
-    `;
-
-    filterSlot.innerHTML += `
-      <option value="${slot.id}">
-        ${slot.label}
-      </option>
-    `;
-
+    slotSelect.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
+    filterSlot.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
   });
 
+  // ==================================================
+  // SELECT КАЧЕСТВА (ФИЛЬТР)
+  // ==================================================
 
-  /* ==================================================
-     SELECT КАЧЕСТВА (ФИЛЬТР)
-  ================================================== */
-
-  const filterQuality =
-    document.getElementById("filter-quality");
-
-
+  const filterQuality = document.getElementById("filter-quality");
   QUALITY.forEach(q => {
-
-    filterQuality.innerHTML += `
-      <option value="${q.id}">
-        ${q.label}
-      </option>
-    `;
-
+    filterQuality.innerHTML += `<option value="${q.id}">${q.label}</option>`;
   });
 
-
-  /* ==================================================
-     ЗАГРУЗКА БОССОВ
-  ================================================== */
+  // ==================================================
+  // ЗАГРУЗКА БОССОВ
+  // ==================================================
 
   let allBosses = [];
 
@@ -646,259 +705,192 @@
   function populateBossSelects() {
     const bossSelect = document.getElementById('f-boss');
     const filterBoss = document.getElementById('filter-boss');
-
-    // Сохраняем текущие значения
     const currentValue = bossSelect.value;
     const filterValue = filterBoss.value;
-
-    // Очищаем
     bossSelect.innerHTML = `<option value="">— выбери босса —</option>`;
     filterBoss.innerHTML = `<option value="">Все боссы</option>`;
-
     allBosses.forEach(boss => {
-      bossSelect.innerHTML += `
-        <option value="${boss.id}">${boss.name}</option>
-      `;
-      filterBoss.innerHTML += `
-        <option value="${boss.id}">${boss.name}</option>
-      `;
+      bossSelect.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+      filterBoss.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
     });
-
-    // Восстанавливаем значения
-    if (currentValue) {
-      bossSelect.value = currentValue;
-    }
-    if (filterValue) {
-      filterBoss.value = filterValue;
-    }
+    if (currentValue) bossSelect.value = currentValue;
+    if (filterValue) filterBoss.value = filterValue;
   }
 
-
-  /* ==================================================
-     ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
-  ================================================== */
+  // ==================================================
+  // ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
+  // ==================================================
 
   const weaponTypeGroup = document.getElementById('weapon-type-group');
   const weaponTypeSelect = document.getElementById('f-weapon-type');
-
-  // При изменении слота
   slotSelect.addEventListener('change', function() {
     if (this.value === 'weapon') {
       weaponTypeGroup.style.display = 'block';
     } else {
       weaponTypeGroup.style.display = 'none';
-      weaponTypeSelect.value = ''; // Сброс значения
+      weaponTypeSelect.value = '';
     }
   });
 
+  // ==================================================
+  // ДИНАМИЧЕСКИЕ ПОЛЯ
+  // ==================================================
 
-  /* ==================================================
-     СОСТОЯНИЕ
-  ================================================== */
+  function addField(containerId, label1 = '', label2 = '', val1 = '', val2 = '') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    row.innerHTML = `
+      <input type="text" placeholder="${label1 || 'Название'}" value="${val1}" class="field-label-input" />
+      <input type="text" placeholder="${label2 || 'Значение'}" value="${val2}" class="field-value-input" />
+      <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function getFields(containerId, type = 'pairs') {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    if (type === 'pairs') {
+      return Array.from(container.querySelectorAll('.field-row')).map(row => {
+        const inputs = row.querySelectorAll('input');
+        return {
+          label: inputs[0]?.value.trim() || '',
+          value: inputs[1]?.value.trim() || ''
+        };
+      }).filter(f => f.label || f.value);
+    }
+    return Array.from(container.querySelectorAll('.field-row input')).map(inp => inp.value.trim()).filter(Boolean);
+  }
+
+  function setFields(containerId, data, type = 'pairs') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    if (type === 'pairs') {
+      data.forEach(item => addField(containerId, 'Название', 'Значение', item.label || '', item.value || ''));
+    } else {
+      data.forEach(val => addField(containerId, '', 'Значение', '', val));
+    }
+  }
+
+  // Кнопки добавления полей
+  document.querySelectorAll('.btn-add-field').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const target = this.dataset.target;
+      if (target === 'stats') {
+        addField('stats-fields', 'Название', 'Значение');
+      } else if (target === 'effect-stats') {
+        addField('effect-stats-fields', 'Название', 'Значение');
+      } else if (target === 'properties') {
+        addField('properties-fields', 'Свойство', '');
+      }
+    });
+  });
+
+  // Инициализация полей
+  ['stats-fields', 'effect-stats-fields', 'properties-fields'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+
+  // ==================================================
+  // ЗАГРУЗКА КАРТИНКИ ЭФФЕКТА
+  // ==================================================
+
+  let currentEffectImage = null;
+
+  document.getElementById('effect-upload-area').addEventListener('click', async () => {
+    const file = await pickFile();
+    if (!file) return;
+    const base64 = await compressImage(file);
+    currentEffectImage = base64;
+    const preview = document.getElementById('effect-preview');
+    preview.src = base64;
+    preview.classList.remove('hidden');
+    document.getElementById('effect-upload-hint').style.display = 'none';
+  });
+
+  // ==================================================
+  // СОСТОЯНИЕ
+  // ==================================================
 
   let allItems = [];
   let currentImageBase64 = null;
 
-
-  /* ==================================================
-     ЗАГРУЗКА ПРЕДМЕТОВ
-  ================================================== */
+  // ==================================================
+  // ЗАГРУЗКА ПРЕДМЕТОВ
+  // ==================================================
 
   async function loadItems() {
-
     try {
-
       allItems = await getItems();
-
-      // Обновляем фильтр боссов (по ID)
       populateBossFilter();
-
       renderItems();
-
     } catch (error) {
-
       console.error("Ошибка загрузки предметов:", error);
-
-      document.getElementById("items-grid").innerHTML = `
-        <div class="text-danger">
-          Не удалось загрузить предметы
-        </div>
-      `;
-
+      document.getElementById("items-grid").innerHTML = `<div class="text-danger">Не удалось загрузить предметы</div>`;
     }
-
   }
 
-
-  /* ==================================================
-     ФИЛЬТР БОССОВ (по ID из allItems)
-  ================================================== */
+  // ==================================================
+  // ФИЛЬТР БОССОВ
+  // ==================================================
 
   function populateBossFilter() {
-
-    // Получаем уникальные ID боссов из предметов
-    const bossIds = [
-      ...new Set(
-        allItems
-          .map(item => item.boss_id)
-          .filter(Boolean)
-      )
-    ];
-
-    // Находим названия боссов по ID
+    const bossIds = [...new Set(allItems.map(item => item.boss_id).filter(Boolean))];
     const bossNames = [];
     bossIds.forEach(id => {
       const boss = allBosses.find(b => b.id === id);
-      if (boss) {
-        bossNames.push({ id: boss.id, name: boss.name });
-      }
+      if (boss) bossNames.push({ id: boss.id, name: boss.name });
     });
-
-    // Сортируем по имени
     bossNames.sort((a, b) => a.name.localeCompare(b.name));
-
-    const select =
-      document.getElementById("filter-boss");
-
-    // Сохраняем текущее значение
+    const select = document.getElementById("filter-boss");
     const currentValue = select.value;
-
-    select.innerHTML = `
-      <option value="">
-        Все боссы
-      </option>
-    `;
-
+    select.innerHTML = `<option value="">Все боссы</option>`;
     bossNames.forEach(boss => {
-      select.innerHTML += `
-        <option value="${boss.id}">
-          ${boss.name}
-        </option>
-      `;
+      select.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
     });
-
-    // Восстанавливаем значение
-    if (currentValue) {
-      select.value = currentValue;
-    }
+    if (currentValue) select.value = currentValue;
   }
 
-
-  /* ==================================================
-     ОТОБРАЖЕНИЕ
-  ================================================== */
+  // ==================================================
+  // ОТОБРАЖЕНИЕ
+  // ==================================================
 
   function renderItems() {
+    const search = document.getElementById("filter-search").value.toLowerCase();
+    const slot = document.getElementById("filter-slot").value;
+    const quality = document.getElementById("filter-quality").value;
+    const bossId = document.getElementById("filter-boss").value;
 
-    const search =
-      document
-        .getElementById("filter-search")
-        .value
-        .toLowerCase();
-
-
-    const slot =
-      document.getElementById("filter-slot").value;
-
-
-    const quality =
-      document.getElementById("filter-quality").value;
-
-
-    const bossId =
-      document.getElementById("filter-boss").value;
-
-
-    const list =
-      allItems.filter(item => {
-
-        if (
-          search &&
-          !item.name
-            ?.toLowerCase()
-            .includes(search) &&
-          !item.boss_name
-            ?.toLowerCase()
-            .includes(search)
-        ) {
-          return false;
-        }
-
-
-        if (
-          slot &&
-          item.slot !== slot
-        ) {
-          return false;
-        }
-
-
-        if (
-          quality &&
-          item.quality !== quality
-        ) {
-          return false;
-        }
-
-
-        if (
-          bossId &&
-          item.boss_id !== bossId
-        ) {
-          return false;
-        }
-
-
-        return true;
-
-      });
-
-
-    const grid =
-      document.getElementById("items-grid");
-
-
-    if (!list.length) {
-
-      grid.innerHTML = `
-        <div class="text-muted">
-          Предметов не найдено
-        </div>
-      `;
-
-      return;
-
-    }
-
-
-    grid.innerHTML = "";
-
-
-    list.forEach(item => {
-
-      grid.appendChild(
-        buildCard(item)
-      );
-
+    const list = allItems.filter(item => {
+      if (search && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
+      if (slot && item.slot !== slot) return false;
+      if (quality && item.quality !== quality) return false;
+      if (bossId && item.boss_id !== bossId) return false;
+      return true;
     });
 
+    const grid = document.getElementById("items-grid");
+    if (!list.length) {
+      grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`;
+      return;
+    }
+
+    grid.innerHTML = "";
+    list.forEach(item => grid.appendChild(buildCard(item)));
   }
 
-
-  /* ==================================================
-     КАРТОЧКА ПРЕДМЕТА
-  ================================================== */
+  // ==================================================
+  // КАРТОЧКА ПРЕДМЕТА С ПОЛНОЙ ВЕРСИЕЙ
+  // ==================================================
 
   function getWeaponTypeLabel(type) {
     const types = {
-      'bow': '🏹 Лук',
-      'staff': '🪄 Посох',
-      'twohand_sword': '⚔️ Двуручный меч',
-      'crossbow': '🎯 Арбалеты',
-      'wand': '✨ Жезл',
-      'daggers': '🗡️ Кинжалы',
-      'sword_shield': '🛡️ Щит и меч',
-      'spear': '🔱 Копье'
+      'bow': '🏹 Лук', 'staff': '🪄 Посох', 'twohand_sword': '⚔️ Двуручный меч',
+      'crossbow': '🎯 Арбалеты', 'wand': '✨ Жезл', 'daggers': '🗡️ Кинжалы',
+      'sword_shield': '🛡️ Щит и меч', 'spear': '🔱 Копье'
     };
     return types[type] || type;
   }
@@ -914,761 +906,358 @@
   }
 
   function buildCard(item) {
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+    const canEdit = canWrite();
 
-    const slotLabel =
-      SLOTS.find(
-        slot => slot.id === item.slot
-      )?.label || item.slot;
+    // Парсим данные
+    const stats = item.stats || [];
+    const effect = item.effect || {};
+    const properties = item.properties || [];
+    const flavor = item.flavor || '';
 
+    const card = document.createElement("div");
+    card.className = `item-card quality-${item.quality || "epic"}`;
 
-    const canEdit =
-      canWrite();
-
-
-    const card =
-      document.createElement("div");
-
-
-    card.className =
-      `item-card quality-${item.quality || "epic"}`;
-
-
+    // Основная карточка (краткая)
     card.innerHTML = `
-
-      <img
-        class="item-img"
-        id="img-${item.id}"
-        alt="${item.name || "Предмет"}"
-      />
-
-
+      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
       <div class="item-info">
-
-        <div class="item-name">
-          ${item.name || "Без названия"}
-        </div>
-
-
+        <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
-
-          <span class="badge badge-purple">
-            ${slotLabel}
-          </span>
-
-          <span class="badge badge-quality-${item.quality || 'epic'}">
-            ${getQualityLabel(item.quality)}
-          </span>
-          
+          <span class="badge badge-purple">${slotLabel}</span>
+          <span class="badge badge-quality-${item.quality || 'epic'}">${getQualityLabel(item.quality)}</span>
           ${item.slot === 'weapon' && item.weapon_type ? `
-            <span class="badge-secondary">
-              ${getWeaponTypeLabel(item.weapon_type)}
-            </span>
+            <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
           ` : ''}
-
         </div>
-
-
-        <div class="item-boss">
-          👹 ${getBossName(item.boss_id)}
-        </div>
-
-
-        ${
-          item.description
-            ? `
-              <div class="item-desc">
-                ${item.description}
-              </div>
-            `
-            : ""
-        }
-
+        <div class="item-boss">👹 ${getBossName(item.boss_id)}</div>
+        ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
       </div>
+      ${canEdit ? `
+        <div class="item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || "").replace(/'/g, "\\'")}')">🗑️</button>
+        </div>
+      ` : ''}
 
+      <!-- Полная карточка при наведении -->
+      <div class="full-card">
+        <div class="fc-header">
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <div class="fc-title">
+            <div class="fc-name">${item.name || "Без названия"}</div>
+            <div class="fc-quality">${getQualityLabel(item.quality)} • ${slotLabel}</div>
+          </div>
+        </div>
 
-      ${
-        canEdit
-          ? `
-            <div class="item-actions">
+        ${stats.length ? `
+          <div class="fc-stats">
+            ${stats.map(s => `
+              <div class="stat">
+                <span class="stat-label">${s.label || s}</span>
+                <span class="stat-value">${s.value || ''}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
 
-              <button
-                class="btn btn-ghost btn-sm"
-                onclick="openEdit('${item.id}')"
-              >
-                ✏️
-              </button>
-
-
-              <button
-                class="btn btn-danger btn-sm"
-                onclick="confirmDelete(
-                  '${item.id}',
-                  '${String(item.name || "")
-                    .replace(/'/g, "\\'")}'
-                )"
-              >
-                🗑️
-              </button>
-
+        ${effect.name || effect.desc ? `
+          <div class="fc-effect">
+            ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
+            <div class="effect-info">
+              ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
+              ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
+              ${effect.stats && effect.stats.length ? `
+                <div class="effect-stats">
+                  ${effect.stats.map(s => `
+                    <span class="es-item"><span class="es-label">${s.label || ''}</span> ${s.value || ''}</span>
+                  `).join('')}
+                </div>
+              ` : ''}
             </div>
-          `
-          : ""
-      }
+          </div>
+        ` : ''}
 
+        ${properties.length ? `
+          <div class="fc-properties">
+            <div class="prop-label">Возможные свойства</div>
+            <div class="prop-list">
+              ${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${flavor ? `
+          <div class="fc-flavor">${flavor}</div>
+        ` : ''}
+      </div>
     `;
 
-
-    const image =
-      card.querySelector(
-        `#img-${item.id}`
-      );
-
-
-    setItemImage(
-      image,
-      item.image
-    );
-
+    const image = card.querySelector(`#img-${item.id}`);
+    setItemImage(image, item.image);
 
     return card;
-
   }
 
+  // ==================================================
+  // ЗАГРУЗКА КАРТИНКИ
+  // ==================================================
 
-  /* ==================================================
-     ЗАГРУЗКА КАРТИНКИ
-  ================================================== */
+  document.getElementById('upload-area').addEventListener('click', async () => {
+    const file = await pickFile();
+    if (!file) return;
+    const base64 = await compressImage(file);
+    currentImageBase64 = base64;
+    const preview = document.getElementById('img-preview');
+    preview.src = base64;
+    preview.classList.remove('hidden');
+    document.getElementById('upload-hint').style.display = 'none';
+  });
 
-  document
-    .getElementById("upload-area")
-    .addEventListener(
-      "click",
-      async () => {
+  // ==================================================
+  // MODAL
+  // ==================================================
 
-        const file =
-          await pickFile();
-
-
-        if (!file) {
-          return;
-        }
-
-
-        const base64 =
-          await compressImage(file);
-
-
-        currentImageBase64 =
-          base64;
-
-
-        const preview =
-          document.getElementById(
-            "img-preview"
-          );
-
-
-        preview.src =
-          base64;
-
-
-        preview.classList.remove(
-          "hidden"
-        );
-
-
-        document.getElementById(
-          "upload-hint"
-        ).style.display = "none";
-
-      }
-    );
-
-
-  /* ==================================================
-     MODAL
-  ================================================== */
-
-  const modal =
-    document.getElementById("modal");
-
-
-  const modalTitle =
-    document.getElementById(
-      "modal-title"
-    );
-
-
-  const editId =
-    document.getElementById(
-      "edit-id"
-    );
-
-
-  /* ==================================================
-     СБРОС ФОРМЫ
-  ================================================== */
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const editId = document.getElementById('edit-id');
 
   function resetForm() {
-
-    editId.value = "";
-
+    editId.value = '';
     currentImageBase64 = null;
-
-
-    document.getElementById(
-      "f-name"
-    ).value = "";
-
-
-    document.getElementById(
-      "f-boss"
-    ).value = "";
-
-
-    document.getElementById(
-      "f-description"
-    ).value = "";
-
-
-    document.getElementById(
-      "f-slot"
-    ).value = "";
-
-
-    document.getElementById(
-      "f-quality"
-    ).value = "epic";
-
-
-    // Сброс типа оружия
-    document.getElementById("f-weapon-type").value = "";
+    currentEffectImage = null;
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-boss').value = '';
+    document.getElementById('f-description').value = '';
+    document.getElementById('f-flavor').value = '';
+    document.getElementById('f-slot').value = '';
+    document.getElementById('f-quality').value = 'epic';
+    document.getElementById('f-effect-name').value = '';
+    document.getElementById('f-effect-desc').value = '';
+    document.getElementById('f-weapon-type').value = '';
     weaponTypeGroup.style.display = 'none';
 
+    // Очищаем динамические поля
+    document.getElementById('stats-fields').innerHTML = '';
+    document.getElementById('effect-stats-fields').innerHTML = '';
+    document.getElementById('properties-fields').innerHTML = '';
 
-    const preview =
-      document.getElementById(
-        "img-preview"
-      );
+    // Очищаем превью картинок
+    const preview = document.getElementById('img-preview');
+    preview.classList.add('hidden');
+    preview.src = '';
+    document.getElementById('upload-hint').style.display = '';
 
-
-    preview.classList.add(
-      "hidden"
-    );
-
-
-    preview.src = "";
-
-
-    document.getElementById(
-      "upload-hint"
-    ).style.display = "";
-
+    const effectPreview = document.getElementById('effect-preview');
+    effectPreview.classList.add('hidden');
+    effectPreview.src = '';
+    document.getElementById('effect-upload-hint').style.display = '';
 
     hideError();
-
   }
-
-
-  /* ==================================================
-     РЕДАКТИРОВАНИЕ
-  ================================================== */
 
   window.openEdit = (id) => {
-
-    const item =
-      allItems.find(
-        i => i.id === id
-      );
-
-
-    if (!item) {
-      return;
-    }
-
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
 
     resetForm();
+    modalTitle.textContent = 'Редактировать предмет';
+    editId.value = id;
 
+    document.getElementById('f-name').value = item.name || '';
+    document.getElementById('f-slot').value = item.slot || '';
+    document.getElementById('f-boss').value = item.boss_id || '';
+    document.getElementById('f-description').value = item.description || '';
+    document.getElementById('f-flavor').value = item.flavor || '';
+    document.getElementById('f-quality').value = item.quality || 'epic';
 
-    modalTitle.textContent =
-      "Редактировать предмет";
-
-
-    editId.value =
-      id;
-
-
-    document.getElementById(
-      "f-name"
-    ).value =
-      item.name || "";
-
-
-    document.getElementById(
-      "f-slot"
-    ).value =
-      item.slot || "";
-
-
-    document.getElementById(
-      "f-boss"
-    ).value =
-      item.boss_id || "";
-
-
-    document.getElementById(
-      "f-description"
-    ).value =
-      item.description || "";
-
-
-    document.getElementById(
-      "f-quality"
-    ).value =
-      item.quality || "epic";
-
-
-    // Если это оружие — показываем поле и устанавливаем значение
     if (item.slot === 'weapon') {
       weaponTypeGroup.style.display = 'block';
-      document.getElementById("f-weapon-type").value = item.weapon_type || '';
+      document.getElementById('f-weapon-type').value = item.weapon_type || '';
     }
 
+    // Заполняем динамические поля
+    if (item.stats && item.stats.length) {
+      setFields('stats-fields', item.stats);
+    }
+    if (item.effect?.stats && item.effect.stats.length) {
+      setFields('effect-stats-fields', item.effect.stats);
+    }
+    if (item.properties && item.properties.length) {
+      setFields('properties-fields', item.properties.map(p => ({ label: p, value: '' })));
+    }
+
+    // Эффект
+    if (item.effect) {
+      document.getElementById('f-effect-name').value = item.effect.name || '';
+      document.getElementById('f-effect-desc').value = item.effect.desc || '';
+      if (item.effect.image) {
+        currentEffectImage = item.effect.image;
+        const ep = document.getElementById('effect-preview');
+        ep.src = item.effect.image;
+        ep.classList.remove('hidden');
+        document.getElementById('effect-upload-hint').style.display = 'none';
+      }
+    }
 
     if (item.image) {
-
-      currentImageBase64 =
-        item.image;
-
-
-      const preview =
-        document.getElementById(
-          "img-preview"
-        );
-
-
-      preview.src =
-        item.image;
-
-
-      preview.classList.remove(
-        "hidden"
-      );
-
-
-      document.getElementById(
-        "upload-hint"
-      ).style.display = "none";
-
+      currentImageBase64 = item.image;
+      const preview = document.getElementById('img-preview');
+      preview.src = item.image;
+      preview.classList.remove('hidden');
+      document.getElementById('upload-hint').style.display = 'none';
     }
 
-
-    modal.classList.remove(
-      "hidden"
-    );
-
+    modal.classList.remove('hidden');
   };
 
-
-  /* ==================================================
-     ДОБАВЛЕНИЕ
-  ================================================== */
-
   function openAdd() {
-
     resetForm();
-
-
-    modalTitle.textContent =
-      "Добавить предмет";
-
-
-    modal.classList.remove(
-      "hidden"
-    );
-
+    modalTitle.textContent = 'Добавить предмет';
+    modal.classList.remove('hidden');
   }
-
-
-  /* ==================================================
-     ЗАКРЫТИЕ MODAL
-  ================================================== */
 
   function closeModal() {
-
-    modal.classList.add(
-      "hidden"
-    );
-
+    modal.classList.add('hidden');
     resetForm();
-
   }
 
-
-  document
-    .getElementById(
-      "btn-modal-close"
-    )
-    .onclick =
-      closeModal;
-
-
-  document
-    .getElementById(
-      "btn-cancel"
-    )
-    .onclick =
-      closeModal;
-
-
-  document
-    .getElementById(
-      "btn-add-item"
-    )
-    .onclick =
-      openAdd;
-
-
-  /* ==================================================
-     СОХРАНЕНИЕ
-  ================================================== */
-
-  document
-    .getElementById(
-      "btn-save"
-    )
-    .onclick = async () => {
-
-      const name =
-        document
-          .getElementById("f-name")
-          .value
-          .trim();
-
-
-      const slot =
-        document
-          .getElementById("f-slot")
-          .value;
-
-
-      const bossId =
-        document
-          .getElementById("f-boss")
-          .value;
-
-
-      const description =
-        document
-          .getElementById("f-description")
-          .value
-          .trim();
-
-
-      const quality =
-        document
-          .getElementById("f-quality")
-          .value;
-
-
-      /* Валидация */
-
-      if (!name) {
-
-        return showError(
-          "Введи название"
-        );
-
-      }
-
-
-      if (!slot) {
-
-        return showError(
-          "Выбери слот"
-        );
-
-      }
-
-
-      // Валидация типа оружия
-      let weaponType = null;
-      if (slot === 'weapon') {
-        weaponType = document.getElementById("f-weapon-type").value;
-        if (!weaponType) {
-          return showError("Выбери тип оружия");
-        }
-      }
-
-
-      if (!bossId) {
-
-        return showError(
-          "Выбери босса"
-        );
-
-      }
-
-      // Находим имя босса по ID
-      const boss = allBosses.find(b => b.id === bossId);
-      const bossName = boss?.name || '';
-
-
-      const btn =
-        document.getElementById(
-          "btn-save"
-        );
-
-
-      btn.disabled = true;
-
-      btn.textContent =
-        "Сохранение...";
-
-
-      try {
-
-        const data = {
-
-          name,
-
-          slot,
-
-          quality,
-
-          boss_id: bossId,
-
-          boss_name: bossName,
-
-          description,
-
-          image:
-            currentImageBase64 || null,
-
-          weapon_type: weaponType
-
-        };
-
-
-        const id =
-          editId.value;
-
-
-        if (id) {
-
-          await updateItem(
-            id,
-            data
-          );
-
-
-          showToast(
-            "Предмет обновлён"
-          );
-
-        } else {
-
-          await addItem(
-            data
-          );
-
-
-          showToast(
-            "Предмет добавлен"
-          );
-
-        }
-
-
-        closeModal();
-
-
-        await loadItems();
-
-      } catch (error) {
-
-        console.error(
-          "Ошибка сохранения:",
-          error
-        );
-
-
-        showError(
-          "Ошибка: " +
-          error.message
-        );
-
-      } finally {
-
-        btn.disabled = false;
-
-        btn.textContent =
-          "Сохранить";
-
-      }
-
+  document.getElementById('btn-modal-close').onclick = closeModal;
+  document.getElementById('btn-cancel').onclick = closeModal;
+  document.getElementById('btn-add-item').onclick = openAdd;
+
+  // ==================================================
+  // СОХРАНЕНИЕ
+  // ==================================================
+
+  document.getElementById('btn-save').onclick = async () => {
+    const name = document.getElementById('f-name').value.trim();
+    const slot = document.getElementById('f-slot').value;
+    const bossId = document.getElementById('f-boss').value;
+    const description = document.getElementById('f-description').value.trim();
+    const flavor = document.getElementById('f-flavor').value.trim();
+    const quality = document.getElementById('f-quality').value;
+    const effectName = document.getElementById('f-effect-name').value.trim();
+    const effectDesc = document.getElementById('f-effect-desc').value.trim();
+
+    if (!name) return showError('Введи название');
+    if (!slot) return showError('Выбери слот');
+
+    let weaponType = null;
+    if (slot === 'weapon') {
+      weaponType = document.getElementById('f-weapon-type').value;
+      if (!weaponType) return showError('Выбери тип оружия');
+    }
+    if (!bossId) return showError('Выбери босса');
+
+    const boss = allBosses.find(b => b.id === bossId);
+    const bossName = boss?.name || '';
+
+    // Собираем динамические поля
+    const stats = getFields('stats-fields');
+    const effectStats = getFields('effect-stats-fields');
+    const properties = getFields('properties-fields', 'single').map(p => p.label || p);
+
+    const effect = {};
+    if (effectName || effectDesc || effectStats.length || currentEffectImage) {
+      effect.name = effectName;
+      effect.desc = effectDesc;
+      effect.stats = effectStats;
+      if (currentEffectImage) effect.image = currentEffectImage;
+    }
+
+    const data = {
+      name,
+      slot,
+      quality,
+      boss_id: bossId,
+      boss_name: bossName,
+      description,
+      flavor,
+      stats,
+      effect,
+      properties,
+      image: currentImageBase64 || null,
+      weapon_type: weaponType
     };
 
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.textContent = 'Сохранение...';
 
-  /* ==================================================
-     УДАЛЕНИЕ
-  ================================================== */
-
-  window.confirmDelete =
-    (id, name) => {
-
-      if (
-        !confirm(
-          `Удалить «${name}»?`
-        )
-      ) {
-        return;
+    try {
+      const id = editId.value;
+      if (id) {
+        await updateItem(id, data);
+        showToast('Предмет обновлён');
+      } else {
+        await addItem(data);
+        showToast('Предмет добавлен');
       }
+      closeModal();
+      await loadItems();
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      showError('Ошибка: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+    }
+  };
 
+  // ==================================================
+  // УДАЛЕНИЕ
+  // ==================================================
 
-      deleteItem(id)
-        .then(() => {
+  window.confirmDelete = (id, name) => {
+    if (!confirm(`Удалить «${name}»?`)) return;
+    deleteItem(id)
+      .then(() => {
+        showToast('Предмет удалён');
+        loadItems();
+      })
+      .catch(error => {
+        console.error('Ошибка удаления:', error);
+        showToast('Ошибка удаления', 'error');
+      });
+  };
 
-          showToast(
-            "Предмет удалён"
-          );
+  // ==================================================
+  // ФИЛЬТРЫ
+  // ==================================================
 
-          loadItems();
+  document.getElementById('filter-search').addEventListener('input', renderItems);
+  document.getElementById('filter-slot').addEventListener('change', renderItems);
+  document.getElementById('filter-quality').addEventListener('change', renderItems);
+  document.getElementById('filter-boss').addEventListener('change', renderItems);
 
-        })
-        .catch(error => {
-
-          console.error(
-            "Ошибка удаления:",
-            error
-          );
-
-          showToast(
-            "Ошибка удаления",
-            "error"
-          );
-
-        });
-
-    };
-
-
-  /* ==================================================
-     ФИЛЬТРЫ
-  ================================================== */
-
-  document
-    .getElementById(
-      "filter-search"
-    )
-    .addEventListener(
-      "input",
-      renderItems
-    );
-
-
-  document
-    .getElementById(
-      "filter-slot"
-    )
-    .addEventListener(
-      "change",
-      renderItems
-    );
-
-
-  document
-    .getElementById(
-      "filter-quality"
-    )
-    .addEventListener(
-      "change",
-      renderItems
-    );
-
-
-  document
-    .getElementById(
-      "filter-boss"
-    )
-    .addEventListener(
-      "change",
-      renderItems
-    );
-
-
-  /* ==================================================
-     HELPERS
-  ================================================== */
+  // ==================================================
+  // HELPERS
+  // ==================================================
 
   function showError(msg) {
-
-    const el =
-      document.getElementById(
-        "modal-error"
-      );
-
-
-    el.textContent =
-      msg;
-
-
-    el.style.display =
-      "block";
-
+    const el = document.getElementById('modal-error');
+    el.textContent = msg;
+    el.style.display = 'block';
   }
-
 
   function hideError() {
-
-    document.getElementById(
-      "modal-error"
-    ).style.display =
-      "none";
-
+    document.getElementById('modal-error').style.display = 'none';
   }
 
-
-  function showToast(
-    msg,
-    type = "success"
-  ) {
-
-    const toast =
-      document.createElement(
-        "div"
-      );
-
-
-    toast.className =
-      `toast ${type}`;
-
-
-    toast.textContent =
-      msg;
-
-
-    document.body.appendChild(
-      toast
-    );
-
-
-    setTimeout(
-      () => toast.remove(),
-      3000
-    );
-
+  function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
 
+  // ==================================================
+  // INIT
+  // ==================================================
 
-  /* ==================================================
-     INIT
-  ================================================== */
-
-  // Загружаем боссов
   await loadBosses();
-
-  // Загружаем предметы ПОСЛЕ авторизации
   await loadItems();
 
 </script>
