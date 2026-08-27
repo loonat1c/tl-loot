@@ -20,20 +20,35 @@ export async function getItem(id) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export async function addItem({ name, slot, quality, description, image }) {
+export async function addItem({ 
+  name, 
+  slot, 
+  quality, 
+  description, 
+  image,
+  weapon_type = null
+}) {
   const ref = await addDoc(COL(), {
     name,
     slot,
     quality:     quality || "epic",
     description: description || "",
     image:       image || null,
+    weapon_type: weapon_type || null,
     created_at:  new Date().toISOString(),
   });
   return ref.id;
 }
 
 export async function updateItem(id, data) {
-  await updateDoc(doc(db, "items", id), data);
+  // Фильтруем undefined поля, чтобы не затирать их в БД
+  const cleanData = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+  await updateDoc(doc(db, "items", id), cleanData);
 }
 
 export async function deleteItem(id) {
