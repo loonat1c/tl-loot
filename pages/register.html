@@ -39,7 +39,7 @@
     }
 
     .auth-link a {
-      color: var(--accent);
+      color: var(--accent-soft);
       text-decoration: none;
     }
 
@@ -48,14 +48,14 @@
     }
 
     .error-message {
-      color: #e74c3c;
+      color: var(--danger);
       font-size: 0.85rem;
       margin-top: 0.5rem;
       display: none;
     }
 
     .success-message {
-      color: #2ecc71;
+      color: var(--success);
       font-size: 0.85rem;
       margin-top: 0.5rem;
       display: none;
@@ -90,7 +90,6 @@
 
     <form id="register-form" autocomplete="off">
 
-      <!-- Email -->
       <div class="form-group">
         <label for="reg-email">Email *</label>
         <input
@@ -101,7 +100,6 @@
         />
       </div>
 
-      <!-- Пароль -->
       <div class="form-group">
         <label for="reg-password">Пароль *</label>
         <input
@@ -116,7 +114,6 @@
         </div>
       </div>
 
-      <!-- Подтверждение пароля -->
       <div class="form-group">
         <label for="reg-password-confirm">Подтвердите пароль *</label>
         <input
@@ -127,7 +124,6 @@
         />
       </div>
 
-      <!-- Имя пользователя (опционально) -->
       <div class="form-group">
         <label for="reg-username">Имя пользователя</label>
         <input
@@ -137,11 +133,9 @@
         />
       </div>
 
-      <!-- Сообщения -->
       <div id="error-message" class="error-message"></div>
       <div id="success-message" class="success-message"></div>
 
-      <!-- Кнопка -->
       <button type="submit" class="btn btn-primary" id="btn-register">
         Зарегистрироваться
       </button>
@@ -189,7 +183,6 @@
   const successDiv = document.getElementById('success-message');
   const btnRegister = document.getElementById('btn-register');
 
-  // Скрываем сообщения при вводе
   [emailInput, passwordInput, passwordConfirmInput, usernameInput].forEach(input => {
     input.addEventListener('input', () => {
       errorDiv.style.display = 'none';
@@ -200,7 +193,6 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Сброс сообщений
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
 
@@ -209,7 +201,6 @@
     const passwordConfirm = passwordConfirmInput.value;
     const username = usernameInput.value.trim();
 
-    // Валидация
     if (!email) {
       errorDiv.textContent = 'Введите email';
       errorDiv.style.display = 'block';
@@ -234,7 +225,6 @@
       return;
     }
 
-    // Блокируем кнопку
     btnRegister.disabled = true;
     btnRegister.textContent = 'Регистрация...';
 
@@ -245,7 +235,6 @@
         successDiv.textContent = '✅ Регистрация успешна! Перенаправление...';
         successDiv.style.display = 'block';
         
-        // Перенаправление через 2 секунды
         setTimeout(() => {
           window.location.href = 'index.html';
         }, 2000);
