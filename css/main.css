@@ -24,6 +24,15 @@
   --font-mono:   'Consolas', monospace;
 }
 
+/* ── Подключение кастомного шрифта ──────────────────── */
+@font-face {
+  font-family: 'HeaderFont';
+  src: url('/assets/fonts/headerfont.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -47,6 +56,7 @@ body {
 }
 
 .nav-brand {
+  font-family: var(--font);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-soft);
@@ -63,6 +73,7 @@ body {
 }
 
 .nav-links a {
+  font-family: 'HeaderFont', var(--font);
   color: var(--text-muted);
   text-decoration: none;
   padding: 0.35rem 0.75rem;
@@ -92,6 +103,7 @@ body {
 
 /* ── Кнопка профиля ────────────────────────────────── */
 .btn-profile {
+  font-family: var(--font);
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -161,6 +173,7 @@ body {
 
 /* ── Кнопки ──────────────────────────────────────── */
 .btn {
+  font-family: var(--font);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +182,6 @@ body {
   border-radius: var(--radius);
   border: none;
   font-size: 0.9rem;
-  font-family: var(--font);
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
   text-decoration: none;
