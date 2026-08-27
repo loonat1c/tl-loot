@@ -124,9 +124,14 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  import { initAuth, authReady, canWrite, isAdmin, currentRole } from "../js/modules/auth.js";
+  
+  // Инициализация
   initNavbar();
-  initAuth((_u, _r) => {});
+  initAuth();
+
+  // Ждём авторизацию
+  await authReady;
 
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
@@ -167,12 +172,14 @@
   }
 
   function buildCard(b) {
+    // Используем currentRole напрямую для надёжности
+    const canEdit = currentRole === "admin" || currentRole === "moderator";
+    
     const bossClass = BOSS_CLASSES.find(c => c.id === b.boss_class);
     const clsLabel = bossClass?.label || b.boss_class || "—";
     const clsId = b.boss_class || "unknown";
     
     const bItems   = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
-    const canEdit  = canWrite();
 
     const card = document.createElement("div");
     card.className = "boss-card";
