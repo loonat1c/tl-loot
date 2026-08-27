@@ -5,16 +5,19 @@
 import { auth, db } from "../firebase.js";
 
 import {
+  createUserWithEmailAndPassword,  // <-- ДОБАВИТЬ
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
+  sendEmailVerification,           // <-- ОПЦИОНАЛЬНО
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import {
   doc,
   getDoc,
+  setDoc,                          // <-- ДОБАВИТЬ
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
@@ -231,6 +234,63 @@ export async function getUserRole(uid) {
 }
 
 // ====================================================
+// РЕГИСТРАЦИЯ (НОВАЯ ФУНКЦИЯ)
+// ====================================================
+
+export async function register(email, password, username = null) {
+
+  console.log("📝 Регистрация:", email);
+
+  try {
+
+    // 1. Создаём пользователя в Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const user = userCredential.user;
+
+    console.log("✅ Пользователь создан:", user.uid);
+
+    // 2. Создаём документ в Firestore
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      role: "user", // По умолчанию обычный пользователь
+      username: username || user.email?.split('@')[0] || "User",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log("📄 Документ пользователя создан");
+
+    // 3. (Опционально) Отправляем письмо для подтверждения email
+    try {
+      await sendEmailVerification(user);
+      console.log("✉️ Письмо подтверждения отправлено");
+    } catch (verifyError) {
+      console.warn("⚠️ Не удалось отправить письмо подтверждения:", verifyError);
+    }
+
+    return {
+      success: true,
+      user: user,
+      message: "Регистрация успешна!"
+    };
+
+  } catch (error) {
+
+    console.error("❌ Ошибка регистрации:", error);
+
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
+}
+
+// ====================================================
 // Login
 // ====================================================
 
@@ -294,6 +354,28 @@ export function canWrite() {
 export function isAdmin() {
 
   return currentRole === "admin";
+}
+
+// ====================================================
+// Вспомогательные функции
+// ====================================================
+
+function getAuthErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'Этот email уже зарегистрирован',
+    'auth/invalid-email': 'Некорректный email адрес',
+    'auth/weak-password': 'Пароль должен содержать минимум 6 символов',
+    'auth/user-not-found': 'Пользователь с таким email не найден',
+    'auth/wrong-password': 'Неверный пароль',
+    'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
+    'auth/operation-not-allowed': 'Вход с email/паролем отключён',
+    'auth/user-disabled': 'Аккаунт заблокирован',
+    'auth/network-request-failed': 'Ошибка сети. Проверьте подключение',
+    'auth/requires-recent-login': 'Требуется повторный вход',
+    'auth/credential-already-in-use': 'Аккаунт уже используется',
+    'auth/email-already-exists': 'Этот email уже зарегистрирован'
+  };
+  return messages[code] || `Ошибка: ${code}`;
 }
 
 // ====================================================
