@@ -197,6 +197,16 @@
       border-radius: var(--radius);
       font-size: 0.8rem;
       color: var(--text-muted);
+      border-left: 2px solid var(--warning);
+    }
+
+    .character-card .char-moderation-feedback {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      color: var(--text-muted);
       border-left: 2px solid var(--danger);
     }
 
@@ -220,22 +230,11 @@
       margin-bottom: 0.5rem;
     }
 
-    .pending-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--warning);
-      border: 1px solid var(--warning);
-    }
-
     .status-filter {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
 
     .status-filter .btn {
@@ -248,7 +247,6 @@
       color: #fff;
     }
 
-    /* Модальное окно */
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -351,15 +349,13 @@
   <div class="characters-section">
     <div class="section-header">
       <h3>👥 Мои персонажи</h3>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" id="btn-add-character">
-          + Добавить персонажа
-        </button>
-      </div>
+      <button class="btn btn-primary btn-sm" id="btn-add-character">
+        + Добавить персонажа
+      </button>
     </div>
 
     <!-- Фильтр по статусу -->
-    <div class="status-filter" style="margin-bottom:1rem;">
+    <div class="status-filter">
       <button class="btn btn-ghost btn-sm active-filter" data-filter="all">Все</button>
       <button class="btn btn-ghost btn-sm" data-filter="pending">⏳ На модерации</button>
       <button class="btn btn-ghost btn-sm" data-filter="approved">✅ Одобрены</button>
@@ -446,8 +442,7 @@
     initAuth, 
     authReady, 
     currentUser, 
-    currentRole,
-    canWrite
+    currentRole
   } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { WEAPONS, SLOTS } from "../js/constants.js";
@@ -494,18 +489,12 @@
 
   async function loadData() {
     try {
-      // Загружаем предметы
       allItems = await getItems();
-
-      // Загружаем персонажей из Firestore
       await loadCharacters();
-
-      // Обновляем UI
       renderProfile();
       renderCharacters();
       populateWeaponSelects();
       populateLootSelects();
-
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
     }
@@ -551,7 +540,6 @@
   function renderCharacters() {
     const container = document.getElementById('characters-list');
 
-    // Фильтруем по статусу
     let filtered = characters;
     if (currentFilter === 'pending') {
       filtered = characters.filter(c => c.status === 'pending');
@@ -597,9 +585,10 @@
           </div>
 
           <div class="char-weapons">
-            ${char.weapons?.map(w => `
-              <span class="weapon-tag">${getWeaponLabel(w)}</span>
-            `).join('') || '<span class="weapon-tag">Нет оружия</span>'}
+            ${char.weapons?.map(w => {
+              const weapon = WEAPONS.find(wp => wp.id === w);
+              return `<span class="weapon-tag">${weapon?.label || w}</span>`;
+            }).join('') || '<span class="weapon-tag">Нет оружия</span>'}
           </div>
 
           ${char.desired_loot && Object.keys(char.desired_loot).length > 0 ? `
@@ -610,7 +599,8 @@
                   .filter(([_, itemId]) => itemId)
                   .map(([slot, itemId]) => {
                     const item = allItems.find(i => i.id === itemId);
-                    const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+                    const slotObj = SLOTS.find(s => s.id === slot);
+                    const slotLabel = slotObj?.label || slot;
                     return item ? `
                       <span class="loot-tag">${slotLabel}: ${item.name}</span>
                     ` : '';
@@ -627,7 +617,7 @@
           ` : ''}
 
           ${char.moderation_feedback ? `
-            <div class="char-moderation-note" style="border-left-color: var(--warning);">
+            <div class="char-moderation-feedback">
               📝 Ответ модератора: ${char.moderation_feedback}
             </div>
           ` : ''}
@@ -670,20 +660,6 @@
   });
 
   // ============================================
-  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-  // ============================================
-
-  function getWeaponLabel(weaponId) {
-    const weapon = WEAPONS.find(w => w.id === weaponId);
-    return weapon?.label || weaponId;
-  }
-
-  function getSlotLabel(slotId) {
-    const slot = SLOTS.find(s => s.id === slotId);
-    return slot?.label || slotId;
-  }
-
-  // ============================================
   // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
   // ============================================
 
@@ -718,17 +694,15 @@
     const container = document.getElementById('loot-selection');
     if (!container) return;
 
-    const slots = ['head', 'shoulders', 'chest', 'gloves', 'legs', 'boots', 'weapon', 'accessory'];
-
-    container.innerHTML = slots.map(slot => {
-      const slotLabel = getSlotLabel(slot);
+    // Используем слоты из SLOTS
+    container.innerHTML = SLOTS.map(slot => {
       return `
         <div class="loot-slot">
-          <label>${slotLabel}</label>
-          <select data-slot="${slot}">
+          <label>${slot.label}</label>
+          <select data-slot="${slot.id}">
             <option value="">— не выбрано —</option>
             ${allItems
-              .filter(item => item.slot === slot)
+              .filter(item => item.slot === slot.id)
               .map(item => `
                 <option value="${item.id}">${item.name}</option>
               `).join('')}
@@ -795,7 +769,7 @@
   document.getElementById('btn-char-cancel').onclick = closeCharModal;
 
   // ============================================
-  // СОХРАНЕНИЕ ПЕРСОНАЖА (отправка на модерацию)
+  // СОХРАНЕНИЕ ПЕРСОНАЖА
   // ============================================
 
   document.getElementById('btn-char-save').onclick = async () => {
@@ -804,7 +778,6 @@
     const weapon2 = charWeapon2.value;
     const moderationNote = charModerationNote.value.trim();
 
-    // Валидация
     if (!name) {
       charError.textContent = 'Введите имя персонажа';
       charError.style.display = 'block';
@@ -817,7 +790,6 @@
       return;
     }
 
-    // Собираем желаемый лут
     const desiredLoot = {};
     document.querySelectorAll('#loot-selection select').forEach(select => {
       const slot = select.dataset.slot;
@@ -833,7 +805,7 @@
       desired_loot: desiredLoot,
       user_id: userId,
       user_email: currentUser.email,
-      status: 'pending', // pending, approved, rejected
+      status: 'pending',
       moderation_note: moderationNote || null,
       moderation_feedback: null,
       moderated_by: null,
@@ -845,9 +817,8 @@
 
     try {
       if (id) {
-        // Обновляем существующего персонажа (только если он в статусе pending или rejected)
         const existing = characters.find(c => c.id === id);
-        if (existing && (existing.status === 'approved')) {
+        if (existing && existing.status === 'approved') {
           charError.textContent = 'Нельзя редактировать одобренного персонажа';
           charError.style.display = 'block';
           return;
@@ -855,8 +826,7 @@
         await updateDoc(doc(db, 'characters', id), charData);
         showToast('Персонаж обновлён и отправлен на модерацию');
       } else {
-        // Добавляем нового персонажа
-        const docRef = await addDoc(collection(db, 'characters'), {
+        await addDoc(collection(db, 'characters'), {
           ...charData,
           created_at: new Date().toISOString()
         });
