@@ -157,7 +157,6 @@
       border-radius: 4px;
       font-size: 12px;
       color: #333;
-      display: none;
     }
   </style>
 </head>
@@ -170,7 +169,7 @@
     <h2>⚙️ Администрирование</h2>
   </div>
 
-  <div id="debug" class="debug-info"></div>
+  <div id="debug" class="debug-info">⏳ Инициализация...</div>
 
   <div id="access-denied" class="hidden" style="text-align:center;padding:3rem;color:var(--text-muted)">
     <div style="font-size:2rem">🔒</div>
@@ -306,7 +305,7 @@
     console.log("✅ navbar.js загружен");
     
     const authModule = await import("../js/modules/auth.js");
-    console.log("✅ auth.js загружен", authModule);
+    console.log("✅ auth.js загружен");
     
     const { getPlayers } = await import("../js/modules/players.js");
     console.log("✅ players.js загружен");
@@ -329,13 +328,15 @@
     
     console.log("✅ Все модули загружены");
     
-    // Используем импортированные функции
-    const { authReady, user, role, canWrite, isAdmin, logout, getUserRole } = authModule;
+    // Получаем функции из auth модуля
+    const { initAuth, authReady, user, role, canWrite, isAdmin, logout, getUserRole } = authModule;
     
-    // Показываем отладку
+    // ВАЖНО: Инициализируем авторизацию
+    console.log("🔄 Вызов initAuth()...");
+    initAuth();
+    
     const debugEl = document.getElementById('debug');
-    debugEl.style.display = 'block';
-    debugEl.innerHTML = `🔍 Статус: загрузка... <br> User: ${user ? user.email : 'нет'}<br> Role: ${role}`;
+    debugEl.innerHTML = `⏳ Ожидание авторизации...<br>User: ${user ? user.email : 'нет'}<br>Role: ${role}`;
     
     initNavbar();
     console.log("✅ Navbar инициализирован");
@@ -402,6 +403,8 @@
       } catch (e) {
         console.error("❌ Ошибка загрузки настроек:", e);
       }
+      
+      debugEl.innerHTML = `✅ Готово!<br> User: ${currentUser ? currentUser.email : 'нет'}<br> Role: ${currentRole}`;
     }).catch(err => {
       console.error("❌ Ошибка в authReady:", err);
       debugEl.innerHTML = `❌ Ошибка: ${err.message}`;
@@ -648,7 +651,6 @@
 
   } catch (error) {
     console.error("❌ Критическая ошибка:", error);
-    document.getElementById('debug').style.display = 'block';
     document.getElementById('debug').innerHTML = `❌ Ошибка: ${error.message}<br>Stack: ${error.stack}`;
   }
 </script>
