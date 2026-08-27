@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Управление — TL Loot</title>
+  <title>Админ-панель — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
+    /* Общие стили для админки */
     .admin-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -39,13 +40,6 @@
     .user-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .user-role-badge { flex-shrink: 0; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 440px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .modal-header h3 { font-size: 1.1rem; }
-    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
-    .btn-close:hover { color: var(--text); }
-
     .lock-manage-row {
       display: flex;
       align-items: center;
@@ -72,6 +66,89 @@
       color: var(--text-muted);
       margin-bottom: 1rem;
     }
+
+    /* Вкладки */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab-btn:hover { background: var(--bg-hover); color: var(--text); }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Настройки */
+    .settings-wrap { max-width: 560px; }
+    .settings-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.35rem;
+    }
+    .settings-card .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .setting-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-of-type { border-bottom: none; }
+    .setting-label { font-size: 0.9rem; font-weight: 600; }
+    .setting-hint  { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .setting-input { width: 80px; text-align: center; }
+
+    .save-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    .saved-msg {
+      font-size: 0.82rem;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-msg.show { opacity: 1; }
+
+    /* Модалка */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 440px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .btn-close:hover { color: var(--text); }
+
+    .badge-purple { background: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
@@ -80,7 +157,7 @@
 
 <main class="container">
   <div class="page-header">
-    <h2>⚙️ Управление</h2>
+    <h2>⚙️ Администрирование</h2>
   </div>
 
   <div id="access-denied" class="hidden" style="text-align:center;padding:3rem;color:var(--text-muted)">
@@ -89,43 +166,99 @@
   </div>
 
   <div id="admin-content" class="hidden">
-    <div class="admin-grid">
-
-      <!-- Управление блокировками -->
-      <div class="admin-section">
-        <h3>🔒 Блокировки слотов</h3>
-        <div class="info-box">
-          Здесь можно вручную снять блокировку с игрока если это необходимо по решению гильдии.
-        </div>
-        <div class="player-select">
-          <select id="lock-player-select" style="width:100%">
-            <option value="">— выбери игрока —</option>
-          </select>
-        </div>
-        <div id="lock-list">
-          <div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>
-        </div>
-      </div>
-
-      <!-- Управление пользователями (только админ) -->
-      <div class="admin-section" id="users-section">
-        <h3>👤 Пользователи системы</h3>
-        <div class="info-box">
-          Создавай учётные записи для модераторов. Первый админ создаётся вручную в консоли Firebase.
-        </div>
-        <button class="btn btn-primary btn-sm" id="btn-add-user" style="margin-bottom:1rem">
-          + Добавить модератора
-        </button>
-        <div id="users-list">
-          <div class="text-muted" style="font-size:0.85rem">Загрузка...</div>
-        </div>
-      </div>
-
+    <!-- Вкладки -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-management">👥 Управление</button>
+      <button class="tab-btn" data-tab="tab-settings">⚙️ Настройки</button>
     </div>
+
+    <!-- ===== ВКЛАДКА: УПРАВЛЕНИЕ ===== -->
+    <div id="tab-management" class="tab-content active">
+      <div class="admin-grid">
+
+        <!-- Блокировки -->
+        <div class="admin-section">
+          <h3>🔒 Блокировки слотов</h3>
+          <div class="info-box">
+            Здесь можно вручную снять блокировку с игрока если это необходимо по решению гильдии.
+          </div>
+          <div class="player-select">
+            <select id="lock-player-select" style="width:100%">
+              <option value="">— выбери игрока —</option>
+            </select>
+          </div>
+          <div id="lock-list">
+            <div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>
+          </div>
+        </div>
+
+        <!-- Пользователи (только админ) -->
+        <div class="admin-section" id="users-section">
+          <h3>👤 Пользователи системы</h3>
+          <div class="info-box">
+            Создавай учётные записи для модераторов. Первый админ создаётся вручную в консоли Firebase.
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-add-user" style="margin-bottom:1rem">
+            + Добавить модератора
+          </button>
+          <div id="users-list">
+            <div class="text-muted" style="font-size:0.85rem">Загрузка...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== ВКЛАДКА: НАСТРОЙКИ ===== -->
+    <div id="tab-settings" class="tab-content">
+      <div class="settings-wrap">
+        <div class="info-box">
+          Настройки влияют на систему мягкого сброса блокировок. Изменения вступают в силу немедленно
+          и применяются при следующем закрытии рейда.
+        </div>
+
+        <div class="settings-card">
+          <h3>🔒 Правила блокировок слотов</h3>
+          <div class="card-desc">
+            После победы в основном ролле игрок блокируется в этом слоте. Блокировка снимается
+            когда игрок посетит нужное количество рейдов. Если игрок пропускает слишком много рейдов —
+            счётчик замораживается.
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Рейдов до сброса блокировки</div>
+              <div class="setting-hint">Сколько рейдов должно пройти чтобы слот разблокировался</div>
+            </div>
+            <input type="number" class="setting-input" id="s-reset-after" min="1" max="20" value="6" />
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Максимум пропусков</div>
+              <div class="setting-hint">Сколько рейдов можно пропустить — иначе счётчик замораживается</div>
+            </div>
+            <input type="number" class="setting-input" id="s-max-skip" min="0" max="10" value="2" />
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-primary" id="btn-save-rules">Сохранить</button>
+            <span class="saved-msg" id="saved-rules-msg">✅ Сохранено</span>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h3>📖 Как это работает</h3>
+          <div class="card-desc">Пример с текущими настройками:</div>
+          <div id="example-text" style="font-size:0.85rem;line-height:1.8;color:var(--text-muted)"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
-<!-- ═══ МОДАЛКА: НОВЫЙ ПОЛЬЗОВАТЕЛЬ ═══ -->
+<!-- Модалка: новый пользователь -->
 <div class="modal-overlay hidden" id="modal-user">
   <div class="modal">
     <div class="modal-header">
@@ -152,15 +285,16 @@
 </div>
 
 <script type="module">
+  // ─── Импорты ──────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  import { authReady, canWrite, isAdmin, logout, user, role } from "../js/modules/auth.js";
   initNavbar();
 
-  import { logout } from "../js/modules/auth.js";
-  import { getPlayers }    from "../js/modules/players.js";
+  import { getPlayers } from "../js/modules/players.js";
   import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
-  import { db, auth }      from "../js/firebase.js";
-  import { SLOTS }         from "../js/constants.js";
+  import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+  import { db, auth } from "../js/firebase.js";
+  import { SLOTS } from "../js/constants.js";
   import {
     collection, getDocs, doc, setDoc, deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -168,9 +302,11 @@
     createUserWithEmailAndPassword
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+  // ─── Состояние ────────────────────────────────────────
   let allPlayers = [];
+  let rules = { reset_after_raids: 6, max_skip_raids: 2 };
 
-  // ── Auth guard ────────────────────────────────────
+  // ─── Авторизация ──────────────────────────────────────
   authReady.then(async () => {
     if (!user || (role !== "admin" && role !== "moderator")) {
       document.getElementById("access-denied").classList.remove("hidden");
@@ -186,14 +322,32 @@
       loadUsers();
     }
 
+    // Загружаем игроков для блокировок
     allPlayers = await getPlayers();
     populatePlayerSelect();
+
+    // Загружаем настройки
+    rules = await getLootRules();
+    document.getElementById("s-reset-after").value = rules.reset_after_raids;
+    document.getElementById("s-max-skip").value = rules.max_skip_raids;
+    updateExample();
   });
 
-  document.getElementById("btn-logout")
-    ?.addEventListener("click", () => logout().then(() => location.reload()));
+  document.getElementById("btn-logout")?.addEventListener("click", () =>
+    logout().then(() => location.reload())
+  );
 
-  // ── Блокировки ────────────────────────────────────
+  // ─── Вкладки ──────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ─── Блокировки ──────────────────────────────────────
   function populatePlayerSelect() {
     const sel = document.getElementById("lock-player-select");
     sel.innerHTML = `<option value="">— выбери игрока —</option>`;
@@ -205,7 +359,8 @@
   document.getElementById("lock-player-select").addEventListener("change", async (e) => {
     const id = e.target.value;
     if (!id) {
-      document.getElementById("lock-list").innerHTML = `<div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>`;
+      document.getElementById("lock-list").innerHTML =
+        `<div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>`;
       return;
     }
     await renderLocks(id);
@@ -225,7 +380,7 @@
 
     container.innerHTML = entries.map(([slot, lock]) => {
       const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
-      const frozen    = lock.raids_skipped > 2;
+      const frozen = lock.raids_skipped > 2;
       return `
         <div class="lock-manage-row">
           <div class="lock-manage-info">
@@ -237,8 +392,7 @@
               ${frozen ? " · ⚠️ заморожено" : ""}
             </div>
           </div>
-          <button class="btn btn-danger btn-sm"
-            onclick="removeLock('${playerId}', '${slot}')">
+          <button class="btn btn-danger btn-sm" onclick="removeLock('${playerId}', '${slot}')">
             Снять
           </button>
         </div>
@@ -254,7 +408,7 @@
     await renderLocks(playerId);
   };
 
-  // ── Пользователи ──────────────────────────────────
+  // ─── Пользователи ────────────────────────────────────
   async function loadUsers() {
     const container = document.getElementById("users-list");
     try {
@@ -269,7 +423,7 @@
       container.innerHTML = users.map(u => `
         <div class="user-row">
           <div class="user-email">${u.email || u.id}</div>
-          <span class="badge badge-${u.role === "admin" ? "purple" : "free"} user-role-badge">
+          <span class="badge ${u.role === "admin" ? "badge-purple" : "badge-free"} user-role-badge">
             ${u.role === "admin" ? "Админ" : "Модератор"}
           </span>
           ${u.role !== "admin" ? `
@@ -279,23 +433,22 @@
           ` : ""}
         </div>
       `).join("");
-    } catch(e) {
+    } catch (e) {
       container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
     }
   }
 
-  // Создать модератора
   document.getElementById("btn-add-user")?.addEventListener("click", () => {
-    document.getElementById("new-user-email").value    = "";
+    document.getElementById("new-user-email").value = "";
     document.getElementById("new-user-password").value = "";
     document.getElementById("user-error").style.display = "none";
     document.getElementById("modal-user").classList.remove("hidden");
   });
 
   document.getElementById("btn-create-user")?.addEventListener("click", async () => {
-    const email    = document.getElementById("new-user-email").value.trim();
+    const email = document.getElementById("new-user-email").value.trim();
     const password = document.getElementById("new-user-password").value;
-    const errEl    = document.getElementById("user-error");
+    const errEl = document.getElementById("user-error");
 
     if (!email || !password) {
       errEl.textContent = "Заполни все поля";
@@ -312,9 +465,7 @@
     btn.disabled = true; btn.textContent = "Создание...";
 
     try {
-      // Создаём в Firebase Auth
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      // Записываем роль в Firestore
       await setDoc(doc(db, "users", cred.user.uid), {
         email,
         role: "moderator",
@@ -323,10 +474,10 @@
       closeModal();
       showToast("Модератор создан");
       loadUsers();
-    } catch(e) {
+    } catch (e) {
       let msg = e.message;
       if (e.code === "auth/email-already-in-use") msg = "Этот email уже используется";
-      if (e.code === "auth/invalid-email")        msg = "Некорректный email";
+      if (e.code === "auth/invalid-email") msg = "Некорректный email";
       errEl.textContent = msg;
       errEl.style.display = "block";
     } finally {
@@ -345,10 +496,61 @@
     document.getElementById("modal-user").classList.add("hidden");
   };
 
+  // ─── Настройки ──────────────────────────────────────
+  document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
+    const resetAfter = Number(document.getElementById("s-reset-after").value);
+    const maxSkip = Number(document.getElementById("s-max-skip").value);
+
+    if (resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
+      alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-save-rules");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      rules = await saveLootRules({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      const msg = document.getElementById("saved-rules-msg");
+      msg.classList.add("show");
+      setTimeout(() => msg.classList.remove("show"), 2500);
+      updateExample();
+    } catch (e) {
+      alert("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Сохранить";
+    }
+  });
+
+  ["s-reset-after", "s-max-skip"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", updateExample);
+  });
+
+  function updateExample() {
+    const n = Number(document.getElementById("s-reset-after")?.value || rules.reset_after_raids);
+    const m = Number(document.getElementById("s-max-skip")?.value || rules.max_skip_raids);
+    const el = document.getElementById("example-text");
+    if (!el) return;
+    el.innerHTML = `
+      Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
+      Чтобы снова участвовать в основном ролле на перчатки, нужно:<br>
+      — посетить рейды так, чтобы прошло <strong>${n} рейдов</strong> с момента выигрыша<br>
+      — при этом пропустить не более <strong>${m} из ${n}</strong> рейдов<br><br>
+      Если игрок пропустит <strong>${m + 1} или больше</strong> рейдов подряд —
+      счётчик заморозится и не будет двигаться пока он не вернётся.<br><br>
+      <span style="color:var(--success)">✅ Разблокируется:</span> посетил ${n - m} из ${n} рейдов<br>
+      <span style="color:var(--warning)">⚠️ Заморожен:</span> пропустил более ${m} рейдов<br>
+      <span style="color:var(--danger)">🔒 Заблокирован:</span> только что выиграл
+    `;
+  }
+
+  // ─── Утилиты ────────────────────────────────────────
   function showToast(msg, type = "success") {
     const t = document.createElement("div");
-    t.className = `toast ${type}`; t.textContent = msg;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
   }
 </script>
 </body>
