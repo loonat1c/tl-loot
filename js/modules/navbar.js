@@ -2,7 +2,7 @@
 // navbar.js — Навбар
 // ====================================================
 
-import { initAuth, authReady, currentUser, currentRole, logout, canWrite } from "./auth.js";
+import { initAuth, authReady, currentUser, currentRole, logout, canWrite, isModerator } from "./auth.js";
 
 let navbarInitialized = false;
 
@@ -34,8 +34,9 @@ function renderNav(nav) {
   const isPlayersPage = currentPath.includes('players.html');
   const isStatsPage = currentPath.includes('stats.html');
   const isSearchPage = currentPath.includes('search.html');
+  const isProfilePage = currentPath.includes('profile.html');
   
-  // Главная страница: если путь заканчивается на / или index.html
+  // Главная страница
   const isIndexPage = currentPath.endsWith('/') || 
                        currentPath.endsWith('/index.html') ||
                        currentPath === '/index.html';
@@ -50,12 +51,14 @@ function renderNav(nav) {
       <a href="/pages/players.html" class="${isPlayersPage ? 'active' : ''}">Игроки</a>
       <a href="/pages/search.html" class="${isSearchPage ? 'active' : ''}">Поиск</a>
       <a href="/pages/stats.html" class="${isStatsPage ? 'active' : ''}">Статистика</a>
-      ${isAuth && canWrite() ? `<a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">⚙️ Админка</a>` : ''}
+      ${isAuth && isModerator() ? `<a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">⚙️ Админка</a>` : ''}
     </div>
     
     <div class="nav-user">
       ${isAuth ? `
-        <span id="nav-user-label">${email} (${role})</span>
+        <a href="/pages/profile.html" class="btn btn-ghost btn-sm btn-profile" id="btn-profile">
+          👤 Профиль
+        </a>
         <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
       ` : `
         <a href="/pages/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
@@ -71,6 +74,14 @@ function renderNav(nav) {
       await logout();
       window.location.href = "/index.html";
     });
+  }
+
+  // Добавляем подсветку активной страницы для профиля
+  if (isProfilePage) {
+    const profileBtn = document.getElementById("btn-profile");
+    if (profileBtn) {
+      profileBtn.classList.add("active");
+    }
   }
 }
 
