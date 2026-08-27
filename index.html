@@ -44,7 +44,9 @@
 
   <script type="module">
     import { initNavbar } from "./js/modules/navbar.js";
+    import { initAuth } from "./js/modules/auth.js";
     initNavbar();
+    initAuth((_u, _r) => {});
   </script>
 </body>
 </html>
