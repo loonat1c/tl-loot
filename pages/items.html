@@ -130,6 +130,13 @@
       font-size: 0.7rem;
     }
 
+    /* Скрываем обёртку если картинка не загрузилась */
+    .item-card .item-img-wrap:has(img:not([src])),
+    .item-card .item-img-wrap:has(img[src=""]),
+    .item-card .item-img-wrap:has(img[src="#"]) {
+      display: none;
+    }
+
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
     .item-card .full-card {
       display: none;
@@ -1439,6 +1446,7 @@
     const bossName = getBossName(item.boss_id);
     const bossIcon = getBossIcon(item.boss_id);
     const qualityLabel = getQualityLabel(item.quality);
+    const hasImage = item.image && item.image !== '';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
@@ -1447,8 +1455,14 @@
     const shortName = item.name && item.name.length > 18 ? item.name.substring(0, 18) + '…' : item.name;
 
     card.innerHTML = `
-      <div class="item-img-wrap">
-        <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+      <div class="item-img-wrap" style="${!hasImage ? 'display:none;' : ''}">
+        <img 
+          class="item-img" 
+          id="img-${item.id}" 
+          alt="${item.name || "Предмет"}" 
+          src="${item.image || ''}"
+          onerror="this.parentElement.style.display='none'"
+        />
       </div>
       <div class="item-info">
         <div class="item-name" title="${item.name || "Без названия"}">${shortName || "Без названия"}</div>
@@ -1553,7 +1567,9 @@
 
     // Устанавливаем картинку
     const image = card.querySelector(`#img-${item.id}`);
-    setItemImage(image, item.image);
+    if (hasImage) {
+      image.src = item.image;
+    }
 
     return card;
   }
