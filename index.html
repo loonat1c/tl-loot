@@ -9,26 +9,7 @@
 <body>
 
   <!-- ═══════════════ НАВБАР ═══════════════ -->
-  <nav class="navbar">
-    <a class="nav-brand" href="index.html">⚔️ TL Loot</a>
-
-    <div class="nav-links">
-      <a href="pages/players.html">Игроки</a>
-      <a href="pages/items.html">Предметы</a>
-      <a href="pages/bosses.html">Боссы</a>
-      <a href="pages/raids.html">Рейды</a>
-      <a href="pages/search.html">Поиск</a>
-      <a href="pages/stats.html">Статистика</a>
-      <a href="pages/admin.html" data-role="moderator" class="hidden">Управление</a>
-      <a href="pages/settings.html" data-role="admin" class="hidden">Настройки</a>
-    </div>
-
-    <div class="nav-user">
-      <span id="nav-user-label">Гость</span>
-      <button id="btn-login"  class="btn btn-sm" onclick="location.href='pages/login.html'">Войти</button>
-      <button id="btn-logout" class="btn btn-sm hidden" id="btn-logout">Выйти</button>
-    </div>
-  </nav>
+  <nav class="navbar" id="main-nav"></nav>
 
   <!-- ═══════════════ ГЛАВНАЯ ═══════════════ -->
   <main class="container">
@@ -62,10 +43,8 @@
   </main>
 
   <script type="module">
-    import { initAuth, logout } from "./js/modules/auth.js";
-    initAuth(() => {});
-    document.getElementById("btn-logout")
-      ?.addEventListener("click", () => logout().then(() => location.reload()));
+    import { initNavbar } from "./js/modules/navbar.js";
+    initNavbar();
   </script>
 </body>
 </html>
