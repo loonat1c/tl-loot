@@ -142,7 +142,8 @@
   <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
   <div class="nav-links">
     <a href="players.html" class="active">Игроки</a>
-    <a href="items.html">Шмотки</a>
+    <a href="items.html">Предметы</a>
+    <a href="bosses.html">Боссы</a>
     <a href="raids.html">Рейды</a>
     <a href="search.html">Поиск</a>
     <a href="stats.html">Статистика</a>
@@ -205,6 +206,17 @@
     </div>
 
     <div class="form-group">
+      <label>Ранг *</label>
+      <select id="f-rank">
+        <option value="">— выбери ранг —</option>
+        <option value="guildmaster">👑 Глава гильдии</option>
+        <option value="advisor">⭐ Советник</option>
+        <option value="guardian">🛡️ Хранитель</option>
+        <option value="member">⚔️ Рядовой</option>
+      </select>
+    </div>
+
+    <div class="form-group">
       <label>Роль *</label>
       <select id="f-role">
         <option value="">— выбери роль —</option>
@@ -234,7 +246,7 @@
            updatePlayer, deletePlayer,
            getAttendancePct }           from "../js/modules/players.js";
   import { getPlayerLocks }            from "../js/modules/locks.js";
-  import { WEAPONS, ROLES, SLOTS }     from "../js/constants.js";
+  import { WEAPONS, ROLES, SLOTS, RANKS } from "../js/constants.js";
 
   // ── Роли и оружие в фильтр ───────────────────────
   const weaponFilter = document.getElementById("filter-weapon");
@@ -314,6 +326,7 @@
   function buildCard(p) {
     const pct  = getAttendancePct(p);
     const role = ROLES.find(r => r.id === p.role);
+    const rank = RANKS.find(r => r.id === p.rank);
     const weapons = (p.weapon_pair || [])
       .map(wid => WEAPONS.find(w => w.id === wid)?.label || wid);
 
@@ -325,6 +338,7 @@
         <div class="player-meta">
           ${p.name ? `<span class="text-muted">${p.name}</span>` : ""}
           <span class="badge badge-${p.role}">${role?.label || p.role}</span>
+          ${rank ? `<span class="badge badge-open">${rank.label}</span>` : ''}
           <div class="weapon-pair">
             ${weapons.map(w => `<span class="weapon-tag">${w}</span>`).join("")}
           </div>
@@ -439,7 +453,8 @@
 
     try {
       const id = editId.value;
-      const data = { nickname, name, role, weapon_pair: selectedWeapons };
+      const rank = document.getElementById('f-rank').value;
+      const data = { nickname, name, role, rank, weapon_pair: selectedWeapons };
 
       if (id) {
         await updatePlayer(id, data);
