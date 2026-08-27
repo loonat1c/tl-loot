@@ -72,6 +72,7 @@
       margin-bottom: 1.5rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
+      flex-wrap: wrap;
     }
     .tab-btn {
       background: none;
@@ -83,11 +84,20 @@
       cursor: pointer;
       border-radius: var(--radius);
       transition: background 0.2s, color 0.2s;
+      position: relative;
     }
     .tab-btn:hover { background: var(--bg-hover); color: var(--text); }
     .tab-btn.active {
       background: var(--accent);
       color: #fff;
+    }
+    .tab-btn .badge {
+      background: var(--danger);
+      color: #fff;
+      border-radius: 50%;
+      padding: 0.05rem 0.45rem;
+      font-size: 0.65rem;
+      margin-left: 0.3rem;
     }
     .tab-content { 
       display: none !important; 
@@ -141,6 +151,121 @@
     }
     .saved-msg.show { opacity: 1; }
 
+    /* ── Модерация персонажей ────────────────────────── */
+    .moderation-stats {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .moderation-stats .stat {
+      background: var(--bg-card);
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .moderation-stats .stat .count {
+      font-weight: 700;
+      color: var(--accent-soft);
+    }
+
+    .moderation-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s;
+    }
+    .moderation-card:hover {
+      border-color: var(--accent);
+    }
+    .moderation-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .moderation-card .char-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .moderation-card .user-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .moderation-card .char-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      margin: 0.75rem 0;
+    }
+    .moderation-card .char-details .detail {
+      font-size: 0.85rem;
+    }
+    .moderation-card .char-details .detail .label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .moderation-card .char-details .detail .value {
+      font-weight: 500;
+    }
+    .moderation-card .loot-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+    .moderation-card .loot-list .loot-tag {
+      background: rgba(124, 58, 237, 0.15);
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid var(--accent);
+      color: var(--accent-soft);
+    }
+    .moderation-card .moderation-note {
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 2px solid var(--warning);
+      margin: 0.5rem 0;
+    }
+    .moderation-card .feedback-input {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .moderation-card .feedback-input textarea {
+      resize: vertical;
+      min-height: 50px;
+      font-size: 0.85rem;
+    }
+    .moderation-card .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+    }
+    .empty-state .icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 440px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
@@ -151,6 +276,15 @@
     .badge-purple { background: var(--accent); color: #fff; }
     
     .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .moderation-card .char-details {
+        grid-template-columns: 1fr;
+      }
+      .moderation-card .card-header {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -169,11 +303,37 @@
 
   <div id="admin-content" class="hidden">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-management">👥 Управление</button>
+      <button class="tab-btn active" data-tab="tab-moderation">
+        🔍 Модерация персонажей
+        <span class="badge" id="pending-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-management">👥 Управление</button>
       <button class="tab-btn" data-tab="tab-settings">⚙️ Настройки</button>
     </div>
 
-    <div id="tab-management" class="tab-content active">
+    <!-- ============================================
+         ВКЛАДКА: МОДЕРАЦИЯ ПЕРСОНАЖЕЙ
+    ============================================ -->
+    <div id="tab-moderation" class="tab-content active">
+      <div class="moderation-stats" id="moderation-stats">
+        <span class="stat">⏳ Ожидают: <span class="count" id="stat-pending">0</span></span>
+        <span class="stat">✅ Одобрено: <span class="count" id="stat-approved">0</span></span>
+        <span class="stat">❌ Отклонено: <span class="count" id="stat-rejected">0</span></span>
+      </div>
+
+      <div id="moderation-list">
+        <div class="empty-state">
+          <span class="icon">🎯</span>
+          <p>Нет персонажей на модерации</p>
+          <small>Все персонажи проверены</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         ВКЛАДКА: УПРАВЛЕНИЕ
+    ============================================ -->
+    <div id="tab-management" class="tab-content">
       <div class="admin-grid">
         <div class="admin-section">
           <h3>🔒 Блокировки слотов</h3>
@@ -205,6 +365,9 @@
       </div>
     </div>
 
+    <!-- ============================================
+         ВКЛАДКА: НАСТРОЙКИ
+    ============================================ -->
     <div id="tab-settings" class="tab-content">
       <div class="settings-wrap">
         <div class="info-box">
@@ -281,14 +444,15 @@
 <script type="module">
   // ─── Импорты ──────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, logout } from "../js/modules/auth.js";
+  import { initAuth, authReady, logout, isModerator, currentUser, currentRole } from "../js/modules/auth.js";
   import { getPlayers } from "../js/modules/players.js";
   import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
   import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+  import { getItems } from "../js/modules/items.js";
   import { db, auth } from "../js/firebase.js";
-  import { SLOTS } from "../js/constants.js";
+  import { SLOTS, WEAPONS } from "../js/constants.js";
   import {
-    collection, getDocs, doc, setDoc, deleteDoc
+    collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import {
     createUserWithEmailAndPassword
@@ -299,9 +463,11 @@
   initAuth();
   
   let allPlayers = [];
+  let allItems = [];
+  let allCharacters = [];
   
   // ─── Авторизация ──────────────────────────────────────
-  authReady.then((authData) => {
+  authReady.then(async (authData) => {
     const user = authData?.user || null;
     const role = authData?.role || "guest";
     
@@ -318,6 +484,9 @@
     } else {
       loadUsers();
     }
+
+    // Загружаем данные для модерации
+    await loadModerationData();
 
     getPlayers().then(players => {
       allPlayers = players;
@@ -338,15 +507,11 @@
   // ─── Вкладки ──────────────────────────────────────────
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", function() {
-      // Убираем active у всех кнопок
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      // Добавляем active текущей кнопке
       this.classList.add("active");
       
-      // Скрываем все вкладки
       document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
       
-      // Показываем нужную вкладку
       const targetId = this.dataset.tab;
       const targetEl = document.getElementById(targetId);
       if (targetEl) {
@@ -354,6 +519,185 @@
       }
     });
   });
+
+  // ============================================
+  // МОДЕРАЦИЯ ПЕРСОНАЖЕЙ
+  // ============================================
+
+  async function loadModerationData() {
+    try {
+      allItems = await getItems();
+      await loadCharacters();
+      renderModeration();
+      updateModerationStats();
+    } catch (error) {
+      console.error('Ошибка загрузки данных для модерации:', error);
+    }
+  }
+
+  async function loadCharacters() {
+    try {
+      const charsRef = collection(db, 'characters');
+      const q = query(charsRef, orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      allCharacters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Ошибка загрузки персонажей:', error);
+      allCharacters = [];
+    }
+  }
+
+  function updateModerationStats() {
+    const pending = allCharacters.filter(c => c.status === 'pending').length;
+    const approved = allCharacters.filter(c => c.status === 'approved').length;
+    const rejected = allCharacters.filter(c => c.status === 'rejected').length;
+
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+
+    const badge = document.getElementById('pending-badge');
+    if (badge) {
+      badge.textContent = pending;
+      badge.style.display = pending > 0 ? 'inline' : 'none';
+    }
+  }
+
+  function renderModeration() {
+    const container = document.getElementById('moderation-list');
+    const pendingCharacters = allCharacters.filter(c => c.status === 'pending');
+
+    if (!pendingCharacters.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="icon">🎯</span>
+          <p>Нет персонажей на модерации</p>
+          <small>Все персонажи проверены</small>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = pendingCharacters.map(char => {
+      const weapons = char.weapons?.map(w => {
+        const weapon = WEAPONS.find(wp => wp.id === w);
+        return weapon?.label || w;
+      }).join(' + ') || '—';
+
+      let lootItems = '';
+      if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
+        lootItems = Object.entries(char.desired_loot)
+          .filter(([_, itemId]) => itemId)
+          .map(([slot, itemId]) => {
+            const item = allItems.find(i => i.id === itemId);
+            const slotObj = SLOTS.find(s => s.id === slot);
+            const slotLabel = slotObj?.label || slot;
+            return item ? `
+              <span class="loot-tag">${slotLabel}: ${item.name}</span>
+            ` : '';
+          }).join('');
+      }
+
+      return `
+        <div class="moderation-card" id="char-${char.id}">
+          <div class="card-header">
+            <div>
+              <span class="char-name">${char.name}</span>
+              <span style="font-size:0.8rem; color: var(--text-muted); margin-left:0.5rem;">
+                ⏳ Ожидает модерации
+              </span>
+            </div>
+            <div class="user-info">
+              👤 ${char.user_email || 'Неизвестно'}
+            </div>
+          </div>
+
+          <div class="char-details">
+            <div class="detail">
+              <div class="label">Оружие</div>
+              <div class="value">${weapons}</div>
+            </div>
+            <div class="detail">
+              <div class="label">Заявка создана</div>
+              <div class="value">${char.created_at ? new Date(char.created_at).toLocaleDateString() : '—'}</div>
+            </div>
+          </div>
+
+          ${lootItems ? `
+            <div style="margin-top:0.5rem;">
+              <div style="font-size:0.8rem; color: var(--text-muted); margin-bottom:0.25rem;">🎯 Желаемый лут:</div>
+              <div class="loot-list">${lootItems}</div>
+            </div>
+          ` : ''}
+
+          ${char.moderation_note ? `
+            <div class="moderation-note">
+              💬 ${char.moderation_note}
+            </div>
+          ` : ''}
+
+          <div class="feedback-input">
+            <div class="form-group" style="margin-bottom:0.5rem;">
+              <label style="font-size:0.8rem;">Комментарий модератора</label>
+              <textarea id="feedback-${char.id}" placeholder="Причина одобрения/отклонения..." rows="2"></textarea>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-success btn-sm" onclick="approveCharacter('${char.id}')">
+                ✅ Одобрить
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="rejectCharacter('${char.id}')">
+                ❌ Отклонить
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Навешиваем обработчики
+    window.approveCharacter = async (id) => {
+      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      await moderateCharacter(id, 'approved', feedback);
+    };
+
+    window.rejectCharacter = async (id) => {
+      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      if (!feedback) {
+        if (!confirm('Вы не указали причину отклонения. Продолжить?')) {
+          return;
+        }
+      }
+      await moderateCharacter(id, 'rejected', feedback);
+    };
+  }
+
+  async function moderateCharacter(id, status, feedback) {
+    try {
+      const charRef = doc(db, 'characters', id);
+      await updateDoc(charRef, {
+        status: status,
+        moderation_feedback: feedback || null,
+        moderated_by: currentUser?.uid || 'unknown',
+        moderated_at: new Date().toISOString()
+      });
+
+      showToast(
+        status === 'approved' 
+          ? '✅ Персонаж одобрен!' 
+          : '❌ Персонаж отклонён',
+        status === 'approved' ? 'success' : 'error'
+      );
+
+      await loadModerationData();
+
+    } catch (error) {
+      console.error('Ошибка модерации:', error);
+      showToast('Ошибка: ' + error.message, 'error');
+    }
+  }
 
   // ─── Блокировки ──────────────────────────────────────
   function populatePlayerSelect() {
