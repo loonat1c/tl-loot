@@ -22,7 +22,6 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       margin-bottom: 2rem;
-      position: relative;
     }
 
     .profile-avatar {
@@ -39,23 +38,9 @@
       flex-shrink: 0;
     }
 
-    .profile-info {
-      flex: 1;
-    }
-
-    .profile-info .name-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
     .profile-info h2 {
       font-size: 1.2rem;
       margin-bottom: 0.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
 
     .profile-info .email {
@@ -74,44 +59,6 @@
       color: var(--accent-soft);
       border: 1px solid var(--accent);
       margin-top: 0.25rem;
-    }
-
-    .btn-edit-name {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 0.1rem 0.4rem;
-      border-radius: 4px;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .btn-edit-name:hover {
-      background: var(--bg-card2);
-      color: var(--text);
-    }
-
-    .name-edit-input {
-      display: none;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      padding: 0.3rem 0.6rem;
-      font-size: 1rem;
-      font-family: var(--font);
-      width: 200px;
-    }
-
-    .name-edit-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .name-edit-actions {
-      display: none;
-      gap: 0.3rem;
     }
 
     .characters-section {
@@ -268,13 +215,291 @@
       gap: 0.4rem;
     }
 
-    .character-card .char-loot-items .loot-tag {
+    /* ── Тег лута с всплывающей карточкой ──────────────── */
+    .loot-tag-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .loot-tag-wrap .loot-tag {
       background: rgba(124, 58, 237, 0.15);
       padding: 0.3rem 0.8rem;
       border-radius: 6px;
       font-size: 0.8rem;
       border: 1px solid var(--accent);
       color: var(--accent-soft);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      display: inline-block;
+    }
+
+    .loot-tag-wrap .loot-tag:hover {
+      background: rgba(124, 58, 237, 0.25);
+      border-color: var(--accent-soft);
+    }
+
+    /* ── Всплывающая карточка предмета ─────────────────── */
+    .loot-tag-wrap .item-tooltip {
+      display: none;
+      position: fixed;
+      width: 380px;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .loot-tag-wrap:hover .item-tooltip {
+      display: block;
+    }
+
+    .loot-tag-wrap .item-tooltip::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .loot-tag-wrap .item-tooltip::-webkit-scrollbar-track {
+      background: var(--bg-card2);
+      border-radius: 4px;
+    }
+
+    .loot-tag-wrap .item-tooltip::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    .item-tooltip .tt-header {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .item-tooltip .tt-header .tt-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .item-tooltip .tt-header .tt-title {
+      flex: 1;
+    }
+
+    .item-tooltip .tt-header .tt-title .tt-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-header .tt-title .tt-quality {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+      margin-top: 2px;
+    }
+
+    .item-tooltip .tt-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.15rem 1rem;
+      margin: 0.4rem 0;
+      padding: 0.4rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+    }
+
+    .item-tooltip .tt-stats .stat {
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-stats .stat .stat-label {
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .tt-stats .stat .stat-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .item-tooltip .tt-damage {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 0.3rem 0.4rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.4rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-damage .damage-label {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-right: 0.3rem;
+    }
+
+    .item-tooltip .tt-effect {
+      display: flex;
+      gap: 0.5rem;
+      margin: 0.4rem 0;
+      padding: 0.4rem;
+      background: rgba(124, 58, 237, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-glow);
+    }
+
+    .item-tooltip .tt-effect .effect-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .item-tooltip .tt-effect .effect-info {
+      flex: 1;
+      font-size: 0.75rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-effect .effect-info .effect-name {
+      font-weight: 600;
+      color: var(--accent-soft);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-effect .effect-info .effect-desc {
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-set-bonus {
+      margin: 0.4rem 0;
+      padding: 0.4rem 0.5rem;
+      background: rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .item-tooltip .tt-set-bonus .set-name {
+      font-weight: 700;
+      color: var(--warning);
+      font-size: 0.85rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-set-bonus .set-pieces {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-top: 0.2rem;
+    }
+
+    .item-tooltip .tt-set-bonus .set-pieces .set-piece {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-set-bonus .set-pieces .set-piece .pieces-label {
+      color: var(--text);
+      font-weight: 600;
+      margin-right: 0.3rem;
+    }
+
+    .item-tooltip .tt-properties {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .item-tooltip .tt-properties .prop-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-properties .prop-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+    }
+
+    .item-tooltip .tt-properties .prop-list .prop-tag {
+      background: var(--bg-card2);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-flavor {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-boss {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .item-tooltip .tt-boss .boss-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .item-tooltip .tt-boss .boss-name {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .item-tooltip .tt-level {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      background: var(--bg-card2);
+      padding: 0.05rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .character-card .char-moderation-note {
@@ -367,6 +592,7 @@
       font-size: 0.85rem;
     }
 
+    /* ── Модальное окно ────────────────────────────────── */
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -536,10 +762,6 @@
         text-align: center;
       }
 
-      .profile-info .name-wrap {
-        justify-content: center;
-      }
-
       .modal .form-row {
         grid-template-columns: 1fr;
       }
@@ -562,6 +784,19 @@
         justify-content: flex-start;
         margin-top: 0.25rem;
       }
+
+      .loot-tag-wrap .item-tooltip {
+        position: fixed;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 92vw;
+        max-height: 80vh;
+      }
+
+      .item-tooltip .tt-stats {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -579,17 +814,7 @@
   <div class="profile-header" id="profile-header">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
-      <div class="name-wrap">
-        <h2>
-          <span id="profile-name">Загрузка...</span>
-          <button class="btn-edit-name" id="btn-edit-name" title="Редактировать имя">✏️</button>
-        </h2>
-        <input type="text" class="name-edit-input" id="name-edit-input" maxlength="30" />
-        <div class="name-edit-actions" id="name-edit-actions">
-          <button class="btn btn-primary btn-sm" id="btn-name-save">Сохранить</button>
-          <button class="btn btn-ghost btn-sm" id="btn-name-cancel">Отмена</button>
-        </div>
-      </div>
+      <h2 id="profile-name">Загрузка...</h2>
       <div class="email" id="profile-email">—</div>
       <span class="role" id="profile-role">guest</span>
     </div>
@@ -686,11 +911,11 @@
     authReady, 
     currentUser, 
     currentRole,
-    isModerator,
-    updateUserProfile
+    isModerator
   } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
-  import { WEAPONS, SLOTS } from "../js/constants.js";
+  import { getBosses } from "../js/modules/bosses.js";
+  import { WEAPONS, SLOTS, QUALITY } from "../js/constants.js";
   import { 
     collection, 
     doc, 
@@ -699,8 +924,7 @@
     updateDoc, 
     deleteDoc,
     query,
-    where,
-    getDoc
+    where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
@@ -721,6 +945,7 @@
   // ============================================
 
   let allItems = [];
+  let allBosses = [];
   let characters = [];
   let editingCharId = null;
   const userId = currentUser?.uid;
@@ -733,6 +958,7 @@
   async function loadData() {
     try {
       allItems = await getItems();
+      allBosses = await getBosses();
       await loadCharacters();
       renderProfile();
       renderCharacters();
@@ -765,108 +991,157 @@
   }
 
   // ============================================
-  // ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ
-  // ============================================
-
-  async function loadUserData() {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        return userDoc.data();
-      }
-      return null;
-    } catch (error) {
-      console.error('Ошибка загрузки данных пользователя:', error);
-      return null;
-    }
-  }
-
-  // ============================================
   // ОТОБРАЖЕНИЕ ПРОФИЛЯ
   // ============================================
 
-  async function renderProfile() {
-    const userData = await loadUserData();
-    const username = userData?.username || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
-    
-    document.getElementById('profile-name').textContent = username;
+  function renderProfile() {
+    const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
+    document.getElementById('profile-name').textContent = name;
     document.getElementById('profile-email').textContent = currentUser?.email || '—';
     document.getElementById('profile-role').textContent = currentRole || 'guest';
 
     const avatar = document.getElementById('profile-avatar');
-    avatar.textContent = username.charAt(0).toUpperCase();
+    avatar.textContent = name.charAt(0).toUpperCase();
   }
 
   // ============================================
-  // РЕДАКТИРОВАНИЕ ИМЕНИ
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ КАРТОЧЕК
   // ============================================
 
-  let isEditingName = false;
-
-  document.getElementById('btn-edit-name').addEventListener('click', () => {
-    const nameSpan = document.getElementById('profile-name');
-    const input = document.getElementById('name-edit-input');
-    const actions = document.getElementById('name-edit-actions');
-    
-    input.value = nameSpan.textContent;
-    nameSpan.style.display = 'none';
-    input.style.display = 'inline-block';
-    actions.style.display = 'inline-flex';
-    document.getElementById('btn-edit-name').style.display = 'none';
-    isEditingName = true;
-    input.focus();
-    input.select();
-  });
-
-  document.getElementById('btn-name-cancel').addEventListener('click', () => {
-    cancelNameEdit();
-  });
-
-  document.getElementById('btn-name-save').addEventListener('click', async () => {
-    const input = document.getElementById('name-edit-input');
-    const newName = input.value.trim();
-    
-    if (!newName) {
-      showToast('Имя не может быть пустым', 'error');
-      return;
-    }
-
-    try {
-      const result = await updateUserProfile({ username: newName });
-      if (result.success) {
-        showToast('Имя обновлено!');
-        cancelNameEdit();
-        renderProfile();
-      } else {
-        showToast('Ошибка: ' + result.error, 'error');
-      }
-    } catch (error) {
-      console.error('Ошибка обновления имени:', error);
-      showToast('Ошибка обновления имени', 'error');
-    }
-  });
-
-  function cancelNameEdit() {
-    const nameSpan = document.getElementById('profile-name');
-    const input = document.getElementById('name-edit-input');
-    const actions = document.getElementById('name-edit-actions');
-    
-    nameSpan.style.display = 'inline';
-    input.style.display = 'none';
-    actions.style.display = 'none';
-    document.getElementById('btn-edit-name').style.display = 'inline';
-    isEditingName = false;
+  function getWeaponLabel(weaponId) {
+    const weapon = WEAPONS.find(w => w.id === weaponId);
+    return weapon?.label || weaponId;
   }
 
-  // Enter для сохранения
-  document.getElementById('name-edit-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      document.getElementById('btn-name-save').click();
-    }
-    if (e.key === 'Escape') {
-      document.getElementById('btn-name-cancel').click();
-    }
-  });
+  function getBossName(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.name || '—';
+  }
+
+  function getBossIcon(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.icon || null;
+  }
+
+  function getQualityLabel(quality) {
+    const q = QUALITY.find(q => q.id === quality);
+    return q?.label || quality;
+  }
+
+  function getSlotLabel(slotId) {
+    const slot = SLOTS.find(s => s.id === slotId);
+    return slot?.label || slotId;
+  }
+
+  function getWeaponTypeLabel(type) {
+    const types = {
+      'bow': '🏹 Лук', 'staff': '🪄 Посох', 'twohand_sword': '⚔️ Двуручный меч',
+      'crossbow': '🎯 Арбалеты', 'wand': '✨ Жезл', 'daggers': '🗡️ Кинжалы',
+      'sword_shield': '🛡️ Щит и меч', 'spear': '🔱 Копье'
+    };
+    return types[type] || type;
+  }
+
+  // ============================================
+  // СОЗДАНИЕ ВСПЛЫВАЮЩЕЙ КАРТОЧКИ ПРЕДМЕТА
+  // ============================================
+
+  function createItemTooltip(item) {
+    if (!item) return '';
+
+    const slotLabel = getSlotLabel(item.slot);
+    const qualityLabel = getQualityLabel(item.quality);
+    const bossName = getBossName(item.boss_id);
+    const bossIcon = getBossIcon(item.boss_id);
+    const stats = item.stats || [];
+    const effect = item.effect || {};
+    const setBonus = item.set_bonus || {};
+    const properties = item.properties || [];
+    const desc = item.description || '';
+    const level = item.level || '';
+    const damageMin = item.damage_min || '';
+    const damageMax = item.damage_max || '';
+    const isWeapon = item.slot === 'weapon';
+
+    // Определяем позицию тултипа
+    const position = 'right';
+
+    return `
+      <div class="item-tooltip" style="${position === 'left' ? 'right: calc(100% + 12px); left: auto;' : 'left: calc(100% + 12px); right: auto;'}">
+        <div class="tt-header">
+          <img class="tt-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <div class="tt-title">
+            <div class="tt-name">${item.name || 'Без названия'}</div>
+            <div class="tt-quality">${qualityLabel} • ${slotLabel} ${level ? `• Уровень ${level}` : ''}</div>
+          </div>
+        </div>
+
+        ${damageMin || damageMax ? `
+          <div class="tt-damage">
+            <span class="damage-label">🗡️ Урон:</span>
+            ${damageMin}${damageMax ? ` ~ ${damageMax}` : ''}
+          </div>
+        ` : ''}
+
+        ${stats.length ? `
+          <div class="tt-stats">
+            ${stats.map(s => `
+              <div class="stat">
+                <span class="stat-label">${s.label || s}</span>
+                <span class="stat-value">${s.value || ''}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        ${!isWeapon && setBonus.name ? `
+          <div class="tt-set-bonus">
+            <div class="set-name">${setBonus.name}</div>
+            <div class="set-pieces">
+              ${setBonus.piece2 ? `
+                <div class="set-piece">
+                  <span class="pieces-label">(2):</span> ${setBonus.piece2}
+                </div>
+              ` : ''}
+              ${setBonus.piece4 ? `
+                <div class="set-piece">
+                  <span class="pieces-label">(4):</span> ${setBonus.piece4}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${isWeapon && (effect.name || effect.desc) ? `
+          <div class="tt-effect">
+            ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
+            <div class="effect-info">
+              ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
+              ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${properties.length ? `
+          <div class="tt-properties">
+            <div class="prop-label">Возможные свойства</div>
+            <div class="prop-list">
+              ${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${desc ? `
+          <div class="tt-flavor">${desc}</div>
+        ` : ''}
+
+        <div class="tt-boss">
+          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : '<span>👹</span>'}
+          <span class="boss-name">${bossName}</span>
+        </div>
+      </div>
+    `;
+  }
 
   // ============================================
   // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
@@ -903,10 +1178,10 @@
       const canDelete = true;
 
       const weaponsHtml = char.weapons?.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return `<span class="weapon-tag">${weapon?.label || w}</span>`;
+        return `<span class="weapon-tag">${getWeaponLabel(w)}</span>`;
       }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
 
+      // Желаемый лут с всплывающими карточками
       let lootHtml = '';
       if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
         const lootItems = Object.entries(char.desired_loot)
@@ -915,9 +1190,17 @@
             const item = allItems.find(i => i.id === itemId);
             const slotObj = SLOTS.find(s => s.id === slot);
             const slotLabel = slotObj?.label || slot;
-            return item ? `
-              <span class="loot-tag">${slotLabel}: ${item.name}</span>
-            ` : '';
+            
+            if (item) {
+              const tooltipHtml = createItemTooltip(item);
+              return `
+                <div class="loot-tag-wrap">
+                  <span class="loot-tag">${slotLabel}: ${item.name}</span>
+                  ${tooltipHtml}
+                </div>
+              `;
+            }
+            return '';
           }).filter(Boolean).join('');
         
         if (lootItems) {
