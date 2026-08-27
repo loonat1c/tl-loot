@@ -463,24 +463,21 @@
 ═══════════════════════════════════════════ -->
 
 <script type="module">
-
   /* ==================================================
-     AUTH + NAVBAR
+     ИМПОРТЫ
   ================================================== */
 
+  // Навбар и авторизация
   import { initNavbar } from "../js/modules/navbar.js";
-
-  import {
-    canWrite
+  import { 
+    initAuth, 
+    authReady, 
+    canWrite, 
+    currentRole,
+    currentUser 
   } from "../js/modules/auth.js";
 
-  initNavbar();
-
-
-  /* ==================================================
-     МОДУЛИ
-  ================================================== */
-
+  // API для работы с предметами
   import {
     getItems,
     addItem,
@@ -488,15 +485,42 @@
     deleteItem
   } from "../js/modules/items.js";
 
+  // Работа с изображениями
   import {
     compressImage,
     pickFile,
     setItemImage
   } from "../js/modules/images.js";
 
-  import {
-    SLOTS
-  } from "../js/constants.js";
+  // Константы
+  import { SLOTS } from "../js/constants.js";
+
+
+  /* ==================================================
+     ИНИЦИАЛИЗАЦИЯ (ЖДЕМ АВТОРИЗАЦИЮ!)
+  ================================================== */
+
+  // 1. Инициализируем навбар
+  initNavbar();
+
+  // 2. Инициализируем авторизацию (если уже вызвана в navbar - ничего страшного)
+  initAuth();
+
+  // 3. ЖДЕМ восстановления сессии!
+  await authReady;
+
+  // 4. Отладка
+  console.log('🔐 Авторизация на странице предметов:', {
+    user: currentUser?.email || 'Нет',
+    role: currentRole,
+    canWrite: canWrite()
+  });
+
+  // 5. Показываем/скрываем кнопку "Добавить предмет"
+  const addBtn = document.getElementById('btn-add-item');
+  if (addBtn) {
+    addBtn.classList.toggle('hidden', !canWrite());
+  }
 
 
   /* ==================================================
@@ -1400,7 +1424,8 @@
      INIT
   ================================================== */
 
-  loadItems();
+  // Загружаем предметы ПОСЛЕ авторизации
+  await loadItems();
 
 </script>
 
