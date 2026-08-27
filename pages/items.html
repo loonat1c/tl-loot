@@ -237,7 +237,6 @@
       margin-right: 0.5rem;
     }
 
-    /* ── Сетовый бонус ──────────────────────────────────── */
     .full-card .fc-set-bonus {
       margin: 0.5rem 0;
       padding: 0.5rem 0.75rem;
@@ -376,6 +375,34 @@
       font-style: italic;
       border-top: 1px solid var(--border);
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    /* ── Босс внизу всплывающей карточки ───────────────── */
+    .full-card .fc-boss {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-boss .boss-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .full-card .fc-boss .boss-name {
+      color: var(--text);
+      font-weight: 500;
     }
 
     /* ── Фильтры ────────────────────────────────────────── */
@@ -637,7 +664,7 @@
       resize: vertical;
     }
 
-    /* ── Поле урона в модалке ──────────────────────────── */
+    /* ── Поле урона/защиты в модалке ──────────────────── */
     .damage-inputs {
       display: flex;
       align-items: center;
@@ -723,6 +750,11 @@
 
     .set-bonus-fields.visible {
       display: block;
+    }
+
+    /* ── Скрытие полей ──────────────────────────────────── */
+    .field-hidden {
+      display: none !important;
     }
 
     /* ── Адаптация для мобильных ────────────────────────── */
@@ -869,7 +901,7 @@
             <option value="">— выбери босса —</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="weapon-type-group">
           <label>Тип оружия</label>
           <select id="f-weapon-type">
             <option value="">— не выбрано —</option>
@@ -885,14 +917,14 @@
         </div>
       </div>
 
-      <!-- Урон -->
-      <div class="form-row">
-        <div class="form-group">
-          <label>Урон (мин)</label>
+      <!-- Урон / Защита -->
+      <div class="form-row" id="damage-row">
+        <div class="form-group" id="damage-min-group">
+          <label id="damage-min-label">Урон (мин)</label>
           <input type="number" id="f-damage-min" placeholder="15" min="0" step="1" />
         </div>
-        <div class="form-group">
-          <label>Урон (макс)</label>
+        <div class="form-group" id="damage-max-group">
+          <label id="damage-max-label">Урон (макс)</label>
           <input type="number" id="f-damage-max" placeholder="155" min="0" step="1" />
         </div>
       </div>
@@ -1077,25 +1109,68 @@
   }
 
   // ==================================================
-  // ПОКАЗ / СКРЫТИЕ СЕТОВОГО БОНУСА
+  // УПРАВЛЕНИЕ ПОЛЯМИ В ЗАВИСИМОСТИ ОТ СЛОТА
   // ==================================================
 
+  const weaponTypeGroup = document.getElementById('weapon-type-group');
+  const damageMinGroup = document.getElementById('damage-min-group');
+  const damageMaxGroup = document.getElementById('damage-max-group');
+  const damageMinLabel = document.getElementById('damage-min-label');
+  const damageMaxLabel = document.getElementById('damage-max-label');
   const effectSection = document.getElementById('effect-section');
   const setBonusSection = document.getElementById('set-bonus-section');
   const setBonusToggle = document.getElementById('f-set-bonus-toggle');
   const setBonusFields = document.getElementById('set-bonus-fields');
 
-  slotSelect.addEventListener('change', function() {
-    const isWeapon = this.value === 'weapon';
-    // Для оружия — показываем эффект, скрываем сетовый бонус
+  // Слоты для брони (защита ближний/дальний)
+  const armorSlots = ['helmet', 'cloak', 'chest', 'gloves', 'pants', 'boots'];
+  // Слоты для аксессуаров (защита магия)
+  const accessorySlots = ['necklace', 'belt', 'ring', 'bracelet'];
+  // Слоты для оружия (урон)
+  const weaponSlot = 'weapon';
+
+  function updateFieldsBySlot(slotId) {
+    const isWeapon = slotId === weaponSlot;
+    const isArmor = armorSlots.includes(slotId);
+    const isAccessory = accessorySlots.includes(slotId);
+
+    // 1. Тип оружия — показываем только для оружия
+    weaponTypeGroup.style.display = isWeapon ? 'block' : 'none';
+
+    // 2. Урон / Защита
+    if (isWeapon) {
+      damageMinGroup.style.display = 'block';
+      damageMaxGroup.style.display = 'block';
+      damageMinLabel.textContent = 'Урон (мин)';
+      damageMaxLabel.textContent = 'Урон (макс)';
+    } else if (isArmor) {
+      damageMinGroup.style.display = 'block';
+      damageMaxGroup.style.display = 'block';
+      damageMinLabel.textContent = 'Защита (ближний бой)';
+      damageMaxLabel.textContent = 'Защита (дальний бой)';
+    } else if (isAccessory) {
+      damageMinGroup.style.display = 'block';
+      damageMaxGroup.style.display = 'none';
+      damageMinLabel.textContent = 'Защита (магия)';
+    } else {
+      // Другие слоты — скрываем
+      damageMinGroup.style.display = 'none';
+      damageMaxGroup.style.display = 'none';
+    }
+
+    // 3. Эффект / Сетовый бонус
     effectSection.style.display = isWeapon ? 'block' : 'none';
     setBonusSection.style.display = isWeapon ? 'none' : 'block';
-    
-    // Если не оружие — сбрасываем тумблер
+
+    // Сбрасываем тумблер сетового бонуса если не оружие
     if (!isWeapon) {
       setBonusToggle.checked = false;
       setBonusFields.classList.remove('visible');
     }
+  }
+
+  slotSelect.addEventListener('change', function() {
+    updateFieldsBySlot(this.value);
   });
 
   setBonusToggle.addEventListener('change', function() {
@@ -1301,9 +1376,25 @@
     return boss?.name || '—';
   }
 
+  function getBossIcon(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.icon || null;
+  }
+
   function getQualityLabel(quality) {
     const q = QUALITY.find(q => q.id === quality);
     return q?.label || quality;
+  }
+
+  function getDamageLabel(slotId) {
+    const isWeapon = slotId === 'weapon';
+    const isArmor = ['helmet', 'cloak', 'chest', 'gloves', 'pants', 'boots'].includes(slotId);
+    const isAccessory = ['necklace', 'belt', 'ring', 'bracelet'].includes(slotId);
+
+    if (isWeapon) return '🗡️ Урон';
+    if (isArmor) return '🛡️ Защита (ближний/дальний)';
+    if (isAccessory) return '🛡️ Защита (магия)';
+    return '';
   }
 
   function buildCard(item) {
@@ -1319,6 +1410,8 @@
     const damageMin = item.damage_min || '';
     const damageMax = item.damage_max || '';
     const isWeapon = item.slot === 'weapon';
+    const bossName = getBossName(item.boss_id);
+    const bossIcon = getBossIcon(item.boss_id);
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
@@ -1333,7 +1426,7 @@
             <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
           ` : ''}
         </div>
-        <div class="item-boss">👹 ${getBossName(item.boss_id)}</div>
+        <div class="item-boss">👹 ${bossName}</div>
         ${desc ? `<div class="item-desc">${desc}</div>` : ''}
       </div>
       ${canEdit ? `
@@ -1359,8 +1452,8 @@
 
         ${damageMin || damageMax ? `
           <div class="fc-damage">
-            <span class="damage-label">🗡️ Урон:</span>
-            ${damageMin} ~ ${damageMax || damageMin}
+            <span class="damage-label">${getDamageLabel(item.slot)}:</span>
+            ${damageMin}${damageMax ? ` ~ ${damageMax}` : ''}
           </div>
         ` : ''}
 
@@ -1415,6 +1508,12 @@
         ${desc ? `
           <div class="fc-flavor">${desc}</div>
         ` : ''}
+
+        <!-- Босс внизу -->
+        <div class="fc-boss">
+          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : `<span style="font-size:1.2rem;">👹</span>`}
+          <span class="boss-name">${bossName}</span>
+        </div>
       </div>
     `;
 
@@ -1468,9 +1567,14 @@
     setBonusToggle.checked = false;
     setBonusFields.classList.remove('visible');
 
-    // Восстанавливаем видимость секций по умолчанию (если слот не выбран — показываем эффект)
+    // Восстанавливаем видимость секций по умолчанию
     effectSection.style.display = 'block';
     setBonusSection.style.display = 'none';
+    weaponTypeGroup.style.display = 'block';
+    damageMinGroup.style.display = 'block';
+    damageMaxGroup.style.display = 'block';
+    damageMinLabel.textContent = 'Урон (мин)';
+    damageMaxLabel.textContent = 'Урон (макс)';
 
     document.getElementById('stats-fields').innerHTML = '';
     document.getElementById('properties-fields').innerHTML = '';
@@ -1496,12 +1600,11 @@
     modalTitle.textContent = 'Редактировать предмет';
     editId.value = id;
 
-    const isWeapon = item.slot === 'weapon';
-    effectSection.style.display = isWeapon ? 'block' : 'none';
-    setBonusSection.style.display = isWeapon ? 'none' : 'block';
+    const slotId = item.slot || '';
+    updateFieldsBySlot(slotId);
 
+    document.getElementById('f-slot').value = slotId;
     document.getElementById('f-name').value = item.name || '';
-    document.getElementById('f-slot').value = item.slot || '';
     document.getElementById('f-boss').value = item.boss_id || '';
     document.getElementById('f-description').value = item.description || '';
     document.getElementById('f-quality').value = item.quality || 'epic';
