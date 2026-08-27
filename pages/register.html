@@ -71,16 +71,7 @@
 
 <body>
 
-<!-- ═══════════════════════════════════════════
-     НАВБАР
-═══════════════════════════════════════════ -->
-
 <nav class="navbar" id="main-nav"></nav>
-
-
-<!-- ═══════════════════════════════════════════
-     ФОРМА РЕГИСТРАЦИИ
-═══════════════════════════════════════════ -->
 
 <main class="container">
 
@@ -143,17 +134,12 @@
     </form>
 
     <div class="auth-link">
-      Уже есть аккаунт? <a href="login.html">Войти</a>
+      Уже есть аккаунт? <a href="/pages/login.html">Войти</a>
     </div>
 
   </div>
 
 </main>
-
-
-<!-- ═══════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════ -->
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
@@ -171,7 +157,7 @@
   // Если уже авторизован — перенаправить на главную
   await authReady;
   if (currentUser) {
-    window.location.href = "index.html";
+    window.location.href = "/index.html";
   }
 
   const form = document.getElementById('register-form');
@@ -236,7 +222,7 @@
         successDiv.style.display = 'block';
         
         setTimeout(() => {
-          window.location.href = 'index.html';
+          window.location.href = '/index.html';
         }, 2000);
       } else {
         errorDiv.textContent = result.error || 'Ошибка регистрации';
