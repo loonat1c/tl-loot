@@ -2,7 +2,7 @@
 // navbar.js — Навбар
 // ====================================================
 
-import { initAuth, authReady, currentUser, currentRole, logout } from "./auth.js";
+import { initAuth, authReady, currentUser, currentRole, logout, canWrite } from "./auth.js";
 
 let navbarInitialized = false;
 
@@ -11,15 +11,14 @@ export async function initNavbar() {
   if (navbarInitialized) return;
   navbarInitialized = true;
 
-  // Ждём авторизацию
   await initAuth();
   await authReady;
 
   const nav = document.getElementById("main-nav");
   if (!nav) return;
 
-  // Отрисовываем навбар
   renderNav(nav);
+  updateRoleElements();
 }
 
 function renderNav(nav) {
@@ -27,34 +26,51 @@ function renderNav(nav) {
   const role = currentRole || "guest";
   const email = currentUser?.email || "";
 
+  // Определяем текущую страницу для подсветки активной ссылки
+  const currentPath = window.location.pathname;
+  const isItemsPage = currentPath.includes('items.html');
+  const isAdminPage = currentPath.includes('admin.html');
+  // Главная страница: если путь заканчивается на / или index.html
+  const isIndexPage = currentPath.endsWith('/') || 
+                       currentPath.endsWith('/index.html') || 
+                       currentPath.endsWith('/pages/index.html');
+
   nav.innerHTML = `
-    <div class="nav-container">
-      <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
-      
-      <div class="nav-links">
-        <a href="/index.html">Главная</a>
-        <a href="/items.html">Предметы</a>
-        
-        ${isAuth ? `
-          <span class="nav-user-label" id="nav-user-label">
-            ${email} (${role})
-          </span>
-          <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
-        ` : `
-          <a href="/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
-          <a href="/register.html" class="btn btn-primary btn-sm">Регистрация</a>
-        `}
-      </div>
+    <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
+    
+    <div class="nav-links">
+      <a href="/index.html" class="${isIndexPage ? 'active' : ''}">Главная</a>
+      <a href="/pages/items.html" class="${isItemsPage ? 'active' : ''}">Предметы</a>
+      ${isAuth && canWrite() ? `<a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">⚙️ Админка</a>` : ''}
+    </div>
+    
+    <div class="nav-user">
+      ${isAuth ? `
+        <span id="nav-user-label">${email} (${role})</span>
+        <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
+      ` : `
+        <a href="/pages/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
+        <a href="/pages/register.html" class="btn btn-primary btn-sm">Регистрация</a>
+      `}
     </div>
   `;
 
-  // Вешаем обработчик на кнопку выхода
+  // Обработчик выхода
   const logoutBtn = document.getElementById("btn-logout");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
+    logoutBtn.addEventListener("click", async () => {
       await logout();
       window.location.href = "/index.html";
     });
   }
+}
+
+function updateRoleElements() {
+  document.querySelectorAll("[data-role='admin']").forEach(el => {
+    el.classList.toggle("hidden", currentRole !== "admin");
+  });
+
+  document.querySelectorAll("[data-role='moderator']").forEach(el => {
+    el.classList.toggle("hidden", !canWrite());
+  });
 }
