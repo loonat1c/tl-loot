@@ -7,28 +7,43 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   doc,
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Текущий пользователь и его роль (кэш в памяти)
 export let currentUser = null;
-export let currentRole = "guest"; // guest | moderator | admin
+export let currentRole = "guest";
 
 // ── Подписка на изменение auth состояния ─────────────
 export function initAuth(onReady) {
+  // Явно включаем localStorage персистентность
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
-      currentRole = await fetchRole(user.uid);
+      // Сначала берём из кэша — быстрый рендер без мигания
+      const cached = sessionStorage.getItem(`role_${user.uid}`);
+      if (cached) {
+        currentRole = cached;
+        updateNavUI();
+        onReady(currentUser, currentRole);
+      }
+      // Потом обновляем из Firestore
+      const fresh = await fetchRole(user.uid);
+      currentRole = fresh;
+      sessionStorage.setItem(`role_${user.uid}`, fresh);
     } else {
       currentUser = null;
       currentRole = "guest";
+      sessionStorage.clear();
     }
-    onReady(currentUser, currentRole);
     updateNavUI();
+    onReady(currentUser, currentRole);
   });
 }
 
@@ -45,12 +60,14 @@ async function fetchRole(uid) {
 
 // ── Логин ─────────────────────────────────────────────
 export async function login(email, password) {
+  await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
 }
 
 // ── Логаут ────────────────────────────────────────────
 export function logout() {
+  sessionStorage.clear();
   return signOut(auth);
 }
 
@@ -65,9 +82,9 @@ export function isAdmin() {
 
 // ── Обновить UI навбара ───────────────────────────────
 function updateNavUI() {
-  const loginBtn  = document.getElementById("btn-login");
-  const logoutBtn = document.getElementById("btn-logout");
-  const userLabel = document.getElementById("nav-user-label");
+  const loginBtn   = document.getElementById("btn-login");
+  const logoutBtn  = document.getElementById("btn-logout");
+  const userLabel  = document.getElementById("nav-user-label");
   const adminLinks = document.querySelectorAll("[data-role='admin']");
   const modLinks   = document.querySelectorAll("[data-role='moderator']");
 
