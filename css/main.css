@@ -99,6 +99,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;   /* 👈 ЦЕНТРИРОВАНИЕ ТЕКСТА */
   gap: 0.4rem;
   padding: 0.5rem 1.1rem;
   border-radius: var(--radius);
@@ -107,14 +108,38 @@ body {
   font-family: var(--font);
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
+  text-decoration: none;     /* 👈 УБИРАЕМ ПОДЧЁРКИВАНИЕ У ССЫЛОК-КНОПОК */
 }
-.btn:hover  { opacity: 0.85; }
-.btn:active { transform: scale(0.97); }
 
-.btn-primary  { background: var(--accent); color: #fff; }
-.btn-danger   { background: var(--danger); color: #fff; }
-.btn-ghost    { background: var(--bg-card2); color: var(--text); border: 1px solid var(--border); }
-.btn-sm       { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+.btn:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: var(--bg-card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
 
 /* ── Карточки ────────────────────────────────────── */
 .card {
@@ -137,10 +162,12 @@ body {
   color: var(--text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
+
 .card-link:hover {
   border-color: var(--accent);
   box-shadow: 0 0 16px var(--accent-glow);
 }
+
 .card-link .icon { font-size: 1.75rem; }
 .card-link strong { font-size: 1rem; }
 .card-link small  { font-size: 0.8rem; color: var(--text-muted); }
@@ -169,10 +196,12 @@ input, select, textarea {
   width: 100%;
   transition: border-color 0.15s;
 }
+
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
 }
+
 select option { background: var(--bg-card2); }
 
 /* ── Таблицы ─────────────────────────────────────── */
@@ -183,11 +212,13 @@ table {
   border-collapse: collapse;
   font-size: 0.9rem;
 }
+
 th, td {
   padding: 0.6rem 0.9rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
+
 th {
   color: var(--text-muted);
   font-weight: 600;
@@ -195,6 +226,7 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
 tr:hover td { background: var(--bg-card2); }
 
 /* ── Бейджи ──────────────────────────────────────── */
@@ -205,7 +237,9 @@ tr:hover td { background: var(--bg-card2); }
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .badge-purple  { background: rgba(124,58,237,0.2); color: #a855f7; border: 1px solid #7c3aed; }
+
 .badge-secondary {
   background: var(--bg-card2);
   color: var(--text-muted);
@@ -214,6 +248,7 @@ tr:hover td { background: var(--bg-card2); }
   border-radius: 4px;
   border: 1px solid var(--border);
 }
+
 .badge-locked  { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
 .badge-free    { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; }
 .badge-frozen  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
@@ -263,6 +298,7 @@ tr:hover td { background: var(--bg-card2); }
   z-index: 9999;
   animation: slideIn 0.2s ease;
 }
+
 .toast.success { border-color: var(--success); color: var(--success); }
 .toast.error   { border-color: var(--danger);  color: var(--danger); }
 
@@ -280,6 +316,7 @@ tr:hover td { background: var(--bg-card2); }
   animation: spin 0.6s linear infinite;
   display: inline-block;
 }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Страница логина ─────────────────────────────── */
@@ -297,6 +334,7 @@ tr:hover td { background: var(--bg-card2); }
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
 .page-header h2 { font-size: 1.4rem; }
 
 /* ── Прогресс блокировки ─────────────────────────── */
@@ -305,11 +343,13 @@ tr:hover td { background: var(--bg-card2); }
   gap: 4px;
   margin-top: 4px;
 }
+
 .lock-pip {
   width: 10px; height: 10px;
   border-radius: 2px;
   background: var(--border);
 }
+
 .lock-pip.done    { background: var(--accent); }
 .lock-pip.skipped { background: var(--warning); }
 
@@ -571,13 +611,4 @@ tr:hover td { background: var(--bg-card2); }
     max-width: 100%;
     width: 100%;
   }
-}
-
-/* ── Ссылки-кнопки ────────────────────────────────── */
-a.btn {
-  text-decoration: none !important;
-}
-
-a.btn:hover {
-  text-decoration: none !important;
 }
