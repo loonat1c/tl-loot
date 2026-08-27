@@ -61,9 +61,9 @@
       background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
     }
 
-    /* Если картинка загружена — показываем поверх подложки */
-    .item-img[src]:not([src=""]) {
-      background: transparent;
+    /* Картинка загружена — убираем подложку */
+    .item-img.loaded {
+      background: transparent !important;
     }
 
     .item-info {
@@ -194,7 +194,6 @@
       border: 1px solid var(--border);
     }
 
-    /* Подложки для картинки в полной карточке */
     .item-card.quality-epic .full-card .fc-img {
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
     }
@@ -203,8 +202,8 @@
       background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
     }
 
-    .full-card .fc-img[src]:not([src=""]) {
-      background: transparent;
+    .full-card .fc-img.loaded {
+      background: transparent !important;
     }
 
     .full-card .fc-header .fc-title {
@@ -1442,8 +1441,9 @@
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
+    // Создаём HTML
     card.innerHTML = `
-      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" onerror="this.style.background='transparent'" />
+      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
       <div class="item-info">
         <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
@@ -1465,7 +1465,7 @@
       <!-- Полная карточка при наведении -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.background='transparent'" />
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" />
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
             <div class="fc-meta">
@@ -1543,8 +1543,18 @@
       </div>
     `;
 
+    // Устанавливаем картинку и добавляем класс loaded если она есть
     const image = card.querySelector(`#img-${item.id}`);
     setItemImage(image, item.image);
+    if (item.image && item.image !== '') {
+      image.classList.add('loaded');
+    }
+
+    // Для большой картинки
+    const fcImg = card.querySelector('.fc-img');
+    if (item.image && item.image !== '') {
+      fcImg.classList.add('loaded');
+    }
 
     return card;
   }
