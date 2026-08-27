@@ -4,74 +4,192 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Вход — TL Loot</title>
+
   <link rel="stylesheet" href="../css/main.css" />
+
+  <style>
+    .auth-container {
+      max-width: 400px;
+      margin: 4rem auto;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .auth-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-container .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .auth-container .btn {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .auth-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .auth-link a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .auth-link a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-  <nav class="navbar">
-    <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
-  </nav>
 
-  <main class="container">
-    <div class="login-wrap">
-      <div class="card">
-        <h2 style="margin-bottom:1.5rem">Вход в систему</h2>
+<!-- ═══════════════════════════════════════════
+     НАВБАР
+═══════════════════════════════════════════ -->
 
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="admin@guild.com" />
-        </div>
+<nav class="navbar" id="main-nav"></nav>
 
-        <div class="form-group">
-          <label for="password">Пароль</label>
-          <input type="password" id="password" placeholder="••••••••" />
-        </div>
 
-        <div id="error-msg" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+<!-- ═══════════════════════════════════════════
+     ФОРМА ВХОДА
+═══════════════════════════════════════════ -->
 
-        <button class="btn btn-primary mt-2" id="btn-submit" style="width:100%">
-          Войти
-        </button>
+<main class="container">
 
-        <p class="text-muted mt-2" style="text-align:center; font-size:0.8rem;">
-          Гости могут <a href="../index.html" style="color:var(--accent-soft)">просматривать</a> без входа
-        </p>
+  <div class="auth-container">
+
+    <h2>🔑 Вход в аккаунт</h2>
+
+    <form id="login-form" autocomplete="off">
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="login-email">Email *</label>
+        <input
+          type="email"
+          id="login-email"
+          placeholder="your@email.com"
+          required
+        />
       </div>
+
+      <!-- Пароль -->
+      <div class="form-group">
+        <label for="login-password">Пароль *</label>
+        <input
+          type="password"
+          id="login-password"
+          placeholder="Введите пароль"
+          required
+        />
+      </div>
+
+      <!-- Сообщение об ошибке -->
+      <div id="error-message" class="error-message"></div>
+
+      <!-- Кнопка -->
+      <button type="submit" class="btn btn-primary" id="btn-login">
+        Войти
+      </button>
+
+    </form>
+
+    <div class="auth-link">
+      Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
     </div>
-  </main>
 
-  <script type="module">
-    import { login, initAuth } from "../js/modules/auth.js";
+  </div>
 
-    // Если уже залогинен — редирект
-    initAuth((user) => {
-      if (user) location.href = "../index.html";
+</main>
+
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+
+<script type="module">
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { 
+    initAuth, 
+    authReady, 
+    login,
+    currentUser 
+  } from "../js/modules/auth.js";
+
+  // Инициализация
+  initNavbar();
+  initAuth();
+
+  // Если уже авторизован — перенаправить на главную
+  await authReady;
+  if (currentUser) {
+    window.location.href = "index.html";
+  }
+
+  const form = document.getElementById('login-form');
+  const emailInput = document.getElementById('login-email');
+  const passwordInput = document.getElementById('login-password');
+  const errorDiv = document.getElementById('error-message');
+  const btnLogin = document.getElementById('btn-login');
+
+  // Скрываем ошибку при вводе
+  [emailInput, passwordInput].forEach(input => {
+    input.addEventListener('input', () => {
+      errorDiv.style.display = 'none';
     });
+  });
 
-    document.getElementById("btn-submit").addEventListener("click", async () => {
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const errEl    = document.getElementById("error-msg");
-      const btn      = document.getElementById("btn-submit");
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      errEl.style.display = "none";
-      btn.disabled = true;
-      btn.textContent = "Входим...";
+    errorDiv.style.display = 'none';
 
-      try {
-        await login(email, password);
-        location.href = "../index.html";
-      } catch (e) {
-        errEl.textContent = "Неверный email или пароль";
-        errEl.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "Войти";
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      errorDiv.textContent = 'Заполните все поля';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Вход...';
+
+    try {
+      const result = await login(email, password);
+      
+      if (result.success) {
+        window.location.href = 'index.html';
+      } else {
+        errorDiv.textContent = result.error || 'Ошибка входа';
+        errorDiv.style.display = 'block';
       }
-    });
+    } catch (error) {
+      errorDiv.textContent = error.message || 'Произошла ошибка';
+      errorDiv.style.display = 'block';
+    } finally {
+      btnLogin.disabled = false;
+      btnLogin.textContent = 'Войти';
+    }
+  });
 
-    // Enter для сабмита
-    document.addEventListener("keydown", e => {
-      if (e.key === "Enter") document.getElementById("btn-submit").click();
-    });
-  </script>
+</script>
+
 </body>
 </html>
