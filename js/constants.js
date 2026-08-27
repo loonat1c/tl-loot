@@ -41,7 +41,8 @@ export const WEAPONS = [
 ];
 
 export const QUALITY = [
-  { id: "epic", label: "Эпическое", color: "#9b59b6" },
+  { id: "epic",    label: "🟣 Эпическое", color: "#9b59b6" },
+  { id: "epic_ii", label: "🟣 Эпическое II", color: "#8e44ad" },
 ];
 
 // ====================================================
