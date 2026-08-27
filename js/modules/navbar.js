@@ -13,7 +13,6 @@ function getActivePage() {
   if (path.includes("search"))   return "search";
   if (path.includes("stats"))    return "stats";
   if (path.includes("admin"))    return "admin";
-  if (path.includes("settings")) return "settings";
   if (path.includes("login"))    return "login";
   return "home";
 }
@@ -41,8 +40,7 @@ export function initNavbar() {
       <a href="${base}raids.html"    class="${active==="raids"    ? "active":""}">Рейды</a>
       <a href="${base}search.html"   class="${active==="search"   ? "active":""}">Поиск</a>
       <a href="${base}stats.html"    class="${active==="stats"    ? "active":""}">Статистика</a>
-      <a href="${base}admin.html"    class="${active==="admin"    ? "active":""}" data-role="moderator" class="hidden">Управление</a>
-      <a href="${base}settings.html" class="${active==="settings" ? "active":""}" data-role="admin" class="hidden">Настройки</a>
+      <a href="${base}admin.html"    class="${active==="admin"    ? "active":""}" id="nav-admin-link">Управление</a>
     </div>
     <div class="nav-user">
       <span id="nav-user-label">Гость</span>
