@@ -22,6 +22,13 @@ export const ROLES = [
   { id: "healer", label: "Хил" },
 ];
 
+export const RANKS = [
+  { id: "guildmaster", label: "Глава гильдии" },
+  { id: "advisor",     label: "Советник" },
+  { id: "guardian",    label: "Хранитель" },
+  { id: "member",      label: "Рядовой" },
+];
+
 export const WEAPONS = [
   { id: "bow",           label: "Лук" },
   { id: "staff",         label: "Посох" },
@@ -34,9 +41,14 @@ export const WEAPONS = [
 ];
 
 export const QUALITY = [
-  { id: "purple", label: "Фиолетовая", color: "#9b59b6" },
-  // gold оставляем на будущее
-  // { id: "gold", label: "Золотая", color: "#f1c40f" },
+  { id: "epic", label: "Эпическое", color: "#9b59b6" },
+];
+
+export const BOSS_CLASSES = [
+  { id: "field",    label: "Полевой босс" },
+  { id: "dungeon",  label: "Данжевый босс" },
+  { id: "raid",     label: "Рейдовый босс" },
+  { id: "world",    label: "Мировой босс" },
 ];
 
 export const ROLL_TYPE = [
@@ -44,9 +56,7 @@ export const ROLL_TYPE = [
   { id: "open", label: "Открытый ролл (продажа/трейты)" },
 ];
 
-// Дефолтные настройки — применяются при первом запуске
-// Потом хранятся в Firestore /settings/loot_rules
 export const DEFAULT_LOOT_RULES = {
-  reset_after_raids: 6,   // через сколько рейдов сбрасывается блокировка
-  max_skip_raids:    2,   // сколько рейдов можно пропустить за этот период
+  reset_after_raids: 6,
+  max_skip_raids:    2,
 };
