@@ -5,20 +5,19 @@
 import { auth, db } from "../firebase.js";
 
 import {
-  createUserWithEmailAndPassword,  // <-- ДОБАВИТЬ
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
   createUserWithEmailAndPassword,
-  sendEmailVerification,           // <-- ОПЦИОНАЛЬНО
+  sendEmailVerification,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import {
   doc,
   getDoc,
-  setDoc,                          // <-- ДОБАВИТЬ
+  setDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
@@ -215,6 +214,19 @@ async function fetchRole(uid) {
       `⚠️ Документ users/${uid} не найден`
     );
 
+    // Если документа нет — создаём его с ролью "user"
+    try {
+      await setDoc(doc(db, "users", uid), {
+        email: currentUser?.email || "",
+        role: "user",
+        createdAt: new Date().toISOString(),
+      });
+      console.log("✅ Создан новый документ пользователя с ролью user");
+      return "user";
+    } catch (createError) {
+      console.error("❌ Ошибка создания документа:", createError);
+    }
+
   } catch (e) {
 
     console.error(
@@ -235,7 +247,7 @@ export async function getUserRole(uid) {
 }
 
 // ====================================================
-// РЕГИСТРАЦИЯ (НОВАЯ ФУНКЦИЯ)
+// РЕГИСТРАЦИЯ
 // ====================================================
 
 export async function register(email, password, username = null) {
@@ -251,15 +263,15 @@ export async function register(email, password, username = null) {
       password
     );
 
-    const user = userCredential.user;
+    const newUser = userCredential.user;
 
-    console.log("✅ Пользователь создан:", user.uid);
+    console.log("✅ Пользователь создан:", newUser.uid);
 
     // 2. Создаём документ в Firestore
-    await setDoc(doc(db, "users", user.uid), {
-      email: user.email,
-      role: "user", // По умолчанию обычный пользователь
-      username: username || user.email?.split('@')[0] || "User",
+    await setDoc(doc(db, "users", newUser.uid), {
+      email: newUser.email,
+      role: "user",
+      username: username || newUser.email?.split('@')[0] || "User",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -268,7 +280,7 @@ export async function register(email, password, username = null) {
 
     // 3. (Опционально) Отправляем письмо для подтверждения email
     try {
-      await sendEmailVerification(user);
+      await sendEmailVerification(newUser);
       console.log("✉️ Письмо подтверждения отправлено");
     } catch (verifyError) {
       console.warn("⚠️ Не удалось отправить письмо подтверждения:", verifyError);
@@ -276,7 +288,7 @@ export async function register(email, password, username = null) {
 
     return {
       success: true,
-      user: user,
+      user: newUser,
       message: "Регистрация успешна!"
     };
 
@@ -302,27 +314,35 @@ export async function login(email, password) {
     email
   );
 
-  await setPersistence(
-    auth,
-    browserLocalPersistence
-  );
-
-  const cred =
-    await signInWithEmailAndPassword(
+  try {
+    await setPersistence(
       auth,
-      email,
-      password
+      browserLocalPersistence
     );
 
-  console.log(
-    "✅ Вход выполнен:",
-    cred.user.email
-  );
+    const cred =
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-  // onAuthStateChanged сам обновит
-  // currentUser/currentRole
+    console.log(
+      "✅ Вход выполнен:",
+      cred.user.email
+    );
 
-  return cred.user;
+    return {
+      success: true,
+      user: cred.user
+    };
+  } catch (error) {
+    console.error("❌ Ошибка входа:", error);
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
 }
 
 // ====================================================
@@ -338,6 +358,8 @@ export async function logout() {
   sessionStorage.clear();
 
   await signOut(auth);
+  
+  return { success: true };
 }
 
 // ====================================================
@@ -357,6 +379,10 @@ export function isAdmin() {
   return currentRole === "admin";
 }
 
+export function isModerator() {
+  return currentRole === "moderator" || currentRole === "admin";
+}
+
 // ====================================================
 // Вспомогательные функции
 // ====================================================
@@ -374,7 +400,8 @@ function getAuthErrorMessage(code) {
     'auth/network-request-failed': 'Ошибка сети. Проверьте подключение',
     'auth/requires-recent-login': 'Требуется повторный вход',
     'auth/credential-already-in-use': 'Аккаунт уже используется',
-    'auth/email-already-exists': 'Этот email уже зарегистрирован'
+    'auth/email-already-exists': 'Этот email уже зарегистрирован',
+    'auth/invalid-credential': 'Неверный email или пароль'
   };
   return messages[code] || `Ошибка: ${code}`;
 }
