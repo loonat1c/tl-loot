@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Игроки — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
+
   <style>
     .weapon-pair {
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
     }
+
     .weapon-tag {
       background: var(--bg-card2);
       border: 1px solid var(--border);
@@ -19,6 +21,7 @@
       font-size: 0.75rem;
       color: var(--text-muted);
     }
+
     .attendance-bar {
       height: 4px;
       background: var(--border);
@@ -26,18 +29,21 @@
       width: 80px;
       overflow: hidden;
     }
+
     .attendance-fill {
       height: 100%;
       background: var(--accent);
       border-radius: 2px;
       transition: width 0.3s;
     }
+
     .locks-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       margin-top: 6px;
     }
+
     .lock-slot {
       font-size: 0.72rem;
       padding: 2px 8px;
@@ -54,6 +60,7 @@
       align-items: center;
       justify-content: center;
     }
+
     .modal {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -64,13 +71,18 @@
       max-height: 90vh;
       overflow-y: auto;
     }
+
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.25rem;
     }
-    .modal-header h3 { font-size: 1.1rem; }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+    }
+
     .btn-close {
       background: none;
       border: none;
@@ -79,13 +91,17 @@
       cursor: pointer;
       line-height: 1;
     }
-    .btn-close:hover { color: var(--text); }
+
+    .btn-close:hover {
+      color: var(--text);
+    }
 
     .weapon-select-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.5rem;
     }
+
     .weapon-option {
       display: flex;
       align-items: center;
@@ -97,13 +113,21 @@
       font-size: 0.85rem;
       transition: border-color 0.15s, background 0.15s;
     }
-    .weapon-option:hover { background: var(--bg-card2); }
+
+    .weapon-option:hover {
+      background: var(--bg-card2);
+    }
+
     .weapon-option.selected {
       border-color: var(--accent);
       background: var(--accent-glow);
       color: var(--accent-soft);
     }
-    .weapon-option input { display: none; }
+
+    .weapon-option input {
+      display: none;
+    }
+
     .weapon-hint {
       font-size: 0.78rem;
       color: var(--text-muted);
@@ -116,8 +140,14 @@
       margin-bottom: 1.25rem;
       flex-wrap: wrap;
     }
-    .filter-bar input { max-width: 240px; }
-    .filter-bar select { width: auto; }
+
+    .filter-bar input {
+      max-width: 240px;
+    }
+
+    .filter-bar select {
+      width: auto;
+    }
 
     .player-card {
       background: var(--bg-card);
@@ -130,372 +160,1086 @@
       align-items: start;
       transition: border-color 0.15s;
     }
-    .player-card:hover { border-color: var(--accent); }
-    .player-name { font-weight: 600; font-size: 1rem; }
-    .player-meta { display: flex; gap: 0.5rem; align-items: center; margin-top: 4px; flex-wrap: wrap; }
-    .players-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .player-card:hover {
+      border-color: var(--accent);
+    }
+
+    .player-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .player-meta {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
   </style>
 </head>
+
 <body>
 
 <nav class="navbar" id="main-nav"></nav>
 
 <main class="container">
+
   <div class="page-header">
     <h2>👥 Игроки</h2>
-    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-player">
+
+    <button
+      class="btn btn-primary hidden"
+      data-role="moderator"
+      id="btn-add-player">
       + Добавить игрока
     </button>
   </div>
 
   <!-- Фильтры -->
   <div class="filter-bar">
-    <input type="text" id="filter-search" placeholder="Поиск по нику или имени..." />
+
+    <input
+      type="text"
+      id="filter-search"
+      placeholder="Поиск по нику или имени..."
+    />
+
     <select id="filter-role">
       <option value="">Все роли</option>
       <option value="tank">Танк</option>
       <option value="dd">ДД</option>
       <option value="healer">Хил</option>
     </select>
+
     <select id="filter-weapon">
       <option value="">Все оружия</option>
     </select>
+
   </div>
 
   <!-- Список -->
   <div id="players-list" class="players-list">
     <div class="text-muted">Загрузка...</div>
   </div>
+
 </main>
 
-<!-- ═══ МОДАЛЬНОЕ ОКНО ═══ -->
+
+<!-- ═══════════════════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО
+     ═══════════════════════════════════════════════════ -->
+
 <div class="modal-overlay hidden" id="modal">
+
   <div class="modal">
+
     <div class="modal-header">
-      <h3 id="modal-title">Добавить игрока</h3>
-      <button class="btn-close" id="btn-modal-close">✕</button>
+
+      <h3 id="modal-title">
+        Добавить игрока
+      </h3>
+
+      <button
+        class="btn-close"
+        id="btn-modal-close">
+        ✕
+      </button>
+
     </div>
 
-    <input type="hidden" id="edit-id" />
+    <input
+      type="hidden"
+      id="edit-id"
+    />
 
     <div class="form-group">
-      <label>Никнейм *</label>
-      <input type="text" id="f-nickname" placeholder="PlayerName" />
+
+      <label>
+        Никнейм *
+      </label>
+
+      <input
+        type="text"
+        id="f-nickname"
+        placeholder="PlayerName"
+      />
+
     </div>
 
-    <div class="form-group">
-      <label>Настоящее имя</label>
-      <input type="text" id="f-name" placeholder="Иван" />
-    </div>
 
     <div class="form-group">
-      <label>Ранг *</label>
+
+      <label>
+        Настоящее имя
+      </label>
+
+      <input
+        type="text"
+        id="f-name"
+        placeholder="Иван"
+      />
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Ранг *
+      </label>
+
       <select id="f-rank">
-        <option value="">— выбери ранг —</option>
-        <option value="guildmaster">👑 Глава гильдии</option>
-        <option value="advisor">⭐ Советник</option>
-        <option value="guardian">🛡️ Хранитель</option>
-        <option value="member">⚔️ Рядовой</option>
+
+        <option value="">
+          — выбери ранг —
+        </option>
+
+        <option value="guildmaster">
+          👑 Глава гильдии
+        </option>
+
+        <option value="advisor">
+          ⭐ Советник
+        </option>
+
+        <option value="guardian">
+          🛡️ Хранитель
+        </option>
+
+        <option value="member">
+          ⚔️ Рядовой
+        </option>
+
       </select>
+
     </div>
 
+
     <div class="form-group">
-      <label>Роль *</label>
+
+      <label>
+        Роль *
+      </label>
+
       <select id="f-role">
-        <option value="">— выбери роль —</option>
-        <option value="tank">🛡️ Танк</option>
-        <option value="dd">⚔️ ДД</option>
-        <option value="healer">💚 Хил</option>
+
+        <option value="">
+          — выбери роль —
+        </option>
+
+        <option value="tank">
+          🛡️ Танк
+        </option>
+
+        <option value="dd">
+          ⚔️ ДД
+        </option>
+
+        <option value="healer">
+          💚 Хил
+        </option>
+
       </select>
+
     </div>
+
 
     <div class="form-group">
-      <label>Оружейная пара * <span class="weapon-hint">(выбери ровно 2)</span></label>
-      <div class="weapon-select-grid" id="weapon-grid"></div>
+
+      <label>
+        Оружейная пара *
+        <span class="weapon-hint">
+          (выбери ровно 2)
+        </span>
+      </label>
+
+      <div
+        class="weapon-select-grid"
+        id="weapon-grid">
+      </div>
+
     </div>
 
-    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+
+    <div
+      id="modal-error"
+      class="text-danger mt-1"
+      style="display:none; font-size:0.85rem;">
+    </div>
+
 
     <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save">Сохранить</button>
-      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+
+      <button
+        class="btn btn-primary"
+        id="btn-save">
+        Сохранить
+      </button>
+
+      <button
+        class="btn btn-ghost"
+        id="btn-cancel">
+        Отмена
+      </button>
+
     </div>
+
   </div>
+
 </div>
 
+
 <script type="module">
-  import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+
+  /* ═══════════════════════════════════════════════════
+     IMPORTS
+     ═══════════════════════════════════════════════════ */
+
+  import { initNavbar }
+    from "../js/modules/navbar.js";
+
+  import {
+    initAuth,
+    authReady,
+    canWrite,
+    isAdmin
+  } from "../js/modules/auth.js";
+
+  import {
+    getPlayers,
+    addPlayer,
+    updatePlayer,
+    deletePlayer,
+    getAttendancePct
+  } from "../js/modules/players.js";
+
+  import {
+    getPlayerLocks
+  } from "../js/modules/locks.js";
+
+  import {
+    WEAPONS,
+    ROLES,
+    SLOTS,
+    RANKS
+  } from "../js/constants.js";
+
+
+  /* ═══════════════════════════════════════════════════
+     NAVBAR
+     ═══════════════════════════════════════════════════ */
+
   initNavbar();
 
-  import { initAuth, canWrite }        from "../js/modules/auth.js";
-  import { getPlayers, addPlayer,
-           updatePlayer, deletePlayer,
-           getAttendancePct }           from "../js/modules/players.js";
-  import { getPlayerLocks }            from "../js/modules/locks.js";
-  import { WEAPONS, ROLES, SLOTS, RANKS } from "../js/constants.js";
 
-  // ── Роли и оружие в фильтр ───────────────────────
-  const weaponFilter = document.getElementById("filter-weapon");
+  /* ═══════════════════════════════════════════════════
+     ОРУЖИЕ В ФИЛЬТР
+     ═══════════════════════════════════════════════════ */
+
+  const weaponFilter =
+    document.getElementById("filter-weapon");
+
   WEAPONS.forEach(w => {
-    const o = document.createElement("option");
-    o.value = w.id; o.textContent = w.label;
+
+    const o =
+      document.createElement("option");
+
+    o.value = w.id;
+    o.textContent = w.label;
+
     weaponFilter.appendChild(o);
+
   });
 
-  // ── Оружие в форме ────────────────────────────────
-  const weaponGrid = document.getElementById("weapon-grid");
+
+  /* ═══════════════════════════════════════════════════
+     ОРУЖИЕ В ФОРМЕ
+     ═══════════════════════════════════════════════════ */
+
+  const weaponGrid =
+    document.getElementById("weapon-grid");
+
   let selectedWeapons = [];
 
+
   WEAPONS.forEach(w => {
-    const div = document.createElement("div");
+
+    const div =
+      document.createElement("div");
+
     div.className = "weapon-option";
     div.dataset.id = w.id;
     div.textContent = w.label;
-    div.addEventListener("click", () => toggleWeapon(w.id, div));
+
+    div.addEventListener(
+      "click",
+      () => toggleWeapon(w.id, div)
+    );
+
     weaponGrid.appendChild(div);
+
   });
 
+
   function toggleWeapon(id, el) {
+
     if (selectedWeapons.includes(id)) {
-      selectedWeapons = selectedWeapons.filter(w => w !== id);
+
+      selectedWeapons =
+        selectedWeapons.filter(
+          w => w !== id
+        );
+
       el.classList.remove("selected");
+
     } else {
+
       if (selectedWeapons.length >= 2) {
-        showError("Можно выбрать только 2 оружия");
+
+        showError(
+          "Можно выбрать только 2 оружия"
+        );
+
         return;
       }
+
       selectedWeapons.push(id);
+
       el.classList.add("selected");
     }
   }
 
+
   function resetWeapons(preselected = []) {
+
     selectedWeapons = [...preselected];
-    weaponGrid.querySelectorAll(".weapon-option").forEach(el => {
-      el.classList.toggle("selected", preselected.includes(el.dataset.id));
-    });
+
+    weaponGrid
+      .querySelectorAll(".weapon-option")
+      .forEach(el => {
+
+        el.classList.toggle(
+          "selected",
+          preselected.includes(el.dataset.id)
+        );
+
+      });
   }
 
-  // ── Состояние ─────────────────────────────────────
+
+  /* ═══════════════════════════════════════════════════
+     СОСТОЯНИЕ
+     ═══════════════════════════════════════════════════ */
+
   let allPlayers = [];
 
-  // ── Загрузить и отрендерить ───────────────────────
+
+  /* ═══════════════════════════════════════════════════
+     ЗАГРУЗКА ИГРОКОВ
+     ═══════════════════════════════════════════════════ */
+
   async function loadPlayers() {
+
     allPlayers = await getPlayers();
+
     renderPlayers();
+
   }
 
+
   function renderPlayers() {
-    const search  = document.getElementById("filter-search").value.toLowerCase();
-    const role    = document.getElementById("filter-role").value;
-    const weapon  = document.getElementById("filter-weapon").value;
 
-    let list = allPlayers.filter(p => {
-      if (search && !p.nickname.toLowerCase().includes(search)
-                 && !p.name?.toLowerCase().includes(search)) return false;
-      if (role   && p.role !== role) return false;
-      if (weapon && !p.weapon_pair?.includes(weapon)) return false;
-      return true;
-    });
+    const search =
+      document
+        .getElementById("filter-search")
+        .value
+        .toLowerCase();
 
-    const container = document.getElementById("players-list");
+    const role =
+      document.getElementById("filter-role").value;
+
+    const weapon =
+      document.getElementById("filter-weapon").value;
+
+
+    let list =
+      allPlayers.filter(p => {
+
+        if (
+          search &&
+          !p.nickname.toLowerCase().includes(search) &&
+          !p.name?.toLowerCase().includes(search)
+        ) {
+          return false;
+        }
+
+        if (
+          role &&
+          p.role !== role
+        ) {
+          return false;
+        }
+
+        if (
+          weapon &&
+          !p.weapon_pair?.includes(weapon)
+        ) {
+          return false;
+        }
+
+        return true;
+
+      });
+
+
+    const container =
+      document.getElementById("players-list");
+
 
     if (!list.length) {
-      container.innerHTML = `<div class="text-muted">Игроков не найдено</div>`;
+
+      container.innerHTML =
+        `<div class="text-muted">
+          Игроков не найдено
+        </div>`;
+
       return;
     }
 
+
     container.innerHTML = "";
-    list.forEach(p => container.appendChild(buildCard(p)));
-  }
 
-  function buildCard(p) {
-    const pct  = getAttendancePct(p);
-    const role = ROLES.find(r => r.id === p.role);
-    const rank = RANKS.find(r => r.id === p.rank);
-    const weapons = (p.weapon_pair || [])
-      .map(wid => WEAPONS.find(w => w.id === wid)?.label || wid);
+    list.forEach(p => {
 
-    const card = document.createElement("div");
-    card.className = "player-card";
-    card.innerHTML = `
-      <div>
-        <div class="player-name">${p.nickname}</div>
-        <div class="player-meta">
-          ${p.name ? `<span class="text-muted">${p.name}</span>` : ""}
-          <span class="badge badge-${p.role}">${role?.label || p.role}</span>
-          ${rank ? `<span class="badge badge-open">${rank.label}</span>` : ''}
-          <div class="weapon-pair">
-            ${weapons.map(w => `<span class="weapon-tag">${w}</span>`).join("")}
-          </div>
-        </div>
+      container.appendChild(
+        buildCard(p)
+      );
 
-        <div class="flex gap-1 items-center mt-1" style="margin-top:8px">
-          <div class="attendance-bar">
-            <div class="attendance-fill" style="width:${pct}%"></div>
-          </div>
-          <span class="text-muted" style="font-size:0.75rem">
-            ${p.raids_attended}/${p.raids_total} рейдов (${pct}%)
-          </span>
-        </div>
-
-        <div id="locks-${p.id}" class="locks-grid">
-          <span class="text-muted" style="font-size:0.75rem">Загрузка блокировок...</span>
-        </div>
-      </div>
-
-      <div class="flex gap-1" style="flex-direction:column; align-items:flex-end">
-        <button class="btn btn-ghost btn-sm hidden" data-role="moderator"
-                onclick="openEdit('${p.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm hidden" data-role="moderator"
-                onclick="confirmDelete('${p.id}', '${p.nickname}')">🗑️</button>
-      </div>
-    `;
-
-    // Применяем видимость по роли
-    card.querySelectorAll("[data-role='moderator']").forEach(el => {
-      if (canWrite()) el.classList.remove("hidden");
     });
 
-    // Загружаем блокировки отдельно
-    loadLocks(p.id);
-
-    return card;
   }
 
+
+  function buildCard(p) {
+
+    const pct =
+      getAttendancePct(p);
+
+    const role =
+      ROLES.find(r => r.id === p.role);
+
+    const rank =
+      RANKS.find(r => r.id === p.rank);
+
+    const weapons =
+      (p.weapon_pair || [])
+        .map(
+          wid =>
+            WEAPONS.find(w => w.id === wid)?.label || wid
+        );
+
+
+    const card =
+      document.createElement("div");
+
+    card.className = "player-card";
+
+
+    card.innerHTML = `
+
+      <div>
+
+        <div class="player-name">
+          ${p.nickname}
+        </div>
+
+        <div class="player-meta">
+
+          ${
+            p.name
+              ? `<span class="text-muted">
+                   ${p.name}
+                 </span>`
+              : ""
+          }
+
+          <span class="badge badge-${p.role}">
+            ${role?.label || p.role}
+          </span>
+
+          ${
+            rank
+              ? `<span class="badge badge-open">
+                   ${rank.label}
+                 </span>`
+              : ""
+          }
+
+          <div class="weapon-pair">
+
+            ${
+              weapons
+                .map(
+                  w =>
+                    `<span class="weapon-tag">
+                       ${w}
+                     </span>`
+                )
+                .join("")
+            }
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="flex gap-1 items-center mt-1"
+          style="margin-top:8px">
+
+          <div class="attendance-bar">
+
+            <div
+              class="attendance-fill"
+              style="width:${pct}%">
+            </div>
+
+          </div>
+
+          <span
+            class="text-muted"
+            style="font-size:0.75rem">
+
+            ${p.raids_attended}/${p.raids_total}
+            рейдов (${pct}%)
+
+          </span>
+
+        </div>
+
+
+        <div
+          id="locks-${p.id}"
+          class="locks-grid">
+
+          <span
+            class="text-muted"
+            style="font-size:0.75rem">
+
+            Загрузка блокировок...
+
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="flex gap-1"
+        style="flex-direction:column; align-items:flex-end">
+
+        <button
+          class="btn btn-ghost btn-sm hidden"
+          data-role="moderator"
+          onclick="openEdit('${p.id}')">
+
+          ✏️
+
+        </button>
+
+        <button
+          class="btn btn-danger btn-sm hidden"
+          data-role="moderator"
+          onclick="confirmDelete('${p.id}', '${p.nickname}')">
+
+          🗑️
+
+        </button>
+
+      </div>
+
+    `;
+
+
+    /* ───────────────────────────────────────────────
+       Видимость кнопок по роли
+       ─────────────────────────────────────────────── */
+
+    card
+      .querySelectorAll(
+        "[data-role='moderator']"
+      )
+      .forEach(el => {
+
+        if (canWrite()) {
+          el.classList.remove("hidden");
+        }
+
+      });
+
+
+    /* ───────────────────────────────────────────────
+       Загрузка блокировок
+       ─────────────────────────────────────────────── */
+
+    loadLocks(p.id);
+
+
+    return card;
+
+  }
+
+
   async function loadLocks(playerId) {
-    const container = document.getElementById(`locks-${playerId}`);
+
+    const container =
+      document.getElementById(
+        `locks-${playerId}`
+      );
+
     if (!container) return;
 
+
     try {
-      const locks = await getPlayerLocks(playerId);
-      const entries = Object.entries(locks);
+
+      const locks =
+        await getPlayerLocks(playerId);
+
+      const entries =
+        Object.entries(locks);
+
 
       if (!entries.length) {
-        container.innerHTML = `<span class="text-muted" style="font-size:0.75rem">Блокировок нет</span>`;
+
+        container.innerHTML =
+          `<span
+             class="text-muted"
+             style="font-size:0.75rem">
+
+             Блокировок нет
+
+           </span>`;
+
         return;
       }
 
-      container.innerHTML = entries.map(([slot, lock]) => {
-        const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
-        const isFrozen  = lock.raids_skipped > 2; // показываем визуально
-        const cls = isFrozen ? "badge-frozen" : "badge-locked";
-        return `<span class="badge ${cls} lock-slot" title="${lock.item_name}">
-          🔒 ${slotLabel} ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped}
-        </span>`;
-      }).join("");
+
+      container.innerHTML =
+        entries
+          .map(([slot, lock]) => {
+
+            const slotLabel =
+              SLOTS.find(
+                s => s.id === slot
+              )?.label || slot;
+
+            const isFrozen =
+              lock.raids_skipped > 2;
+
+            const cls =
+              isFrozen
+                ? "badge-frozen"
+                : "badge-locked";
+
+
+            return `
+              <span
+                class="badge ${cls} lock-slot"
+                title="${lock.item_name}">
+
+                🔒 ${slotLabel}
+                ${lock.raids_attended}/
+                ${lock.raids_attended + lock.raids_skipped}
+
+              </span>
+            `;
+
+          })
+          .join("");
+
     } catch {
+
       container.innerHTML = "";
+
     }
+
   }
 
-  // ── Модальное окно ────────────────────────────────
-  const modal      = document.getElementById("modal");
-  const modalTitle = document.getElementById("modal-title");
-  const editId     = document.getElementById("edit-id");
+
+  /* ═══════════════════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО
+     ═══════════════════════════════════════════════════ */
+
+  const modal =
+    document.getElementById("modal");
+
+  const modalTitle =
+    document.getElementById("modal-title");
+
+  const editId =
+    document.getElementById("edit-id");
+
 
   function openAdd() {
-    modalTitle.textContent = "Добавить игрока";
+
+    modalTitle.textContent =
+      "Добавить игрока";
+
     editId.value = "";
-    document.getElementById("f-nickname").value = "";
-    document.getElementById("f-name").value     = "";
-    document.getElementById("f-role").value     = "";
+
+    document.getElementById(
+      "f-nickname"
+    ).value = "";
+
+    document.getElementById(
+      "f-name"
+    ).value = "";
+
+    document.getElementById(
+      "f-role"
+    ).value = "";
+
+    document.getElementById(
+      "f-rank"
+    ).value = "";
+
     resetWeapons([]);
+
     hideError();
+
     modal.classList.remove("hidden");
+
   }
+
 
   window.openEdit = async (id) => {
-    const p = allPlayers.find(pl => pl.id === id);
+
+    const p =
+      allPlayers.find(
+        pl => pl.id === id
+      );
+
     if (!p) return;
-    modalTitle.textContent = "Редактировать игрока";
+
+
+    modalTitle.textContent =
+      "Редактировать игрока";
+
     editId.value = id;
-    document.getElementById("f-nickname").value = p.nickname || "";
-    document.getElementById("f-name").value     = p.name     || "";
-    document.getElementById("f-role").value     = p.role     || "";
-    resetWeapons(p.weapon_pair || []);
+
+
+    document.getElementById(
+      "f-nickname"
+    ).value =
+      p.nickname || "";
+
+
+    document.getElementById(
+      "f-name"
+    ).value =
+      p.name || "";
+
+
+    document.getElementById(
+      "f-role"
+    ).value =
+      p.role || "";
+
+
+    document.getElementById(
+      "f-rank"
+    ).value =
+      p.rank || "";
+
+
+    resetWeapons(
+      p.weapon_pair || []
+    );
+
     hideError();
+
     modal.classList.remove("hidden");
+
   };
 
-  function closeModal() { modal.classList.add("hidden"); }
 
-  document.getElementById("btn-modal-close").onclick = closeModal;
-  document.getElementById("btn-cancel").onclick      = closeModal;
-  document.getElementById("btn-add-player").onclick  = openAdd;
+  function closeModal() {
 
-  // ── Сохранить ─────────────────────────────────────
-  document.getElementById("btn-save").onclick = async () => {
-    const nickname = document.getElementById("f-nickname").value.trim();
-    const name     = document.getElementById("f-name").value.trim();
-    const role     = document.getElementById("f-role").value;
+    modal.classList.add("hidden");
 
-    if (!nickname)                  return showError("Введи никнейм");
-    if (!role)                      return showError("Выбери роль");
-    if (selectedWeapons.length < 2) return showError("Выбери ровно 2 оружия");
+  }
 
-    const btn = document.getElementById("btn-save");
-    btn.disabled = true; btn.textContent = "Сохранение...";
+
+  document.getElementById(
+    "btn-modal-close"
+  ).onclick = closeModal;
+
+
+  document.getElementById(
+    "btn-cancel"
+  ).onclick = closeModal;
+
+
+  document.getElementById(
+    "btn-add-player"
+  ).onclick = openAdd;
+
+
+  /* ═══════════════════════════════════════════════════
+     СОХРАНИТЬ
+     ═══════════════════════════════════════════════════ */
+
+  document.getElementById(
+    "btn-save"
+  ).onclick = async () => {
+
+    const nickname =
+      document
+        .getElementById("f-nickname")
+        .value
+        .trim();
+
+    const name =
+      document
+        .getElementById("f-name")
+        .value
+        .trim();
+
+    const role =
+      document.getElementById(
+        "f-role"
+      ).value;
+
+
+    if (!nickname) {
+      return showError(
+        "Введи никнейм"
+      );
+    }
+
+
+    if (!role) {
+      return showError(
+        "Выбери роль"
+      );
+    }
+
+
+    if (selectedWeapons.length < 2) {
+      return showError(
+        "Выбери ровно 2 оружия"
+      );
+    }
+
+
+    const btn =
+      document.getElementById(
+        "btn-save"
+      );
+
+    btn.disabled = true;
+    btn.textContent = "Сохранение...";
+
 
     try {
-      const id = editId.value;
-      const rank = document.getElementById('f-rank').value;
-      const data = { nickname, name, role, rank, weapon_pair: selectedWeapons };
+
+      const id =
+        editId.value;
+
+      const rank =
+        document.getElementById(
+          "f-rank"
+        ).value;
+
+
+      const data = {
+        nickname,
+        name,
+        role,
+        rank,
+        weapon_pair: selectedWeapons
+      };
+
 
       if (id) {
-        await updatePlayer(id, data);
-        showToast("Игрок обновлён");
+
+        await updatePlayer(
+          id,
+          data
+        );
+
+        showToast(
+          "Игрок обновлён"
+        );
+
       } else {
-        await addPlayer(data);
-        showToast("Игрок добавлен");
+
+        await addPlayer(
+          data
+        );
+
+        showToast(
+          "Игрок добавлен"
+        );
+
       }
 
+
       closeModal();
+
       await loadPlayers();
+
     } catch (e) {
-      showError("Ошибка: " + e.message);
+
+      showError(
+        "Ошибка: " + e.message
+      );
+
     } finally {
-      btn.disabled = false; btn.textContent = "Сохранить";
+
+      btn.disabled = false;
+      btn.textContent = "Сохранить";
+
     }
+
   };
 
-  // ── Удалить ───────────────────────────────────────
-  window.confirmDelete = (id, nickname) => {
-    if (!confirm(`Удалить игрока «${nickname}»? Это действие нельзя отменить.`)) return;
-    deletePlayer(id).then(() => {
-      showToast("Игрок удалён");
-      loadPlayers();
-    });
-  };
 
-  // ── Фильтры ───────────────────────────────────────
-  document.getElementById("filter-search").addEventListener("input",  renderPlayers);
-  document.getElementById("filter-role").addEventListener("change",   renderPlayers);
-  document.getElementById("filter-weapon").addEventListener("change", renderPlayers);
+  /* ═══════════════════════════════════════════════════
+     УДАЛИТЬ
+     ═══════════════════════════════════════════════════ */
 
-  // ── Helpers ───────────────────────────────────────
+  window.confirmDelete =
+    (id, nickname) => {
+
+      if (
+        !confirm(
+          `Удалить игрока «${nickname}»? Это действие нельзя отменить.`
+        )
+      ) {
+        return;
+      }
+
+
+      deletePlayer(id)
+        .then(() => {
+
+          showToast(
+            "Игрок удалён"
+          );
+
+          loadPlayers();
+
+        });
+
+    };
+
+
+  /* ═══════════════════════════════════════════════════
+     ФИЛЬТРЫ
+     ═══════════════════════════════════════════════════ */
+
+  document
+    .getElementById("filter-search")
+    .addEventListener(
+      "input",
+      renderPlayers
+    );
+
+
+  document
+    .getElementById("filter-role")
+    .addEventListener(
+      "change",
+      renderPlayers
+    );
+
+
+  document
+    .getElementById("filter-weapon")
+    .addEventListener(
+      "change",
+      renderPlayers
+    );
+
+
+  /* ═══════════════════════════════════════════════════
+     HELPERS
+     ═══════════════════════════════════════════════════ */
+
   function showError(msg) {
-    const el = document.getElementById("modal-error");
-    el.textContent = msg; el.style.display = "block";
+
+    const el =
+      document.getElementById(
+        "modal-error"
+      );
+
+    el.textContent = msg;
+    el.style.display = "block";
+
   }
+
+
   function hideError() {
-    document.getElementById("modal-error").style.display = "none";
+
+    document.getElementById(
+      "modal-error"
+    ).style.display = "none";
+
   }
 
-  function showToast(msg, type = "success") {
-    const t = document.createElement("div");
-    t.className = `toast ${type}`;
+
+  function showToast(
+    msg,
+    type = "success"
+  ) {
+
+    const t =
+      document.createElement("div");
+
+    t.className =
+      `toast ${type}`;
+
     t.textContent = msg;
+
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+
+    setTimeout(
+      () => t.remove(),
+      3000
+    );
+
   }
 
-  // ── Init ──────────────────────────────────────────
-  document.getElementById("btn-logout")
-    ?.addEventListener("click", () => logout().then(() => location.reload()));
 
-  loadPlayers();
+  /* ═══════════════════════════════════════════════════
+     INIT
+     ═══════════════════════════════════════════════════ */
+
+  // Сначала восстанавливаем авторизацию,
+  // затем загружаем игроков.
+  initAuth((user, role) => {
+
+    console.log(
+      "PLAYERS AUTH:",
+      user,
+      role
+    );
+
+    loadPlayers();
+
+  });
+
 </script>
+
 </body>
 </html>
