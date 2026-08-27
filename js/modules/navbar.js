@@ -42,8 +42,9 @@ function renderNav(nav) {
                        currentPath.endsWith('/index.html') ||
                        currentPath === '/index.html';
 
-  // Кнопка профиля активна ТОЛЬКО когда мы на странице профиля
-  const isProfileActive = isProfilePage;
+  // Кнопка профиля активна (фиолетовая) КОГДА МЫ НЕ НА СТРАНИЦЕ ПРОФИЛЯ
+  // Это чтобы привлекать внимание пользователя
+  const isProfileActive = !isProfilePage && isAuth;
 
   nav.innerHTML = `
     <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
