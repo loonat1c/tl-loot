@@ -20,18 +20,16 @@ export async function initNavbar() {
 
   // Отрисовываем навбар
   renderNav(nav);
-
-  // Вешаем обработчики
-  setupEventListeners();
 }
 
 function renderNav(nav) {
   const isAuth = !!currentUser;
   const role = currentRole || "guest";
+  const email = currentUser?.email || "";
 
   nav.innerHTML = `
     <div class="nav-container">
-      <a href="/" class="nav-brand">⚔️ TL Loot</a>
+      <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
       
       <div class="nav-links">
         <a href="/index.html">Главная</a>
@@ -39,24 +37,24 @@ function renderNav(nav) {
         
         ${isAuth ? `
           <span class="nav-user-label" id="nav-user-label">
-            ${currentUser?.email || 'Пользователь'} (${role})
+            ${email} (${role})
           </span>
-          <button class="btn btn-ghost btn-sm" id="btn-logout">🚪 Выйти</button>
+          <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
         ` : `
-          <a href="/login.html" class="btn btn-ghost btn-sm" id="btn-login">🔑 Войти</a>
-          <a href="/register.html" class="btn btn-primary btn-sm">📝 Регистрация</a>
+          <a href="/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
+          <a href="/register.html" class="btn btn-primary btn-sm">Регистрация</a>
         `}
       </div>
     </div>
   `;
-}
 
-function setupEventListeners() {
+  // Вешаем обработчик на кнопку выхода
   const logoutBtn = document.getElementById("btn-logout");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
+    logoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       await logout();
-      window.location.href = "/";
+      window.location.href = "/index.html";
     });
   }
 }
