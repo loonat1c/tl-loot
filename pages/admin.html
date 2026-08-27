@@ -287,7 +287,7 @@
 <script type="module">
   // ─── Импорты ──────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin, logout, getUserRole } from "../js/modules/auth.js";
+  import { authReady, user, role, canWrite, isAdmin, logout, getUserRole } from "../js/modules/auth.js";
   initNavbar();
 
   import { getPlayers } from "../js/modules/players.js";
@@ -309,16 +309,16 @@
   let currentRole = null;
 
   // ─── Авторизация ──────────────────────────────────────
-  authReady.then(async (userData) => {
-    currentUser = userData;
+  authReady.then(async () => {
+    // Используем импортированные user и role
+    currentUser = user;
+    currentRole = role;
+    
     if (!currentUser) {
       document.getElementById("access-denied").classList.remove("hidden");
       return;
     }
 
-    // Получаем роль пользователя
-    currentRole = await getUserRole(currentUser.uid);
-    
     if (currentRole !== "admin" && currentRole !== "moderator") {
       document.getElementById("access-denied").classList.remove("hidden");
       return;
