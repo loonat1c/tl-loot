@@ -241,7 +241,10 @@
     /* ── Всплывающая карточка предмета ─────────────────── */
     .loot-tag-wrap .item-tooltip {
       display: none;
-      position: fixed;
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
       width: 380px;
       max-width: 90vw;
       max-height: 85vh;
@@ -253,6 +256,29 @@
       box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
       z-index: 1000;
       pointer-events: none;
+    }
+
+    .loot-tag-wrap:last-child .item-tooltip,
+    .loot-tag-wrap:nth-last-child(2) .item-tooltip {
+      left: auto;
+      right: calc(100% + 12px);
+    }
+
+    .loot-tag-wrap .item-tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 20px;
+      border: 8px solid transparent;
+      border-right-color: var(--accent);
+    }
+
+    .loot-tag-wrap:last-child .item-tooltip::before,
+    .loot-tag-wrap:nth-last-child(2) .item-tooltip::before {
+      right: auto;
+      left: 100%;
+      border-right-color: transparent;
+      border-left-color: var(--accent);
     }
 
     .loot-tag-wrap:hover .item-tooltip {
@@ -792,6 +818,11 @@
         transform: translate(-50%, -50%) !important;
         width: 92vw;
         max-height: 80vh;
+        right: auto !important;
+      }
+
+      .loot-tag-wrap .item-tooltip::before {
+        display: none;
       }
 
       .item-tooltip .tt-stats {
@@ -928,10 +959,6 @@
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ============================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ============================================
-
   initNavbar();
   initAuth();
   await authReady;
@@ -940,20 +967,12 @@
     window.location.href = '/pages/login.html';
   }
 
-  // ============================================
-  // СОСТОЯНИЕ
-  // ============================================
-
   let allItems = [];
   let allBosses = [];
   let characters = [];
   let editingCharId = null;
   const userId = currentUser?.uid;
   const userIsModerator = isModerator();
-
-  // ============================================
-  // ЗАГРУЗКА ДАННЫХ
-  // ============================================
 
   async function loadData() {
     try {
@@ -990,10 +1009,6 @@
     }
   }
 
-  // ============================================
-  // ОТОБРАЖЕНИЕ ПРОФИЛЯ
-  // ============================================
-
   function renderProfile() {
     const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
     document.getElementById('profile-name').textContent = name;
@@ -1003,10 +1018,6 @@
     const avatar = document.getElementById('profile-avatar');
     avatar.textContent = name.charAt(0).toUpperCase();
   }
-
-  // ============================================
-  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ КАРТОЧЕК
-  // ============================================
 
   function getWeaponLabel(weaponId) {
     const weapon = WEAPONS.find(w => w.id === weaponId);
@@ -1042,10 +1053,6 @@
     return types[type] || type;
   }
 
-  // ============================================
-  // СОЗДАНИЕ ВСПЛЫВАЮЩЕЙ КАРТОЧКИ ПРЕДМЕТА
-  // ============================================
-
   function createItemTooltip(item) {
     if (!item) return '';
 
@@ -1063,11 +1070,8 @@
     const damageMax = item.damage_max || '';
     const isWeapon = item.slot === 'weapon';
 
-    // Определяем позицию тултипа
-    const position = 'right';
-
     return `
-      <div class="item-tooltip" style="${position === 'left' ? 'right: calc(100% + 12px); left: auto;' : 'left: calc(100% + 12px); right: auto;'}">
+      <div class="item-tooltip">
         <div class="tt-header">
           <img class="tt-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
           <div class="tt-title">
@@ -1143,10 +1147,6 @@
     `;
   }
 
-  // ============================================
-  // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
-  // ============================================
-
   function renderCharacters() {
     const container = document.getElementById('characters-list');
     const addBtn = document.getElementById('btn-add-character');
@@ -1181,7 +1181,6 @@
         return `<span class="weapon-tag">${getWeaponLabel(w)}</span>`;
       }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
 
-      // Желаемый лут с всплывающими карточками
       let lootHtml = '';
       if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
         const lootItems = Object.entries(char.desired_loot)
@@ -1293,10 +1292,6 @@
     };
   }
 
-  // ============================================
-  // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
-  // ============================================
-
   function populateWeaponSelects() {
     const selects = ['f-char-weapon1', 'f-char-weapon2'];
     
@@ -1319,10 +1314,6 @@
       }
     });
   }
-
-  // ============================================
-  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ
-  // ============================================
 
   function setupWeaponSync() {
     const weapon1 = document.getElementById('f-char-weapon1');
@@ -1353,10 +1344,6 @@
 
     syncWeapons();
   }
-
-  // ============================================
-  // SELECT С ПОИСКОМ
-  // ============================================
 
   function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
     const container = document.createElement('div');
@@ -1458,10 +1445,6 @@
     return container;
   }
 
-  // ============================================
-  // ЗАПОЛНЕНИЕ ЖЕЛАЕМОГО ЛУТА
-  // ============================================
-
   function populateLootSlots() {
     const container = document.getElementById('loot-selection');
     if (!container) return;
@@ -1488,10 +1471,6 @@
     });
   }
 
-  // ============================================
-  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ
-  // ============================================
-
   function getSelectedLoot() {
     const result = {};
     document.querySelectorAll('.loot-slot').forEach(slot => {
@@ -1506,10 +1485,6 @@
     });
     return result;
   }
-
-  // ============================================
-  // МОДАЛЬНОЕ ОКНО
-  // ============================================
 
   const modal = document.getElementById('modal-character');
   const modalTitle = document.getElementById('modal-char-title');
@@ -1566,10 +1541,6 @@
   document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
   document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
 
-  // ============================================
-  // СОХРАНЕНИЕ ПЕРСОНАЖА
-  // ============================================
-
   document.getElementById('btn-char-save').addEventListener('click', async () => {
     const name = charName.value.trim();
     const weapon1 = charWeapon1.value;
@@ -1602,7 +1573,6 @@
 
     const desiredLoot = getSelectedLoot();
 
-    // Если пользователь модератор или админ — сразу одобряем
     const isModeratorOrAdmin = isModerator();
     const status = isModeratorOrAdmin ? 'approved' : 'pending';
 
@@ -1651,10 +1621,6 @@
     }
   });
 
-  // ============================================
-  // HELPERS
-  // ============================================
-
   function showToast(msg, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -1662,10 +1628,6 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
-
-  // ============================================
-  // ЗАГРУЗКА ДАННЫХ
-  // ============================================
 
   await loadData();
 
