@@ -104,20 +104,6 @@
       border: 1px solid var(--border);
     }
 
-    .badge-quality-epic {
-      background: rgba(155, 89, 182, 0.2);
-      color: #9b59b6;
-      border: 1px solid #9b59b6;
-    }
-
-    .badge-quality-epic_ii {
-      background: rgba(142, 68, 173, 0.25);
-      color: #a855f7;
-      border: 2px solid #8e44ad;
-      box-shadow: 0 0 8px rgba(142, 68, 173, 0.3);
-      font-weight: 700;
-    }
-
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
     .item-card .full-card {
       display: none;
@@ -242,22 +228,6 @@
       margin-top: 2px;
     }
 
-    .full-card .fc-effect .effect-info .effect-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem 0.8rem;
-      margin-top: 4px;
-    }
-
-    .full-card .fc-effect .effect-info .effect-stats .es-item {
-      font-size: 0.75rem;
-      color: var(--text);
-    }
-
-    .full-card .fc-effect .effect-info .effect-stats .es-item .es-label {
-      color: var(--text-muted);
-    }
-
     .full-card .fc-properties {
       margin-top: 0.5rem;
       padding-top: 0.5rem;
@@ -334,7 +304,7 @@
       border-radius: var(--radius);
       padding: 1.5rem;
       width: 100%;
-      max-width: 640px;
+      max-width: 680px;
       max-height: 90vh;
       overflow-y: auto;
     }
@@ -344,10 +314,13 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
     }
 
     .modal-header h3 {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
+      font-weight: 700;
     }
 
     .btn-close {
@@ -357,37 +330,87 @@
       font-size: 1.25rem;
       cursor: pointer;
       line-height: 1;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: background 0.15s;
     }
 
     .btn-close:hover {
+      background: var(--bg-card2);
       color: var(--text);
+    }
+
+    .modal .form-section {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal .form-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .modal .form-section .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .modal .form-row .form-group {
+      margin-bottom: 0;
     }
 
     .image-upload-area {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
-      padding: 1rem;
+      padding: 0.75rem;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--bg-card2);
     }
 
     .image-upload-area:hover {
       border-color: var(--accent);
+      background: var(--bg-card);
     }
 
     .image-preview {
-      width: 96px;
-      height: 96px;
+      width: 80px;
+      height: 80px;
       object-fit: cover;
       border-radius: 6px;
-      margin: 0 auto 0.5rem;
+      margin: 0 auto 0.3rem;
       display: block;
     }
 
     .upload-hint {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
+    }
+
+    .image-upload-area.small {
+      padding: 0.4rem;
+    }
+
+    .image-upload-area.small .image-preview {
+      width: 48px;
+      height: 48px;
+    }
+
+    .image-upload-area.small .upload-hint {
+      font-size: 0.6rem;
     }
 
     /* ── Динамические поля ────────────────────────────── */
@@ -400,16 +423,25 @@
       gap: 0.5rem;
       align-items: center;
       margin-bottom: 0.3rem;
+      background: var(--bg-card2);
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .field-row:hover {
+      border-color: var(--accent);
     }
 
     .field-row input {
       flex: 1;
       padding: 0.3rem 0.5rem;
-      background: var(--bg-card2);
+      background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--text);
       font-size: 0.85rem;
+      transition: border-color 0.15s;
     }
 
     .field-row input:focus {
@@ -422,44 +454,75 @@
       border: none;
       color: var(--danger);
       cursor: pointer;
-      font-size: 1rem;
-      padding: 0 0.3rem;
+      font-size: 0.9rem;
+      padding: 0.1rem 0.3rem;
       line-height: 1;
+      border-radius: 4px;
+      transition: background 0.15s;
     }
 
     .field-row .btn-remove-field:hover {
-      opacity: 0.7;
+      background: rgba(239, 68, 68, 0.15);
     }
 
     .btn-add-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
       font-size: 0.75rem;
-      padding: 0.15rem 0.6rem;
-      margin-top: 0.2rem;
+      padding: 0.25rem 0.75rem;
+      margin-top: 0.3rem;
       background: var(--bg-card2);
       color: var(--text-muted);
       border: 1px solid var(--border);
       border-radius: 4px;
       cursor: pointer;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      height: 30px;
     }
 
     .btn-add-field:hover {
       border-color: var(--accent);
       color: var(--text);
+      background: var(--bg-card);
     }
 
-    .field-row .field-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      min-width: 60px;
+    .btn-add-field .icon {
+      font-size: 0.9rem;
+      line-height: 1;
     }
 
-    .field-row .field-value {
-      flex: 2;
+    .field-row .field-label-input {
+      flex: 1;
     }
 
-    .field-row .field-value input {
-      width: 100%;
+    .field-row .field-value-input {
+      flex: 1.5;
+    }
+
+    .field-row.field-single .field-label-input {
+      flex: 1;
+    }
+
+    .field-row.field-single .field-value-input {
+      display: none;
+    }
+
+    .modal .form-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal .form-actions .btn {
+      min-width: 120px;
+    }
+
+    .modal .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
     }
 
     @media (max-width: 768px) {
@@ -481,12 +544,29 @@
         grid-template-columns: 1fr;
       }
 
+      .modal .form-row {
+        grid-template-columns: 1fr;
+      }
+
       .field-row {
         flex-wrap: wrap;
       }
 
-      .field-row .field-label {
-        min-width: 100%;
+      .field-row .field-label-input {
+        flex: 1 1 100%;
+      }
+
+      .field-row .field-value-input {
+        flex: 1 1 100%;
+      }
+
+      .modal .form-actions {
+        flex-direction: column;
+      }
+
+      .modal .form-actions .btn {
+        width: 100%;
+        min-width: unset;
       }
     }
   </style>
@@ -531,106 +611,120 @@
 
     <input type="hidden" id="edit-id" />
 
-    <!-- Картинка -->
-    <div class="form-group">
-      <label>Картинка</label>
-      <div class="image-upload-area" id="upload-area">
-        <img id="img-preview" class="image-preview hidden" alt="preview" />
-        <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
-      </div>
-    </div>
+    <!-- ─── ОСНОВНАЯ ИНФОРМАЦИЯ ─── -->
+    <div class="form-section">
+      <div class="section-title">Основная информация</div>
 
-    <!-- Название -->
-    <div class="form-group">
-      <label>Название *</label>
-      <input type="text" id="f-name" placeholder="Шлем Тени" />
-    </div>
-
-    <!-- Слот -->
-    <div class="form-group">
-      <label>Слот *</label>
-      <select id="f-slot"><option value="">— выбери слот —</option></select>
-    </div>
-
-    <!-- Тип оружия -->
-    <div class="form-group" id="weapon-type-group" style="display:none;">
-      <label>Тип оружия *</label>
-      <select id="f-weapon-type">
-        <option value="">— выбери тип оружия —</option>
-        <option value="bow">🏹 Лук</option>
-        <option value="staff">🪄 Посох</option>
-        <option value="twohand_sword">⚔️ Двуручный меч</option>
-        <option value="crossbow">🎯 Арбалеты</option>
-        <option value="wand">✨ Жезл</option>
-        <option value="daggers">🗡️ Кинжалы</option>
-        <option value="sword_shield">🛡️ Щит и меч</option>
-        <option value="spear">🔱 Копье</option>
-      </select>
-    </div>
-
-    <!-- Качество -->
-    <div class="form-group">
-      <label>Качество</label>
-      <select id="f-quality">
-        <option value="epic">🟣 Эпическое</option>
-        <option value="epic_ii">🟣 Эпическое II</option>
-      </select>
-    </div>
-
-    <!-- Босс -->
-    <div class="form-group">
-      <label>Босс *</label>
-      <select id="f-boss"><option value="">— выбери босса —</option></select>
-    </div>
-
-    <!-- Описание -->
-    <div class="form-group">
-      <label>Описание</label>
-      <textarea id="f-description" rows="2" placeholder="Характеристики, особенности..."></textarea>
-    </div>
-
-    <!-- Флейвор (цитата) -->
-    <div class="form-group">
-      <label>Флейвор (цитата)</label>
-      <input type="text" id="f-flavor" placeholder="«Цитата предмета...»" />
-    </div>
-
-    <!-- Характеристики (статы) — ГИБКИЕ ПОЛЯ -->
-    <div class="form-group">
-      <label>Характеристики</label>
-      <div class="dynamic-fields" id="stats-fields"></div>
-      <button class="btn-add-field" data-target="stats">+ Добавить характеристику</button>
-    </div>
-
-    <!-- Эффект -->
-    <div class="form-group">
-      <label>Эффект</label>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
-        <input type="text" id="f-effect-name" placeholder="Название эффекта" />
-        <input type="text" id="f-effect-desc" placeholder="Описание эффекта" />
-      </div>
-      <div style="margin-bottom:0.5rem;">
-        <label style="font-size:0.8rem;">Картинка эффекта</label>
-        <div class="image-upload-area" id="effect-upload-area" style="padding:0.5rem;">
-          <img id="effect-preview" class="image-preview hidden" alt="effect" style="width:48px;height:48px;" />
-          <div class="upload-hint" id="effect-upload-hint" style="font-size:0.7rem;">Нажми чтобы выбрать картинку</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Название *</label>
+          <input type="text" id="f-name" placeholder="Например: Шлем Тени" />
+        </div>
+        <div class="form-group">
+          <label>Слот *</label>
+          <select id="f-slot">
+            <option value="">— выбери слот —</option>
+          </select>
         </div>
       </div>
-      <label style="font-size:0.8rem;">Статы эффекта</label>
-      <div class="dynamic-fields" id="effect-stats-fields"></div>
-      <button class="btn-add-field" data-target="effect-stats">+ Добавить стат эффекта</button>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Качество</label>
+          <select id="f-quality">
+            <option value="epic">🟣 Эпическое</option>
+            <option value="epic_ii">🟣 Эпическое II</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Босс *</label>
+          <select id="f-boss">
+            <option value="">— выбери босса —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Тип оружия -->
+      <div class="form-group" id="weapon-type-group" style="display:none;">
+        <label>Тип оружия *</label>
+        <select id="f-weapon-type">
+          <option value="">— выбери тип оружия —</option>
+          <option value="bow">🏹 Лук</option>
+          <option value="staff">🪄 Посох</option>
+          <option value="twohand_sword">⚔️ Двуручный меч</option>
+          <option value="crossbow">🎯 Арбалеты</option>
+          <option value="wand">✨ Жезл</option>
+          <option value="daggers">🗡️ Кинжалы</option>
+          <option value="sword_shield">🛡️ Щит и меч</option>
+          <option value="spear">🔱 Копье</option>
+        </select>
+      </div>
+
+      <!-- Картинка -->
+      <div class="form-group">
+        <label>Картинка</label>
+        <div class="image-upload-area" id="upload-area">
+          <img id="img-preview" class="image-preview hidden" alt="preview" />
+          <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Возможные свойства — ГИБКИЕ ПОЛЯ -->
-    <div class="form-group">
-      <label>Возможные свойства</label>
+    <!-- ─── ОПИСАНИЕ ─── -->
+    <div class="form-section">
+      <div class="section-title">Описание</div>
+      <div class="form-group">
+        <label>Описание / Флейвор</label>
+        <textarea id="f-description" rows="4" placeholder="Полное описание предмета, цитата, история..."></textarea>
+      </div>
+    </div>
+
+    <!-- ─── ХАРАКТЕРИСТИКИ ─── -->
+    <div class="form-section">
+      <div class="section-title">Характеристики</div>
+      <div class="dynamic-fields" id="stats-fields"></div>
+      <button class="btn-add-field" data-target="stats">
+        <span class="icon">+</span> Добавить характеристику
+      </button>
+    </div>
+
+    <!-- ─── ЭФФЕКТ ─── -->
+    <div class="form-section">
+      <div class="section-title">Эффект</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Название эффекта</label>
+          <input type="text" id="f-effect-name" placeholder="Например: Глубинное пламя" />
+        </div>
+        <div class="form-group">
+          <label>Картинка эффекта</label>
+          <div class="image-upload-area small" id="effect-upload-area">
+            <img id="effect-preview" class="image-preview hidden" alt="effect" />
+            <div class="upload-hint" id="effect-upload-hint">Нажми чтобы выбрать</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Описание эффекта</label>
+        <input type="text" id="f-effect-desc" placeholder="Описание эффекта..." />
+      </div>
+    </div>
+
+    <!-- ─── ВОЗМОЖНЫЕ СВОЙСТВА ─── -->
+    <div class="form-section">
+      <div class="section-title">Возможные свойства</div>
       <div class="dynamic-fields" id="properties-fields"></div>
-      <button class="btn-add-field" data-target="properties">+ Добавить свойство</button>
+      <button class="btn-add-field" data-target="properties">
+        <span class="icon">+</span> Добавить свойство
+      </button>
     </div>
 
     <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
 
-    <div class="flex gap-1 mt-3">
+    <!-- ─── КНОПКИ ─── -->
+    <div class="form-actions">
       <button class="btn btn-primary" id="btn-save">Сохранить</button>
       <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
     </div>
@@ -736,42 +830,74 @@
   // ДИНАМИЧЕСКИЕ ПОЛЯ
   // ==================================================
 
-  function addField(containerId, label1 = '', label2 = '', val1 = '', val2 = '') {
+  function addField(containerId, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return;
     const row = document.createElement('div');
-    row.className = 'field-row';
-    row.innerHTML = `
-      <input type="text" placeholder="${label1 || 'Название'}" value="${val1}" class="field-label-input" />
-      <input type="text" placeholder="${label2 || 'Значение'}" value="${val2}" class="field-value-input" />
-      <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
-    `;
+    row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
+
+    if (type === 'single') {
+      row.innerHTML = `
+        <input type="text" placeholder="Введите свойство..." class="field-label-input" />
+        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <input type="text" placeholder="Название" class="field-label-input" />
+        <input type="text" placeholder="Значение" class="field-value-input" />
+        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+      `;
+    }
     container.appendChild(row);
+    // Фокус на первый инпут
+    const firstInput = row.querySelector('input');
+    if (firstInput) setTimeout(() => firstInput.focus(), 50);
   }
 
-  function getFields(containerId, type = 'pairs') {
+  function getFields(containerId, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return [];
-    if (type === 'pairs') {
-      return Array.from(container.querySelectorAll('.field-row')).map(row => {
-        const inputs = row.querySelectorAll('input');
-        return {
-          label: inputs[0]?.value.trim() || '',
-          value: inputs[1]?.value.trim() || ''
-        };
-      }).filter(f => f.label || f.value);
-    }
-    return Array.from(container.querySelectorAll('.field-row input')).map(inp => inp.value.trim()).filter(Boolean);
+    const rows = container.querySelectorAll('.field-row');
+    const result = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (type === 'single') {
+        const val = inputs[0]?.value.trim();
+        if (val) result.push(val);
+      } else {
+        const label = inputs[0]?.value.trim() || '';
+        const value = inputs[1]?.value.trim() || '';
+        if (label || value) result.push({ label, value });
+      }
+    });
+    return result;
   }
 
-  function setFields(containerId, data, type = 'pairs') {
+  function setFields(containerId, data, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    if (type === 'pairs') {
-      data.forEach(item => addField(containerId, 'Название', 'Значение', item.label || '', item.value || ''));
+    if (type === 'single') {
+      data.forEach(val => {
+        const row = document.createElement('div');
+        row.className = 'field-row field-single';
+        row.innerHTML = `
+          <input type="text" placeholder="Введите свойство..." class="field-label-input" value="${val}" />
+          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+      });
     } else {
-      data.forEach(val => addField(containerId, '', 'Значение', '', val));
+      data.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.innerHTML = `
+          <input type="text" placeholder="Название" class="field-label-input" value="${item.label || ''}" />
+          <input type="text" placeholder="Значение" class="field-value-input" value="${item.value || ''}" />
+          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+      });
     }
   }
 
@@ -779,18 +905,16 @@
   document.querySelectorAll('.btn-add-field').forEach(btn => {
     btn.addEventListener('click', function() {
       const target = this.dataset.target;
-      if (target === 'stats') {
-        addField('stats-fields', 'Название', 'Значение');
-      } else if (target === 'effect-stats') {
-        addField('effect-stats-fields', 'Название', 'Значение');
-      } else if (target === 'properties') {
-        addField('properties-fields', 'Свойство', '');
+      if (target === 'properties') {
+        addField('properties-fields', 'single');
+      } else {
+        addField(`${target}-fields`, 'pair');
       }
     });
   });
 
   // Инициализация полей
-  ['stats-fields', 'effect-stats-fields', 'properties-fields'].forEach(id => {
+  ['stats-fields', 'properties-fields'].forEach(id => {
     document.getElementById(id).innerHTML = '';
   });
 
@@ -909,29 +1033,28 @@
     const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
     const canEdit = canWrite();
 
-    // Парсим данные
     const stats = item.stats || [];
     const effect = item.effect || {};
     const properties = item.properties || [];
     const flavor = item.flavor || '';
+    const desc = item.description || '';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
-    // Основная карточка (краткая)
+    // Основная карточка (краткая) — БЕЗ КАЧЕСТВА
     card.innerHTML = `
       <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
       <div class="item-info">
         <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
           <span class="badge badge-purple">${slotLabel}</span>
-          <span class="badge badge-quality-${item.quality || 'epic'}">${getQualityLabel(item.quality)}</span>
           ${item.slot === 'weapon' && item.weapon_type ? `
             <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
           ` : ''}
         </div>
         <div class="item-boss">👹 ${getBossName(item.boss_id)}</div>
-        ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+        ${desc ? `<div class="item-desc">${desc}</div>` : ''}
       </div>
       ${canEdit ? `
         <div class="item-actions">
@@ -940,7 +1063,7 @@
         </div>
       ` : ''}
 
-      <!-- Полная карточка при наведении -->
+      <!-- Полная карточка при наведении (с качеством) -->
       <div class="full-card">
         <div class="fc-header">
           <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
@@ -967,13 +1090,6 @@
             <div class="effect-info">
               ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
               ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
-              ${effect.stats && effect.stats.length ? `
-                <div class="effect-stats">
-                  ${effect.stats.map(s => `
-                    <span class="es-item"><span class="es-label">${s.label || ''}</span> ${s.value || ''}</span>
-                  `).join('')}
-                </div>
-              ` : ''}
             </div>
           </div>
         ` : ''}
@@ -987,8 +1103,8 @@
           </div>
         ` : ''}
 
-        ${flavor ? `
-          <div class="fc-flavor">${flavor}</div>
+        ${desc ? `
+          <div class="fc-flavor">${desc}</div>
         ` : ''}
       </div>
     `;
@@ -1029,7 +1145,6 @@
     document.getElementById('f-name').value = '';
     document.getElementById('f-boss').value = '';
     document.getElementById('f-description').value = '';
-    document.getElementById('f-flavor').value = '';
     document.getElementById('f-slot').value = '';
     document.getElementById('f-quality').value = 'epic';
     document.getElementById('f-effect-name').value = '';
@@ -1037,12 +1152,9 @@
     document.getElementById('f-weapon-type').value = '';
     weaponTypeGroup.style.display = 'none';
 
-    // Очищаем динамические поля
     document.getElementById('stats-fields').innerHTML = '';
-    document.getElementById('effect-stats-fields').innerHTML = '';
     document.getElementById('properties-fields').innerHTML = '';
 
-    // Очищаем превью картинок
     const preview = document.getElementById('img-preview');
     preview.classList.add('hidden');
     preview.src = '';
@@ -1068,7 +1180,6 @@
     document.getElementById('f-slot').value = item.slot || '';
     document.getElementById('f-boss').value = item.boss_id || '';
     document.getElementById('f-description').value = item.description || '';
-    document.getElementById('f-flavor').value = item.flavor || '';
     document.getElementById('f-quality').value = item.quality || 'epic';
 
     if (item.slot === 'weapon') {
@@ -1076,18 +1187,13 @@
       document.getElementById('f-weapon-type').value = item.weapon_type || '';
     }
 
-    // Заполняем динамические поля
     if (item.stats && item.stats.length) {
-      setFields('stats-fields', item.stats);
-    }
-    if (item.effect?.stats && item.effect.stats.length) {
-      setFields('effect-stats-fields', item.effect.stats);
+      setFields('stats-fields', item.stats, 'pair');
     }
     if (item.properties && item.properties.length) {
-      setFields('properties-fields', item.properties.map(p => ({ label: p, value: '' })));
+      setFields('properties-fields', item.properties, 'single');
     }
 
-    // Эффект
     if (item.effect) {
       document.getElementById('f-effect-name').value = item.effect.name || '';
       document.getElementById('f-effect-desc').value = item.effect.desc || '';
@@ -1135,7 +1241,6 @@
     const slot = document.getElementById('f-slot').value;
     const bossId = document.getElementById('f-boss').value;
     const description = document.getElementById('f-description').value.trim();
-    const flavor = document.getElementById('f-flavor').value.trim();
     const quality = document.getElementById('f-quality').value;
     const effectName = document.getElementById('f-effect-name').value.trim();
     const effectDesc = document.getElementById('f-effect-desc').value.trim();
@@ -1153,16 +1258,13 @@
     const boss = allBosses.find(b => b.id === bossId);
     const bossName = boss?.name || '';
 
-    // Собираем динамические поля
-    const stats = getFields('stats-fields');
-    const effectStats = getFields('effect-stats-fields');
-    const properties = getFields('properties-fields', 'single').map(p => p.label || p);
+    const stats = getFields('stats-fields', 'pair');
+    const properties = getFields('properties-fields', 'single');
 
     const effect = {};
-    if (effectName || effectDesc || effectStats.length || currentEffectImage) {
+    if (effectName || effectDesc || currentEffectImage) {
       effect.name = effectName;
       effect.desc = effectDesc;
-      effect.stats = effectStats;
       if (currentEffectImage) effect.image = currentEffectImage;
     }
 
@@ -1173,7 +1275,6 @@
       boss_id: bossId,
       boss_name: bossName,
       description,
-      flavor,
       stats,
       effect,
       properties,
