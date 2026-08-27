@@ -108,9 +108,9 @@
     .item-card .full-card {
       display: none;
       position: fixed;
-      left: 50%;
+      left: calc(100% + 20px);
       top: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateY(-50%);
       width: 440px;
       max-width: 92vw;
       max-height: 85vh;
@@ -124,7 +124,30 @@
       pointer-events: none;
     }
 
-    /* Убираем стрелку, так как карточка по центру */
+    /* Для левой стороны — карточка открывается вправо */
+    .item-card:nth-child(n) .full-card {
+      left: calc(100% + 20px);
+      right: auto;
+    }
+
+    /* Для правой стороны — карточка открывается влево */
+    .item-card:last-child .full-card,
+    .item-card:nth-last-child(2) .full-card {
+      left: auto;
+      right: calc(100% + 20px);
+    }
+
+    /* На мобилках центрируем */
+    @media (max-width: 992px) {
+      .item-card .full-card {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        right: auto;
+      }
+    }
+
     .item-card .full-card::before {
       display: none;
     }
@@ -133,7 +156,6 @@
       display: block;
     }
 
-    /* Стили для скролла внутри полной карточки */
     .full-card::-webkit-scrollbar {
       width: 4px;
     }
@@ -150,36 +172,75 @@
 
     .full-card .fc-header {
       display: flex;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 0.75rem;
       align-items: flex-start;
     }
 
     .full-card .fc-header .fc-img {
-      width: 48px;
-      height: 48px;
-      border-radius: 6px;
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
       object-fit: cover;
       background: var(--bg-card2);
       flex-shrink: 0;
+      border: 1px solid var(--border);
     }
 
     .full-card .fc-header .fc-title {
       flex: 1;
+      min-width: 0;
     }
 
     .full-card .fc-header .fc-title .fc-name {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--text);
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.3;
+    }
+
+    .full-card .fc-header .fc-title .fc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem 0.6rem;
+      margin-top: 4px;
     }
 
     .full-card .fc-header .fc-title .fc-quality {
       font-size: 0.75rem;
       color: var(--text-muted);
-      margin-top: 6px;
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-header .fc-title .fc-level {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--bg-card2);
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-damage {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 0.4rem 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-damage .damage-label {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
     }
 
     .full-card .fc-stats {
@@ -285,13 +346,6 @@
       color: var(--text-muted);
       font-style: italic;
       border-top: 1px solid var(--border);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .full-card .fc-level {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 4px;
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
@@ -554,13 +608,35 @@
       resize: vertical;
     }
 
-    @media (max-width: 768px) {
-      .item-card .full-card {
-        width: 95vw;
-        max-height: 80vh;
-        padding: 1rem;
-      }
+    /* ── Поле урона в модалке ──────────────────────────── */
+    .damage-inputs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
+    .damage-inputs input {
+      width: 80px;
+      text-align: center;
+    }
+
+    .damage-inputs span {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 992px) {
+      .item-card .full-card {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        right: auto;
+        width: 92vw;
+      }
+    }
+
+    @media (max-width: 768px) {
       .full-card .fc-stats {
         grid-template-columns: 1fr;
       }
@@ -588,6 +664,10 @@
       .modal .form-actions .btn {
         width: 100%;
         min-width: unset;
+      }
+
+      .damage-inputs {
+        flex-wrap: wrap;
       }
     }
   </style>
@@ -683,6 +763,18 @@
             <option value="sword_shield">🛡️ Щит и меч</option>
             <option value="spear">🔱 Копье</option>
           </select>
+        </div>
+      </div>
+
+      <!-- Урон -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Урон (мин)</label>
+          <input type="number" id="f-damage-min" placeholder="15" min="0" step="1" />
+        </div>
+        <div class="form-group">
+          <label>Урон (макс)</label>
+          <input type="number" id="f-damage-max" placeholder="155" min="0" step="1" />
         </div>
       </div>
 
@@ -1046,6 +1138,8 @@
     const properties = item.properties || [];
     const desc = item.description || '';
     const level = item.level || '';
+    const damageMin = item.damage_min || '';
+    const damageMax = item.damage_max || '';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
@@ -1076,10 +1170,20 @@
           <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
-            <div class="fc-quality">${getQualityLabel(item.quality)} • ${slotLabel}</div>
-            ${level ? `<div class="fc-level">Уровень: ${level}</div>` : ''}
+            <div class="fc-meta">
+              <span class="fc-quality">${getQualityLabel(item.quality)}</span>
+              ${level ? `<span class="fc-level">Уровень ${level}</span>` : ''}
+              <span class="fc-quality">• ${slotLabel}</span>
+            </div>
           </div>
         </div>
+
+        ${damageMin || damageMax ? `
+          <div class="fc-damage">
+            <span class="damage-label">🗡️ Урон:</span>
+            ${damageMin} ~ ${damageMax || damageMin}
+          </div>
+        ` : ''}
 
         ${stats.length ? `
           <div class="fc-stats">
@@ -1156,6 +1260,8 @@
     document.getElementById('f-slot').value = '';
     document.getElementById('f-quality').value = 'epic';
     document.getElementById('f-level').value = '';
+    document.getElementById('f-damage-min').value = '';
+    document.getElementById('f-damage-max').value = '';
     document.getElementById('f-effect-name').value = '';
     document.getElementById('f-effect-desc').value = '';
     document.getElementById('f-weapon-type').value = '';
@@ -1190,6 +1296,8 @@
     document.getElementById('f-description').value = item.description || '';
     document.getElementById('f-quality').value = item.quality || 'epic';
     document.getElementById('f-level').value = item.level || '';
+    document.getElementById('f-damage-min').value = item.damage_min || '';
+    document.getElementById('f-damage-max').value = item.damage_max || '';
     document.getElementById('f-weapon-type').value = item.weapon_type || '';
 
     if (item.stats && item.stats.length) {
@@ -1248,6 +1356,8 @@
     const description = document.getElementById('f-description').value.trim();
     const quality = document.getElementById('f-quality').value;
     const level = document.getElementById('f-level').value.trim();
+    const damageMin = document.getElementById('f-damage-min').value.trim();
+    const damageMax = document.getElementById('f-damage-max').value.trim();
     const effectName = document.getElementById('f-effect-name').value.trim();
     const effectDesc = document.getElementById('f-effect-desc').value.trim();
 
@@ -1276,6 +1386,8 @@
       slot,
       quality,
       level,
+      damage_min: damageMin || null,
+      damage_max: damageMax || null,
       boss_id: bossId,
       boss_name: bossName,
       description,
