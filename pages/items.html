@@ -1,164 +1,1365 @@
-/* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
-.item-card .full-card {
-  display: none;
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 420px;
-  max-width: 90vw;
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  z-index: 100;
-  pointer-events: none;
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Предметы — TL Loot</title>
 
-.item-card .full-card::before {
-  content: '';
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 8px solid transparent;
-  border-right-color: var(--accent);
-}
+  <link rel="stylesheet" href="../css/main.css" />
 
-.item-card:hover .full-card {
-  display: block;
-}
+  <style>
+    /* ── Основная сетка ─────────────────────────────────── */
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
 
-.full-card .fc-header {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  align-items: flex-start;
-}
+    /* ── Карточка предмета ─────────────────────────────── */
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      cursor: pointer;
+    }
 
-.full-card .fc-header .fc-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  object-fit: cover;
-  background: var(--bg-card2);
-  flex-shrink: 0;
-}
+    .item-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+      z-index: 10;
+    }
 
-.full-card .fc-header .fc-title {
-  flex: 1;
-}
+    .item-card.quality-epic {
+      border-left: 3px solid #9b59b6;
+    }
 
-.full-card .fc-header .fc-title .fc-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text);
-  font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-}
+    .item-card.quality-epic_ii {
+      border-left: 3px solid #8e44ad;
+    }
 
-.full-card .fc-header .fc-title .fc-quality {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
+    .item-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
 
-.full-card .fc-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem 1rem;
-  margin: 0.5rem 0;
-  padding: 0.5rem;
-  background: var(--bg-card2);
-  border-radius: var(--radius);
-}
+    .item-info {
+      flex: 1;
+      min-width: 0;
+    }
 
-.full-card .fc-stats .stat {
-  font-size: 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
+    .item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-.full-card .fc-stats .stat .stat-label {
-  color: var(--text-muted);
-}
+    .item-meta {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
 
-.full-card .fc-stats .stat .stat-value {
-  color: var(--text);
-  font-weight: 500;
-}
+    .item-boss {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
 
-.full-card .fc-effect {
-  display: flex;
-  gap: 0.75rem;
-  margin: 0.75rem 0;
-  padding: 0.75rem;
-  background: rgba(124, 58, 237, 0.08);
-  border-radius: var(--radius);
-  border: 1px solid var(--accent-glow);
-}
+    .item-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
 
-.full-card .fc-effect .effect-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  object-fit: cover;
-  background: var(--bg-card2);
-  flex-shrink: 0;
-}
+    .item-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
 
-.full-card .fc-effect .effect-info {
-  flex: 1;
-  font-size: 0.82rem;
-}
+    .badge-secondary {
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
 
-.full-card .fc-effect .effect-info .effect-name {
-  font-weight: 600;
-  color: var(--accent-soft);
-}
+    /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
+    .item-card .full-card {
+      display: none;
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 420px;
+      max-width: 90vw;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      pointer-events: none;
+    }
 
-.full-card .fc-effect .effect-info .effect-desc {
-  color: var(--text-muted);
-  margin-top: 2px;
-}
+    .item-card .full-card::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-right-color: var(--accent);
+    }
 
-.full-card .fc-properties {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
-}
+    .item-card:hover .full-card {
+      display: block;
+    }
 
-.full-card .fc-properties .prop-label {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 4px;
-}
+    .full-card .fc-header {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
 
-.full-card .fc-properties .prop-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-}
+    .full-card .fc-header .fc-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
 
-.full-card .fc-properties .prop-list .prop-tag {
-  background: var(--bg-card2);
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
+    .full-card .fc-header .fc-title {
+      flex: 1;
+    }
 
-.full-card .fc-flavor {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-style: italic;
-  border-top: 1px solid var(--border);
-  font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-}
+    .full-card .fc-header .fc-title .fc-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-header .fc-title .fc-quality {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .full-card .fc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem 1rem;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+    }
+
+    .full-card .fc-stats .stat {
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .full-card .fc-stats .stat .stat-label {
+      color: var(--text-muted);
+    }
+
+    .full-card .fc-stats .stat .stat-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .full-card .fc-effect {
+      display: flex;
+      gap: 0.75rem;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: rgba(124, 58, 237, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-glow);
+    }
+
+    .full-card .fc-effect .effect-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .full-card .fc-effect .effect-info {
+      flex: 1;
+      font-size: 0.82rem;
+    }
+
+    .full-card .fc-effect .effect-info .effect-name {
+      font-weight: 600;
+      color: var(--accent-soft);
+    }
+
+    .full-card .fc-effect .effect-info .effect-desc {
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .full-card .fc-properties {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .full-card .fc-properties .prop-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+
+    .full-card .fc-properties .prop-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+
+    .full-card .fc-properties .prop-list .prop-tag {
+      background: var(--bg-card2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .full-card .fc-flavor {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    /* ── Фильтры ────────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar input {
+      max-width: 220px;
+    }
+
+    .filter-bar select {
+      width: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── Модальное окно ────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .btn-close:hover {
+      background: var(--bg-card2);
+      color: var(--text);
+    }
+
+    .modal .form-section {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal .form-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .modal .form-section .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .modal .form-row .form-group {
+      margin-bottom: 0;
+    }
+
+    .image-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--bg-card2);
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+
+    .image-preview {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin: 0 auto 0.3rem;
+      display: block;
+    }
+
+    .upload-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .image-upload-area.small {
+      padding: 0.4rem;
+    }
+
+    .image-upload-area.small .image-preview {
+      width: 48px;
+      height: 48px;
+    }
+
+    .image-upload-area.small .upload-hint {
+      font-size: 0.6rem;
+    }
+
+    /* ── Динамические поля ────────────────────────────── */
+    .dynamic-fields {
+      margin-top: 0.25rem;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.3rem;
+      background: var(--bg-card2);
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .field-row:hover {
+      border-color: var(--accent);
+    }
+
+    .field-row input {
+      flex: 1;
+      padding: 0.3rem 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.85rem;
+      transition: border-color 0.15s;
+    }
+
+    .field-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field-row .btn-remove-field {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.1rem 0.3rem;
+      line-height: 1;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .field-row .btn-remove-field:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .btn-add-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      margin-top: 0.3rem;
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      height: 30px;
+    }
+
+    .btn-add-field:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--bg-card);
+    }
+
+    .btn-add-field .icon {
+      font-size: 0.9rem;
+      line-height: 1;
+    }
+
+    .field-row .field-label-input {
+      flex: 1;
+    }
+
+    .field-row .field-value-input {
+      flex: 1.5;
+    }
+
+    .field-row.field-single .field-label-input {
+      flex: 1;
+    }
+
+    .field-row.field-single .field-value-input {
+      display: none;
+    }
+
+    .modal .form-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal .form-actions .btn {
+      min-width: 120px;
+    }
+
+    .modal .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    @media (max-width: 768px) {
+      .item-card .full-card {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 92vw;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .item-card .full-card::before {
+        display: none;
+      }
+
+      .full-card .fc-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .modal .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .field-row {
+        flex-wrap: wrap;
+      }
+
+      .field-row .field-label-input {
+        flex: 1 1 100%;
+      }
+
+      .field-row .field-value-input {
+        flex: 1 1 100%;
+      }
+
+      .modal .form-actions {
+        flex-direction: column;
+      }
+
+      .modal .form-actions .btn {
+        width: 100%;
+        min-width: unset;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar" id="main-nav"></nav>
+
+<main class="container">
+
+  <div class="page-header">
+    <h2>🗡️ Предметы</h2>
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-item">
+      + Добавить предмет
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="filter-search" placeholder="Поиск по названию..." />
+    <select id="filter-slot"><option value="">Все слоты</option></select>
+    <select id="filter-quality"><option value="">Все качества</option></select>
+    <select id="filter-boss"><option value="">Все боссы</option></select>
+  </div>
+
+  <div id="items-grid" class="items-grid">
+    <div class="text-muted">Загрузка...</div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО
+═══════════════════════════════════════════ -->
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Добавить предмет</h3>
+      <button class="btn-close" id="btn-modal-close">✕</button>
+    </div>
+
+    <input type="hidden" id="edit-id" />
+
+    <!-- ─── ОСНОВНАЯ ИНФОРМАЦИЯ ─── -->
+    <div class="form-section">
+      <div class="section-title">Основная информация</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Название *</label>
+          <input type="text" id="f-name" placeholder="Например: Шлем Тени" />
+        </div>
+        <div class="form-group">
+          <label>Слот *</label>
+          <select id="f-slot">
+            <option value="">— выбери слот —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Качество</label>
+          <select id="f-quality">
+            <option value="epic">🟣 Эпическое</option>
+            <option value="epic_ii">🟣 Эпическое II</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Босс *</label>
+          <select id="f-boss">
+            <option value="">— выбери босса —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Тип оружия -->
+      <div class="form-group" id="weapon-type-group" style="display:none;">
+        <label>Тип оружия *</label>
+        <select id="f-weapon-type">
+          <option value="">— выбери тип оружия —</option>
+          <option value="bow">🏹 Лук</option>
+          <option value="staff">🪄 Посох</option>
+          <option value="twohand_sword">⚔️ Двуручный меч</option>
+          <option value="crossbow">🎯 Арбалеты</option>
+          <option value="wand">✨ Жезл</option>
+          <option value="daggers">🗡️ Кинжалы</option>
+          <option value="sword_shield">🛡️ Щит и меч</option>
+          <option value="spear">🔱 Копье</option>
+        </select>
+      </div>
+
+      <!-- Картинка -->
+      <div class="form-group">
+        <label>Картинка</label>
+        <div class="image-upload-area" id="upload-area">
+          <img id="img-preview" class="image-preview hidden" alt="preview" />
+          <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ОПИСАНИЕ ─── -->
+    <div class="form-section">
+      <div class="section-title">Описание</div>
+      <div class="form-group">
+        <label>Описание / Флейвор</label>
+        <textarea id="f-description" rows="4" placeholder="Полное описание предмета, цитата, история..."></textarea>
+      </div>
+    </div>
+
+    <!-- ─── ХАРАКТЕРИСТИКИ ─── -->
+    <div class="form-section">
+      <div class="section-title">Характеристики</div>
+      <div class="dynamic-fields" id="stats-fields"></div>
+      <button class="btn-add-field" data-target="stats">
+        <span class="icon">+</span> Добавить характеристику
+      </button>
+    </div>
+
+    <!-- ─── ЭФФЕКТ ─── -->
+    <div class="form-section">
+      <div class="section-title">Эффект</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Название эффекта</label>
+          <input type="text" id="f-effect-name" placeholder="Например: Глубинное пламя" />
+        </div>
+        <div class="form-group">
+          <label>Картинка эффекта</label>
+          <div class="image-upload-area small" id="effect-upload-area">
+            <img id="effect-preview" class="image-preview hidden" alt="effect" />
+            <div class="upload-hint" id="effect-upload-hint">Нажми чтобы выбрать</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Описание эффекта</label>
+        <input type="text" id="f-effect-desc" placeholder="Описание эффекта..." />
+      </div>
+    </div>
+
+    <!-- ─── ВОЗМОЖНЫЕ СВОЙСТВА ─── -->
+    <div class="form-section">
+      <div class="section-title">Возможные свойства</div>
+      <div class="dynamic-fields" id="properties-fields"></div>
+      <button class="btn-add-field" data-target="properties">
+        <span class="icon">+</span> Добавить свойство
+      </button>
+    </div>
+
+    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+
+    <!-- ─── КНОПКИ ─── -->
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-save">Сохранить</button>
+      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // ==================================================
+  // ИМПОРТЫ
+  // ==================================================
+
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { initAuth, authReady, canWrite, currentRole, currentUser } from "../js/modules/auth.js";
+  import { getItems, addItem, updateItem, deleteItem } from "../js/modules/items.js";
+  import { getBosses } from "../js/modules/bosses.js";
+  import { compressImage, pickFile, setItemImage } from "../js/modules/images.js";
+  import { SLOTS, QUALITY } from "../js/constants.js";
+
+  // ==================================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ==================================================
+
+  initNavbar();
+  initAuth();
+  await authReady;
+
+  console.log('🔐 Авторизация на странице предметов:', {
+    user: currentUser?.email || 'Нет',
+    role: currentRole,
+    canWrite: canWrite()
+  });
+
+  const addBtn = document.getElementById('btn-add-item');
+  if (addBtn) addBtn.classList.toggle('hidden', !canWrite());
+
+  // ==================================================
+  // SELECT СЛОТОВ
+  // ==================================================
+
+  const slotSelect = document.getElementById("f-slot");
+  const filterSlot = document.getElementById("filter-slot");
+  SLOTS.forEach(slot => {
+    slotSelect.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
+    filterSlot.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
+  });
+
+  // ==================================================
+  // SELECT КАЧЕСТВА (ФИЛЬТР)
+  // ==================================================
+
+  const filterQuality = document.getElementById("filter-quality");
+  QUALITY.forEach(q => {
+    filterQuality.innerHTML += `<option value="${q.id}">${q.label}</option>`;
+  });
+
+  // ==================================================
+  // ЗАГРУЗКА БОССОВ
+  // ==================================================
+
+  let allBosses = [];
+
+  async function loadBosses() {
+    try {
+      allBosses = await getBosses();
+      populateBossSelects();
+    } catch (error) {
+      console.error('Ошибка загрузки боссов:', error);
+      allBosses = [];
+    }
+  }
+
+  function populateBossSelects() {
+    const bossSelect = document.getElementById('f-boss');
+    const filterBoss = document.getElementById('filter-boss');
+    const currentValue = bossSelect.value;
+    const filterValue = filterBoss.value;
+    bossSelect.innerHTML = `<option value="">— выбери босса —</option>`;
+    filterBoss.innerHTML = `<option value="">Все боссы</option>`;
+    allBosses.forEach(boss => {
+      bossSelect.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+      filterBoss.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+    });
+    if (currentValue) bossSelect.value = currentValue;
+    if (filterValue) filterBoss.value = filterValue;
+  }
+
+  // ==================================================
+  // ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
+  // ==================================================
+
+  const weaponTypeGroup = document.getElementById('weapon-type-group');
+  const weaponTypeSelect = document.getElementById('f-weapon-type');
+  slotSelect.addEventListener('change', function() {
+    if (this.value === 'weapon') {
+      weaponTypeGroup.style.display = 'block';
+    } else {
+      weaponTypeGroup.style.display = 'none';
+      weaponTypeSelect.value = '';
+    }
+  });
+
+  // ==================================================
+  // ДИНАМИЧЕСКИЕ ПОЛЯ
+  // ==================================================
+
+  function addField(containerId, type = 'pair') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
+
+    if (type === 'single') {
+      row.innerHTML = `
+        <input type="text" placeholder="Введите свойство..." class="field-label-input" />
+        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <input type="text" placeholder="Название" class="field-label-input" />
+        <input type="text" placeholder="Значение" class="field-value-input" />
+        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+      `;
+    }
+    container.appendChild(row);
+    const firstInput = row.querySelector('input');
+    if (firstInput) setTimeout(() => firstInput.focus(), 50);
+  }
+
+  function getFields(containerId, type = 'pair') {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const rows = container.querySelectorAll('.field-row');
+    const result = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (type === 'single') {
+        const val = inputs[0]?.value.trim();
+        if (val) result.push(val);
+      } else {
+        const label = inputs[0]?.value.trim() || '';
+        const value = inputs[1]?.value.trim() || '';
+        if (label || value) result.push({ label, value });
+      }
+    });
+    return result;
+  }
+
+  function setFields(containerId, data, type = 'pair') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    if (type === 'single') {
+      data.forEach(val => {
+        const row = document.createElement('div');
+        row.className = 'field-row field-single';
+        row.innerHTML = `
+          <input type="text" placeholder="Введите свойство..." class="field-label-input" value="${val}" />
+          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+      });
+    } else {
+      data.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.innerHTML = `
+          <input type="text" placeholder="Название" class="field-label-input" value="${item.label || ''}" />
+          <input type="text" placeholder="Значение" class="field-value-input" value="${item.value || ''}" />
+          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+  }
+
+  document.querySelectorAll('.btn-add-field').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const target = this.dataset.target;
+      if (target === 'properties') {
+        addField('properties-fields', 'single');
+      } else {
+        addField(`${target}-fields`, 'pair');
+      }
+    });
+  });
+
+  ['stats-fields', 'properties-fields'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+
+  // ==================================================
+  // ЗАГРУЗКА КАРТИНКИ ЭФФЕКТА
+  // ==================================================
+
+  let currentEffectImage = null;
+
+  document.getElementById('effect-upload-area').addEventListener('click', async () => {
+    const file = await pickFile();
+    if (!file) return;
+    const base64 = await compressImage(file);
+    currentEffectImage = base64;
+    const preview = document.getElementById('effect-preview');
+    preview.src = base64;
+    preview.classList.remove('hidden');
+    document.getElementById('effect-upload-hint').style.display = 'none';
+  });
+
+  // ==================================================
+  // СОСТОЯНИЕ
+  // ==================================================
+
+  let allItems = [];
+  let currentImageBase64 = null;
+
+  // ==================================================
+  // ЗАГРУЗКА ПРЕДМЕТОВ
+  // ==================================================
+
+  async function loadItems() {
+    try {
+      allItems = await getItems();
+      populateBossFilter();
+      renderItems();
+    } catch (error) {
+      console.error("Ошибка загрузки предметов:", error);
+      document.getElementById("items-grid").innerHTML = `<div class="text-danger">Не удалось загрузить предметы</div>`;
+    }
+  }
+
+  // ==================================================
+  // ФИЛЬТР БОССОВ
+  // ==================================================
+
+  function populateBossFilter() {
+    const bossIds = [...new Set(allItems.map(item => item.boss_id).filter(Boolean))];
+    const bossNames = [];
+    bossIds.forEach(id => {
+      const boss = allBosses.find(b => b.id === id);
+      if (boss) bossNames.push({ id: boss.id, name: boss.name });
+    });
+    bossNames.sort((a, b) => a.name.localeCompare(b.name));
+    const select = document.getElementById("filter-boss");
+    const currentValue = select.value;
+    select.innerHTML = `<option value="">Все боссы</option>`;
+    bossNames.forEach(boss => {
+      select.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+    });
+    if (currentValue) select.value = currentValue;
+  }
+
+  // ==================================================
+  // ОТОБРАЖЕНИЕ
+  // ==================================================
+
+  function renderItems() {
+    const search = document.getElementById("filter-search").value.toLowerCase();
+    const slot = document.getElementById("filter-slot").value;
+    const quality = document.getElementById("filter-quality").value;
+    const bossId = document.getElementById("filter-boss").value;
+
+    const list = allItems.filter(item => {
+      if (search && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
+      if (slot && item.slot !== slot) return false;
+      if (quality && item.quality !== quality) return false;
+      if (bossId && item.boss_id !== bossId) return false;
+      return true;
+    });
+
+    const grid = document.getElementById("items-grid");
+    if (!list.length) {
+      grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`;
+      return;
+    }
+
+    grid.innerHTML = "";
+    list.forEach(item => grid.appendChild(buildCard(item)));
+  }
+
+  // ==================================================
+  // КАРТОЧКА ПРЕДМЕТА С ПОЛНОЙ ВЕРСИЕЙ
+  // ==================================================
+
+  function getWeaponTypeLabel(type) {
+    const types = {
+      'bow': '🏹 Лук', 'staff': '🪄 Посох', 'twohand_sword': '⚔️ Двуручный меч',
+      'crossbow': '🎯 Арбалеты', 'wand': '✨ Жезл', 'daggers': '🗡️ Кинжалы',
+      'sword_shield': '🛡️ Щит и меч', 'spear': '🔱 Копье'
+    };
+    return types[type] || type;
+  }
+
+  function getBossName(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.name || '—';
+  }
+
+  function getQualityLabel(quality) {
+    const q = QUALITY.find(q => q.id === quality);
+    return q?.label || quality;
+  }
+
+  function buildCard(item) {
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+    const canEdit = canWrite();
+
+    const stats = item.stats || [];
+    const effect = item.effect || {};
+    const properties = item.properties || [];
+    const desc = item.description || '';
+
+    const card = document.createElement("div");
+    card.className = `item-card quality-${item.quality || "epic"}`;
+
+    card.innerHTML = `
+      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+      <div class="item-info">
+        <div class="item-name">${item.name || "Без названия"}</div>
+        <div class="item-meta">
+          <span class="badge badge-purple">${slotLabel}</span>
+          ${item.slot === 'weapon' && item.weapon_type ? `
+            <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
+          ` : ''}
+        </div>
+        <div class="item-boss">👹 ${getBossName(item.boss_id)}</div>
+        ${desc ? `<div class="item-desc">${desc}</div>` : ''}
+      </div>
+      ${canEdit ? `
+        <div class="item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || "").replace(/'/g, "\\'")}')">🗑️</button>
+        </div>
+      ` : ''}
+
+      <!-- Полная карточка при наведении -->
+      <div class="full-card">
+        <div class="fc-header">
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <div class="fc-title">
+            <div class="fc-name">${item.name || "Без названия"}</div>
+            <div class="fc-quality">${getQualityLabel(item.quality)} • ${slotLabel}</div>
+          </div>
+        </div>
+
+        ${stats.length ? `
+          <div class="fc-stats">
+            ${stats.map(s => `
+              <div class="stat">
+                <span class="stat-label">${s.label || s}</span>
+                <span class="stat-value">${s.value || ''}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        ${effect.name || effect.desc ? `
+          <div class="fc-effect">
+            ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
+            <div class="effect-info">
+              ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
+              ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${properties.length ? `
+          <div class="fc-properties">
+            <div class="prop-label">Возможные свойства</div>
+            <div class="prop-list">
+              ${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${desc ? `
+          <div class="fc-flavor">${desc}</div>
+        ` : ''}
+      </div>
+    `;
+
+    const image = card.querySelector(`#img-${item.id}`);
+    setItemImage(image, item.image);
+
+    return card;
+  }
+
+  // ==================================================
+  // ЗАГРУЗКА КАРТИНКИ
+  // ==================================================
+
+  document.getElementById('upload-area').addEventListener('click', async () => {
+    const file = await pickFile();
+    if (!file) return;
+    const base64 = await compressImage(file);
+    currentImageBase64 = base64;
+    const preview = document.getElementById('img-preview');
+    preview.src = base64;
+    preview.classList.remove('hidden');
+    document.getElementById('upload-hint').style.display = 'none';
+  });
+
+  // ==================================================
+  // MODAL
+  // ==================================================
+
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const editId = document.getElementById('edit-id');
+
+  function resetForm() {
+    editId.value = '';
+    currentImageBase64 = null;
+    currentEffectImage = null;
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-boss').value = '';
+    document.getElementById('f-description').value = '';
+    document.getElementById('f-slot').value = '';
+    document.getElementById('f-quality').value = 'epic';
+    document.getElementById('f-effect-name').value = '';
+    document.getElementById('f-effect-desc').value = '';
+    document.getElementById('f-weapon-type').value = '';
+    weaponTypeGroup.style.display = 'none';
+
+    document.getElementById('stats-fields').innerHTML = '';
+    document.getElementById('properties-fields').innerHTML = '';
+
+    const preview = document.getElementById('img-preview');
+    preview.classList.add('hidden');
+    preview.src = '';
+    document.getElementById('upload-hint').style.display = '';
+
+    const effectPreview = document.getElementById('effect-preview');
+    effectPreview.classList.add('hidden');
+    effectPreview.src = '';
+    document.getElementById('effect-upload-hint').style.display = '';
+
+    hideError();
+  }
+
+  window.openEdit = (id) => {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+
+    resetForm();
+    modalTitle.textContent = 'Редактировать предмет';
+    editId.value = id;
+
+    document.getElementById('f-name').value = item.name || '';
+    document.getElementById('f-slot').value = item.slot || '';
+    document.getElementById('f-boss').value = item.boss_id || '';
+    document.getElementById('f-description').value = item.description || '';
+    document.getElementById('f-quality').value = item.quality || 'epic';
+
+    if (item.slot === 'weapon') {
+      weaponTypeGroup.style.display = 'block';
+      document.getElementById('f-weapon-type').value = item.weapon_type || '';
+    }
+
+    if (item.stats && item.stats.length) {
+      setFields('stats-fields', item.stats, 'pair');
+    }
+    if (item.properties && item.properties.length) {
+      setFields('properties-fields', item.properties, 'single');
+    }
+
+    if (item.effect) {
+      document.getElementById('f-effect-name').value = item.effect.name || '';
+      document.getElementById('f-effect-desc').value = item.effect.desc || '';
+      if (item.effect.image) {
+        currentEffectImage = item.effect.image;
+        const ep = document.getElementById('effect-preview');
+        ep.src = item.effect.image;
+        ep.classList.remove('hidden');
+        document.getElementById('effect-upload-hint').style.display = 'none';
+      }
+    }
+
+    if (item.image) {
+      currentImageBase64 = item.image;
+      const preview = document.getElementById('img-preview');
+      preview.src = item.image;
+      preview.classList.remove('hidden');
+      document.getElementById('upload-hint').style.display = 'none';
+    }
+
+    modal.classList.remove('hidden');
+  };
+
+  function openAdd() {
+    resetForm();
+    modalTitle.textContent = 'Добавить предмет';
+    modal.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    resetForm();
+  }
+
+  document.getElementById('btn-modal-close').onclick = closeModal;
+  document.getElementById('btn-cancel').onclick = closeModal;
+  document.getElementById('btn-add-item').onclick = openAdd;
+
+  // ==================================================
+  // СОХРАНЕНИЕ
+  // ==================================================
+
+  document.getElementById('btn-save').onclick = async () => {
+    const name = document.getElementById('f-name').value.trim();
+    const slot = document.getElementById('f-slot').value;
+    const bossId = document.getElementById('f-boss').value;
+    const description = document.getElementById('f-description').value.trim();
+    const quality = document.getElementById('f-quality').value;
+    const effectName = document.getElementById('f-effect-name').value.trim();
+    const effectDesc = document.getElementById('f-effect-desc').value.trim();
+
+    if (!name) return showError('Введи название');
+    if (!slot) return showError('Выбери слот');
+
+    let weaponType = null;
+    if (slot === 'weapon') {
+      weaponType = document.getElementById('f-weapon-type').value;
+      if (!weaponType) return showError('Выбери тип оружия');
+    }
+    if (!bossId) return showError('Выбери босса');
+
+    const boss = allBosses.find(b => b.id === bossId);
+    const bossName = boss?.name || '';
+
+    const stats = getFields('stats-fields', 'pair');
+    const properties = getFields('properties-fields', 'single');
+
+    const effect = {};
+    if (effectName || effectDesc || currentEffectImage) {
+      effect.name = effectName;
+      effect.desc = effectDesc;
+      if (currentEffectImage) effect.image = currentEffectImage;
+    }
+
+    const data = {
+      name,
+      slot,
+      quality,
+      boss_id: bossId,
+      boss_name: bossName,
+      description,
+      stats,
+      effect,
+      properties,
+      image: currentImageBase64 || null,
+      weapon_type: weaponType
+    };
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.textContent = 'Сохранение...';
+
+    try {
+      const id = editId.value;
+      if (id) {
+        await updateItem(id, data);
+        showToast('Предмет обновлён');
+      } else {
+        await addItem(data);
+        showToast('Предмет добавлен');
+      }
+      closeModal();
+      await loadItems();
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      showError('Ошибка: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+    }
+  };
+
+  // ==================================================
+  // УДАЛЕНИЕ
+  // ==================================================
+
+  window.confirmDelete = (id, name) => {
+    if (!confirm(`Удалить «${name}»?`)) return;
+    deleteItem(id)
+      .then(() => {
+        showToast('Предмет удалён');
+        loadItems();
+      })
+      .catch(error => {
+        console.error('Ошибка удаления:', error);
+        showToast('Ошибка удаления', 'error');
+      });
+  };
+
+  // ==================================================
+  // ФИЛЬТРЫ
+  // ==================================================
+
+  document.getElementById('filter-search').addEventListener('input', renderItems);
+  document.getElementById('filter-slot').addEventListener('change', renderItems);
+  document.getElementById('filter-quality').addEventListener('change', renderItems);
+  document.getElementById('filter-boss').addEventListener('change', renderItems);
+
+  // ==================================================
+  // HELPERS
+  // ==================================================
+
+  function showError(msg) {
+    const el = document.getElementById('modal-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('modal-error').style.display = 'none';
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // ==================================================
+  // INIT
+  // ==================================================
+
+  await loadBosses();
+  await loadItems();
+
+</script>
+
+</body>
+</html>
