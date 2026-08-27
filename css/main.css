@@ -1,311 +1,70 @@
-/* ====================================================
-   main.css — TL Loot UI
-   Тёмная тема, акцент — фиолетовый (цвет эпик-шмотки)
-   ==================================================== */
+// ====================================================
+// navbar.js — Навбар
+// ====================================================
 
-/* ── Сброс и базовые переменные ──────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+import { initAuth, authReady, currentUser, currentRole, logout, canWrite } from "./auth.js";
 
-:root {
-  --bg:          #0d0f14;
-  --bg-card:     #161a24;
-  --bg-card2:    #1e2333;
-  --border:      #2a3047;
-  --accent:      #7c3aed;        /* фиолетовый — эпик */
-  --accent-soft: #a855f7;
-  --accent-glow: rgba(124,58,237,0.25);
-  --text:        #e2e8f0;
-  --text-muted:  #7a8399;
-  --success:     #22c55e;
-  --danger:      #ef4444;
-  --warning:     #f59e0b;
-  --radius:      8px;
-  --font:        'Segoe UI', system-ui, sans-serif;
-  --font-mono:   'Consolas', monospace;
+let navbarInitialized = false;
+
+export async function initNavbar() {
+
+  if (navbarInitialized) return;
+  navbarInitialized = true;
+
+  await initAuth();
+  await authReady;
+
+  const nav = document.getElementById("main-nav");
+  if (!nav) return;
+
+  renderNav(nav);
+  updateRoleElements();
 }
 
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.5;
+function renderNav(nav) {
+  const isAuth = !!currentUser;
+  const role = currentRole || "guest";
+  const email = currentUser?.email || "";
+
+  nav.innerHTML = `
+    <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
+    
+    <div class="nav-links">
+      <a href="/index.html" id="nav-home">Главная</a>
+      <a href="/items.html" id="nav-items">Предметы</a>
+      
+      ${isAuth ? `
+        <a href="/admin.html" id="nav-admin-link" class="${role === 'admin' || role === 'moderator' ? '' : 'hidden'}">
+          ⚙️ Админка
+        </a>
+      ` : ''}
+    </div>
+    
+    <div class="nav-user">
+      ${isAuth ? `
+        <span id="nav-user-label">${email} (${role})</span>
+        <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
+      ` : `
+        <a href="/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
+        <a href="/register.html" class="btn btn-primary btn-sm">Регистрация</a>
+      `}
+    </div>
+  `;
+
+  // Обработчик выхода
+  const logoutBtn = document.getElementById("btn-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await logout();
+      window.location.href = "/index.html";
+    });
+  }
 }
 
-/* ── Навбар ──────────────────────────────────────── */
-.navbar {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 0 1.5rem;
-  height: 56px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-brand {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--accent-soft);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.nav-links {
-  display: flex;
-  gap: 0.25rem;
-  flex: 1;
-}
-
-.nav-links a {
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius);
-  font-size: 0.9rem;
-  transition: color 0.15s, background 0.15s;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  color: var(--text);
-  background: var(--bg-card2);
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-left: auto;
-}
-
-#nav-user-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-/* ── Контейнер ───────────────────────────────────── */
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-/* ── Кнопки ──────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1.1rem;
-  border-radius: var(--radius);
-  border: none;
-  font-size: 0.9rem;
-  font-family: var(--font);
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
-}
-.btn:hover  { opacity: 0.85; }
-.btn:active { transform: scale(0.97); }
-
-.btn-primary  { background: var(--accent); color: #fff; }
-.btn-danger   { background: var(--danger); color: #fff; }
-.btn-ghost    { background: var(--bg-card2); color: var(--text); border: 1px solid var(--border); }
-.btn-sm       { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
-
-/* ── Карточки ────────────────────────────────────── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-}
-
-.card-link {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem 1rem;
-  text-decoration: none;
-  color: var(--text);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.card-link:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 16px var(--accent-glow);
-}
-.card-link .icon { font-size: 1.75rem; }
-.card-link strong { font-size: 1rem; }
-.card-link small  { font-size: 0.8rem; color: var(--text-muted); }
-
-/* ── Формы ───────────────────────────────────────── */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-}
-
-label {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-input, select, textarea {
-  background: var(--bg-card2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  padding: 0.5rem 0.75rem;
-  font-family: var(--font);
-  font-size: 0.9rem;
-  width: 100%;
-  transition: border-color 0.15s;
-}
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-select option { background: var(--bg-card2); }
-
-/* ── Таблицы ─────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-th, td {
-  padding: 0.6rem 0.9rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-th {
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-tr:hover td { background: var(--bg-card2); }
-
-/* ── Бейджи ──────────────────────────────────────── */
-.badge {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.badge-purple  { background: rgba(124,58,237,0.2); color: #a855f7; border: 1px solid #7c3aed; }
-.badge-locked  { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
-.badge-free    { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; }
-.badge-frozen  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
-.badge-main    { background: rgba(124,58,237,0.2); color: #a855f7; }
-.badge-open    { background: rgba(99,102,241,0.2);  color: #818cf8; }
-.badge-tank    { background: rgba(59,130,246,0.2);  color: #60a5fa; }
-.badge-dd      { background: rgba(239,68,68,0.2);   color: #f87171; }
-.badge-healer  { background: rgba(34,197,94,0.2);   color: #4ade80; }
-
-/* ── Герой главной ───────────────────────────────── */
-.hero { text-align: center; padding: 3rem 0 2rem; }
-.hero h1 { font-size: 2rem; font-weight: 700; }
-.hero-sub { color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 2.5rem; }
-
-.quick-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-/* ── Утилиты ─────────────────────────────────────── */
-.hidden   { display: none !important; }
-.mt-1     { margin-top: 0.5rem; }
-.mt-2     { margin-top: 1rem; }
-.mt-3     { margin-top: 1.5rem; }
-.flex     { display: flex; }
-.gap-1    { gap: 0.5rem; }
-.gap-2    { gap: 1rem; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.text-muted { color: var(--text-muted); font-size: 0.85rem; }
-.text-danger { color: var(--danger); }
-.text-success { color: var(--success); }
-
-/* ── Уведомления ─────────────────────────────────── */
-.toast {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  background: var(--bg-card2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem 1.25rem;
-  font-size: 0.9rem;
-  z-index: 9999;
-  animation: slideIn 0.2s ease;
-}
-.toast.success { border-color: var(--success); color: var(--success); }
-.toast.error   { border-color: var(--danger);  color: var(--danger); }
-
-@keyframes slideIn {
-  from { transform: translateY(10px); opacity: 0; }
-  to   { transform: translateY(0);   opacity: 1; }
-}
-
-/* ── Спиннер ─────────────────────────────────────── */
-.spinner {
-  width: 20px; height: 20px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  display: inline-block;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Страница логина ─────────────────────────────── */
-.login-wrap {
-  max-width: 380px;
-  margin: 4rem auto;
-}
-
-/* ── Заголовки страниц ───────────────────────────── */
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-.page-header h2 { font-size: 1.4rem; }
-
-/* ── Прогресс блокировки ─────────────────────────── */
-.lock-progress {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-.lock-pip {
-  width: 10px; height: 10px;
-  border-radius: 2px;
-  background: var(--border);
-}
-.lock-pip.done    { background: var(--accent); }
-.lock-pip.skipped { background: var(--warning); }
-
-#nav-admin-link {
-  display: none; /* по умолчанию скрыто */
-}
-
-#nav-admin-link.visible {
-  display: inline; /* или block, в зависимости от типа ссылки */
+function updateRoleElements() {
+  // Показываем/скрываем ссылку на админку
+  const adminLink = document.getElementById("nav-admin-link");
+  if (adminLink) {
+    adminLink.classList.toggle("hidden", !canWrite());
+  }
 }
