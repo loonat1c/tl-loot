@@ -1,190 +1,73 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Вход — TL Loot</title>
+// ====================================================
+// navbar.js — Навбар
+// ====================================================
 
-  <link rel="stylesheet" href="../css/main.css" />
+import { initAuth, authReady, currentUser, currentRole, logout, canWrite } from "./auth.js";
 
-  <style>
-    .auth-container {
-      max-width: 400px;
-      margin: 4rem auto;
-      padding: 2rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
+let navbarInitialized = false;
 
-    .auth-container h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+export async function initNavbar() {
 
-    .auth-container .form-group {
-      margin-bottom: 1rem;
-    }
+  if (navbarInitialized) return;
+  navbarInitialized = true;
 
-    .auth-container .btn {
-      width: 100%;
-      margin-top: 0.5rem;
-    }
-
-    .auth-link {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-    }
-
-    .auth-link a {
-      color: var(--accent-soft);
-      text-decoration: none;
-    }
-
-    .auth-link a:hover {
-      text-decoration: underline;
-    }
-
-    .error-message {
-      color: var(--danger);
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      display: none;
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- ═══════════════════════════════════════════
-     НАВБАР
-═══════════════════════════════════════════ -->
-
-<nav class="navbar" id="main-nav"></nav>
-
-
-<!-- ═══════════════════════════════════════════
-     ФОРМА ВХОДА
-═══════════════════════════════════════════ -->
-
-<main class="container">
-
-  <div class="auth-container">
-
-    <h2>🔑 Вход в аккаунт</h2>
-
-    <form id="login-form" autocomplete="off">
-
-      <div class="form-group">
-        <label for="login-email">Email *</label>
-        <input
-          type="email"
-          id="login-email"
-          placeholder="your@email.com"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="login-password">Пароль *</label>
-        <input
-          type="password"
-          id="login-password"
-          placeholder="Введите пароль"
-          required
-        />
-      </div>
-
-      <div id="error-message" class="error-message"></div>
-
-      <button type="submit" class="btn btn-primary" id="btn-login">
-        Войти
-      </button>
-
-    </form>
-
-    <div class="auth-link">
-      Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
-    </div>
-
-  </div>
-
-</main>
-
-
-<!-- ═══════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════ -->
-
-<script type="module">
-  import { initNavbar } from "../js/modules/navbar.js";
-  import { 
-    initAuth, 
-    authReady, 
-    login,
-    currentUser 
-  } from "../js/modules/auth.js";
-
-  // Инициализация
-  initNavbar();
-  initAuth();
-
-  // Если уже авторизован — перенаправить на главную
+  await initAuth();
   await authReady;
-  if (currentUser) {
-    window.location.href = "index.html";
-  }
 
-  const form = document.getElementById('login-form');
-  const emailInput = document.getElementById('login-email');
-  const passwordInput = document.getElementById('login-password');
-  const errorDiv = document.getElementById('error-message');
-  const btnLogin = document.getElementById('btn-login');
+  const nav = document.getElementById("main-nav");
+  if (!nav) return;
 
-  [emailInput, passwordInput].forEach(input => {
-    input.addEventListener('input', () => {
-      errorDiv.style.display = 'none';
+  renderNav(nav);
+  updateRoleElements();
+}
+
+function renderNav(nav) {
+  const isAuth = !!currentUser;
+  const role = currentRole || "guest";
+  const email = currentUser?.email || "";
+
+  // Определяем текущую страницу для подсветки активной ссылки
+  const currentPath = window.location.pathname;
+  const isItemsPage = currentPath.includes('items.html');
+  const isAdminPage = currentPath.includes('admin.html');
+
+  nav.innerHTML = `
+    <a href="/pages/index.html" class="nav-brand">⚔️ TL Loot</a>
+    
+    <div class="nav-links">
+      <a href="/pages/index.html" class="${!isItemsPage && !isAdminPage ? 'active' : ''}">Главная</a>
+      <a href="/pages/items.html" class="${isItemsPage ? 'active' : ''}">Предметы</a>
+      ${isAuth && canWrite() ? `<a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">⚙️ Админка</a>` : ''}
+    </div>
+    
+    <div class="nav-user">
+      ${isAuth ? `
+        <span id="nav-user-label">${email} (${role})</span>
+        <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
+      ` : `
+        <a href="/pages/login.html" class="btn btn-ghost btn-sm" id="btn-login">Войти</a>
+        <a href="/pages/register.html" class="btn btn-primary btn-sm">Регистрация</a>
+      `}
+    </div>
+  `;
+
+  // Обработчик выхода
+  const logoutBtn = document.getElementById("btn-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await logout();
+      window.location.href = "/pages/index.html";
     });
+  }
+}
+
+function updateRoleElements() {
+  // Обновляем элементы с data-role
+  document.querySelectorAll("[data-role='admin']").forEach(el => {
+    el.classList.toggle("hidden", currentRole !== "admin");
   });
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    errorDiv.style.display = 'none';
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!email || !password) {
-      errorDiv.textContent = 'Заполните все поля';
-      errorDiv.style.display = 'block';
-      return;
-    }
-
-    btnLogin.disabled = true;
-    btnLogin.textContent = 'Вход...';
-
-    try {
-      const result = await login(email, password);
-      
-      if (result.success) {
-        window.location.href = 'index.html';
-      } else {
-        errorDiv.textContent = result.error || 'Ошибка входа';
-        errorDiv.style.display = 'block';
-      }
-    } catch (error) {
-      errorDiv.textContent = error.message || 'Произошла ошибка';
-      errorDiv.style.display = 'block';
-    } finally {
-      btnLogin.disabled = false;
-      btnLogin.textContent = 'Войти';
-    }
+  document.querySelectorAll("[data-role='moderator']").forEach(el => {
+    el.classList.toggle("hidden", !canWrite());
   });
-
-</script>
-
-</body>
-</html>
+}
