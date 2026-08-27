@@ -26,7 +26,7 @@ export async function addBoss({ name, level, boss_class, description, item_ids }
     level:       level || "",
     boss_class:  boss_class || "",
     description: description || "",
-    item_ids:    item_ids || [],   // массив id предметов
+    item_ids:    item_ids || [],
     created_at:  new Date().toISOString(),
   });
   return ref.id;
