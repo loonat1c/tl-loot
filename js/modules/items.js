@@ -2,7 +2,7 @@
 // items.js — CRUD для предметов
 // ====================================================
 
-import { db } from "/js/firebase.js";
+import { db } from "../firebase.js";
 import {
   collection, doc, addDoc, updateDoc,
   deleteDoc, getDocs, getDoc, query, orderBy,
@@ -28,7 +28,14 @@ export async function addItem({
   image,
   boss_id,
   boss_name,
-  weapon_type = null
+  weapon_type = null,
+  level = null,
+  damage_min = null,
+  damage_max = null,
+  stats = [],
+  effect = {},
+  set_bonus = {},
+  properties = []
 }) {
   const ref = await addDoc(COL(), {
     name,
@@ -39,6 +46,13 @@ export async function addItem({
     boss_id:     boss_id || null,
     boss_name:   boss_name || "",
     weapon_type: weapon_type || null,
+    level:       level || null,
+    damage_min:  damage_min || null,
+    damage_max:  damage_max || null,
+    stats:       stats || [],
+    effect:      effect || {},
+    set_bonus:   set_bonus || {},
+    properties:  properties || [],
     created_at:  new Date().toISOString(),
   });
   return ref.id;
