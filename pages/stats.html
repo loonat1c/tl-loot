@@ -146,18 +146,56 @@
 </main>
 
 <script type="module">
+  /* ==================================================
+     ИМПОРТЫ
+  ================================================== */
+  
   import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
-  initNavbar();
-
-  import { getPlayers }       from "../js/modules/players.js";
-  import { getRaids }         from "../js/modules/raids.js";
-  import { SLOTS, ROLES }     from "../js/constants.js";
+  import { 
+    initAuth, 
+    authReady, 
+    canWrite, 
+    isAdmin,
+    currentUser,
+    currentRole 
+  } from "../js/modules/auth.js";
+  
+  import { getPlayers } from "../js/modules/players.js";
+  import { getRaids } from "../js/modules/raids.js";
+  import { SLOTS, ROLES } from "../js/constants.js";
+  
   import {
     collection, getDocs, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
+
+  /* ==================================================
+     ИНИЦИАЛИЗАЦИЯ (ЖДЕМ АВТОРИЗАЦИЮ!)
+  ================================================== */
+  
+  // 1. Инициализируем навбар
+  initNavbar();
+  
+  // 2. Инициализируем авторизацию
+  initAuth();
+  
+  // 3. ЖДЕМ восстановления сессии!
+  await authReady;
+  
+  // 4. Отладка
+  console.log('🔐 Авторизация на странице статистики:', {
+    user: currentUser?.email || 'Нет',
+    role: currentRole,
+    canWrite: canWrite(),
+    isAdmin: isAdmin()
+  });
+
+
+  /* ==================================================
+     ОСНОВНОЙ КОД
+  ================================================== */
+  
   let allPlayers = [];
   let allRaids   = [];
   let history    = [];
@@ -337,7 +375,8 @@
     return n.toLocaleString();
   }
 
-  init();
+  // ЗАПУСКАЕМ ПОСЛЕ АВТОРИЗАЦИИ
+  await init();
 </script>
 </body>
 </html>
