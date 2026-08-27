@@ -123,7 +123,6 @@
       pointer-events: none;
     }
 
-    /* Для карточек справа — открываем влево */
     .item-card:nth-child(4n) .full-card,
     .item-card:nth-child(4n-1) .full-card {
       left: auto;
@@ -139,7 +138,6 @@
       border-right-color: var(--accent);
     }
 
-    /* Для карточек справа — стрелка слева */
     .item-card:nth-child(4n) .full-card::before,
     .item-card:nth-child(4n-1) .full-card::before {
       right: auto;
@@ -237,6 +235,41 @@
       color: var(--text-muted);
       font-size: 0.8rem;
       margin-right: 0.5rem;
+    }
+
+    /* ── Сетовый бонус ──────────────────────────────────── */
+    .full-card .fc-set-bonus {
+      margin: 0.5rem 0;
+      padding: 0.5rem 0.75rem;
+      background: rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .full-card .fc-set-bonus .set-name {
+      font-weight: 700;
+      color: var(--warning);
+      font-size: 0.9rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-set-bonus .set-pieces {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-top: 0.3rem;
+    }
+
+    .full-card .fc-set-bonus .set-pieces .set-piece {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-set-bonus .set-pieces .set-piece .pieces-label {
+      color: var(--text);
+      font-weight: 600;
+      margin-right: 0.3rem;
     }
 
     .full-card .fc-stats {
@@ -621,6 +654,77 @@
       font-size: 0.9rem;
     }
 
+    /* ── Тумблер сетового бонуса ───────────────────────── */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .toggle-wrap .toggle-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-switch .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .toggle-switch .slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .toggle-switch input:checked + .slider {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .slider::before {
+      transform: translateX(20px);
+      background: #fff;
+    }
+
+    .set-bonus-fields {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: none;
+    }
+
+    .set-bonus-fields.visible {
+      display: block;
+    }
+
     /* ── Адаптация для мобильных ────────────────────────── */
     @media (max-width: 992px) {
       .item-card .full-card {
@@ -678,6 +782,10 @@
       }
 
       .damage-inputs {
+        flex-wrap: wrap;
+      }
+
+      .toggle-wrap {
         flex-wrap: wrap;
       }
     }
@@ -818,7 +926,7 @@
     </div>
 
     <!-- ─── ЭФФЕКТ ─── -->
-    <div class="form-section">
+    <div class="form-section" id="effect-section">
       <div class="section-title">Эффект</div>
 
       <div class="form-row">
@@ -838,6 +946,34 @@
       <div class="form-group">
         <label>Описание эффекта</label>
         <input type="text" id="f-effect-desc" placeholder="Описание эффекта..." />
+      </div>
+    </div>
+
+    <!-- ─── СЕТОВЫЙ БОНУС ─── -->
+    <div class="form-section" id="set-bonus-section" style="display:none;">
+      <div class="section-title">Сетовый бонус</div>
+
+      <div class="toggle-wrap">
+        <span class="toggle-label">Включить сетовый бонус</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="f-set-bonus-toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="set-bonus-fields" id="set-bonus-fields">
+        <div class="form-group">
+          <label>Название бонуса</label>
+          <input type="text" id="f-set-name" placeholder="Например: Доспехи Дайгона" />
+        </div>
+        <div class="form-group">
+          <label>Эффект за 2 предмета</label>
+          <input type="text" id="f-set-2" placeholder="Урон +5%" />
+        </div>
+        <div class="form-group">
+          <label>Эффект за 4 предмета</label>
+          <input type="text" id="f-set-4" placeholder="Защита +10%" />
+        </div>
       </div>
     </div>
 
@@ -939,6 +1075,36 @@
     if (currentValue) bossSelect.value = currentValue;
     if (filterValue) filterBoss.value = filterValue;
   }
+
+  // ==================================================
+  // ПОКАЗ / СКРЫТИЕ СЕТОВОГО БОНУСА
+  // ==================================================
+
+  const effectSection = document.getElementById('effect-section');
+  const setBonusSection = document.getElementById('set-bonus-section');
+  const setBonusToggle = document.getElementById('f-set-bonus-toggle');
+  const setBonusFields = document.getElementById('set-bonus-fields');
+
+  slotSelect.addEventListener('change', function() {
+    const isWeapon = this.value === 'weapon';
+    // Для оружия — показываем эффект, скрываем сетовый бонус
+    effectSection.style.display = isWeapon ? 'block' : 'none';
+    setBonusSection.style.display = isWeapon ? 'none' : 'block';
+    
+    // Если не оружие — сбрасываем тумблер
+    if (!isWeapon) {
+      setBonusToggle.checked = false;
+      setBonusFields.classList.remove('visible');
+    }
+  });
+
+  setBonusToggle.addEventListener('change', function() {
+    if (this.checked) {
+      setBonusFields.classList.add('visible');
+    } else {
+      setBonusFields.classList.remove('visible');
+    }
+  });
 
   // ==================================================
   // ДИНАМИЧЕСКИЕ ПОЛЯ
@@ -1146,11 +1312,13 @@
 
     const stats = item.stats || [];
     const effect = item.effect || {};
+    const setBonus = item.set_bonus || {};
     const properties = item.properties || [];
     const desc = item.description || '';
     const level = item.level || '';
     const damageMin = item.damage_min || '';
     const damageMax = item.damage_max || '';
+    const isWeapon = item.slot === 'weapon';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
@@ -1207,7 +1375,25 @@
           </div>
         ` : ''}
 
-        ${effect.name || effect.desc ? `
+        ${!isWeapon && setBonus.name ? `
+          <div class="fc-set-bonus">
+            <div class="set-name">${setBonus.name}</div>
+            <div class="set-pieces">
+              ${setBonus.piece2 ? `
+                <div class="set-piece">
+                  <span class="pieces-label">(2):</span> ${setBonus.piece2}
+                </div>
+              ` : ''}
+              ${setBonus.piece4 ? `
+                <div class="set-piece">
+                  <span class="pieces-label">(4):</span> ${setBonus.piece4}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${isWeapon && (effect.name || effect.desc) ? `
           <div class="fc-effect">
             ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
             <div class="effect-info">
@@ -1276,6 +1462,15 @@
     document.getElementById('f-effect-name').value = '';
     document.getElementById('f-effect-desc').value = '';
     document.getElementById('f-weapon-type').value = '';
+    document.getElementById('f-set-name').value = '';
+    document.getElementById('f-set-2').value = '';
+    document.getElementById('f-set-4').value = '';
+    setBonusToggle.checked = false;
+    setBonusFields.classList.remove('visible');
+
+    // Восстанавливаем видимость секций по умолчанию (если слот не выбран — показываем эффект)
+    effectSection.style.display = 'block';
+    setBonusSection.style.display = 'none';
 
     document.getElementById('stats-fields').innerHTML = '';
     document.getElementById('properties-fields').innerHTML = '';
@@ -1301,6 +1496,10 @@
     modalTitle.textContent = 'Редактировать предмет';
     editId.value = id;
 
+    const isWeapon = item.slot === 'weapon';
+    effectSection.style.display = isWeapon ? 'block' : 'none';
+    setBonusSection.style.display = isWeapon ? 'none' : 'block';
+
     document.getElementById('f-name').value = item.name || '';
     document.getElementById('f-slot').value = item.slot || '';
     document.getElementById('f-boss').value = item.boss_id || '';
@@ -1310,13 +1509,6 @@
     document.getElementById('f-damage-min').value = item.damage_min || '';
     document.getElementById('f-damage-max').value = item.damage_max || '';
     document.getElementById('f-weapon-type').value = item.weapon_type || '';
-
-    if (item.stats && item.stats.length) {
-      setFields('stats-fields', item.stats, 'pair');
-    }
-    if (item.properties && item.properties.length) {
-      setFields('properties-fields', item.properties, 'single');
-    }
 
     if (item.effect) {
       document.getElementById('f-effect-name').value = item.effect.name || '';
@@ -1328,6 +1520,23 @@
         ep.classList.remove('hidden');
         document.getElementById('effect-upload-hint').style.display = 'none';
       }
+    }
+
+    if (item.set_bonus) {
+      document.getElementById('f-set-name').value = item.set_bonus.name || '';
+      document.getElementById('f-set-2').value = item.set_bonus.piece2 || '';
+      document.getElementById('f-set-4').value = item.set_bonus.piece4 || '';
+      if (item.set_bonus.name || item.set_bonus.piece2 || item.set_bonus.piece4) {
+        setBonusToggle.checked = true;
+        setBonusFields.classList.add('visible');
+      }
+    }
+
+    if (item.stats && item.stats.length) {
+      setFields('stats-fields', item.stats, 'pair');
+    }
+    if (item.properties && item.properties.length) {
+      setFields('properties-fields', item.properties, 'single');
     }
 
     if (item.image) {
@@ -1371,6 +1580,10 @@
     const damageMax = document.getElementById('f-damage-max').value.trim();
     const effectName = document.getElementById('f-effect-name').value.trim();
     const effectDesc = document.getElementById('f-effect-desc').value.trim();
+    const setBonusEnabled = setBonusToggle.checked;
+    const setName = document.getElementById('f-set-name').value.trim();
+    const set2 = document.getElementById('f-set-2').value.trim();
+    const set4 = document.getElementById('f-set-4').value.trim();
 
     if (!name) return showError('Введи название');
     if (!slot) return showError('Выбери слот');
@@ -1392,6 +1605,13 @@
       if (currentEffectImage) effect.image = currentEffectImage;
     }
 
+    const setBonus = {};
+    if (setBonusEnabled && (setName || set2 || set4)) {
+      setBonus.name = setName;
+      if (set2) setBonus.piece2 = set2;
+      if (set4) setBonus.piece4 = set4;
+    }
+
     const data = {
       name,
       slot,
@@ -1403,7 +1623,8 @@
       boss_name: bossName,
       description,
       stats,
-      effect,
+      effect: slot === 'weapon' ? effect : {},
+      set_bonus: slot !== 'weapon' ? setBonus : {},
       properties,
       image: currentImageBase64 || null,
       weapon_type: weaponType
