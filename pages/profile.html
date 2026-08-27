@@ -241,26 +241,23 @@
       margin-bottom: 0;
     }
 
-    .weapon-select-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    .weapon-slots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
     }
 
-    .weapon-select-group select {
-      width: 100%;
+    .weapon-slots .form-group {
+      margin-bottom: 0;
     }
 
     .loot-selection {
       margin-top: 0.5rem;
-      max-height: 300px;
+      max-height: 320px;
       overflow-y: auto;
     }
 
-    .loot-selection .loot-slot {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    .loot-slot {
       margin-bottom: 0.5rem;
       padding: 0.4rem;
       background: var(--bg-card2);
@@ -268,37 +265,81 @@
       border: 1px solid var(--border);
     }
 
-    .loot-selection .loot-slot label {
-      min-width: 80px;
-      font-size: 0.8rem;
-      flex-shrink: 0;
+    .loot-slot .loot-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.2rem;
     }
 
-    .loot-selection .loot-slot .loot-search {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .loot-selection .loot-slot .loot-search input {
+    /* ── Комбобокс с поиском ────────────────────────── */
+    .loot-combobox {
+      position: relative;
       width: 100%;
-      padding: 0.3rem 0.5rem;
-      font-size: 0.8rem;
+    }
+
+    .loot-combobox input {
+      width: 100%;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--text);
+      outline: none;
     }
 
-    .loot-selection .loot-slot .loot-search input:focus {
-      outline: none;
+    .loot-combobox input:focus {
       border-color: var(--accent);
     }
 
-    .loot-selection .loot-slot select {
-      flex: 1;
-      min-width: 0;
-      padding: 0.3rem 0.5rem;
-      font-size: 0.8rem;
+    .loot-combobox .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      z-index: 50;
+      margin-top: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .loot-combobox .dropdown.open {
+      display: block;
+    }
+
+    .loot-combobox .dropdown .item {
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.1s;
+      color: var(--text);
+    }
+
+    .loot-combobox .dropdown .item:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .loot-combobox .dropdown .item.selected {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .loot-combobox .dropdown .item.empty {
+      color: var(--text-muted);
+      cursor: default;
+      font-style: italic;
+    }
+
+    .loot-combobox .dropdown .item.empty:hover {
+      background: transparent;
     }
 
     .moderation-note {
@@ -310,17 +351,6 @@
       min-height: 60px;
     }
 
-    /* Оружие в модалке */
-    .weapon-slots {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    .weapon-slots .form-group {
-      margin-bottom: 0;
-    }
-
     @media (max-width: 768px) {
       .profile-header {
         flex-direction: column;
@@ -329,15 +359,6 @@
 
       .modal .form-row {
         grid-template-columns: 1fr;
-      }
-
-      .loot-selection .loot-slot {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .loot-selection .loot-slot label {
-        min-width: auto;
       }
 
       .weapon-slots {
@@ -433,7 +454,7 @@
       </div>
     </div>
 
-    <!-- Желаемый лут с поиском -->
+    <!-- Желаемый лут с комбобоксом -->
     <div class="form-group">
       <label>Желаемый лут</label>
       <div class="loot-selection" id="loot-selection">
@@ -517,7 +538,7 @@
       renderProfile();
       renderCharacters();
       populateWeaponSelects();
-      populateLootSelects();
+      populateLootSlots();
       setupWeaponSync();
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
@@ -694,7 +715,7 @@
   }
 
   // ============================================
-  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ (нельзя выбрать одинаковые)
+  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ
   // ============================================
 
   function setupWeaponSync() {
@@ -705,7 +726,6 @@
       const val1 = weapon1.value;
       const val2 = weapon2.value;
 
-      // Обновляем опции в weapon2
       Array.from(weapon2.options).forEach(opt => {
         if (opt.value && opt.value === val1) {
           opt.disabled = true;
@@ -714,75 +734,159 @@
         }
       });
 
-      // Если weapon2 выбран тот же, что и weapon1 — сбрасываем
       if (val2 && val2 === val1) {
         weapon2.value = '';
       }
     }
 
+    weapon1.removeEventListener('change', syncWeapons);
+    weapon2.removeEventListener('change', syncWeapons);
+    
     weapon1.addEventListener('change', syncWeapons);
     weapon2.addEventListener('change', syncWeapons);
 
-    // Инициализация
     syncWeapons();
   }
 
   // ============================================
-  // ЗАПОЛНЕНИЕ SELECT ЖЕЛАЕМОГО ЛУТА С ПОИСКОМ
+  // КОМБОБОКС С ПОИСКОМ
   // ============================================
 
-  function populateLootSelects() {
+  function createCombobox(slotId, slotLabel, items, selectedValue = '') {
+    const container = document.createElement('div');
+    container.className = 'loot-slot';
+    container.innerHTML = `
+      <span class="loot-label">${slotLabel}</span>
+      <div class="loot-combobox" data-slot="${slotId}">
+        <input type="text" placeholder="🔍 Поиск..." autocomplete="off" />
+        <div class="dropdown"></div>
+      </div>
+    `;
+
+    const input = container.querySelector('input');
+    const dropdown = container.querySelector('.dropdown');
+
+    // Функция рендеринга списка
+    function renderItems(filter = '') {
+      const search = filter.toLowerCase().trim();
+      let filtered = items;
+      
+      if (search) {
+        filtered = items.filter(item => 
+          item.name.toLowerCase().includes(search)
+        );
+      }
+
+      dropdown.innerHTML = '';
+
+      if (!filtered.length) {
+        dropdown.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
+      } else {
+        filtered.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          if (item.id === selectedValue) {
+            div.classList.add('selected');
+          }
+          div.textContent = item.name;
+          div.dataset.value = item.id;
+          div.addEventListener('click', () => {
+            selectedValue = item.id;
+            input.value = item.name;
+            dropdown.classList.remove('open');
+            renderItems();
+            // Сохраняем выбранное значение в атрибут
+            container.dataset.selected = item.id;
+          });
+          dropdown.appendChild(div);
+        });
+      }
+    }
+
+    // Выбор текущего значения
+    if (selectedValue) {
+      const selectedItem = items.find(i => i.id === selectedValue);
+      if (selectedItem) {
+        input.value = selectedItem.name;
+        container.dataset.selected = selectedValue;
+      }
+    }
+
+    // Открытие/закрытие дропдауна
+    input.addEventListener('focus', () => {
+      dropdown.classList.add('open');
+      renderItems(input.value);
+    });
+
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        dropdown.classList.remove('open');
+      }, 200);
+    });
+
+    input.addEventListener('input', () => {
+      renderItems(input.value);
+      dropdown.classList.add('open');
+    });
+
+    // Закрытие при клике вне
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // Инициализация
+    renderItems();
+
+    return container;
+  }
+
+  // ============================================
+  // ЗАПОЛНЕНИЕ ЖЕЛАЕМОГО ЛУТА
+  // ============================================
+
+  function populateLootSlots() {
     const container = document.getElementById('loot-selection');
     if (!container) return;
 
-    container.innerHTML = SLOTS.map(slot => {
-      // Получаем предметы для этого слота
+    container.innerHTML = '';
+
+    // Собираем текущие значения (если редактируем)
+    const currentValues = {};
+    if (editingCharId) {
+      const char = characters.find(c => c.id === editingCharId);
+      if (char?.desired_loot) {
+        Object.assign(currentValues, char.desired_loot);
+      }
+    }
+
+    SLOTS.forEach(slot => {
       const slotItems = allItems.filter(item => item.slot === slot.id);
-      
-      return `
-        <div class="loot-slot">
-          <label>${slot.label}</label>
-          <div class="loot-search">
-            <input type="text" placeholder="🔍 Поиск..." class="loot-search-input" data-slot="${slot.id}" />
-          </div>
-          <select data-slot="${slot.id}" class="loot-select">
-            <option value="">— не выбрано —</option>
-            ${slotItems.map(item => `
-              <option value="${item.id}">${item.name}</option>
-            `).join('')}
-          </select>
-        </div>
-      `;
-    }).join('');
-
-    // Навешиваем обработчики поиска
-    document.querySelectorAll('.loot-search-input').forEach(input => {
-      input.addEventListener('input', function() {
-        const slotId = this.dataset.slot;
-        const searchValue = this.value.toLowerCase().trim();
-        const select = document.querySelector(`.loot-select[data-slot="${slotId}"]`);
-        
-        if (select) {
-          // Сохраняем текущее выбранное значение
-          const currentValue = select.value;
-          
-          // Показываем/скрываем опции
-          Array.from(select.options).forEach(opt => {
-            if (opt.value === '') {
-              opt.style.display = '';
-              return;
-            }
-            const text = opt.textContent.toLowerCase();
-            opt.style.display = text.includes(searchValue) ? '' : 'none';
-          });
-
-          // Восстанавливаем выбранное значение
-          if (currentValue) {
-            select.value = currentValue;
-          }
-        }
-      });
+      const combobox = createCombobox(
+        slot.id,
+        slot.label,
+        slotItems,
+        currentValues[slot.id] || ''
+      );
+      container.appendChild(combobox);
     });
+  }
+
+  // ============================================
+  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ ИЗ КОМБОБОКСОВ
+  // ============================================
+
+  function getSelectedLoot() {
+    const result = {};
+    document.querySelectorAll('.loot-combobox').forEach(combobox => {
+      const slot = combobox.dataset.slot;
+      const value = combobox.parentElement.dataset.selected || '';
+      if (value) {
+        result[slot] = value;
+      }
+    });
+    return result;
   }
 
   // ============================================
@@ -804,6 +908,7 @@
       return;
     }
 
+    editingCharId = null;
     modalTitle.textContent = 'Добавить персонажа';
     editCharId.value = '';
     charName.value = '';
@@ -811,21 +916,15 @@
     charWeapon2.value = '';
     charModerationNote.value = '';
     
-    document.querySelectorAll('.loot-select').forEach(select => {
-      select.value = '';
-    });
-    document.querySelectorAll('.loot-search-input').forEach(input => {
-      input.value = '';
-    });
-
     charError.style.display = 'none';
     modal.classList.remove('hidden');
     
-    // Синхронизация оружия
+    populateLootSlots();
     setupWeaponSync();
   }
 
   function openEditCharacter(char) {
+    editingCharId = char.id;
     modalTitle.textContent = 'Редактировать персонажа';
     editCharId.value = char.id;
     charName.value = char.name || '';
@@ -833,23 +932,16 @@
     charWeapon2.value = char.weapons?.[1] || '';
     charModerationNote.value = char.moderation_note || '';
 
-    // Устанавливаем выбранный лут
-    if (char.desired_loot) {
-      document.querySelectorAll('.loot-select').forEach(select => {
-        const slot = select.dataset.slot;
-        select.value = char.desired_loot[slot] || '';
-      });
-    }
-
     charError.style.display = 'none';
     modal.classList.remove('hidden');
     
-    // Синхронизация оружия
+    populateLootSlots();
     setupWeaponSync();
   }
 
   function closeCharModal() {
     modal.classList.add('hidden');
+    editingCharId = null;
   }
 
   document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
@@ -890,14 +982,7 @@
       return;
     }
 
-    const desiredLoot = {};
-    document.querySelectorAll('.loot-select').forEach(select => {
-      const slot = select.dataset.slot;
-      const value = select.value;
-      if (value) {
-        desiredLoot[slot] = value;
-      }
-    });
+    const desiredLoot = getSelectedLoot();
 
     const charData = {
       name,
