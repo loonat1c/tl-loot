@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Шмотки — TL Loot</title>
+  <title>Предметы — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
     .items-grid {
@@ -59,6 +59,7 @@
   <div class="nav-links">
     <a href="players.html">Игроки</a>
     <a href="items.html" class="active">Шмотки</a>
+    <a href="bosses.html">Боссы</a>
     <a href="raids.html">Рейды</a>
     <a href="search.html">Поиск</a>
     <a href="stats.html">Статистика</a>
@@ -74,12 +75,12 @@
 
 <main class="container">
   <div class="page-header">
-    <h2>🗡️ Шмотки</h2>
-    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-item">+ Добавить шмотку</button>
+    <h2>🗡️ Предметы</h2>
+    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-item">+ Добавить предмет</button>
   </div>
 
   <div class="filter-bar">
-    <input type="text" id="filter-search" placeholder="Поиск по названию или боссу..." />
+    <input type="text" id="filter-search" placeholder="Поиск по названию..." />
     <select id="filter-slot"><option value="">Все слоты</option></select>
     <select id="filter-boss"><option value="">Все боссы</option></select>
   </div>
@@ -92,7 +93,7 @@
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="modal-title">Добавить шмотку</h3>
+      <h3 id="modal-title">Добавить предмет</h3>
       <button class="btn-close" id="btn-modal-close">✕</button>
     </div>
     <input type="hidden" id="edit-id" />
@@ -180,7 +181,7 @@
     });
 
     const grid = document.getElementById("items-grid");
-    if (!list.length) { grid.innerHTML = `<div class="text-muted">Шмоток не найдено</div>`; return; }
+    if (!list.length) { grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`; return; }
 
     grid.innerHTML = "";
     list.forEach(item => grid.appendChild(buildCard(item)));
@@ -252,7 +253,7 @@
     const item = allItems.find(i => i.id === id);
     if (!item) return;
     resetForm();
-    modalTitle.textContent = "Редактировать шмотку";
+    modalTitle.textContent = "Редактировать предмет";
     editId.value = id;
     document.getElementById("f-name").value        = item.name        || "";
     document.getElementById("f-slot").value        = item.slot        || "";
@@ -271,7 +272,7 @@
   };
 
   function openAdd() {
-    modalTitle.textContent = "Добавить шмотку";
+    modalTitle.textContent = "Добавить предмет";
     resetForm();
     modal.classList.remove("hidden");
   }
@@ -299,8 +300,8 @@
     try {
       const data = { name, slot, quality, boss_name: boss, lucent_value: Number(lucent) || 0, description: desc, image: currentImageBase64 || null };
       const id = editId.value;
-      if (id) { await updateItem(id, data); showToast("Шмотка обновлена"); }
-      else    { await addItem(data);        showToast("Шмотка добавлена"); }
+      if (id) { await updateItem(id, data); showToast("Предмет обновлён"); }
+      else    { await addItem(data);        showToast("Предмет добавлен"); }
       closeModal();
       await loadItems();
     } catch (e) {
@@ -312,7 +313,7 @@
 
   window.confirmDelete = (id, name) => {
     if (!confirm(`Удалить «${name}»?`)) return;
-    deleteItem(id).then(() => { showToast("Шмотка удалена"); loadItems(); });
+    deleteItem(id).then(() => { showToast("Предмет удалён"); loadItems(); });
   };
 
   document.getElementById("filter-search").addEventListener("input",  renderItems);
