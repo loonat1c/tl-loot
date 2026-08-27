@@ -76,23 +76,7 @@
 </head>
 <body>
 
-<nav class="navbar">
-  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
-  <div class="nav-links">
-    <a href="players.html">Игроки</a>
-    <a href="items.html">Шмотки</a>
-    <a href="raids.html">Рейды</a>
-    <a href="search.html">Поиск</a>
-    <a href="stats.html">Статистика</a>
-    <a href="admin.html" class="active" data-role="moderator">Управление</a>
-    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
-  </div>
-  <div class="nav-user">
-    <span id="nav-user-label">Гость</span>
-    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
-    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
-  </div>
-</nav>
+<nav class="navbar" id="main-nav"></nav>
 
 <main class="container">
   <div class="page-header">
@@ -168,7 +152,11 @@
 </div>
 
 <script type="module">
-  import { initAuth, canWrite, isAdmin, logout, currentRole } from "../js/modules/auth.js";
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  initNavbar();
+
+  import { logout } from "../js/modules/auth.js";
   import { getPlayers }    from "../js/modules/players.js";
   import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
   import { db, auth }      from "../js/firebase.js";
@@ -183,7 +171,7 @@
   let allPlayers = [];
 
   // ── Auth guard ────────────────────────────────────
-  initAuth(async (user, role) => {
+  authReady.then(async () => {
     if (!user || (role !== "admin" && role !== "moderator")) {
       document.getElementById("access-denied").classList.remove("hidden");
       return;
