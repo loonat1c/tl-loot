@@ -19,9 +19,9 @@ export let currentUser = null;
 export let currentRole = "guest";
 
 // ─── Промис готовности ────────────────────────────────
-let _authReadyResolve;
-export const authReady = new Promise(res => { 
-  _authReadyResolve = res; 
+let _authReadyResolve = null;
+export const authReady = new Promise((resolve) => {
+  _authReadyResolve = resolve;
 });
 
 // ─── Флаг инициализации ──────────────────────────────
@@ -42,29 +42,40 @@ export function initAuth(onReady) {
   onAuthStateChanged(auth, async (user) => {
     console.log("📡 onAuthStateChanged вызван, user:", user ? user.email : null);
     
+    let result = { user: null, role: "guest" };
+    
     if (user) {
       currentUser = user;
       console.log("👤 Пользователь найден:", user.email);
       
-      // ВАЖНО: Сначала загружаем роль из Firestore
+      // Загружаем роль из Firestore
       const fresh = await fetchRole(user.uid);
       currentRole = fresh;
       console.log("🔄 Роль из Firestore:", currentRole);
       sessionStorage.setItem(`role_${user.uid}`, fresh);
       
-      // Обновляем UI
-      updateNavUI();
+      result = { user: currentUser, role: currentRole };
     } else {
       console.log("👤 Пользователь не найден (guest)");
       currentUser = null;
       currentRole = "guest";
       sessionStorage.clear();
-      updateNavUI();
+      result = { user: null, role: "guest" };
     }
 
-    if (onReady) onReady(currentUser, currentRole);
-    console.log("✅ authReady резолвится с user:", currentUser ? currentUser.email : null, "role:", currentRole);
-    _authReadyResolve({ user: currentUser, role: currentRole });
+    // Обновляем UI
+    updateNavUI();
+    
+    // Вызываем колбэк если есть
+    if (onReady) {
+      onReady(currentUser, currentRole);
+    }
+    
+    // Резолвим промис с данными
+    console.log("✅ authReady резолвится с:", result);
+    if (_authReadyResolve) {
+      _authReadyResolve(result);
+    }
   });
 }
 
@@ -96,13 +107,13 @@ export async function login(email, password) {
   console.log("✅ Вход выполнен:", cred.user.email);
   
   // Ждем загрузки роли
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 300));
   const role = await fetchRole(cred.user.uid);
   currentRole = role;
   sessionStorage.setItem(`role_${cred.user.uid}`, role);
   updateNavUI();
   
-  return cred.user;
+  return { user: cred.user, role: role };
 }
 
 export function logout() {
@@ -129,7 +140,7 @@ export let user = currentUser;
 export let role = currentRole;
 
 // Обновляем синонимы при изменении
-export function updateCurrentUser() {
+function updateCurrentUser() {
   user = currentUser;
   role = currentRole;
 }
