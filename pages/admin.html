@@ -6,7 +6,6 @@
   <title>Администрирование — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
-    /* Все стили как раньше */
     .admin-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -90,8 +89,12 @@
       background: var(--accent);
       color: #fff;
     }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    .tab-content { 
+      display: none !important; 
+    }
+    .tab-content.active { 
+      display: block !important; 
+    }
 
     .settings-wrap { max-width: 560px; }
     .settings-card {
@@ -147,14 +150,7 @@
 
     .badge-purple { background: var(--accent); color: #fff; }
     
-    .debug-info {
-      background: #f0f0f0;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #333;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -166,9 +162,7 @@
     <h2>⚙️ Администрирование</h2>
   </div>
 
-  <div id="debug" class="debug-info">⏳ Инициализация...</div>
-
-  <div id="access-denied" class="hidden" style="text-align:center;padding:3rem;color:var(--text-muted)">
+  <div id="access-denied" style="text-align:center;padding:3rem;color:var(--text-muted)">
     <div style="font-size:2rem">🔒</div>
     <div class="mt-1">Доступ только для модераторов и администраторов</div>
   </div>
@@ -285,325 +279,307 @@
 </div>
 
 <script type="module">
-  console.log("🚀 Страница загружена");
-  
   // ─── Импорты ──────────────────────────────────────────
-  try {
-    const { initNavbar } = await import("../js/modules/navbar.js");
-    const authModule = await import("../js/modules/auth.js");
-    const { getPlayers } = await import("../js/modules/players.js");
-    const { getPlayerLocks, removeSlotLock } = await import("../js/modules/locks.js");
-    const { getLootRules, saveLootRules } = await import("../js/modules/settings.js");
-    const { db, auth } = await import("../js/firebase.js");
-    const { SLOTS } = await import("../js/constants.js");
-    const { collection, getDocs, doc, setDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { initAuth, authReady, logout } from "../js/modules/auth.js";
+  import { getPlayers } from "../js/modules/players.js";
+  import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
+  import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+  import { db, auth } from "../js/firebase.js";
+  import { SLOTS } from "../js/constants.js";
+  import {
+    collection, getDocs, doc, setDoc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  
+  // ─── Инициализация ──────────────────────────────────
+  initNavbar();
+  initAuth();
+  
+  let allPlayers = [];
+  
+  // ─── Авторизация ──────────────────────────────────────
+  authReady.then((authData) => {
+    const user = authData?.user || null;
+    const role = authData?.role || "guest";
     
-    const { initAuth, authReady, logout, currentUser, currentRole } = authModule;
-    
-    // ВАЖНО: Инициализируем auth
-    console.log("🔄 Вызов initAuth()...");
-    initAuth();
-    initNavbar();
-    
-    const debugEl = document.getElementById('debug');
-    
-    // ─── Ждем авторизацию ──────────────────────────────────
-    console.log("⏳ Ожидание authReady...");
-    
-    authReady.then((authData) => {
-      console.log("✅ authReady выполнен", authData);
-      
-      // Безопасно получаем данные
-      const user = authData?.user || null;
-      const role = authData?.role || "guest";
-      
-      debugEl.innerHTML = `
-        🔍 Статус: авторизация<br>
-        User: ${user ? user.email : 'нет'}<br>
-        Role: ${role}
-      `;
-      
-      if (!user) {
-        console.log("❌ Пользователь не авторизован");
-        document.getElementById("access-denied").classList.remove("hidden");
-        return;
-      }
-
-      if (role !== "admin" && role !== "moderator") {
-        console.log("❌ Недостаточно прав:", role);
-        document.getElementById("access-denied").classList.remove("hidden");
-        return;
-      }
-
-      console.log("✅ Доступ разрешен, роль:", role);
-      document.getElementById("admin-content").classList.remove("hidden");
-
-      // Секция пользователей — только для админа
-      if (role !== "admin") {
-        document.getElementById("users-section").style.display = "none";
-      } else {
-        loadUsers();
-      }
-
-      // Загружаем игроков
-      getPlayers().then(allPlayers => {
-        console.log(`✅ Загружено ${allPlayers.length} игроков`);
-        populatePlayerSelect(allPlayers);
-      }).catch(e => {
-        console.error("❌ Ошибка загрузки игроков:", e);
-      });
-
-      // Загружаем настройки
-      getLootRules().then(rules => {
-        console.log("✅ Настройки загружены:", rules);
-        document.getElementById("s-reset-after").value = rules.reset_after_raids;
-        document.getElementById("s-max-skip").value = rules.max_skip_raids;
-        updateExample(rules);
-      }).catch(e => {
-        console.error("❌ Ошибка загрузки настроек:", e);
-      });
-      
-      debugEl.innerHTML = `
-        ✅ Готово!<br>
-        User: ${user ? user.email : 'нет'}<br>
-        Role: ${role}
-      `;
-    }).catch(err => {
-      console.error("❌ Ошибка в authReady:", err);
-      debugEl.innerHTML = `❌ Ошибка: ${err.message}`;
-    });
-
-    // ─── Остальные функции ──────────────────────────────
-    
-    function populatePlayerSelect(allPlayers) {
-      const sel = document.getElementById("lock-player-select");
-      sel.innerHTML = `<option value="">— выбери игрока —</option>`;
-      allPlayers.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
-      });
+    if (!user || (role !== "admin" && role !== "moderator")) {
+      document.getElementById("access-denied").classList.remove("hidden");
+      return;
     }
 
-    document.getElementById("lock-player-select").addEventListener("change", async (e) => {
-      const id = e.target.value;
-      if (!id) {
-        document.getElementById("lock-list").innerHTML =
-          `<div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>`;
-        return;
-      }
-      await renderLocks(id);
+    document.getElementById("access-denied").classList.add("hidden");
+    document.getElementById("admin-content").classList.remove("hidden");
+
+    if (role !== "admin") {
+      document.getElementById("users-section").style.display = "none";
+    } else {
+      loadUsers();
+    }
+
+    getPlayers().then(players => {
+      allPlayers = players;
+      populatePlayerSelect();
     });
 
-    async function renderLocks(playerId) {
-      const container = document.getElementById("lock-list");
-      container.innerHTML = `<div class="text-muted" style="font-size:0.82rem">Загрузка...</div>`;
+    getLootRules().then(rules => {
+      document.getElementById("s-reset-after").value = rules.reset_after_raids;
+      document.getElementById("s-max-skip").value = rules.max_skip_raids;
+      updateExample(rules);
+    });
+  });
 
-      try {
-        const locks = await getPlayerLocks(playerId);
-        const entries = Object.entries(locks);
+  document.getElementById("btn-logout")?.addEventListener("click", () =>
+    logout().then(() => location.reload())
+  );
 
-        if (!entries.length) {
-          container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Блокировок нет</div>`;
-          return;
-        }
+  // ─── Вкладки ──────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      // Убираем active у всех кнопок
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      // Добавляем active текущей кнопке
+      this.classList.add("active");
+      
+      // Скрываем все вкладки
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      
+      // Показываем нужную вкладку
+      const targetId = this.dataset.tab;
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        targetEl.classList.add("active");
+      }
+    });
+  });
 
-        container.innerHTML = entries.map(([slot, lock]) => {
-          const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
-          const frozen = lock.raids_skipped > 2;
-          return `
-            <div class="lock-manage-row">
-              <div class="lock-manage-info">
-                <div class="lock-manage-name">
-                  <span class="badge badge-${frozen ? "frozen" : "locked"}">${slotLabel}</span>
-                </div>
-                <div class="lock-manage-detail">
-                  ${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов
-                  ${frozen ? " · ⚠️ заморожено" : ""}
-                </div>
+  // ─── Блокировки ──────────────────────────────────────
+  function populatePlayerSelect() {
+    const sel = document.getElementById("lock-player-select");
+    sel.innerHTML = `<option value="">— выбери игрока —</option>`;
+    allPlayers.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
+    });
+  }
+
+  document.getElementById("lock-player-select").addEventListener("change", async (e) => {
+    const id = e.target.value;
+    if (!id) {
+      document.getElementById("lock-list").innerHTML =
+        `<div class="text-muted" style="font-size:0.85rem">Выбери игрока</div>`;
+      return;
+    }
+    await renderLocks(id);
+  });
+
+  async function renderLocks(playerId) {
+    const container = document.getElementById("lock-list");
+    container.innerHTML = `<div class="text-muted" style="font-size:0.82rem">Загрузка...</div>`;
+
+    try {
+      const locks = await getPlayerLocks(playerId);
+      const entries = Object.entries(locks);
+
+      if (!entries.length) {
+        container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Блокировок нет</div>`;
+        return;
+      }
+
+      container.innerHTML = entries.map(([slot, lock]) => {
+        const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+        const frozen = lock.raids_skipped > 2;
+        return `
+          <div class="lock-manage-row">
+            <div class="lock-manage-info">
+              <div class="lock-manage-name">
+                <span class="badge badge-${frozen ? "frozen" : "locked"}">${slotLabel}</span>
               </div>
-              <button class="btn btn-danger btn-sm" onclick="window.removeLock('${playerId}', '${slot}')">
-                Снять
-              </button>
+              <div class="lock-manage-detail">
+                ${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов
+                ${frozen ? " · ⚠️ заморожено" : ""}
+              </div>
             </div>
-          `;
-        }).join("");
-      } catch (e) {
-        console.error("Ошибка рендеринга блокировок:", e);
-        container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки блокировок</div>`;
-      }
-    }
-
-    window.removeLock = async (playerId, slot) => {
-      const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
-      if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
-      try {
-        await removeSlotLock(playerId, slot);
-        showToast("Блокировка снята");
-        await renderLocks(playerId);
-      } catch (e) {
-        console.error("Ошибка снятия блокировки:", e);
-        showToast("Ошибка снятия блокировки", "error");
-      }
-    };
-
-    async function loadUsers() {
-      const container = document.getElementById("users-list");
-      try {
-        const snap = await getDocs(collection(db, "users"));
-        const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        if (!users.length) {
-          container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Нет пользователей</div>`;
-          return;
-        }
-
-        container.innerHTML = users.map(u => `
-          <div class="user-row">
-            <div class="user-email">${u.email || u.id}</div>
-            <span class="badge ${u.role === "admin" ? "badge-purple" : "badge-free"} user-role-badge">
-              ${u.role === "admin" ? "Админ" : "Модератор"}
-            </span>
-            ${u.role !== "admin" ? `
-              <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
-                🗑️
-              </button>
-            ` : ""}
+            <button class="btn btn-danger btn-sm" onclick="window.removeLock('${playerId}', '${slot}')">
+              Снять
+            </button>
           </div>
-        `).join("");
-      } catch (e) {
-        console.error("Ошибка загрузки пользователей:", e);
-        container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
+        `;
+      }).join("");
+    } catch (e) {
+      console.error("Ошибка рендеринга блокировок:", e);
+      container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки блокировок</div>`;
+    }
+  }
+
+  window.removeLock = async (playerId, slot) => {
+    const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+    if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
+    try {
+      await removeSlotLock(playerId, slot);
+      showToast("Блокировка снята");
+      await renderLocks(playerId);
+    } catch (e) {
+      console.error("Ошибка снятия блокировки:", e);
+      showToast("Ошибка снятия блокировки", "error");
+    }
+  };
+
+  // ─── Пользователи ────────────────────────────────────
+  async function loadUsers() {
+    const container = document.getElementById("users-list");
+    try {
+      const snap = await getDocs(collection(db, "users"));
+      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      if (!users.length) {
+        container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Нет пользователей</div>`;
+        return;
       }
+
+      container.innerHTML = users.map(u => `
+        <div class="user-row">
+          <div class="user-email">${u.email || u.id}</div>
+          <span class="badge ${u.role === "admin" ? "badge-purple" : "badge-free"} user-role-badge">
+            ${u.role === "admin" ? "Админ" : "Модератор"}
+          </span>
+          ${u.role !== "admin" ? `
+            <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
+              🗑️
+            </button>
+          ` : ""}
+        </div>
+      `).join("");
+    } catch (e) {
+      console.error("Ошибка загрузки пользователей:", e);
+      container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
+    }
+  }
+
+  document.getElementById("btn-add-user")?.addEventListener("click", () => {
+    document.getElementById("new-user-email").value = "";
+    document.getElementById("new-user-password").value = "";
+    document.getElementById("user-error").style.display = "none";
+    document.getElementById("modal-user").classList.remove("hidden");
+  });
+
+  document.getElementById("btn-create-user")?.addEventListener("click", async () => {
+    const email = document.getElementById("new-user-email").value.trim();
+    const password = document.getElementById("new-user-password").value;
+    const errEl = document.getElementById("user-error");
+
+    if (!email || !password) {
+      errEl.textContent = "Заполни все поля";
+      errEl.style.display = "block";
+      return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = "Пароль минимум 6 символов";
+      errEl.style.display = "block";
+      return;
     }
 
-    document.getElementById("btn-add-user")?.addEventListener("click", () => {
-      document.getElementById("new-user-email").value = "";
-      document.getElementById("new-user-password").value = "";
-      document.getElementById("user-error").style.display = "none";
-      document.getElementById("modal-user").classList.remove("hidden");
-    });
+    const btn = document.getElementById("btn-create-user");
+    btn.disabled = true; btn.textContent = "Создание...";
 
-    document.getElementById("btn-create-user")?.addEventListener("click", async () => {
-      const email = document.getElementById("new-user-email").value.trim();
-      const password = document.getElementById("new-user-password").value;
-      const errEl = document.getElementById("user-error");
-
-      if (!email || !password) {
-        errEl.textContent = "Заполни все поля";
-        errEl.style.display = "block";
-        return;
-      }
-      if (password.length < 6) {
-        errEl.textContent = "Пароль минимум 6 символов";
-        errEl.style.display = "block";
-        return;
-      }
-
-      const btn = document.getElementById("btn-create-user");
-      btn.disabled = true; btn.textContent = "Создание...";
-
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, "users", cred.user.uid), {
-          email,
-          role: "moderator",
-          created_at: new Date().toISOString(),
-        });
-        closeModal();
-        showToast("Модератор создан");
-        await loadUsers();
-      } catch (e) {
-        let msg = e.message;
-        if (e.code === "auth/email-already-in-use") msg = "Этот email уже используется";
-        if (e.code === "auth/invalid-email") msg = "Некорректный email";
-        errEl.textContent = msg;
-        errEl.style.display = "block";
-      } finally {
-        btn.disabled = false; btn.textContent = "Создать";
-      }
-    });
-
-    window.deleteUser = async (uid, email) => {
-      if (!confirm(`Удалить пользователя ${email}?`)) return;
-      try {
-        await deleteDoc(doc(db, "users", uid));
-        showToast("Пользователь удалён из системы");
-        await loadUsers();
-      } catch (e) {
-        console.error("Ошибка удаления пользователя:", e);
-        showToast("Ошибка удаления", "error");
-      }
-    };
-
-    window.closeModal = () => {
-      document.getElementById("modal-user").classList.add("hidden");
-    };
-
-    document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
-      const resetAfter = Number(document.getElementById("s-reset-after").value);
-      const maxSkip = Number(document.getElementById("s-max-skip").value);
-
-      if (resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
-        alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
-        return;
-      }
-
-      const btn = document.getElementById("btn-save-rules");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-
-      try {
-        await saveLootRules({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
-        const msg = document.getElementById("saved-rules-msg");
-        msg.classList.add("show");
-        setTimeout(() => msg.classList.remove("show"), 2500);
-        updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
-      } catch (e) {
-        console.error("Ошибка сохранения настроек:", e);
-        alert("Ошибка: " + e.message);
-      } finally {
-        btn.disabled = false; btn.textContent = "Сохранить";
-      }
-    });
-
-    ["s-reset-after", "s-max-skip"].forEach(id => {
-      document.getElementById(id)?.addEventListener("input", () => {
-        const n = Number(document.getElementById("s-reset-after")?.value || 6);
-        const m = Number(document.getElementById("s-max-skip")?.value || 2);
-        updateExample({ reset_after_raids: n, max_skip_raids: m });
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", cred.user.uid), {
+        email,
+        role: "moderator",
+        created_at: new Date().toISOString(),
       });
+      closeModal();
+      showToast("Модератор создан");
+      await loadUsers();
+    } catch (e) {
+      let msg = e.message;
+      if (e.code === "auth/email-already-in-use") msg = "Этот email уже используется";
+      if (e.code === "auth/invalid-email") msg = "Некорректный email";
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+    } finally {
+      btn.disabled = false; btn.textContent = "Создать";
+    }
+  });
+
+  window.deleteUser = async (uid, email) => {
+    if (!confirm(`Удалить пользователя ${email}?`)) return;
+    try {
+      await deleteDoc(doc(db, "users", uid));
+      showToast("Пользователь удалён из системы");
+      await loadUsers();
+    } catch (e) {
+      console.error("Ошибка удаления пользователя:", e);
+      showToast("Ошибка удаления", "error");
+    }
+  };
+
+  window.closeModal = () => {
+    document.getElementById("modal-user").classList.add("hidden");
+  };
+
+  // ─── Настройки ──────────────────────────────────────
+  document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
+    const resetAfter = Number(document.getElementById("s-reset-after").value);
+    const maxSkip = Number(document.getElementById("s-max-skip").value);
+
+    if (resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
+      alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-save-rules");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      await saveLootRules({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      const msg = document.getElementById("saved-rules-msg");
+      msg.classList.add("show");
+      setTimeout(() => msg.classList.remove("show"), 2500);
+      updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+    } catch (e) {
+      console.error("Ошибка сохранения настроек:", e);
+      alert("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Сохранить";
+    }
+  });
+
+  ["s-reset-after", "s-max-skip"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", () => {
+      const n = Number(document.getElementById("s-reset-after")?.value || 6);
+      const m = Number(document.getElementById("s-max-skip")?.value || 2);
+      updateExample({ reset_after_raids: n, max_skip_raids: m });
     });
+  });
 
-    function updateExample(rules) {
-      const n = rules?.reset_after_raids || Number(document.getElementById("s-reset-after")?.value || 6);
-      const m = rules?.max_skip_raids || Number(document.getElementById("s-max-skip")?.value || 2);
-      const el = document.getElementById("example-text");
-      if (!el) return;
-      el.innerHTML = `
-        Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
-        Чтобы снова участвовать в основном ролле на перчатки, нужно:<br>
-        — посетить рейды так, чтобы прошло <strong>${n} рейдов</strong> с момента выигрыша<br>
-        — при этом пропустить не более <strong>${m} из ${n}</strong> рейдов<br><br>
-        Если игрок пропустит <strong>${m + 1} или больше</strong> рейдов подряд —
-        счётчик заморозится и не будет двигаться пока он не вернётся.<br><br>
-        <span style="color:var(--success)">✅ Разблокируется:</span> посетил ${n - m} из ${n} рейдов<br>
-        <span style="color:var(--warning)">⚠️ Заморожен:</span> пропустил более ${m} рейдов<br>
-        <span style="color:var(--danger)">🔒 Заблокирован:</span> только что выиграл
-      `;
-    }
+  function updateExample(rules) {
+    const n = rules?.reset_after_raids || Number(document.getElementById("s-reset-after")?.value || 6);
+    const m = rules?.max_skip_raids || Number(document.getElementById("s-max-skip")?.value || 2);
+    const el = document.getElementById("example-text");
+    if (!el) return;
+    el.innerHTML = `
+      Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
+      Чтобы снова участвовать в основном ролле на перчатки, нужно:<br>
+      — посетить рейды так, чтобы прошло <strong>${n} рейдов</strong> с момента выигрыша<br>
+      — при этом пропустить не более <strong>${m} из ${n}</strong> рейдов<br><br>
+      Если игрок пропустит <strong>${m + 1} или больше</strong> рейдов подряд —
+      счётчик заморозится и не будет двигаться пока он не вернётся.<br><br>
+      <span style="color:var(--success)">✅ Разблокируется:</span> посетил ${n - m} из ${n} рейдов<br>
+      <span style="color:var(--warning)">⚠️ Заморожен:</span> пропустил более ${m} рейдов<br>
+      <span style="color:var(--danger)">🔒 Заблокирован:</span> только что выиграл
+    `;
+  }
 
-    function showToast(msg, type = "success") {
-      const t = document.createElement("div");
-      t.className = `toast ${type}`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
-    }
-    
-    console.log("✅ Страница полностью загружена");
-
-  } catch (error) {
-    console.error("❌ Критическая ошибка:", error);
-    document.getElementById('debug').innerHTML = `❌ Ошибка: ${error.message}`;
+  // ─── Утилиты ────────────────────────────────────────
+  function showToast(msg, type = "success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
   }
 </script>
 </body>
