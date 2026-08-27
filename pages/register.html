@@ -66,6 +66,12 @@
       color: var(--text-muted);
       margin-top: 0.25rem;
     }
+
+    .hint-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
   </style>
 </head>
 
@@ -81,6 +87,7 @@
 
     <form id="register-form" autocomplete="off">
 
+      <!-- Email -->
       <div class="form-group">
         <label for="reg-email">Email *</label>
         <input
@@ -91,6 +98,7 @@
         />
       </div>
 
+      <!-- Пароль -->
       <div class="form-group">
         <label for="reg-password">Пароль *</label>
         <input
@@ -105,6 +113,7 @@
         </div>
       </div>
 
+      <!-- Подтверждение пароля -->
       <div class="form-group">
         <label for="reg-password-confirm">Подтвердите пароль *</label>
         <input
@@ -115,18 +124,24 @@
         />
       </div>
 
+      <!-- Имя пользователя (опционально) -->
       <div class="form-group">
         <label for="reg-username">Имя пользователя</label>
         <input
           type="text"
           id="reg-username"
-          placeholder="Как к вам обращаться"
+          placeholder="Как к вам обращаться (опционально)"
         />
+        <div class="hint-text">
+          💡 Если не заполнить — будет использоваться имя из email
+        </div>
       </div>
 
+      <!-- Сообщения -->
       <div id="error-message" class="error-message"></div>
       <div id="success-message" class="success-message"></div>
 
+      <!-- Кнопка -->
       <button type="submit" class="btn btn-primary" id="btn-register">
         Зарегистрироваться
       </button>
@@ -169,6 +184,7 @@
   const successDiv = document.getElementById('success-message');
   const btnRegister = document.getElementById('btn-register');
 
+  // Скрываем сообщения при вводе
   [emailInput, passwordInput, passwordConfirmInput, usernameInput].forEach(input => {
     input.addEventListener('input', () => {
       errorDiv.style.display = 'none';
@@ -185,8 +201,10 @@
     const email = emailInput.value.trim();
     const password = passwordInput.value;
     const passwordConfirm = passwordConfirmInput.value;
-    const username = usernameInput.value.trim();
+    // Если имя не заполнено — будет null, в auth.js возьмётся из email
+    const username = usernameInput.value.trim() || null;
 
+    // Валидация
     if (!email) {
       errorDiv.textContent = 'Введите email';
       errorDiv.style.display = 'block';
@@ -211,11 +229,12 @@
       return;
     }
 
+    // Блокируем кнопку
     btnRegister.disabled = true;
     btnRegister.textContent = 'Регистрация...';
 
     try {
-      const result = await register(email, password, username || null);
+      const result = await register(email, password, username);
       
       if (result.success) {
         successDiv.textContent = '✅ Регистрация успешна! Перенаправление...';
