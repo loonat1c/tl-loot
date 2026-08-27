@@ -85,23 +85,7 @@
 </head>
 <body>
 
-<nav class="navbar">
-  <a class="nav-brand" href="../index.html">⚔️ TL Loot</a>
-  <div class="nav-links">
-    <a href="players.html">Игроки</a>
-    <a href="items.html">Шмотки</a>
-    <a href="raids.html">Рейды</a>
-    <a href="search.html">Поиск</a>
-    <a href="stats.html" class="active">Статистика</a>
-    <a href="admin.html" data-role="moderator" class="hidden">Управление</a>
-    <a href="settings.html" data-role="admin" class="hidden">Настройки</a>
-  </div>
-  <div class="nav-user">
-    <span id="nav-user-label">Гость</span>
-    <button class="btn btn-sm" onclick="location.href='login.html'" id="btn-login">Войти</button>
-    <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
-  </div>
-</nav>
+<nav class="navbar" id="main-nav"></nav>
 
 <main class="container">
   <div class="page-header">
@@ -162,7 +146,10 @@
 </main>
 
 <script type="module">
-  import { initAuth, logout } from "../js/modules/auth.js";
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  initNavbar();
+
   import { getPlayers }       from "../js/modules/players.js";
   import { getRaids }         from "../js/modules/raids.js";
   import { SLOTS, ROLES }     from "../js/constants.js";
@@ -350,8 +337,6 @@
     return n.toLocaleString();
   }
 
-  initAuth(() => {});
-  document.getElementById("btn-logout")?.addEventListener("click", () => logout().then(() => location.reload()));
   init();
 </script>
 </body>
