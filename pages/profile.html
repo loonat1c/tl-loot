@@ -273,72 +273,116 @@
       margin-bottom: 0.2rem;
     }
 
-    /* ── Комбобокс с поиском ────────────────────────── */
-    .loot-combobox {
+    /* ── Select с поиском ───────────────────────────── */
+    .loot-select-wrap {
       position: relative;
       width: 100%;
     }
 
-    .loot-combobox input {
+    .loot-select-wrap .select-display {
       width: 100%;
-      padding: 0.35rem 0.6rem;
+      padding: 0.35rem 2rem 0.35rem 0.6rem;
       font-size: 0.85rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .loot-select-wrap .select-display::after {
+      content: '▼';
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .loot-select-wrap .select-display:focus {
+      border-color: var(--accent);
       outline: none;
     }
 
-    .loot-combobox input:focus {
-      border-color: var(--accent);
-    }
-
-    .loot-combobox .dropdown {
+    .loot-select-wrap .dropdown {
       display: none;
       position: absolute;
-      top: 100%;
+      top: calc(100% + 2px);
       left: 0;
       right: 0;
-      max-height: 180px;
+      max-height: 200px;
       overflow-y: auto;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 4px;
       z-index: 50;
-      margin-top: 2px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
-    .loot-combobox .dropdown.open {
+    .loot-select-wrap .dropdown.open {
       display: block;
     }
 
-    .loot-combobox .dropdown .item {
+    .loot-select-wrap .dropdown .search-input {
+      width: 100%;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      background: var(--bg-card2);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      outline: none;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .loot-select-wrap .dropdown .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .loot-select-wrap .dropdown .items-wrap {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .loot-select-wrap .dropdown .item {
       padding: 0.3rem 0.6rem;
       cursor: pointer;
       font-size: 0.85rem;
       transition: background 0.1s;
       color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .loot-combobox .dropdown .item:hover {
+    .loot-select-wrap .dropdown .item:hover {
       background: var(--accent);
       color: #fff;
     }
 
-    .loot-combobox .dropdown .item.selected {
+    .loot-select-wrap .dropdown .item.selected {
       background: var(--accent);
       color: #fff;
     }
 
-    .loot-combobox .dropdown .item.empty {
+    .loot-select-wrap .dropdown .item.empty {
       color: var(--text-muted);
       cursor: default;
       font-style: italic;
     }
 
-    .loot-combobox .dropdown .item.empty:hover {
+    .loot-select-wrap .dropdown .item.empty:hover {
       background: transparent;
     }
 
@@ -454,7 +498,7 @@
       </div>
     </div>
 
-    <!-- Желаемый лут с комбобоксом -->
+    <!-- Желаемый лут с select + поиск -->
     <div class="form-group">
       <label>Желаемый лут</label>
       <div class="loot-selection" id="loot-selection">
@@ -749,22 +793,37 @@
   }
 
   // ============================================
-  // КОМБОБОКС С ПОИСКОМ
+  // SELECT С ПОИСКОМ (КАК НОРМАЛЬНЫЙ SELECT)
   // ============================================
 
-  function createCombobox(slotId, slotLabel, items, selectedValue = '') {
+  function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
     const container = document.createElement('div');
     container.className = 'loot-slot';
+    
+    // Находим выбранный предмет
+    const selectedItem = items.find(i => i.id === selectedValue);
+    const displayText = selectedItem ? selectedItem.name : '— не выбрано —';
+
     container.innerHTML = `
       <span class="loot-label">${slotLabel}</span>
-      <div class="loot-combobox" data-slot="${slotId}">
-        <input type="text" placeholder="🔍 Поиск..." autocomplete="off" />
-        <div class="dropdown"></div>
+      <div class="loot-select-wrap" data-slot="${slotId}">
+        <div class="select-display" data-value="${selectedValue || ''}">
+          ${displayText}
+        </div>
+        <div class="dropdown">
+          <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
+          <div class="items-wrap"></div>
+        </div>
       </div>
     `;
 
-    const input = container.querySelector('input');
-    const dropdown = container.querySelector('.dropdown');
+    const wrap = container.querySelector('.loot-select-wrap');
+    const display = wrap.querySelector('.select-display');
+    const dropdown = wrap.querySelector('.dropdown');
+    const searchInput = wrap.querySelector('.search-input');
+    const itemsWrap = wrap.querySelector('.items-wrap');
+
+    let currentValue = selectedValue || '';
 
     // Функция рендеринга списка
     function renderItems(filter = '') {
@@ -777,56 +836,52 @@
         );
       }
 
-      dropdown.innerHTML = '';
+      itemsWrap.innerHTML = '';
 
       if (!filtered.length) {
-        dropdown.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
+        itemsWrap.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
       } else {
         filtered.forEach(item => {
           const div = document.createElement('div');
           div.className = 'item';
-          if (item.id === selectedValue) {
+          if (item.id === currentValue) {
             div.classList.add('selected');
           }
           div.textContent = item.name;
           div.dataset.value = item.id;
           div.addEventListener('click', () => {
-            selectedValue = item.id;
-            input.value = item.name;
-            dropdown.classList.remove('open');
-            renderItems();
-            // Сохраняем выбранное значение в атрибут
-            container.dataset.selected = item.id;
+            selectItem(item.id, item.name);
           });
-          dropdown.appendChild(div);
+          itemsWrap.appendChild(div);
         });
       }
     }
 
-    // Выбор текущего значения
-    if (selectedValue) {
-      const selectedItem = items.find(i => i.id === selectedValue);
-      if (selectedItem) {
-        input.value = selectedItem.name;
-        container.dataset.selected = selectedValue;
-      }
+    function selectItem(value, label) {
+      currentValue = value;
+      display.textContent = label || '— не выбрано —';
+      display.dataset.value = value;
+      dropdown.classList.remove('open');
+      // Сохраняем значение в атрибут контейнера
+      container.dataset.selected = value;
+      renderItems();
     }
 
-    // Открытие/закрытие дропдауна
-    input.addEventListener('focus', () => {
-      dropdown.classList.add('open');
-      renderItems(input.value);
+    // Открытие дропдауна
+    display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      dropdown.classList.toggle('open');
+      if (!isOpen) {
+        searchInput.value = '';
+        renderItems();
+        setTimeout(() => searchInput.focus(), 100);
+      }
     });
 
-    input.addEventListener('blur', () => {
-      setTimeout(() => {
-        dropdown.classList.remove('open');
-      }, 200);
-    });
-
-    input.addEventListener('input', () => {
-      renderItems(input.value);
-      dropdown.classList.add('open');
+    // Поиск
+    searchInput.addEventListener('input', () => {
+      renderItems(searchInput.value);
     });
 
     // Закрытие при клике вне
@@ -837,7 +892,16 @@
     });
 
     // Инициализация
-    renderItems();
+    if (currentValue) {
+      const item = items.find(i => i.id === currentValue);
+      if (item) {
+        display.textContent = item.name;
+        container.dataset.selected = currentValue;
+      }
+    }
+
+    // Метод для получения значения
+    container.getSelected = () => currentValue;
 
     return container;
   }
@@ -863,27 +927,30 @@
 
     SLOTS.forEach(slot => {
       const slotItems = allItems.filter(item => item.slot === slot.id);
-      const combobox = createCombobox(
+      const select = createSearchableSelect(
         slot.id,
         slot.label,
         slotItems,
         currentValues[slot.id] || ''
       );
-      container.appendChild(combobox);
+      container.appendChild(select);
     });
   }
 
   // ============================================
-  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ ИЗ КОМБОБОКСОВ
+  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ
   // ============================================
 
   function getSelectedLoot() {
     const result = {};
-    document.querySelectorAll('.loot-combobox').forEach(combobox => {
-      const slot = combobox.dataset.slot;
-      const value = combobox.parentElement.dataset.selected || '';
-      if (value) {
-        result[slot] = value;
+    document.querySelectorAll('.loot-slot').forEach(slot => {
+      const wrap = slot.querySelector('.loot-select-wrap');
+      if (wrap) {
+        const display = wrap.querySelector('.select-display');
+        if (display && display.dataset.value) {
+          const slotId = wrap.dataset.slot;
+          result[slotId] = display.dataset.value;
+        }
       }
     });
     return result;
