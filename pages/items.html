@@ -29,8 +29,14 @@
       border-color: var(--accent);
     }
 
-    .item-card.quality-purple {
+    /* Качество предметов */
+    .item-card.quality-epic {
       border-left: 3px solid #9b59b6;
+    }
+
+    .item-card.quality-epic_ii {
+      border-left: 3px solid #8e44ad;
+      box-shadow: 0 0 16px rgba(142, 68, 173, 0.25);
     }
 
     .item-img {
@@ -96,14 +102,32 @@
       border: 1px solid var(--border);
     }
 
+    /* Бейджи качества */
+    .badge-quality-epic {
+      background: rgba(155, 89, 182, 0.2);
+      color: #9b59b6;
+      border: 1px solid #9b59b6;
+    }
+
+    .badge-quality-epic_ii {
+      background: rgba(142, 68, 173, 0.25);
+      color: #a855f7;
+      border: 2px solid #8e44ad;
+      box-shadow: 0 0 8px rgba(142, 68, 173, 0.3);
+      font-weight: 700;
+    }
+
+    /* Модальное окно */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.7);
       z-index: 200;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       padding: 1rem;
     }
 
@@ -111,9 +135,12 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+
       padding: 1.5rem;
+
       width: 100%;
       max-width: 520px;
+
       max-height: 90vh;
       overflow-y: auto;
     }
@@ -122,6 +149,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+
       margin-bottom: 1.25rem;
     }
 
@@ -132,8 +160,11 @@
     .btn-close {
       background: none;
       border: none;
+
       color: var(--text-muted);
+
       font-size: 1.25rem;
+
       cursor: pointer;
       line-height: 1;
     }
@@ -142,12 +173,17 @@
       color: var(--text);
     }
 
+    /* Загрузка картинки */
     .image-upload-area {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
+
       padding: 1rem;
+
       text-align: center;
+
       cursor: pointer;
+
       transition: border-color 0.15s;
     }
 
@@ -158,9 +194,13 @@
     .image-preview {
       width: 96px;
       height: 96px;
+
       object-fit: cover;
+
       border-radius: 6px;
+
       margin: 0 auto 0.5rem;
+
       display: block;
     }
 
@@ -169,10 +209,13 @@
       color: var(--text-muted);
     }
 
+    /* Фильтры */
     .filter-bar {
       display: flex;
       gap: 0.75rem;
+
       margin-bottom: 1.25rem;
+
       flex-wrap: wrap;
     }
 
@@ -192,12 +235,23 @@
 
 <body>
 
+<!-- ═══════════════════════════════════════════
+     НАВБАР
+═══════════════════════════════════════════ -->
+
 <nav class="navbar" id="main-nav"></nav>
+
+
+<!-- ═══════════════════════════════════════════
+     ОСНОВНОЙ КОНТЕНТ
+═══════════════════════════════════════════ -->
 
 <main class="container">
 
   <div class="page-header">
+
     <h2>🗡️ Предметы</h2>
+
     <button
       class="btn btn-primary hidden"
       data-role="moderator"
@@ -205,66 +259,163 @@
     >
       + Добавить предмет
     </button>
+
   </div>
 
+
+  <!-- ═══════════════════════════════════════
+       ФИЛЬТРЫ
+  ═══════════════════════════════════════ -->
+
   <div class="filter-bar">
+
     <input
       type="text"
       id="filter-search"
       placeholder="Поиск по названию..."
     />
+
     <select id="filter-slot">
       <option value="">Все слоты</option>
     </select>
+
+    <select id="filter-quality">
+      <option value="">Все качества</option>
+    </select>
+
     <select id="filter-boss">
       <option value="">Все боссы</option>
     </select>
+
   </div>
 
+
+  <!-- ═══════════════════════════════════════
+       СПИСОК ПРЕДМЕТОВ
+  ═══════════════════════════════════════ -->
+
   <div id="items-grid" class="items-grid">
-    <div class="text-muted">Загрузка...</div>
+
+    <div class="text-muted">
+      Загрузка...
+    </div>
+
   </div>
 
 </main>
 
-<!-- Модальное окно -->
+
+<!-- ═══════════════════════════════════════════
+     МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ
+═══════════════════════════════════════════ -->
+
 <div class="modal-overlay hidden" id="modal">
+
   <div class="modal">
+
     <div class="modal-header">
-      <h3 id="modal-title">Добавить предмет</h3>
-      <button class="btn-close" id="btn-modal-close">✕</button>
+
+      <h3 id="modal-title">
+        Добавить предмет
+      </h3>
+
+      <button
+        class="btn-close"
+        id="btn-modal-close"
+      >
+        ✕
+      </button>
+
     </div>
 
-    <input type="hidden" id="edit-id" />
+
+    <input
+      type="hidden"
+      id="edit-id"
+    />
+
+
+    <!-- Картинка -->
 
     <div class="form-group">
-      <label>Картинка</label>
-      <div class="image-upload-area" id="upload-area">
-        <img id="img-preview" class="image-preview hidden" alt="preview" />
-        <div class="upload-hint" id="upload-hint">
+
+      <label>
+        Картинка
+      </label>
+
+      <div
+        class="image-upload-area"
+        id="upload-area"
+      >
+
+        <img
+          id="img-preview"
+          class="image-preview hidden"
+          alt="preview"
+        />
+
+        <div
+          class="upload-hint"
+          id="upload-hint"
+        >
           Нажми чтобы выбрать картинку
           <br>
-          <small>Сожмётся до 128×128</small>
+          <small>
+            Сожмётся до 128×128
+          </small>
         </div>
+
       </div>
+
     </div>
 
-    <div class="form-group">
-      <label>Название *</label>
-      <input type="text" id="f-name" placeholder="Шлем Тени" />
-    </div>
+
+    <!-- Название -->
 
     <div class="form-group">
-      <label>Слот *</label>
+
+      <label>
+        Название *
+      </label>
+
+      <input
+        type="text"
+        id="f-name"
+        placeholder="Шлем Тени"
+      />
+
+    </div>
+
+
+    <!-- Слот -->
+
+    <div class="form-group">
+
+      <label>
+        Слот *
+      </label>
+
       <select id="f-slot">
-        <option value="">— выбери слот —</option>
+
+        <option value="">
+          — выбери слот —
+        </option>
+
       </select>
+
     </div>
+
+
+    <!-- Тип оружия (показывается только для слота "weapon") -->
 
     <div class="form-group" id="weapon-type-group" style="display:none;">
-      <label>Тип оружия *</label>
+      <label>
+        Тип оружия *
+      </label>
       <select id="f-weapon-type">
-        <option value="">— выбери тип оружия —</option>
+        <option value="">
+          — выбери тип оружия —
+        </option>
         <option value="bow">🏹 Лук</option>
         <option value="staff">🪄 Посох</option>
         <option value="twohand_sword">⚔️ Двуручный меч</option>
@@ -276,39 +427,101 @@
       </select>
     </div>
 
+
+    <!-- Качество -->
+
     <div class="form-group">
-      <label>Качество</label>
+
+      <label>
+        Качество
+      </label>
+
       <select id="f-quality">
-        <option value="purple">🟣 Эпическое</option>
+        <option value="epic">🟣 Эпическое</option>
+        <option value="epic_ii">🟣 Эпическое II</option>
       </select>
+
     </div>
 
+
+    <!-- Босс (выбор из списка) -->
+
     <div class="form-group">
-      <label>Босс *</label>
+
+      <label>
+        Босс *
+      </label>
+
       <select id="f-boss">
-        <option value="">— выбери босса —</option>
+        <option value="">
+          — выбери босса —
+        </option>
       </select>
+
     </div>
+
+
+    <!-- Описание -->
 
     <div class="form-group">
-      <label>Описание</label>
-      <textarea id="f-description" rows="3" placeholder="Характеристики, особенности..."></textarea>
+
+      <label>
+        Описание
+      </label>
+
+      <textarea
+        id="f-description"
+        rows="3"
+        placeholder="Характеристики, особенности..."
+      ></textarea>
+
     </div>
 
-    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+
+    <!-- Ошибка -->
+
+    <div
+      id="modal-error"
+      class="text-danger mt-1"
+      style="display:none; font-size:0.85rem;"
+    ></div>
+
+
+    <!-- Кнопки -->
 
     <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save">Сохранить</button>
-      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+
+      <button
+        class="btn btn-primary"
+        id="btn-save"
+      >
+        Сохранить
+      </button>
+
+      <button
+        class="btn btn-ghost"
+        id="btn-cancel"
+      >
+        Отмена
+      </button>
+
     </div>
+
   </div>
+
 </div>
 
-<script type="module">
-  // ==================================================
-  // ИМПОРТЫ
-  // ==================================================
 
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+
+<script type="module">
+  /* ==================================================
+     ИМПОРТЫ
+  ================================================== */
+
+  // Навбар и авторизация
   import { initNavbar } from "../js/modules/navbar.js";
   import { 
     initAuth, 
@@ -318,6 +531,7 @@
     currentUser 
   } from "../js/modules/auth.js";
 
+  // API для работы с предметами
   import {
     getItems,
     addItem,
@@ -325,76 +539,103 @@
     deleteItem
   } from "../js/modules/items.js";
 
+  // API для работы с боссами
+  import { getBosses } from "../js/modules/bosses.js";
+
+  // Работа с изображениями
   import {
     compressImage,
     pickFile,
     setItemImage
   } from "../js/modules/images.js";
 
-  import { SLOTS } from "../js/constants.js";
-
-  // Прямой запрос к Firestore (вместо bosses.js)
-  import { 
-    collection, 
-    getDocs, 
-    query, 
-    orderBy 
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { db } from "../js/firebase.js";
+  // Константы
+  import { SLOTS, QUALITY } from "../js/constants.js";
 
 
-  // ==================================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ==================================================
+  /* ==================================================
+     ИНИЦИАЛИЗАЦИЯ (ЖДЕМ АВТОРИЗАЦИЮ!)
+  ================================================== */
 
+  // 1. Инициализируем навбар
   initNavbar();
+
+  // 2. Инициализируем авторизацию
   initAuth();
+
+  // 3. ЖДЕМ восстановления сессии!
   await authReady;
 
+  // 4. Отладка
   console.log('🔐 Авторизация на странице предметов:', {
     user: currentUser?.email || 'Нет',
     role: currentRole,
     canWrite: canWrite()
   });
 
+  // 5. Показываем/скрываем кнопку "Добавить предмет"
   const addBtn = document.getElementById('btn-add-item');
   if (addBtn) {
     addBtn.classList.toggle('hidden', !canWrite());
   }
 
 
-  // ==================================================
-  // SELECT СЛОТОВ
-  // ==================================================
+  /* ==================================================
+     SELECT СЛОТОВ
+  ================================================== */
 
-  const slotSelect = document.getElementById("f-slot");
-  const filterSlot = document.getElementById("filter-slot");
+  const slotSelect =
+    document.getElementById("f-slot");
+
+  const filterSlot =
+    document.getElementById("filter-slot");
+
 
   SLOTS.forEach(slot => {
+
     slotSelect.innerHTML += `
-      <option value="${slot.id}">${slot.label}</option>
+      <option value="${slot.id}">
+        ${slot.label}
+      </option>
     `;
+
     filterSlot.innerHTML += `
-      <option value="${slot.id}">${slot.label}</option>
+      <option value="${slot.id}">
+        ${slot.label}
+      </option>
     `;
+
   });
 
 
-  // ==================================================
-  // ЗАГРУЗКА БОССОВ (прямой запрос)
-  // ==================================================
+  /* ==================================================
+     SELECT КАЧЕСТВА (ФИЛЬТР)
+  ================================================== */
+
+  const filterQuality =
+    document.getElementById("filter-quality");
+
+
+  QUALITY.forEach(q => {
+
+    filterQuality.innerHTML += `
+      <option value="${q.id}">
+        ${q.label}
+      </option>
+    `;
+
+  });
+
+
+  /* ==================================================
+     ЗАГРУЗКА БОССОВ
+  ================================================== */
 
   let allBosses = [];
 
   async function loadBosses() {
     try {
-      const bossesRef = collection(db, 'bosses');
-      const q = query(bossesRef, orderBy('name'));
-      const querySnapshot = await getDocs(q);
-      allBosses = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      allBosses = await getBosses();
       populateBossSelects();
     } catch (error) {
       console.error('Ошибка загрузки боссов:', error);
@@ -406,9 +647,11 @@
     const bossSelect = document.getElementById('f-boss');
     const filterBoss = document.getElementById('filter-boss');
 
+    // Сохраняем текущие значения
     const currentValue = bossSelect.value;
     const filterValue = filterBoss.value;
 
+    // Очищаем
     bossSelect.innerHTML = `<option value="">— выбери босса —</option>`;
     filterBoss.innerHTML = `<option value="">Все боссы</option>`;
 
@@ -421,107 +664,230 @@
       `;
     });
 
-    if (currentValue) bossSelect.value = currentValue;
-    if (filterValue) filterBoss.value = filterValue;
+    // Восстанавливаем значения
+    if (currentValue) {
+      bossSelect.value = currentValue;
+    }
+    if (filterValue) {
+      filterBoss.value = filterValue;
+    }
   }
 
 
-  // ==================================================
-  // ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
-  // ==================================================
+  /* ==================================================
+     ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
+  ================================================== */
 
   const weaponTypeGroup = document.getElementById('weapon-type-group');
   const weaponTypeSelect = document.getElementById('f-weapon-type');
 
+  // При изменении слота
   slotSelect.addEventListener('change', function() {
     if (this.value === 'weapon') {
       weaponTypeGroup.style.display = 'block';
     } else {
       weaponTypeGroup.style.display = 'none';
-      weaponTypeSelect.value = '';
+      weaponTypeSelect.value = ''; // Сброс значения
     }
   });
 
 
-  // ==================================================
-  // СОСТОЯНИЕ
-  // ==================================================
+  /* ==================================================
+     СОСТОЯНИЕ
+  ================================================== */
 
   let allItems = [];
   let currentImageBase64 = null;
 
 
-  // ==================================================
-  // ЗАГРУЗКА ПРЕДМЕТОВ
-  // ==================================================
+  /* ==================================================
+     ЗАГРУЗКА ПРЕДМЕТОВ
+  ================================================== */
 
   async function loadItems() {
+
     try {
+
       allItems = await getItems();
+
+      // Обновляем фильтр боссов (по ID)
       populateBossFilter();
+
       renderItems();
+
     } catch (error) {
+
       console.error("Ошибка загрузки предметов:", error);
+
       document.getElementById("items-grid").innerHTML = `
-        <div class="text-danger">Не удалось загрузить предметы</div>
+        <div class="text-danger">
+          Не удалось загрузить предметы
+        </div>
       `;
+
     }
+
   }
 
 
-  // ==================================================
-  // ФИЛЬТР БОССОВ
-  // ==================================================
+  /* ==================================================
+     ФИЛЬТР БОССОВ (по ID из allItems)
+  ================================================== */
 
   function populateBossFilter() {
-    const bossIds = [...new Set(allItems.map(item => item.boss_id).filter(Boolean))];
+
+    // Получаем уникальные ID боссов из предметов
+    const bossIds = [
+      ...new Set(
+        allItems
+          .map(item => item.boss_id)
+          .filter(Boolean)
+      )
+    ];
+
+    // Находим названия боссов по ID
     const bossNames = [];
     bossIds.forEach(id => {
       const boss = allBosses.find(b => b.id === id);
-      if (boss) bossNames.push({ id: boss.id, name: boss.name });
+      if (boss) {
+        bossNames.push({ id: boss.id, name: boss.name });
+      }
     });
+
+    // Сортируем по имени
     bossNames.sort((a, b) => a.name.localeCompare(b.name));
 
-    const select = document.getElementById("filter-boss");
+    const select =
+      document.getElementById("filter-boss");
+
+    // Сохраняем текущее значение
     const currentValue = select.value;
-    select.innerHTML = `<option value="">Все боссы</option>`;
+
+    select.innerHTML = `
+      <option value="">
+        Все боссы
+      </option>
+    `;
+
     bossNames.forEach(boss => {
-      select.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+      select.innerHTML += `
+        <option value="${boss.id}">
+          ${boss.name}
+        </option>
+      `;
     });
-    if (currentValue) select.value = currentValue;
+
+    // Восстанавливаем значение
+    if (currentValue) {
+      select.value = currentValue;
+    }
   }
 
 
-  // ==================================================
-  // ОТОБРАЖЕНИЕ
-  // ==================================================
+  /* ==================================================
+     ОТОБРАЖЕНИЕ
+  ================================================== */
 
   function renderItems() {
-    const search = document.getElementById("filter-search").value.toLowerCase();
-    const slot = document.getElementById("filter-slot").value;
-    const bossId = document.getElementById("filter-boss").value;
 
-    const list = allItems.filter(item => {
-      if (search && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
-      if (slot && item.slot !== slot) return false;
-      if (bossId && item.boss_id !== bossId) return false;
-      return true;
-    });
+    const search =
+      document
+        .getElementById("filter-search")
+        .value
+        .toLowerCase();
 
-    const grid = document.getElementById("items-grid");
+
+    const slot =
+      document.getElementById("filter-slot").value;
+
+
+    const quality =
+      document.getElementById("filter-quality").value;
+
+
+    const bossId =
+      document.getElementById("filter-boss").value;
+
+
+    const list =
+      allItems.filter(item => {
+
+        if (
+          search &&
+          !item.name
+            ?.toLowerCase()
+            .includes(search) &&
+          !item.boss_name
+            ?.toLowerCase()
+            .includes(search)
+        ) {
+          return false;
+        }
+
+
+        if (
+          slot &&
+          item.slot !== slot
+        ) {
+          return false;
+        }
+
+
+        if (
+          quality &&
+          item.quality !== quality
+        ) {
+          return false;
+        }
+
+
+        if (
+          bossId &&
+          item.boss_id !== bossId
+        ) {
+          return false;
+        }
+
+
+        return true;
+
+      });
+
+
+    const grid =
+      document.getElementById("items-grid");
+
+
     if (!list.length) {
-      grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`;
+
+      grid.innerHTML = `
+        <div class="text-muted">
+          Предметов не найдено
+        </div>
+      `;
+
       return;
+
     }
 
+
     grid.innerHTML = "";
-    list.forEach(item => grid.appendChild(buildCard(item)));
+
+
+    list.forEach(item => {
+
+      grid.appendChild(
+        buildCard(item)
+      );
+
+    });
+
   }
 
 
-  // ==================================================
-  // КАРТОЧКА ПРЕДМЕТА
-  // ==================================================
+  /* ==================================================
+     КАРТОЧКА ПРЕДМЕТА
+  ================================================== */
 
   function getWeaponTypeLabel(type) {
     const types = {
@@ -542,226 +908,767 @@
     return boss?.name || '—';
   }
 
-  function buildCard(item) {
-    const slotLabel = SLOTS.find(slot => slot.id === item.slot)?.label || item.slot;
-    const canEdit = canWrite();
+  function getQualityLabel(quality) {
+    const q = QUALITY.find(q => q.id === quality);
+    return q?.label || quality;
+  }
 
-    const card = document.createElement("div");
-    card.className = `item-card quality-${item.quality || "purple"}`;
+  function buildCard(item) {
+
+    const slotLabel =
+      SLOTS.find(
+        slot => slot.id === item.slot
+      )?.label || item.slot;
+
+
+    const canEdit =
+      canWrite();
+
+
+    const card =
+      document.createElement("div");
+
+
+    card.className =
+      `item-card quality-${item.quality || "epic"}`;
+
+
     card.innerHTML = `
-      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+
+      <img
+        class="item-img"
+        id="img-${item.id}"
+        alt="${item.name || "Предмет"}"
+      />
+
+
       <div class="item-info">
-        <div class="item-name">${item.name || "Без названия"}</div>
+
+        <div class="item-name">
+          ${item.name || "Без названия"}
+        </div>
+
+
         <div class="item-meta">
-          <span class="badge badge-purple">${slotLabel}</span>
+
+          <span class="badge badge-purple">
+            ${slotLabel}
+          </span>
+
+          <span class="badge badge-quality-${item.quality || 'epic'}">
+            ${getQualityLabel(item.quality)}
+          </span>
+          
           ${item.slot === 'weapon' && item.weapon_type ? `
-            <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
+            <span class="badge-secondary">
+              ${getWeaponTypeLabel(item.weapon_type)}
+            </span>
           ` : ''}
+
         </div>
-        <div class="item-boss">👹 ${getBossName(item.boss_id)}</div>
-        ${item.description ? `<div class="item-desc">${item.description}</div>` : ""}
+
+
+        <div class="item-boss">
+          👹 ${getBossName(item.boss_id)}
+        </div>
+
+
+        ${
+          item.description
+            ? `
+              <div class="item-desc">
+                ${item.description}
+              </div>
+            `
+            : ""
+        }
+
       </div>
-      ${canEdit ? `
-        <div class="item-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || "").replace(/'/g, "\\'")}')">🗑️</button>
-        </div>
-      ` : ""}
+
+
+      ${
+        canEdit
+          ? `
+            <div class="item-actions">
+
+              <button
+                class="btn btn-ghost btn-sm"
+                onclick="openEdit('${item.id}')"
+              >
+                ✏️
+              </button>
+
+
+              <button
+                class="btn btn-danger btn-sm"
+                onclick="confirmDelete(
+                  '${item.id}',
+                  '${String(item.name || "")
+                    .replace(/'/g, "\\'")}'
+                )"
+              >
+                🗑️
+              </button>
+
+            </div>
+          `
+          : ""
+      }
+
     `;
 
-    const image = card.querySelector(`#img-${item.id}`);
-    setItemImage(image, item.image);
+
+    const image =
+      card.querySelector(
+        `#img-${item.id}`
+      );
+
+
+    setItemImage(
+      image,
+      item.image
+    );
+
+
     return card;
+
   }
 
 
-  // ==================================================
-  // ЗАГРУЗКА КАРТИНКИ
-  // ==================================================
+  /* ==================================================
+     ЗАГРУЗКА КАРТИНКИ
+  ================================================== */
 
-  document.getElementById("upload-area").addEventListener("click", async () => {
-    const file = await pickFile();
-    if (!file) return;
-    const base64 = await compressImage(file);
-    currentImageBase64 = base64;
-    const preview = document.getElementById("img-preview");
-    preview.src = base64;
-    preview.classList.remove("hidden");
-    document.getElementById("upload-hint").style.display = "none";
-  });
+  document
+    .getElementById("upload-area")
+    .addEventListener(
+      "click",
+      async () => {
+
+        const file =
+          await pickFile();
 
 
-  // ==================================================
-  // MODAL
-  // ==================================================
+        if (!file) {
+          return;
+        }
 
-  const modal = document.getElementById("modal");
-  const modalTitle = document.getElementById("modal-title");
-  const editId = document.getElementById("edit-id");
+
+        const base64 =
+          await compressImage(file);
+
+
+        currentImageBase64 =
+          base64;
+
+
+        const preview =
+          document.getElementById(
+            "img-preview"
+          );
+
+
+        preview.src =
+          base64;
+
+
+        preview.classList.remove(
+          "hidden"
+        );
+
+
+        document.getElementById(
+          "upload-hint"
+        ).style.display = "none";
+
+      }
+    );
+
+
+  /* ==================================================
+     MODAL
+  ================================================== */
+
+  const modal =
+    document.getElementById("modal");
+
+
+  const modalTitle =
+    document.getElementById(
+      "modal-title"
+    );
+
+
+  const editId =
+    document.getElementById(
+      "edit-id"
+    );
+
+
+  /* ==================================================
+     СБРОС ФОРМЫ
+  ================================================== */
 
   function resetForm() {
+
     editId.value = "";
+
     currentImageBase64 = null;
-    document.getElementById("f-name").value = "";
-    document.getElementById("f-boss").value = "";
-    document.getElementById("f-description").value = "";
-    document.getElementById("f-slot").value = "";
-    document.getElementById("f-quality").value = "purple";
+
+
+    document.getElementById(
+      "f-name"
+    ).value = "";
+
+
+    document.getElementById(
+      "f-boss"
+    ).value = "";
+
+
+    document.getElementById(
+      "f-description"
+    ).value = "";
+
+
+    document.getElementById(
+      "f-slot"
+    ).value = "";
+
+
+    document.getElementById(
+      "f-quality"
+    ).value = "epic";
+
+
+    // Сброс типа оружия
     document.getElementById("f-weapon-type").value = "";
     weaponTypeGroup.style.display = 'none';
-    const preview = document.getElementById("img-preview");
-    preview.classList.add("hidden");
+
+
+    const preview =
+      document.getElementById(
+        "img-preview"
+      );
+
+
+    preview.classList.add(
+      "hidden"
+    );
+
+
     preview.src = "";
-    document.getElementById("upload-hint").style.display = "";
+
+
+    document.getElementById(
+      "upload-hint"
+    ).style.display = "";
+
+
     hideError();
+
   }
 
+
+  /* ==================================================
+     РЕДАКТИРОВАНИЕ
+  ================================================== */
+
   window.openEdit = (id) => {
-    const item = allItems.find(i => i.id === id);
-    if (!item) return;
+
+    const item =
+      allItems.find(
+        i => i.id === id
+      );
+
+
+    if (!item) {
+      return;
+    }
+
+
     resetForm();
-    modalTitle.textContent = "Редактировать предмет";
-    editId.value = id;
-    document.getElementById("f-name").value = item.name || "";
-    document.getElementById("f-slot").value = item.slot || "";
-    document.getElementById("f-boss").value = item.boss_id || "";
-    document.getElementById("f-description").value = item.description || "";
-    document.getElementById("f-quality").value = item.quality || "purple";
+
+
+    modalTitle.textContent =
+      "Редактировать предмет";
+
+
+    editId.value =
+      id;
+
+
+    document.getElementById(
+      "f-name"
+    ).value =
+      item.name || "";
+
+
+    document.getElementById(
+      "f-slot"
+    ).value =
+      item.slot || "";
+
+
+    document.getElementById(
+      "f-boss"
+    ).value =
+      item.boss_id || "";
+
+
+    document.getElementById(
+      "f-description"
+    ).value =
+      item.description || "";
+
+
+    document.getElementById(
+      "f-quality"
+    ).value =
+      item.quality || "epic";
+
+
+    // Если это оружие — показываем поле и устанавливаем значение
     if (item.slot === 'weapon') {
       weaponTypeGroup.style.display = 'block';
       document.getElementById("f-weapon-type").value = item.weapon_type || '';
     }
+
+
     if (item.image) {
-      currentImageBase64 = item.image;
-      const preview = document.getElementById("img-preview");
-      preview.src = item.image;
-      preview.classList.remove("hidden");
-      document.getElementById("upload-hint").style.display = "none";
+
+      currentImageBase64 =
+        item.image;
+
+
+      const preview =
+        document.getElementById(
+          "img-preview"
+        );
+
+
+      preview.src =
+        item.image;
+
+
+      preview.classList.remove(
+        "hidden"
+      );
+
+
+      document.getElementById(
+        "upload-hint"
+      ).style.display = "none";
+
     }
-    modal.classList.remove("hidden");
+
+
+    modal.classList.remove(
+      "hidden"
+    );
+
   };
+
+
+  /* ==================================================
+     ДОБАВЛЕНИЕ
+  ================================================== */
 
   function openAdd() {
+
     resetForm();
-    modalTitle.textContent = "Добавить предмет";
-    modal.classList.remove("hidden");
+
+
+    modalTitle.textContent =
+      "Добавить предмет";
+
+
+    modal.classList.remove(
+      "hidden"
+    );
+
   }
+
+
+  /* ==================================================
+     ЗАКРЫТИЕ MODAL
+  ================================================== */
 
   function closeModal() {
-    modal.classList.add("hidden");
+
+    modal.classList.add(
+      "hidden"
+    );
+
     resetForm();
+
   }
 
-  document.getElementById("btn-modal-close").onclick = closeModal;
-  document.getElementById("btn-cancel").onclick = closeModal;
-  document.getElementById("btn-add-item").onclick = openAdd;
+
+  document
+    .getElementById(
+      "btn-modal-close"
+    )
+    .onclick =
+      closeModal;
 
 
-  // ==================================================
-  // СОХРАНЕНИЕ
-  // ==================================================
+  document
+    .getElementById(
+      "btn-cancel"
+    )
+    .onclick =
+      closeModal;
 
-  document.getElementById("btn-save").onclick = async () => {
-    const name = document.getElementById("f-name").value.trim();
-    const slot = document.getElementById("f-slot").value;
-    const bossId = document.getElementById("f-boss").value;
-    const description = document.getElementById("f-description").value.trim();
-    const quality = document.getElementById("f-quality").value;
 
-    if (!name) return showError("Введи название");
-    if (!slot) return showError("Выбери слот");
+  document
+    .getElementById(
+      "btn-add-item"
+    )
+    .onclick =
+      openAdd;
 
-    let weaponType = null;
-    if (slot === 'weapon') {
-      weaponType = document.getElementById("f-weapon-type").value;
-      if (!weaponType) return showError("Выбери тип оружия");
-    }
-    if (!bossId) return showError("Выбери босса");
 
-    const boss = allBosses.find(b => b.id === bossId);
-    const bossName = boss?.name || '';
+  /* ==================================================
+     СОХРАНЕНИЕ
+  ================================================== */
 
-    const btn = document.getElementById("btn-save");
-    btn.disabled = true;
-    btn.textContent = "Сохранение...";
+  document
+    .getElementById(
+      "btn-save"
+    )
+    .onclick = async () => {
 
-    try {
-      const data = { name, slot, quality, boss_id: bossId, boss_name: bossName, description, image: currentImageBase64 || null, weapon_type: weaponType };
-      const id = editId.value;
-      if (id) {
-        await updateItem(id, data);
-        showToast("Предмет обновлён");
-      } else {
-        await addItem(data);
-        showToast("Предмет добавлен");
+      const name =
+        document
+          .getElementById("f-name")
+          .value
+          .trim();
+
+
+      const slot =
+        document
+          .getElementById("f-slot")
+          .value;
+
+
+      const bossId =
+        document
+          .getElementById("f-boss")
+          .value;
+
+
+      const description =
+        document
+          .getElementById("f-description")
+          .value
+          .trim();
+
+
+      const quality =
+        document
+          .getElementById("f-quality")
+          .value;
+
+
+      /* Валидация */
+
+      if (!name) {
+
+        return showError(
+          "Введи название"
+        );
+
       }
-      closeModal();
-      await loadItems();
-    } catch (error) {
-      console.error("Ошибка сохранения:", error);
-      showError("Ошибка: " + error.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Сохранить";
-    }
-  };
 
 
-  // ==================================================
-  // УДАЛЕНИЕ
-  // ==================================================
+      if (!slot) {
 
-  window.confirmDelete = (id, name) => {
-    if (!confirm(`Удалить «${name}»?`)) return;
-    deleteItem(id)
-      .then(() => {
-        showToast("Предмет удалён");
-        loadItems();
-      })
-      .catch(error => {
-        console.error("Ошибка удаления:", error);
-        showToast("Ошибка удаления", "error");
-      });
-  };
+        return showError(
+          "Выбери слот"
+        );
+
+      }
 
 
-  // ==================================================
-  // ФИЛЬТРЫ
-  // ==================================================
+      // Валидация типа оружия
+      let weaponType = null;
+      if (slot === 'weapon') {
+        weaponType = document.getElementById("f-weapon-type").value;
+        if (!weaponType) {
+          return showError("Выбери тип оружия");
+        }
+      }
 
-  document.getElementById("filter-search").addEventListener("input", renderItems);
-  document.getElementById("filter-slot").addEventListener("change", renderItems);
-  document.getElementById("filter-boss").addEventListener("change", renderItems);
+
+      if (!bossId) {
+
+        return showError(
+          "Выбери босса"
+        );
+
+      }
+
+      // Находим имя босса по ID
+      const boss = allBosses.find(b => b.id === bossId);
+      const bossName = boss?.name || '';
 
 
-  // ==================================================
-  // HELPERS
-  // ==================================================
+      const btn =
+        document.getElementById(
+          "btn-save"
+        );
+
+
+      btn.disabled = true;
+
+      btn.textContent =
+        "Сохранение...";
+
+
+      try {
+
+        const data = {
+
+          name,
+
+          slot,
+
+          quality,
+
+          boss_id: bossId,
+
+          boss_name: bossName,
+
+          description,
+
+          image:
+            currentImageBase64 || null,
+
+          weapon_type: weaponType
+
+        };
+
+
+        const id =
+          editId.value;
+
+
+        if (id) {
+
+          await updateItem(
+            id,
+            data
+          );
+
+
+          showToast(
+            "Предмет обновлён"
+          );
+
+        } else {
+
+          await addItem(
+            data
+          );
+
+
+          showToast(
+            "Предмет добавлен"
+          );
+
+        }
+
+
+        closeModal();
+
+
+        await loadItems();
+
+      } catch (error) {
+
+        console.error(
+          "Ошибка сохранения:",
+          error
+        );
+
+
+        showError(
+          "Ошибка: " +
+          error.message
+        );
+
+      } finally {
+
+        btn.disabled = false;
+
+        btn.textContent =
+          "Сохранить";
+
+      }
+
+    };
+
+
+  /* ==================================================
+     УДАЛЕНИЕ
+  ================================================== */
+
+  window.confirmDelete =
+    (id, name) => {
+
+      if (
+        !confirm(
+          `Удалить «${name}»?`
+        )
+      ) {
+        return;
+      }
+
+
+      deleteItem(id)
+        .then(() => {
+
+          showToast(
+            "Предмет удалён"
+          );
+
+          loadItems();
+
+        })
+        .catch(error => {
+
+          console.error(
+            "Ошибка удаления:",
+            error
+          );
+
+          showToast(
+            "Ошибка удаления",
+            "error"
+          );
+
+        });
+
+    };
+
+
+  /* ==================================================
+     ФИЛЬТРЫ
+  ================================================== */
+
+  document
+    .getElementById(
+      "filter-search"
+    )
+    .addEventListener(
+      "input",
+      renderItems
+    );
+
+
+  document
+    .getElementById(
+      "filter-slot"
+    )
+    .addEventListener(
+      "change",
+      renderItems
+    );
+
+
+  document
+    .getElementById(
+      "filter-quality"
+    )
+    .addEventListener(
+      "change",
+      renderItems
+    );
+
+
+  document
+    .getElementById(
+      "filter-boss"
+    )
+    .addEventListener(
+      "change",
+      renderItems
+    );
+
+
+  /* ==================================================
+     HELPERS
+  ================================================== */
 
   function showError(msg) {
-    const el = document.getElementById("modal-error");
-    el.textContent = msg;
-    el.style.display = "block";
+
+    const el =
+      document.getElementById(
+        "modal-error"
+      );
+
+
+    el.textContent =
+      msg;
+
+
+    el.style.display =
+      "block";
+
   }
+
 
   function hideError() {
-    document.getElementById("modal-error").style.display = "none";
-  }
 
-  function showToast(msg, type = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    document.getElementById(
+      "modal-error"
+    ).style.display =
+      "none";
+
   }
 
 
-  // ==================================================
-  // INIT
-  // ==================================================
+  function showToast(
+    msg,
+    type = "success"
+  ) {
 
+    const toast =
+      document.createElement(
+        "div"
+      );
+
+
+    toast.className =
+      `toast ${type}`;
+
+
+    toast.textContent =
+      msg;
+
+
+    document.body.appendChild(
+      toast
+    );
+
+
+    setTimeout(
+      () => toast.remove(),
+      3000
+    );
+
+  }
+
+
+  /* ==================================================
+     INIT
+  ================================================== */
+
+  // Загружаем боссов
   await loadBosses();
+
+  // Загружаем предметы ПОСЛЕ авторизации
   await loadItems();
 
 </script>
