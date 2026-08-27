@@ -164,6 +164,16 @@
       border-radius: var(--radius);
       border: 1px solid var(--border);
       font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .moderation-stats .stat:hover {
+      border-color: var(--accent);
+      background: var(--bg-card2);
+    }
+    .moderation-stats .stat.active-stat {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.15);
     }
     .moderation-stats .stat .count {
       font-weight: 700;
@@ -236,6 +246,15 @@
       border-left: 2px solid var(--warning);
       margin: 0.5rem 0;
     }
+    .moderation-card .moderation-feedback {
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 2px solid var(--danger);
+      margin: 0.5rem 0;
+    }
     .moderation-card .feedback-input {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
@@ -280,6 +299,29 @@
       border: 1px solid #818cf8; 
     }
     
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid var(--warning);
+    }
+    .status-badge.approved {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+    
     .hidden { display: none !important; }
 
     @media (max-width: 768px) {
@@ -321,16 +363,25 @@
     ============================================ -->
     <div id="tab-moderation" class="tab-content active">
       <div class="moderation-stats" id="moderation-stats">
-        <span class="stat">⏳ Ожидают: <span class="count" id="stat-pending">0</span></span>
-        <span class="stat">✅ Одобрено: <span class="count" id="stat-approved">0</span></span>
-        <span class="stat">❌ Отклонено: <span class="count" id="stat-rejected">0</span></span>
+        <span class="stat active-stat" data-filter="pending">
+          ⏳ Ожидают: <span class="count" id="stat-pending">0</span>
+        </span>
+        <span class="stat" data-filter="approved">
+          ✅ Одобрено: <span class="count" id="stat-approved">0</span>
+        </span>
+        <span class="stat" data-filter="rejected">
+          ❌ Отклонено: <span class="count" id="stat-rejected">0</span>
+        </span>
+        <span class="stat" data-filter="all">
+          📋 Все: <span class="count" id="stat-all">0</span>
+        </span>
       </div>
 
       <div id="moderation-list">
         <div class="empty-state">
           <span class="icon">🎯</span>
-          <p>Нет персонажей на модерации</p>
-          <small>Все персонажи проверены</small>
+          <p>Нет персонажей с таким статусом</p>
+          <small>Попробуйте выбрать другой фильтр</small>
         </div>
       </div>
     </div>
@@ -470,6 +521,7 @@
   let allPlayers = [];
   let allItems = [];
   let allCharacters = [];
+  let currentFilter = 'pending';
   
   // ─── Авторизация ──────────────────────────────────────
   authReady.then(async (authData) => {
@@ -525,6 +577,16 @@
     });
   });
 
+  // ─── Фильтр по статусам ──────────────────────────────
+  document.querySelectorAll('.moderation-stats .stat').forEach(stat => {
+    stat.addEventListener('click', function() {
+      document.querySelectorAll('.moderation-stats .stat').forEach(s => s.classList.remove('active-stat'));
+      this.classList.add('active-stat');
+      currentFilter = this.dataset.filter;
+      renderModeration();
+    });
+  });
+
   // ============================================
   // МОДЕРАЦИЯ ПЕРСОНАЖЕЙ
   // ============================================
@@ -533,8 +595,8 @@
     try {
       allItems = await getItems();
       await loadCharacters();
-      renderModeration();
       updateModerationStats();
+      renderModeration();
     } catch (error) {
       console.error('Ошибка загрузки данных для модерации:', error);
     }
@@ -559,10 +621,12 @@
     const pending = allCharacters.filter(c => c.status === 'pending').length;
     const approved = allCharacters.filter(c => c.status === 'approved').length;
     const rejected = allCharacters.filter(c => c.status === 'rejected').length;
+    const all = allCharacters.length;
 
     document.getElementById('stat-pending').textContent = pending;
     document.getElementById('stat-approved').textContent = approved;
     document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('stat-all').textContent = all;
 
     const badge = document.getElementById('pending-badge');
     if (badge) {
@@ -573,20 +637,42 @@
 
   function renderModeration() {
     const container = document.getElementById('moderation-list');
-    const pendingCharacters = allCharacters.filter(c => c.status === 'pending');
+    
+    // Фильтруем по статусу
+    let filtered = allCharacters;
+    if (currentFilter === 'pending') {
+      filtered = allCharacters.filter(c => c.status === 'pending');
+    } else if (currentFilter === 'approved') {
+      filtered = allCharacters.filter(c => c.status === 'approved');
+    } else if (currentFilter === 'rejected') {
+      filtered = allCharacters.filter(c => c.status === 'rejected');
+    }
+    // 'all' — показываем всех
 
-    if (!pendingCharacters.length) {
+    if (!filtered.length) {
+      const statusLabels = {
+        'pending': 'ожидающих модерации',
+        'approved': 'одобренных',
+        'rejected': 'отклонённых',
+        'all': 'персонажей'
+      };
       container.innerHTML = `
         <div class="empty-state">
           <span class="icon">🎯</span>
-          <p>Нет персонажей на модерации</p>
-          <small>Все персонажи проверены</small>
+          <p>Нет ${statusLabels[currentFilter] || 'персонажей'}</p>
+          <small>Попробуйте выбрать другой фильтр</small>
         </div>
       `;
       return;
     }
 
-    container.innerHTML = pendingCharacters.map(char => {
+    container.innerHTML = filtered.map(char => {
+      const statusLabel = {
+        'pending': '⏳ Ожидает модерации',
+        'approved': '✅ Одобрен',
+        'rejected': '❌ Отклонён'
+      }[char.status] || char.status;
+
       const weapons = char.weapons?.map(w => {
         const weapon = WEAPONS.find(wp => wp.id === w);
         return weapon?.label || w;
@@ -606,14 +692,14 @@
           }).join('');
       }
 
+      const isPending = char.status === 'pending';
+
       return `
         <div class="moderation-card" id="char-${char.id}">
           <div class="card-header">
             <div>
               <span class="char-name">${char.name}</span>
-              <span style="font-size:0.8rem; color: var(--text-muted); margin-left:0.5rem;">
-                ⏳ Ожидает модерации
-              </span>
+              <span class="status-badge ${char.status}">${statusLabel}</span>
             </div>
             <div class="user-info">
               👤 ${char.user_email || 'Неизвестно'}
@@ -644,20 +730,28 @@
             </div>
           ` : ''}
 
-          <div class="feedback-input">
-            <div class="form-group" style="margin-bottom:0.5rem;">
-              <label style="font-size:0.8rem;">Комментарий модератора</label>
-              <textarea id="feedback-${char.id}" placeholder="Причина одобрения/отклонения..." rows="2"></textarea>
+          ${char.moderation_feedback ? `
+            <div class="moderation-feedback">
+              📝 Ответ модератора: ${char.moderation_feedback}
             </div>
-            <div class="action-buttons">
-              <button class="btn btn-success btn-sm" onclick="approveCharacter('${char.id}')">
-                ✅ Одобрить
-              </button>
-              <button class="btn btn-danger btn-sm" onclick="rejectCharacter('${char.id}')">
-                ❌ Отклонить
-              </button>
+          ` : ''}
+
+          ${isPending ? `
+            <div class="feedback-input">
+              <div class="form-group" style="margin-bottom:0.5rem;">
+                <label style="font-size:0.8rem;">Комментарий модератора</label>
+                <textarea id="feedback-${char.id}" placeholder="Причина одобрения/отклонения..." rows="2"></textarea>
+              </div>
+              <div class="action-buttons">
+                <button class="btn btn-success btn-sm" onclick="approveCharacter('${char.id}')">
+                  ✅ Одобрить
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="rejectCharacter('${char.id}')">
+                  ❌ Отклонить
+                </button>
+              </div>
             </div>
-          </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -788,7 +882,6 @@
       }
 
       container.innerHTML = users.map(u => {
-        // Определяем отображаемую роль
         let roleDisplay = 'Пользователь';
         let badgeClass = 'badge-user';
         
@@ -803,7 +896,6 @@
           badgeClass = 'badge-user';
         }
         
-        // Могут удалять только модераторов и пользователей (не админов)
         const canDelete = u.role !== 'admin';
         
         return `
