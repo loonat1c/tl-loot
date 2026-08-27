@@ -88,6 +88,48 @@ body {
   color: var(--text-muted);
 }
 
+/* ── Кнопка профиля ────────────────────────────────── */
+.btn-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.btn-profile:hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.btn-profile.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-profile .avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* ── Контейнер ───────────────────────────────────── */
 .container {
   max-width: 1100px;
@@ -99,7 +141,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;   /* 👈 ЦЕНТРИРОВАНИЕ ТЕКСТА */
+  justify-content: center;
   gap: 0.4rem;
   padding: 0.5rem 1.1rem;
   border-radius: var(--radius);
@@ -108,7 +150,7 @@ body {
   font-family: var(--font);
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
-  text-decoration: none;     /* 👈 УБИРАЕМ ПОДЧЁРКИВАНИЕ У ССЫЛОК-КНОПОК */
+  text-decoration: none;
 }
 
 .btn:hover {
@@ -247,6 +289,12 @@ tr:hover td { background: var(--bg-card2); }
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--border);
+}
+
+.badge-user {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  border: 1px solid #818cf8;
 }
 
 .badge-locked  { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
@@ -555,6 +603,17 @@ tr:hover td { background: var(--bg-card2); }
   .btn {
     font-size: 0.8rem;
     padding: 0.3rem 0.7rem;
+  }
+
+  .btn-profile {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .btn-profile .avatar {
+    width: 18px;
+    height: 18px;
+    font-size: 0.55rem;
   }
 
   .page-header {
