@@ -43,27 +43,34 @@
       border-left: 3px solid #8e44ad;
     }
 
-    .item-img {
+    /* ── Обёртка для картинки с градиентом ─────────────── */
+    .item-img-wrapper {
+      position: relative;
       width: 64px;
       height: 64px;
       border-radius: 6px;
-      object-fit: cover;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .item-img-wrapper .item-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      object-fit: contain;
+      display: block;
+      position: relative;
+      z-index: 1;
     }
 
     /* Эпическое — тёмно-фиолетовая подложка */
-    .item-card.quality-epic .item-img {
+    .item-card.quality-epic .item-img-wrapper {
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
     }
 
     /* Эпическое II — ярко-фиолетовая подложка */
-    .item-card.quality-epic_ii .item-img {
+    .item-card.quality-epic_ii .item-img-wrapper {
       background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
-    }
-
-    /* Картинка загружена — убираем подложку */
-    .item-img.loaded {
-      background: transparent !important;
     }
 
     .item-info {
@@ -178,32 +185,40 @@
       border-radius: 4px;
     }
 
+    /* ── Обёртка для картинки в полной карточке ────────── */
+    .fc-img-wrapper {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .fc-img-wrapper .fc-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      object-fit: contain;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .item-card.quality-epic .fc-img-wrapper {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+    }
+
+    .item-card.quality-epic_ii .fc-img-wrapper {
+      background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
+    }
+
     .full-card .fc-header {
       display: flex;
       gap: 1rem;
       margin-bottom: 0.75rem;
       align-items: flex-start;
-    }
-
-    .full-card .fc-header .fc-img {
-      width: 72px;
-      height: 72px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 1px solid var(--border);
-    }
-
-    .item-card.quality-epic .full-card .fc-img {
-      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
-    }
-
-    .item-card.quality-epic_ii .full-card .fc-img {
-      background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
-    }
-
-    .full-card .fc-img.loaded {
-      background: transparent !important;
     }
 
     .full-card .fc-header .fc-title {
@@ -1441,9 +1456,10 @@
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
-    // Создаём HTML
     card.innerHTML = `
-      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+      <div class="item-img-wrapper">
+        <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+      </div>
       <div class="item-info">
         <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
@@ -1465,7 +1481,9 @@
       <!-- Полная карточка при наведении -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" />
+          <div class="fc-img-wrapper">
+            <img class="fc-img" src="${item.image || ''}" alt="${item.name}" />
+          </div>
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
             <div class="fc-meta">
@@ -1543,17 +1561,14 @@
       </div>
     `;
 
-    // Устанавливаем картинку и добавляем класс loaded если она есть
+    // Устанавливаем картинку
     const image = card.querySelector(`#img-${item.id}`);
     setItemImage(image, item.image);
-    if (item.image && item.image !== '') {
-      image.classList.add('loaded');
-    }
 
     // Для большой картинки
     const fcImg = card.querySelector('.fc-img');
     if (item.image && item.image !== '') {
-      fcImg.classList.add('loaded');
+      fcImg.src = item.image;
     }
 
     return card;
