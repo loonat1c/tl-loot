@@ -45,10 +45,6 @@ export const QUALITY = [
   { id: "epic_ii", label: "🟣 Эпическое II", color: "#8e44ad" },
 ];
 
-// ====================================================
-// КЛАССЫ БОССОВ (ОБНОВЛЕНО)
-// ====================================================
-
 export const BOSS_CLASSES = [
   { id: "beast",     label: "🐾 Зверь" },
   { id: "undead",    label: "💀 Нежить" },
@@ -67,25 +63,4 @@ export const DEFAULT_LOOT_RULES = {
   max_skip_raids:    2,
 };
 
-export const ITEM_STATS = [
-  { id: "damage_min", label: "Мин. урон" },
-  { id: "damage_max", label: "Макс. урон" },
-  { id: "attack_speed", label: "Скорость атаки" },
-  { id: "attack_range", label: "Радиус атаки" },
-  { id: "crit_chance", label: "Шанс крит. удара" },
-  { id: "crit_damage", label: "Крит. урон" },
-  { id: "strength", label: "Сила" },
-  { id: "dexterity", label: "Ловкость" },
-  { id: "intelligence", label: "Интеллект" },
-  { id: "wisdom", label: "Мудрость" },
-  { id: "health", label: "Здоровье" },
-  { id: "mana", label: "Мана" },
-  { id: "defense", label: "Защита" },
-  { id: "magic_defense", label: "Маг. защита" },
-];
-
-export const EFFECT_TYPES = [
-  { id: "passive", label: "Пассивный эффект" },
-  { id: "active", label: "Активный эффект" },
-  { id: "set", label: "Сетовый эффект" },
-];
+// Удаляем ITEM_STATS и EFFECT_TYPES — они больше не нужны
