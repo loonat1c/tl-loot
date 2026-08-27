@@ -470,7 +470,6 @@
   // Если не авторизован — перенаправить на вход
   if (!currentUser) {
     window.location.href = '/pages/login.html';
-    return;
   }
 
   // ============================================
@@ -481,7 +480,7 @@
   let characters = [];
   let editingCharId = null;
   let currentFilter = 'all';
-  const userId = currentUser.uid;
+  const userId = currentUser?.uid;
 
   // ============================================
   // ЗАГРУЗКА ДАННЫХ
@@ -524,10 +523,10 @@
   // ============================================
 
   function renderProfile() {
-    const name = currentUser.displayName || currentUser.email?.split('@')[0] || 'Пользователь';
+    const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
     document.getElementById('profile-name').textContent = name;
-    document.getElementById('profile-email').textContent = currentUser.email || '—';
-    document.getElementById('profile-role').textContent = currentRole;
+    document.getElementById('profile-email').textContent = currentUser?.email || '—';
+    document.getElementById('profile-role').textContent = currentRole || 'guest';
 
     const avatar = document.getElementById('profile-avatar');
     avatar.textContent = name.charAt(0).toUpperCase();
@@ -579,8 +578,8 @@
               <span class="char-status ${statusClass}">${statusLabel}</span>
             </div>
             <div class="char-actions">
-              ${canEdit ? `<button class="btn btn-ghost btn-sm" onclick="editCharacter('${char.id}')">✏️</button>` : ''}
-              ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')">🗑️</button>` : ''}
+              ${canEdit ? `<button class="btn btn-ghost btn-sm" onclick="window.editCharacter('${char.id}')">✏️</button>` : ''}
+              ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="window.deleteCharacter('${char.id}')">🗑️</button>` : ''}
             </div>
           </div>
 
@@ -625,7 +624,7 @@
       `;
     }).join('');
 
-    // Навешиваем обработчики
+    // Навешиваем обработчики через window
     window.editCharacter = (id) => {
       const char = characters.find(c => c.id === id);
       if (char) openEditCharacter(char);
@@ -694,7 +693,6 @@
     const container = document.getElementById('loot-selection');
     if (!container) return;
 
-    // Используем слоты из SLOTS
     container.innerHTML = SLOTS.map(slot => {
       return `
         <div class="loot-slot">
@@ -764,15 +762,15 @@
     modal.classList.add('hidden');
   }
 
-  document.getElementById('btn-add-character').onclick = openAddCharacter;
-  document.getElementById('btn-char-close').onclick = closeCharModal;
-  document.getElementById('btn-char-cancel').onclick = closeCharModal;
+  document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
+  document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
+  document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
 
   // ============================================
   // СОХРАНЕНИЕ ПЕРСОНАЖА
   // ============================================
 
-  document.getElementById('btn-char-save').onclick = async () => {
+  document.getElementById('btn-char-save').addEventListener('click', async () => {
     const name = charName.value.trim();
     const weapon1 = charWeapon1.value;
     const weapon2 = charWeapon2.value;
@@ -804,7 +802,7 @@
       weapons: [weapon1, weapon2].filter(Boolean),
       desired_loot: desiredLoot,
       user_id: userId,
-      user_email: currentUser.email,
+      user_email: currentUser?.email,
       status: 'pending',
       moderation_note: moderationNote || null,
       moderation_feedback: null,
@@ -842,7 +840,7 @@
       charError.textContent = 'Ошибка сохранения: ' + error.message;
       charError.style.display = 'block';
     }
-  };
+  });
 
   // ============================================
   // HELPERS
