@@ -52,6 +52,13 @@
     .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .filter-bar input { max-width: 240px; }
     .filter-bar select { width: auto; }
+
+    /* ── Бейджи классов боссов ─────────────────────────── */
+    .badge-beast     { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+    .badge-undead    { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid #8b5cf6; }
+    .badge-humanoid  { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
+    .badge-mechanism { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border: 1px solid #9ca3af; }
+    .badge-demon     { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
   </style>
 </head>
 <body>
@@ -160,7 +167,10 @@
   }
 
   function buildCard(b) {
-    const cls      = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || "—";
+    const bossClass = BOSS_CLASSES.find(c => c.id === b.boss_class);
+    const clsLabel = bossClass?.label || b.boss_class || "—";
+    const clsId = b.boss_class || "unknown";
+    
     const bItems   = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
     const canEdit  = canWrite();
 
@@ -172,7 +182,7 @@
           <div class="boss-name">👹 ${b.name}</div>
           <div class="boss-meta">
             ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ""}
-            <span class="badge badge-open">${cls}</span>
+            <span class="badge badge-${clsId}">${clsLabel}</span>
           </div>
           ${b.description ? `<div class="text-muted" style="font-size:0.8rem;margin-top:6px">${b.description}</div>` : ""}
         </div>
