@@ -230,23 +230,6 @@
       margin-bottom: 0.5rem;
     }
 
-    .status-filter {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-
-    .status-filter .btn {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-    }
-
-    .status-filter .btn.active-filter {
-      background: var(--accent);
-      color: #fff;
-    }
-
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -348,25 +331,17 @@
 
   <div class="characters-section">
     <div class="section-header">
-      <h3>👥 Мои персонажи</h3>
+      <h3>👥 Мой персонаж</h3>
       <button class="btn btn-primary btn-sm" id="btn-add-character">
         + Добавить персонажа
       </button>
     </div>
 
-    <!-- Фильтр по статусу -->
-    <div class="status-filter">
-      <button class="btn btn-ghost btn-sm active-filter" data-filter="all">Все</button>
-      <button class="btn btn-ghost btn-sm" data-filter="pending">⏳ На модерации</button>
-      <button class="btn btn-ghost btn-sm" data-filter="approved">✅ Одобрены</button>
-      <button class="btn btn-ghost btn-sm" data-filter="rejected">❌ Отклонены</button>
-    </div>
-
     <div id="characters-list">
       <div class="empty-state">
         <span class="icon">🎮</span>
-        <p>У вас пока нет персонажей</p>
-        <small>Добавьте первого персонажа, чтобы начать</small>
+        <p>У вас пока нет персонажа</p>
+        <small>Создайте персонажа, чтобы участвовать в рейдах</small>
       </div>
     </div>
   </div>
@@ -455,7 +430,7 @@
     deleteDoc,
     query,
     where,
-    orderBy
+    limit
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
@@ -479,7 +454,6 @@
   let allItems = [];
   let characters = [];
   let editingCharId = null;
-  let currentFilter = 'all';
   const userId = currentUser?.uid;
 
   // ============================================
@@ -504,14 +478,19 @@
       const charsRef = collection(db, 'characters');
       const q = query(
         charsRef,
-        where('user_id', '==', userId),
-        orderBy('created_at', 'desc')
+        where('user_id', '==', userId)
       );
       const querySnapshot = await getDocs(q);
       characters = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      // Сортируем вручную
+      characters.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+        return dateB - dateA;
+      });
     } catch (error) {
       console.error('Ошибка загрузки персонажей:', error);
       characters = [];
@@ -538,28 +517,29 @@
 
   function renderCharacters() {
     const container = document.getElementById('characters-list');
+    const addBtn = document.getElementById('btn-add-character');
 
-    let filtered = characters;
-    if (currentFilter === 'pending') {
-      filtered = characters.filter(c => c.status === 'pending');
-    } else if (currentFilter === 'approved') {
-      filtered = characters.filter(c => c.status === 'approved');
-    } else if (currentFilter === 'rejected') {
-      filtered = characters.filter(c => c.status === 'rejected');
+    // Показываем/скрываем кнопку добавления
+    if (addBtn) {
+      if (characters.length > 0) {
+        addBtn.style.display = 'none';
+      } else {
+        addBtn.style.display = 'inline-flex';
+      }
     }
 
-    if (!filtered.length) {
+    if (!characters.length) {
       container.innerHTML = `
         <div class="empty-state">
           <span class="icon">🎮</span>
-          <p>${characters.length ? 'Нет персонажей с таким статусом' : 'У вас пока нет персонажей'}</p>
-          <small>${characters.length ? 'Измените фильтр или' : 'Добавьте первого персонажа, чтобы начать'}</small>
+          <p>У вас пока нет персонажа</p>
+          <small>Создайте персонажа, чтобы участвовать в рейдах</small>
         </div>
       `;
       return;
     }
 
-    container.innerHTML = filtered.map(char => {
+    container.innerHTML = characters.map(char => {
       const statusClass = char.status || 'pending';
       const statusLabel = {
         'pending': '⏳ На модерации',
@@ -646,19 +626,6 @@
   }
 
   // ============================================
-  // ФИЛЬТР ПО СТАТУСУ
-  // ============================================
-
-  document.querySelectorAll('.status-filter .btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.status-filter .btn').forEach(b => b.classList.remove('active-filter'));
-      btn.classList.add('active-filter');
-      currentFilter = btn.dataset.filter;
-      renderCharacters();
-    });
-  });
-
-  // ============================================
   // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
   // ============================================
 
@@ -724,6 +691,12 @@
   const charError = document.getElementById('char-error');
 
   function openAddCharacter() {
+    // Проверяем, есть ли уже персонаж
+    if (characters.length > 0) {
+      showToast('У вас уже есть персонаж!', 'error');
+      return;
+    }
+
     modalTitle.textContent = 'Добавить персонажа';
     editCharId.value = '';
     charName.value = '';
@@ -784,6 +757,13 @@
 
     if (!weapon1) {
       charError.textContent = 'Выберите основное оружие';
+      charError.style.display = 'block';
+      return;
+    }
+
+    // Проверяем, есть ли уже персонаж (защита от дублирования)
+    if (!editCharId.value && characters.length > 0) {
+      charError.textContent = 'У вас уже есть персонаж!';
       charError.style.display = 'block';
       return;
     }
