@@ -30,10 +30,15 @@ function renderNav(nav) {
   const currentPath = window.location.pathname;
   const isItemsPage = currentPath.includes('items.html');
   const isAdminPage = currentPath.includes('admin.html');
+  const isRaidPage = currentPath.includes('raids.html');
+  const isPlayersPage = currentPath.includes('players.html');
+  const isStatsPage = currentPath.includes('stats.html');
+  const isSearchPage = currentPath.includes('search.html');
+  
   // Главная страница: если путь заканчивается на / или index.html
   const isIndexPage = currentPath.endsWith('/') || 
-                       currentPath.endsWith('/index.html') || 
-                       currentPath.endsWith('/pages/index.html');
+                       currentPath.endsWith('/index.html') ||
+                       currentPath === '/index.html';
 
   nav.innerHTML = `
     <a href="/index.html" class="nav-brand">⚔️ TL Loot</a>
@@ -41,6 +46,10 @@ function renderNav(nav) {
     <div class="nav-links">
       <a href="/index.html" class="${isIndexPage ? 'active' : ''}">Главная</a>
       <a href="/pages/items.html" class="${isItemsPage ? 'active' : ''}">Предметы</a>
+      <a href="/pages/raids.html" class="${isRaidPage ? 'active' : ''}">Рейды</a>
+      <a href="/pages/players.html" class="${isPlayersPage ? 'active' : ''}">Игроки</a>
+      <a href="/pages/search.html" class="${isSearchPage ? 'active' : ''}">Поиск</a>
+      <a href="/pages/stats.html" class="${isStatsPage ? 'active' : ''}">Статистика</a>
       ${isAuth && canWrite() ? `<a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">⚙️ Админка</a>` : ''}
     </div>
     
