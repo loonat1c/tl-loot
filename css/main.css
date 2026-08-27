@@ -572,3 +572,21 @@ tr:hover td { background: var(--bg-card2); }
     width: 100%;
   }
 }
+
+/* ── Ссылки-кнопки в навбаре ─────────────────────── */
+.nav-user a.btn {
+  text-decoration: none !important;
+}
+
+.nav-user a.btn:hover {
+  text-decoration: none !important;
+}
+
+/* Или для всех ссылок с классом btn */
+a.btn {
+  text-decoration: none !important;
+}
+
+a.btn:hover {
+  text-decoration: none !important;
+}
