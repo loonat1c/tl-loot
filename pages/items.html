@@ -107,33 +107,45 @@
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
     .item-card .full-card {
       display: none;
-      position: absolute;
-      left: calc(100% + 12px);
+      position: fixed;
+      left: 50%;
       top: 50%;
-      transform: translateY(-50%);
-      width: 420px;
-      max-width: 90vw;
+      transform: translate(-50%, -50%);
+      width: 440px;
+      max-width: 92vw;
+      max-height: 85vh;
+      overflow-y: auto;
       background: var(--bg-card);
       border: 1px solid var(--accent);
       border-radius: var(--radius);
       padding: 1.25rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-      z-index: 100;
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
+      z-index: 1000;
       pointer-events: none;
     }
 
+    /* Убираем стрелку, так как карточка по центру */
     .item-card .full-card::before {
-      content: '';
-      position: absolute;
-      right: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      border: 8px solid transparent;
-      border-right-color: var(--accent);
+      display: none;
     }
 
     .item-card:hover .full-card {
       display: block;
+    }
+
+    /* Стили для скролла внутри полной карточки */
+    .full-card::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .full-card::-webkit-scrollbar-track {
+      background: var(--bg-card2);
+      border-radius: 4px;
+    }
+
+    .full-card::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
     }
 
     .full-card .fc-header {
@@ -167,6 +179,7 @@
       font-size: 0.75rem;
       color: var(--text-muted);
       margin-top: 6px;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-stats {
@@ -184,6 +197,7 @@
       display: flex;
       justify-content: space-between;
       gap: 0.5rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-stats .stat .stat-label {
@@ -217,16 +231,19 @@
     .full-card .fc-effect .effect-info {
       flex: 1;
       font-size: 0.82rem;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-effect .effect-info .effect-name {
       font-weight: 600;
       color: var(--accent-soft);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-effect .effect-info .effect-desc {
       color: var(--text-muted);
       margin-top: 2px;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-properties {
@@ -241,6 +258,7 @@
       text-transform: uppercase;
       letter-spacing: 0.3px;
       margin-bottom: 4px;
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-properties .prop-list {
@@ -257,6 +275,7 @@
       font-size: 0.7rem;
       border: 1px solid var(--border);
       color: var(--text-muted);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .full-card .fc-flavor {
@@ -266,6 +285,13 @@
       color: var(--text-muted);
       font-style: italic;
       border-top: 1px solid var(--border);
+      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .full-card .fc-level {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
@@ -437,7 +463,6 @@
     }
 
     .field-row input {
-      flex: 1;
       padding: 0.3rem 0.5rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -452,6 +477,14 @@
       border-color: var(--accent);
     }
 
+    .field-row .field-label-input {
+      flex: 2;
+    }
+
+    .field-row .field-value-input {
+      flex: 1;
+    }
+
     .field-row .btn-remove-field {
       background: none;
       border: none;
@@ -462,10 +495,19 @@
       line-height: 1;
       border-radius: 4px;
       transition: background 0.15s;
+      flex-shrink: 0;
     }
 
     .field-row .btn-remove-field:hover {
       background: rgba(239, 68, 68, 0.15);
+    }
+
+    .field-row.field-single .field-label-input {
+      flex: 1;
+    }
+
+    .field-row.field-single .field-value-input {
+      display: none;
     }
 
     .btn-add-field {
@@ -495,22 +537,6 @@
       line-height: 1;
     }
 
-    .field-row .field-label-input {
-      flex: 1;
-    }
-
-    .field-row .field-value-input {
-      flex: 1.5;
-    }
-
-    .field-row.field-single .field-label-input {
-      flex: 1;
-    }
-
-    .field-row.field-single .field-value-input {
-      display: none;
-    }
-
     .modal .form-actions {
       display: flex;
       gap: 0.75rem;
@@ -530,17 +556,9 @@
 
     @media (max-width: 768px) {
       .item-card .full-card {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 92vw;
+        width: 95vw;
         max-height: 80vh;
-        overflow-y: auto;
-      }
-
-      .item-card .full-card::before {
-        display: none;
+        padding: 1rem;
       }
 
       .full-card .fc-stats {
@@ -640,27 +658,32 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Уровень предмета</label>
+          <input type="number" id="f-level" placeholder="12" min="1" max="99" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
           <label>Босс *</label>
           <select id="f-boss">
             <option value="">— выбери босса —</option>
           </select>
         </div>
-      </div>
-
-      <!-- Тип оружия -->
-      <div class="form-group" id="weapon-type-group" style="display:none;">
-        <label>Тип оружия *</label>
-        <select id="f-weapon-type">
-          <option value="">— выбери тип оружия —</option>
-          <option value="bow">🏹 Лук</option>
-          <option value="staff">🪄 Посох</option>
-          <option value="twohand_sword">⚔️ Двуручный меч</option>
-          <option value="crossbow">🎯 Арбалеты</option>
-          <option value="wand">✨ Жезл</option>
-          <option value="daggers">🗡️ Кинжалы</option>
-          <option value="sword_shield">🛡️ Щит и меч</option>
-          <option value="spear">🔱 Копье</option>
-        </select>
+        <div class="form-group">
+          <label>Тип оружия</label>
+          <select id="f-weapon-type">
+            <option value="">— не выбрано —</option>
+            <option value="bow">🏹 Лук</option>
+            <option value="staff">🪄 Посох</option>
+            <option value="twohand_sword">⚔️ Двуручный меч</option>
+            <option value="crossbow">🎯 Арбалеты</option>
+            <option value="wand">✨ Жезл</option>
+            <option value="daggers">🗡️ Кинжалы</option>
+            <option value="sword_shield">🛡️ Щит и меч</option>
+            <option value="spear">🔱 Копье</option>
+          </select>
+        </div>
       </div>
 
       <!-- Картинка -->
@@ -813,21 +836,6 @@
     if (currentValue) bossSelect.value = currentValue;
     if (filterValue) filterBoss.value = filterValue;
   }
-
-  // ==================================================
-  // ПОКАЗ / СКРЫТИЕ ТИПА ОРУЖИЯ
-  // ==================================================
-
-  const weaponTypeGroup = document.getElementById('weapon-type-group');
-  const weaponTypeSelect = document.getElementById('f-weapon-type');
-  slotSelect.addEventListener('change', function() {
-    if (this.value === 'weapon') {
-      weaponTypeGroup.style.display = 'block';
-    } else {
-      weaponTypeGroup.style.display = 'none';
-      weaponTypeSelect.value = '';
-    }
-  });
 
   // ==================================================
   // ДИНАМИЧЕСКИЕ ПОЛЯ
@@ -1037,6 +1045,7 @@
     const effect = item.effect || {};
     const properties = item.properties || [];
     const desc = item.description || '';
+    const level = item.level || '';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
@@ -1068,6 +1077,7 @@
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
             <div class="fc-quality">${getQualityLabel(item.quality)} • ${slotLabel}</div>
+            ${level ? `<div class="fc-level">Уровень: ${level}</div>` : ''}
           </div>
         </div>
 
@@ -1145,10 +1155,10 @@
     document.getElementById('f-description').value = '';
     document.getElementById('f-slot').value = '';
     document.getElementById('f-quality').value = 'epic';
+    document.getElementById('f-level').value = '';
     document.getElementById('f-effect-name').value = '';
     document.getElementById('f-effect-desc').value = '';
     document.getElementById('f-weapon-type').value = '';
-    weaponTypeGroup.style.display = 'none';
 
     document.getElementById('stats-fields').innerHTML = '';
     document.getElementById('properties-fields').innerHTML = '';
@@ -1179,11 +1189,8 @@
     document.getElementById('f-boss').value = item.boss_id || '';
     document.getElementById('f-description').value = item.description || '';
     document.getElementById('f-quality').value = item.quality || 'epic';
-
-    if (item.slot === 'weapon') {
-      weaponTypeGroup.style.display = 'block';
-      document.getElementById('f-weapon-type').value = item.weapon_type || '';
-    }
+    document.getElementById('f-level').value = item.level || '';
+    document.getElementById('f-weapon-type').value = item.weapon_type || '';
 
     if (item.stats && item.stats.length) {
       setFields('stats-fields', item.stats, 'pair');
@@ -1240,17 +1247,15 @@
     const bossId = document.getElementById('f-boss').value;
     const description = document.getElementById('f-description').value.trim();
     const quality = document.getElementById('f-quality').value;
+    const level = document.getElementById('f-level').value.trim();
     const effectName = document.getElementById('f-effect-name').value.trim();
     const effectDesc = document.getElementById('f-effect-desc').value.trim();
 
     if (!name) return showError('Введи название');
     if (!slot) return showError('Выбери слот');
 
-    let weaponType = null;
-    if (slot === 'weapon') {
-      weaponType = document.getElementById('f-weapon-type').value;
-      if (!weaponType) return showError('Выбери тип оружия');
-    }
+    const weaponType = document.getElementById('f-weapon-type').value || null;
+
     if (!bossId) return showError('Выбери босса');
 
     const boss = allBosses.find(b => b.id === bossId);
@@ -1270,6 +1275,7 @@
       name,
       slot,
       quality,
+      level,
       boss_id: bossId,
       boss_name: bossName,
       description,
