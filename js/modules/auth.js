@@ -14,13 +14,15 @@ import {
   doc, getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// ─── Состояние ──────────────────────────────────────────
 export let currentUser = null;
 export let currentRole = "guest";
 
-// Промис — резолвится когда Firebase восстановил сессию
+// ─── Промис готовности ────────────────────────────────
 let _authReadyResolve;
 export const authReady = new Promise(res => { _authReadyResolve = res; });
 
+// ─── Инициализация ──────────────────────────────────────
 export function initAuth(onReady) {
   setPersistence(auth, browserLocalPersistence).catch(() => {});
 
@@ -47,6 +49,7 @@ export function initAuth(onReady) {
   });
 }
 
+// ─── Получение роли ────────────────────────────────────
 async function fetchRole(uid) {
   try {
     const snap = await getDoc(doc(db, "users", uid));
@@ -57,6 +60,12 @@ async function fetchRole(uid) {
   return "guest";
 }
 
+// ─── Публичная функция для получения роли ─────────────
+export async function getUserRole(uid) {
+  return await fetchRole(uid);
+}
+
+// ─── Аутентификация ────────────────────────────────────
 export async function login(email, password) {
   await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -68,6 +77,7 @@ export function logout() {
   return signOut(auth);
 }
 
+// ─── Проверки ролей ────────────────────────────────────
 export function canWrite() {
   return currentRole === "admin" || currentRole === "moderator";
 }
@@ -76,6 +86,11 @@ export function isAdmin() {
   return currentRole === "admin";
 }
 
+// ─── Синонимы для удобства ────────────────────────────
+export const user = currentUser;
+export const role = currentRole;
+
+// ─── Обновление UI ─────────────────────────────────────
 export function updateNavUI() {
   const loginBtn  = document.getElementById("btn-login");
   const logoutBtn = document.getElementById("btn-logout");
