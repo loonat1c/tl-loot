@@ -41,6 +41,11 @@ body {
   line-height: 1.5;
 }
 
+/* ── Заголовки ───────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'HeaderFont', var(--font);
+}
+
 /* ── Навбар ──────────────────────────────────────── */
 .navbar {
   display: flex;
@@ -342,7 +347,11 @@ tr:hover td { background: var(--bg-card2); }
 
 /* ── Герой главной ───────────────────────────────── */
 .hero { text-align: center; padding: 3rem 0 2rem; }
-.hero h1 { font-size: 2rem; font-weight: 700; }
+.hero h1 {
+  font-family: 'HeaderFont', var(--font);
+  font-size: 2rem;
+  font-weight: 700;
+}
 .hero-sub { color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 2.5rem; }
 
 .quick-links {
@@ -417,7 +426,10 @@ tr:hover td { background: var(--bg-card2); }
   gap: 0.75rem;
 }
 
-.page-header h2 { font-size: 1.4rem; }
+.page-header h2 {
+  font-family: 'HeaderFont', var(--font);
+  font-size: 1.4rem;
+}
 
 /* ── Прогресс блокировки ─────────────────────────── */
 .lock-progress {
@@ -466,6 +478,7 @@ tr:hover td { background: var(--bg-card2); }
 }
 
 .modal-header h3 {
+  font-family: 'HeaderFont', var(--font);
   font-size: 1.1rem;
 }
 
@@ -551,6 +564,7 @@ tr:hover td { background: var(--bg-card2); }
 }
 
 .item-name {
+  font-family: 'HeaderFont', var(--font);
   font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
