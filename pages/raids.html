@@ -175,8 +175,9 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  import { initAuth, authReady, canWrite, isAdmin } from "../js/modules/auth.js";
   initNavbar();
+  initAuth((_u, _r) => {});
 
   import {
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,

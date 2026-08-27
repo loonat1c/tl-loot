@@ -117,8 +117,9 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  import { initAuth, authReady, canWrite, isAdmin } from "../js/modules/auth.js";
   initNavbar();
+  initAuth((_u, _r) => {});
 
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
