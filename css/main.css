@@ -59,6 +59,7 @@ body {
   gap: 0.25rem;
   flex: 1;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .nav-links a {
@@ -81,6 +82,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
+  flex-wrap: wrap;
 }
 
 #nav-user-label {
@@ -114,6 +116,12 @@ body {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+}
+
+.btn-profile.active:hover {
+  background: var(--accent);
+  color: #fff;
+  opacity: 0.85;
 }
 
 .btn-profile .avatar {
@@ -584,6 +592,7 @@ tr:hover td { background: var(--bg-card2); }
   .nav-links {
     flex-wrap: wrap;
     gap: 0.15rem;
+    flex: 1 1 100%;
   }
 
   .nav-links a {
@@ -594,6 +603,7 @@ tr:hover td { background: var(--bg-card2); }
   .nav-user {
     margin-left: 0;
     flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   #nav-user-label {
