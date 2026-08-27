@@ -142,8 +142,7 @@
       display: none;
       position: absolute;
       left: calc(100% + 12px);
-      top: 50%;
-      transform: translateY(-50%);
+      top: 0;
       width: 440px;
       max-width: 80vw;
       max-height: 85vh;
@@ -163,22 +162,24 @@
       right: calc(100% + 12px);
     }
 
+    /* Стрелка у карточек, открывающихся вправо */
     .item-card .full-card::before {
       content: '';
       position: absolute;
       right: 100%;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 20px;
       border: 8px solid transparent;
       border-right-color: var(--accent);
     }
 
+    /* Стрелка у карточек, открывающихся влево */
     .item-card:nth-child(4n) .full-card::before,
     .item-card:nth-child(4n-1) .full-card::before {
       right: auto;
       left: 100%;
       border-right-color: transparent;
       border-left-color: var(--accent);
+      top: 20px;
     }
 
     .item-card:hover .full-card {
