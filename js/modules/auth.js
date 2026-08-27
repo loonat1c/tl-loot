@@ -11,29 +11,28 @@ import {
   browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  doc,
-  getDoc,
+  doc, getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export let currentUser = null;
 export let currentRole = "guest";
 
-// ── Подписка на изменение auth состояния ─────────────
+// ── Одноразовый промис — резолвится когда auth готов ─
+// Все страницы await-ят его перед рендером
+let _authReadyResolve;
+export const authReady = new Promise(res => { _authReadyResolve = res; });
+
+// ── Инициализация ─────────────────────────────────────
 export function initAuth(onReady) {
-  // Явно включаем localStorage персистентность
   setPersistence(auth, browserLocalPersistence).catch(() => {});
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
-      // Сначала берём из кэша — быстрый рендер без мигания
+      // Кэш роли в sessionStorage — мгновенный рендер без мигания
       const cached = sessionStorage.getItem(`role_${user.uid}`);
-      if (cached) {
-        currentRole = cached;
-        updateNavUI();
-        onReady(currentUser, currentRole);
-      }
-      // Потом обновляем из Firestore
+      if (cached) currentRole = cached;
+      // Всегда обновляем из Firestore
       const fresh = await fetchRole(user.uid);
       currentRole = fresh;
       sessionStorage.setItem(`role_${user.uid}`, fresh);
@@ -42,12 +41,14 @@ export function initAuth(onReady) {
       currentRole = "guest";
       sessionStorage.clear();
     }
+
     updateNavUI();
-    onReady(currentUser, currentRole);
+    if (onReady) onReady(currentUser, currentRole);
+    _authReadyResolve(); // сигнал что auth готов
   });
 }
 
-// ── Получить роль из Firestore ────────────────────────
+// ── Получить роль ─────────────────────────────────────
 async function fetchRole(uid) {
   try {
     const snap = await getDoc(doc(db, "users", uid));
@@ -71,17 +72,16 @@ export function logout() {
   return signOut(auth);
 }
 
-// ── Проверки роли ─────────────────────────────────────
+// ── Роли ──────────────────────────────────────────────
 export function canWrite() {
   return currentRole === "admin" || currentRole === "moderator";
 }
-
 export function isAdmin() {
   return currentRole === "admin";
 }
 
 // ── Обновить UI навбара ───────────────────────────────
-function updateNavUI() {
+export function updateNavUI() {
   const loginBtn   = document.getElementById("btn-login");
   const logoutBtn  = document.getElementById("btn-logout");
   const userLabel  = document.getElementById("nav-user-label");
