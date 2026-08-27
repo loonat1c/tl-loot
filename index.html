@@ -46,9 +46,7 @@
     import { initNavbar } from "./js/modules/navbar.js";
     import { initAuth } from "./js/modules/auth.js";
     initNavbar();
-    initAuth((user, role) => {
-  console.log("AUTH:", user);
-  console.log("ROLE:", role);
+initAuth((_u, _r) => {});
 });
   </script>
 </body>
