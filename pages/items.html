@@ -48,8 +48,22 @@
       height: 64px;
       border-radius: 6px;
       object-fit: cover;
-      background: var(--bg-card2);
       flex-shrink: 0;
+    }
+
+    /* Эпическое — тёмно-фиолетовая подложка */
+    .item-card.quality-epic .item-img {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+    }
+
+    /* Эпическое II — ярко-фиолетовая подложка */
+    .item-card.quality-epic_ii .item-img {
+      background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
+    }
+
+    /* Если картинка загружена — показываем поверх подложки */
+    .item-img[src]:not([src=""]) {
+      background: transparent;
     }
 
     .item-info {
@@ -176,9 +190,21 @@
       height: 72px;
       border-radius: 8px;
       object-fit: cover;
-      background: var(--bg-card2);
       flex-shrink: 0;
       border: 1px solid var(--border);
+    }
+
+    /* Подложки для картинки в полной карточке */
+    .item-card.quality-epic .full-card .fc-img {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+    }
+
+    .item-card.quality-epic_ii .full-card .fc-img {
+      background: linear-gradient(145deg, #3b0a5e 0%, #7c3aed 40%, #a855f7 70%, #7c3aed 100%);
+    }
+
+    .full-card .fc-img[src]:not([src=""]) {
+      background: transparent;
     }
 
     .full-card .fc-header .fc-title {
@@ -1417,7 +1443,7 @@
     card.className = `item-card quality-${item.quality || "epic"}`;
 
     card.innerHTML = `
-      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
+      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" onerror="this.style.background='transparent'" />
       <div class="item-info">
         <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
@@ -1439,7 +1465,7 @@
       <!-- Полная карточка при наведении -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.background='transparent'" />
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
             <div class="fc-meta">
