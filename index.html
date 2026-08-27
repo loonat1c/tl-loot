@@ -3,50 +3,271 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TL Loot — Гильдейский трекер</title>
+  <title>TL Loot — Трекер лута гильдии</title>
+
   <link rel="stylesheet" href="css/main.css" />
+
+  <style>
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+
+    .card-link:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .card-link .icon {
+      font-size: 2rem;
+    }
+
+    .card-link strong {
+      font-size: 1rem;
+    }
+
+    .card-link small {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .feature-item {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.15s;
+    }
+
+    .feature-item:hover {
+      border-color: var(--accent);
+    }
+
+    .feature-item .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-item h3 {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-item p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem auto;
+      max-width: 600px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-item .number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-soft);
+    }
+
+    .stat-item .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+
+      .quick-links {
+        grid-template-columns: 1fr;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        gap: 1rem;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- ═══════════════ НАВБАР ═══════════════ -->
-  <nav class="navbar" id="main-nav"></nav>
+<nav class="navbar" id="main-nav"></nav>
 
-  <!-- ═══════════════ ГЛАВНАЯ ═══════════════ -->
-  <main class="container">
-    <section class="hero">
-      <h1>Трекер лута гильдии</h1>
-      <p class="hero-sub">Throne & Liberty — справедливое распределение через прозрачные логи</p>
+<main class="container">
 
-      <div class="quick-links">
-        <a href="pages/raids.html" class="card-link">
-          <span class="icon">🗡️</span>
-          <strong>Рейды</strong>
-          <small>История и новый рейд</small>
-        </a>
-        <a href="pages/players.html" class="card-link">
-          <span class="icon">👥</span>
-          <strong>Игроки</strong>
-          <small>Профили и блокировки</small>
-        </a>
-        <a href="pages/search.html" class="card-link">
-          <span class="icon">🔍</span>
-          <strong>Поиск</strong>
-          <small>Игрок, босс, шмотка</small>
-        </a>
-        <a href="pages/stats.html" class="card-link">
-          <span class="icon">📊</span>
-          <strong>Статистика</strong>
-          <small>Лут в люцентах</small>
-        </a>
-      </div>
-    </section>
-  </main>
+  <section class="hero">
+    <h1>🗡️ Трекер лута гильдии</h1>
+    <p class="hero-sub">
+      Throne &amp; Liberty — справедливое распределение через прозрачные логи
+    </p>
 
-  <script type="module">
-    import { initNavbar } from "./js/modules/navbar.js";
-    import { initAuth } from "./js/modules/auth.js";
-    initNavbar();
-initAuth((_u, _r) => {});
-  </script>
+    <div class="quick-links">
+      <a href="pages/items.html" class="card-link">
+        <span class="icon">📦</span>
+        <strong>Предметы</strong>
+        <small>Весь лут с боссов</small>
+      </a>
+      <a href="pages/players.html" class="card-link">
+        <span class="icon">👥</span>
+        <strong>Игроки</strong>
+        <small>Профили и блокировки</small>
+      </a>
+      <a href="pages/search.html" class="card-link">
+        <span class="icon">🔍</span>
+        <strong>Поиск</strong>
+        <small>Игрок, босс, шмотка</small>
+      </a>
+      <a href="pages/stats.html" class="card-link">
+        <span class="icon">📊</span>
+        <strong>Статистика</strong>
+        <small>Лут в люцентах</small>
+      </a>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="features-grid">
+    <div class="feature-item">
+      <div class="icon">📜</div>
+      <h3>История рейдов</h3>
+      <p>Все дропы с боссов в хронологическом порядке</p>
+    </div>
+    <div class="feature-item">
+      <div class="icon">⚖️</div>
+      <h3>Справедливое распределение</h3>
+      <p>Прозрачная система DKP и лута</p>
+    </div>
+    <div class="feature-item">
+      <div class="icon">📈</div>
+      <h3>Аналитика</h3>
+      <p>Статистика по игрокам и предметам</p>
+    </div>
+    <div class="feature-item">
+      <div class="icon">🛡️</div>
+      <h3>Безопасность</h3>
+      <p>Роли и права доступа для модераторов</p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-item">
+      <div class="number" id="stat-items">0</div>
+      <div class="label">Всего предметов</div>
+    </div>
+    <div class="stat-item">
+      <div class="number" id="stat-players">0</div>
+      <div class="label">Игроков</div>
+    </div>
+    <div class="stat-item">
+      <div class="number" id="stat-bosses">0</div>
+      <div class="label">Боссов</div>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { initNavbar } from "js/modules/navbar.js";
+  import { initAuth, authReady, currentUser, currentRole } from "js/modules/auth.js";
+  import { getItems } from "js/modules/items.js";
+
+  // Инициализация
+  initNavbar();
+  initAuth();
+
+  await authReady;
+
+  // Загружаем статистику
+  try {
+    const items = await getItems();
+    const bosses = new Set(items.map(i => i.boss_name).filter(Boolean));
+    
+    document.getElementById('stat-items').textContent = items.length;
+    document.getElementById('stat-bosses').textContent = bosses.size;
+    
+    // Показываем примерное количество игроков
+    document.getElementById('stat-players').textContent = '2';
+  } catch (error) {
+    console.error('Ошибка загрузки статистики:', error);
+  }
+
+  console.log('🔐 Текущий пользователь:', currentUser?.email || 'Гость');
+  console.log('🔐 Роль:', currentRole);
+</script>
+
 </body>
 </html>
