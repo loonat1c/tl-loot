@@ -17,22 +17,21 @@ import {
 export let currentUser = null;
 export let currentRole = "guest";
 
-// ── Одноразовый промис — резолвится когда auth готов ─
-// Все страницы await-ят его перед рендером
+// Промис — резолвится когда Firebase восстановил сессию
 let _authReadyResolve;
 export const authReady = new Promise(res => { _authReadyResolve = res; });
 
-// ── Инициализация ─────────────────────────────────────
 export function initAuth(onReady) {
   setPersistence(auth, browserLocalPersistence).catch(() => {});
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
-      // Кэш роли в sessionStorage — мгновенный рендер без мигания
       const cached = sessionStorage.getItem(`role_${user.uid}`);
-      if (cached) currentRole = cached;
-      // Всегда обновляем из Firestore
+      if (cached) {
+        currentRole = cached;
+        updateNavUI();
+      }
       const fresh = await fetchRole(user.uid);
       currentRole = fresh;
       sessionStorage.setItem(`role_${user.uid}`, fresh);
@@ -44,11 +43,10 @@ export function initAuth(onReady) {
 
     updateNavUI();
     if (onReady) onReady(currentUser, currentRole);
-    _authReadyResolve(); // сигнал что auth готов
+    _authReadyResolve();
   });
 }
 
-// ── Получить роль ─────────────────────────────────────
 async function fetchRole(uid) {
   try {
     const snap = await getDoc(doc(db, "users", uid));
@@ -59,35 +57,31 @@ async function fetchRole(uid) {
   return "guest";
 }
 
-// ── Логин ─────────────────────────────────────────────
 export async function login(email, password) {
   await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
 }
 
-// ── Логаут ────────────────────────────────────────────
 export function logout() {
   sessionStorage.clear();
   return signOut(auth);
 }
 
-// ── Роли ──────────────────────────────────────────────
 export function canWrite() {
   return currentRole === "admin" || currentRole === "moderator";
 }
+
 export function isAdmin() {
   return currentRole === "admin";
 }
 
-// ── Обновить UI навбара ───────────────────────────────
 export function updateNavUI() {
-  const loginBtn   = document.getElementById("btn-login");
-  const logoutBtn  = document.getElementById("btn-logout");
-  const userLabel  = document.getElementById("nav-user-label");
-  const adminLinks = document.querySelectorAll("[data-role='admin']");
-  const modLinks   = document.querySelectorAll("[data-role='moderator']");
+  const loginBtn  = document.getElementById("btn-login");
+  const logoutBtn = document.getElementById("btn-logout");
+  const userLabel = document.getElementById("nav-user-label");
 
+  // Используем hidden класс (из CSS)
   if (loginBtn)  loginBtn.classList.toggle("hidden", !!currentUser);
   if (logoutBtn) logoutBtn.classList.toggle("hidden", !currentUser);
 
@@ -97,10 +91,11 @@ export function updateNavUI() {
       : "Гость";
   }
 
-  adminLinks.forEach(el =>
-    el.classList.toggle("hidden", currentRole !== "admin")
-  );
-  modLinks.forEach(el =>
-    el.classList.toggle("hidden", !canWrite())
-  );
+  // Управление/Настройки — показываем по роли
+  document.querySelectorAll("[data-role='admin']").forEach(el => {
+    el.classList.toggle("hidden", currentRole !== "admin");
+  });
+  document.querySelectorAll("[data-role='moderator']").forEach(el => {
+    el.classList.toggle("hidden", !canWrite());
+  });
 }
