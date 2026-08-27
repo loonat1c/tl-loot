@@ -721,3 +721,54 @@ tr:hover td { background: var(--bg-card2); }
     width: 100%;
   }
 }
+
+/* ── Глобальные настройки шрифтов ───────────────── */
+html {
+  font-size: 110%; /* Увеличиваем всё на 10% */
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6; /* Улучшаем читаемость */
+}
+
+/* ── Увеличение заголовков ────────────────────────── */
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.3rem; }
+h5 { font-size: 1.1rem; }
+h6 { font-size: 1rem; }
+
+/* ── Увеличение пунктов меню ──────────────────────── */
+.nav-links a {
+  font-size: 1.05rem; /* Было 0.9rem */
+  padding: 0.4rem 0.9rem; /* Чуть больше отступы */
+}
+
+/* ── Увеличение заголовков страниц ────────────────── */
+.page-header h2 {
+  font-size: 1.8rem; /* Было 1.4rem */
+}
+
+/* ── Увеличение текста в карточках ────────────────── */
+.card-link strong {
+  font-size: 1.15rem; /* Было 1rem */
+}
+
+/* ── Увеличение названий предметов ────────────────── */
+.item-name {
+  font-size: 1.05rem; /* Было 0.95rem */
+}
+
+/* ── Увеличение текста в таблицах ─────────────────── */
+table {
+  font-size: 0.95rem; /* Было 0.9rem */
+}
+
+th, td {
+  padding: 0.7rem 1rem; /* Чуть больше отступы */
+}
