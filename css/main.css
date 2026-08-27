@@ -112,6 +112,7 @@ body {
   color: var(--text);
 }
 
+/* Активная кнопка профиля — когда НЕ на странице профиля (привлекает внимание) */
 .btn-profile.active {
   background: var(--accent);
   color: #fff;
@@ -122,6 +123,19 @@ body {
   background: var(--accent);
   color: #fff;
   opacity: 0.85;
+}
+
+/* Когда на странице профиля — обычный серый вид */
+.btn-profile:not(.active) {
+  background: var(--bg-card2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-profile:not(.active):hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .btn-profile .avatar {
