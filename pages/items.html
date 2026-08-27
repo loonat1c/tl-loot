@@ -15,24 +15,23 @@
       gap: 1rem;
     }
 
-    /* ── Карточка предмета (мини) ────────────────────────── */
+    /* ── Карточка предмета ─────────────────────────────── */
     .item-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.75rem;
+      padding: 1rem;
       display: flex;
       gap: 0.75rem;
-      align-items: center;
-      transition: border-color 0.15s, transform 0.1s;
+      align-items: flex-start;
+      transition: border-color 0.15s, box-shadow 0.15s;
       position: relative;
       cursor: pointer;
-      min-height: 72px;
     }
 
     .item-card:hover {
       border-color: var(--accent);
-      transform: translateY(-2px);
+      box-shadow: 0 0 24px var(--accent-glow);
       z-index: 10;
     }
 
@@ -44,97 +43,65 @@
       border-left: 3px solid #8e44ad;
     }
 
-    .item-card .item-img-wrap {
-      width: 48px;
-      height: 48px;
+    .item-img {
+      width: 64px;
+      height: 64px;
       border-radius: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: var(--bg-card2);
-    }
-
-    .item-card .item-img-wrap .item-img {
-      width: 100%;
-      height: 100%;
       object-fit: cover;
-      display: block;
+      background: var(--bg-card2);
+      flex-shrink: 0;
     }
 
-    .item-card .item-info {
+    .item-info {
       flex: 1;
       min-width: 0;
     }
 
-    .item-card .item-name {
+    .item-name {
       font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--text);
+      font-size: 0.95rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .item-card .item-meta {
+    .item-meta {
       display: flex;
-      align-items: center;
       gap: 0.4rem;
       flex-wrap: wrap;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
-    .item-card .item-meta .slot-badge {
-      font-size: 0.65rem;
+    .item-boss {
+      font-size: 0.78rem;
       color: var(--text-muted);
-      background: var(--bg-card2);
-      padding: 0.1rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
+      margin-top: 4px;
     }
 
-    .item-card .item-meta .boss-tag {
-      font-size: 0.6rem;
+    .item-desc {
+      font-size: 0.78rem;
       color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-    }
-
-    .item-card .item-meta .boss-tag .boss-icon-small {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card2);
-    }
-
-    .item-card .item-desc {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 6px;
       display: -webkit-box;
-      -webkit-line-clamp: 1;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      opacity: 0.7;
     }
 
-    .item-card .item-actions {
+    .item-actions {
       display: flex;
       flex-direction: column;
       gap: 4px;
       flex-shrink: 0;
     }
 
-    .item-card .item-actions .btn {
-      padding: 0.15rem 0.4rem;
+    .badge-secondary {
+      background: var(--bg-card2);
+      color: var(--text-muted);
       font-size: 0.7rem;
-    }
-
-    /* Скрываем обёртку если картинка не загрузилась */
-    .item-card .item-img-wrap:has(img:not([src])),
-    .item-card .item-img-wrap:has(img[src=""]),
-    .item-card .item-img-wrap:has(img[src="#"]) {
-      display: none;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
     }
 
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
@@ -1445,54 +1412,38 @@
     const isWeapon = item.slot === 'weapon';
     const bossName = getBossName(item.boss_id);
     const bossIcon = getBossIcon(item.boss_id);
-    const qualityLabel = getQualityLabel(item.quality);
-    const hasImage = item.image && item.image !== '';
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
-    // Сокращаем название, если длинное
-    const shortName = item.name && item.name.length > 18 ? item.name.substring(0, 18) + '…' : item.name;
-
     card.innerHTML = `
-      <div class="item-img-wrap" style="${!hasImage ? 'display:none;' : ''}">
-        <img 
-          class="item-img" 
-          id="img-${item.id}" 
-          alt="${item.name || "Предмет"}" 
-          src="${item.image || ''}"
-          onerror="this.parentElement.style.display='none'"
-        />
-      </div>
+      <img class="item-img" id="img-${item.id}" alt="${item.name || "Предмет"}" />
       <div class="item-info">
-        <div class="item-name" title="${item.name || "Без названия"}">${shortName || "Без названия"}</div>
+        <div class="item-name">${item.name || "Без названия"}</div>
         <div class="item-meta">
-          <span class="slot-badge">${slotLabel}</span>
-          <span class="boss-tag">
-            ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" />` : '👹'}
-            ${bossName}
-          </span>
+          <span class="badge badge-purple">${slotLabel}</span>
           ${item.slot === 'weapon' && item.weapon_type ? `
-            <span style="font-size:0.6rem;color:var(--text-muted);background:var(--bg-card2);padding:0.05rem 0.4rem;border-radius:4px;border:1px solid var(--border);">${getWeaponTypeLabel(item.weapon_type)}</span>
+            <span class="badge-secondary">${getWeaponTypeLabel(item.weapon_type)}</span>
           ` : ''}
         </div>
+        <div class="item-boss">👹 ${bossName}</div>
         ${desc ? `<div class="item-desc">${desc}</div>` : ''}
       </div>
       ${canEdit ? `
         <div class="item-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')" title="Редактировать">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || "").replace(/'/g, "\\'")}')" title="Удалить">🗑️</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || "").replace(/'/g, "\\'")}')">🗑️</button>
         </div>
       ` : ''}
 
       <!-- Полная карточка при наведении -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" />
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
           <div class="fc-title">
             <div class="fc-name">${item.name || "Без названия"}</div>
             <div class="fc-meta">
-              <span class="fc-quality">${qualityLabel}</span>
+              <span class="fc-quality">${getQualityLabel(item.quality)}</span>
               ${level ? `<span class="fc-level">Уровень ${level}</span>` : ''}
               <span class="fc-quality">• ${slotLabel}</span>
             </div>
@@ -1558,6 +1509,7 @@
           <div class="fc-flavor">${desc}</div>
         ` : ''}
 
+        <!-- Босс внизу -->
         <div class="fc-boss">
           ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : `<span style="font-size:1.2rem;">👹</span>`}
           <span class="boss-name">${bossName}</span>
@@ -1565,11 +1517,8 @@
       </div>
     `;
 
-    // Устанавливаем картинку
     const image = card.querySelector(`#img-${item.id}`);
-    if (hasImage) {
-      image.src = item.image;
-    }
+    setItemImage(image, item.image);
 
     return card;
   }
