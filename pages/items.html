@@ -107,12 +107,11 @@
     /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ ─────────────────── */
     .item-card .full-card {
       display: none;
-      position: fixed;
-      left: calc(100% + 20px);
-      top: 50%;
-      transform: translateY(-50%);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 0;
       width: 440px;
-      max-width: 92vw;
+      max-width: 80vw;
       max-height: 85vh;
       overflow-y: auto;
       background: var(--bg-card);
@@ -124,32 +123,29 @@
       pointer-events: none;
     }
 
-    /* Для левой стороны — карточка открывается вправо */
-    .item-card:nth-child(n) .full-card {
-      left: calc(100% + 20px);
-      right: auto;
-    }
-
-    /* Для правой стороны — карточка открывается влево */
-    .item-card:last-child .full-card,
-    .item-card:nth-last-child(2) .full-card {
+    /* Для карточек справа — открываем влево */
+    .item-card:nth-child(4n) .full-card,
+    .item-card:nth-child(4n-1) .full-card {
       left: auto;
-      right: calc(100% + 20px);
-    }
-
-    /* На мобилках центрируем */
-    @media (max-width: 992px) {
-      .item-card .full-card {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        right: auto;
-      }
+      right: calc(100% + 12px);
     }
 
     .item-card .full-card::before {
-      display: none;
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 20px;
+      border: 8px solid transparent;
+      border-right-color: var(--accent);
+    }
+
+    /* Для карточек справа — стрелка слева */
+    .item-card:nth-child(4n) .full-card::before,
+    .item-card:nth-child(4n-1) .full-card::before {
+      right: auto;
+      left: 100%;
+      border-right-color: transparent;
+      border-left-color: var(--accent);
     }
 
     .item-card:hover .full-card {
@@ -625,6 +621,7 @@
       font-size: 0.9rem;
     }
 
+    /* ── Адаптация для мобильных ────────────────────────── */
     @media (max-width: 992px) {
       .item-card .full-card {
         position: fixed;
@@ -632,13 +629,27 @@
         top: 50%;
         transform: translate(-50%, -50%);
         right: auto;
-        width: 92vw;
+        max-width: 92vw;
+        max-height: 80vh;
+      }
+
+      .item-card .full-card::before {
+        display: none;
+      }
+
+      .full-card .fc-stats {
+        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 768px) {
       .full-card .fc-stats {
         grid-template-columns: 1fr;
+      }
+
+      .item-card .full-card {
+        width: 92vw;
+        padding: 1rem;
       }
 
       .modal .form-row {
