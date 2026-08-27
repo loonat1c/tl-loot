@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TL Loot — Трекер лута гильдии</title>
-
+  <title>TL Loot — Гильдейский трекер</title>
   <link rel="stylesheet" href="css/main.css" />
 
   <style>
+    /* Дополнительные стили для главной страницы */
     .hero {
       text-align: center;
       padding: 3rem 0 2rem;
@@ -71,45 +71,6 @@
       text-align: center;
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-      margin-top: 3rem;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .feature-item {
-      text-align: center;
-      padding: 1.5rem 1rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      transition: border-color 0.15s;
-    }
-
-    .feature-item:hover {
-      border-color: var(--accent);
-    }
-
-    .feature-item .icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .feature-item h3 {
-      font-size: 1rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .feature-item p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin: 0;
-    }
-
     .divider {
       border: none;
       border-top: 1px solid var(--border);
@@ -149,10 +110,6 @@
         grid-template-columns: 1fr;
       }
 
-      .features-grid {
-        grid-template-columns: 1fr;
-      }
-
       .stats-row {
         gap: 1rem;
       }
@@ -162,112 +119,86 @@
 
 <body>
 
-<nav class="navbar" id="main-nav"></nav>
+  <!-- ═══════════════ НАВБАР ═══════════════ -->
+  <nav class="navbar" id="main-nav"></nav>
 
-<main class="container">
+  <!-- ═══════════════ ГЛАВНАЯ ═══════════════ -->
+  <main class="container">
+    <section class="hero">
+      <h1>🗡️ Трекер лута гильдии</h1>
+      <p class="hero-sub">Throne &amp; Liberty — справедливое распределение через прозрачные логи</p>
 
-  <section class="hero">
-    <h1>🗡️ Трекер лута гильдии</h1>
-    <p class="hero-sub">
-      Throne &amp; Liberty — справедливое распределение через прозрачные логи
-    </p>
+      <div class="quick-links">
+        <a href="pages/raids.html" class="card-link">
+          <span class="icon">🗡️</span>
+          <strong>Рейды</strong>
+          <small>История и новый рейд</small>
+        </a>
+        <a href="pages/players.html" class="card-link">
+          <span class="icon">👥</span>
+          <strong>Игроки</strong>
+          <small>Профили и блокировки</small>
+        </a>
+        <a href="pages/search.html" class="card-link">
+          <span class="icon">🔍</span>
+          <strong>Поиск</strong>
+          <small>Игрок, босс, шмотка</small>
+        </a>
+        <a href="pages/stats.html" class="card-link">
+          <span class="icon">📊</span>
+          <strong>Статистика</strong>
+          <small>Лут в люцентах</small>
+        </a>
+      </div>
+    </section>
 
-    <div class="quick-links">
-      <a href="pages/items.html" class="card-link">
-        <span class="icon">📦</span>
-        <strong>Предметы</strong>
-        <small>Весь лут с боссов</small>
-      </a>
-      <a href="pages/players.html" class="card-link">
-        <span class="icon">👥</span>
-        <strong>Игроки</strong>
-        <small>Профили и блокировки</small>
-      </a>
-      <a href="pages/search.html" class="card-link">
-        <span class="icon">🔍</span>
-        <strong>Поиск</strong>
-        <small>Игрок, босс, шмотка</small>
-      </a>
-      <a href="pages/stats.html" class="card-link">
-        <span class="icon">📊</span>
-        <strong>Статистика</strong>
-        <small>Лут в люцентах</small>
-      </a>
+    <hr class="divider" />
+
+    <!-- Статистика -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-item">
+        <div class="number" id="stat-items">0</div>
+        <div class="label">Всего предметов</div>
+      </div>
+      <div class="stat-item">
+        <div class="number" id="stat-players">0</div>
+        <div class="label">Игроков</div>
+      </div>
+      <div class="stat-item">
+        <div class="number" id="stat-bosses">0</div>
+        <div class="label">Боссов</div>
+      </div>
     </div>
-  </section>
+  </main>
 
-  <hr class="divider" />
+  <script type="module">
+    import { initNavbar } from "./js/modules/navbar.js";
+    import { initAuth, authReady, currentUser, currentRole } from "./js/modules/auth.js";
+    import { getItems } from "./js/modules/items.js";
 
-  <section class="features-grid">
-    <div class="feature-item">
-      <div class="icon">📜</div>
-      <h3>История рейдов</h3>
-      <p>Все дропы с боссов в хронологическом порядке</p>
-    </div>
-    <div class="feature-item">
-      <div class="icon">⚖️</div>
-      <h3>Справедливое распределение</h3>
-      <p>Прозрачная система DKP и лута</p>
-    </div>
-    <div class="feature-item">
-      <div class="icon">📈</div>
-      <h3>Аналитика</h3>
-      <p>Статистика по игрокам и предметам</p>
-    </div>
-    <div class="feature-item">
-      <div class="icon">🛡️</div>
-      <h3>Безопасность</h3>
-      <p>Роли и права доступа для модераторов</p>
-    </div>
-  </section>
+    // Инициализация
+    initNavbar();
+    initAuth();
 
-  <hr class="divider" />
+    // Ждём авторизацию и загружаем статистику
+    await authReady;
 
-  <div class="stats-row" id="stats-row">
-    <div class="stat-item">
-      <div class="number" id="stat-items">0</div>
-      <div class="label">Всего предметов</div>
-    </div>
-    <div class="stat-item">
-      <div class="number" id="stat-players">0</div>
-      <div class="label">Игроков</div>
-    </div>
-    <div class="stat-item">
-      <div class="number" id="stat-bosses">0</div>
-      <div class="label">Боссов</div>
-    </div>
-  </div>
+    try {
+      const items = await getItems();
+      const bosses = new Set(items.map(i => i.boss_name).filter(Boolean));
+      
+      document.getElementById('stat-items').textContent = items.length;
+      document.getElementById('stat-bosses').textContent = bosses.size;
+      
+      // Показываем примерное количество игроков
+      // В реальном проекте нужно загружать из отдельной коллекции
+      document.getElementById('stat-players').textContent = '0';
+    } catch (error) {
+      console.error('Ошибка загрузки статистики:', error);
+    }
 
-</main>
-
-<script type="module">
-  import { initNavbar } from "js/modules/navbar.js";
-  import { initAuth, authReady, currentUser, currentRole } from "js/modules/auth.js";
-  import { getItems } from "js/modules/items.js";
-
-  // Инициализация
-  initNavbar();
-  initAuth();
-
-  await authReady;
-
-  // Загружаем статистику
-  try {
-    const items = await getItems();
-    const bosses = new Set(items.map(i => i.boss_name).filter(Boolean));
-    
-    document.getElementById('stat-items').textContent = items.length;
-    document.getElementById('stat-bosses').textContent = bosses.size;
-    
-    // Показываем примерное количество игроков
-    document.getElementById('stat-players').textContent = '2';
-  } catch (error) {
-    console.error('Ошибка загрузки статистики:', error);
-  }
-
-  console.log('🔐 Текущий пользователь:', currentUser?.email || 'Гость');
-  console.log('🔐 Роль:', currentRole);
-</script>
-
+    console.log('🔐 Текущий пользователь:', currentUser?.email || 'Гость');
+    console.log('🔐 Роль:', currentRole);
+  </script>
 </body>
 </html>
