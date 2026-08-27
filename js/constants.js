@@ -44,11 +44,16 @@ export const QUALITY = [
   { id: "epic", label: "Эпическое", color: "#9b59b6" },
 ];
 
+// ====================================================
+// КЛАССЫ БОССОВ (ОБНОВЛЕНО)
+// ====================================================
+
 export const BOSS_CLASSES = [
-  { id: "field",    label: "Полевой босс" },
-  { id: "dungeon",  label: "Данжевый босс" },
-  { id: "raid",     label: "Рейдовый босс" },
-  { id: "world",    label: "Мировой босс" },
+  { id: "beast",     label: "🐾 Зверь" },
+  { id: "undead",    label: "💀 Нежить" },
+  { id: "humanoid",  label: "🧑 Гуманоид" },
+  { id: "mechanism", label: "⚙️ Механизм" },
+  { id: "demon",     label: "👿 Демон" },
 ];
 
 export const ROLL_TYPE = [
