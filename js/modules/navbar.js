@@ -1,58 +1,62 @@
 // ====================================================
-// navbar.js — единый навбар
+// navbar.js — Навбар
 // ====================================================
 
-import { initAuth, logout } from "./auth.js";
+import { initAuth, authReady, currentUser, currentRole, logout } from "./auth.js";
 
-function getActivePage() {
-  const path = window.location.pathname;
-  if (path.includes("players"))  return "players";
-  if (path.includes("items"))    return "items";
-  if (path.includes("bosses"))   return "bosses";
-  if (path.includes("raids"))    return "raids";
-  if (path.includes("search"))   return "search";
-  if (path.includes("stats"))    return "stats";
-  if (path.includes("admin"))    return "admin";
-  if (path.includes("login"))    return "login";
-  return "home";
-}
+let navbarInitialized = false;
 
-function getBase() {
-  return window.location.pathname.includes("/pages/") ? "" : "pages/";
-}
+export async function initNavbar() {
 
-export function initNavbar() {
-  const active   = getActivePage();
-  const base     = getBase();
-  const rootBase = base === "" ? "../" : "";
+  if (navbarInitialized) return;
+  navbarInitialized = true;
+
+  // Ждём авторизацию
+  await initAuth();
+  await authReady;
 
   const nav = document.getElementById("main-nav");
   if (!nav) return;
 
+  // Отрисовываем навбар
+  renderNav(nav);
+
+  // Вешаем обработчики
+  setupEventListeners();
+}
+
+function renderNav(nav) {
+  const isAuth = !!currentUser;
+  const role = currentRole || "guest";
+
   nav.innerHTML = `
-    <a class="nav-brand" href="${rootBase}index.html">
-      <span class="nav-brand-text">⚔️ TL Loot</span>
-    </a>
-    <div class="nav-links">
-      <a href="${base}players.html"  class="${active==="players"  ? "active":""}">Игроки</a>
-      <a href="${base}items.html"    class="${active==="items"    ? "active":""}">Предметы</a>
-      <a href="${base}bosses.html"   class="${active==="bosses"   ? "active":""}">Боссы</a>
-      <a href="${base}raids.html"    class="${active==="raids"    ? "active":""}">Рейды</a>
-      <a href="${base}search.html"   class="${active==="search"   ? "active":""}">Поиск</a>
-      <a href="${base}stats.html"    class="${active==="stats"    ? "active":""}">Статистика</a>
-      <a href="${base}admin.html"    class="${active==="admin"    ? "active":""}" id="nav-admin-link">Управление</a>
-    </div>
-    <div class="nav-user">
-      <span id="nav-user-label">Гость</span>
-      <button class="btn btn-sm hidden" id="btn-login" onclick="location.href='${base}login.html'">Войти</button>
-      <button class="btn btn-sm hidden" id="btn-logout">Выйти</button>
+    <div class="nav-container">
+      <a href="/" class="nav-brand">⚔️ TL Loot</a>
+      
+      <div class="nav-links">
+        <a href="/index.html">Главная</a>
+        <a href="/items.html">Предметы</a>
+        
+        ${isAuth ? `
+          <span class="nav-user-label" id="nav-user-label">
+            ${currentUser?.email || 'Пользователь'} (${role})
+          </span>
+          <button class="btn btn-ghost btn-sm" id="btn-logout">🚪 Выйти</button>
+        ` : `
+          <a href="/login.html" class="btn btn-ghost btn-sm" id="btn-login">🔑 Войти</a>
+          <a href="/register.html" class="btn btn-primary btn-sm">📝 Регистрация</a>
+        `}
+      </div>
     </div>
   `;
+}
 
-  document.getElementById("btn-logout").addEventListener("click", () => {
-    logout().then(() => location.reload());
-  });
-
-  // Показываем кнопку Войти сразу (до auth) — auth скроет если залогинен
-  document.getElementById("btn-login").classList.remove("hidden");
+function setupEventListeners() {
+  const logoutBtn = document.getElementById("btn-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await logout();
+      window.location.href = "/";
+    });
+  }
 }
