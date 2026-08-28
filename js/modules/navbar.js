@@ -47,9 +47,8 @@ function renderNav(nav) {
   nav.innerHTML = `
     <div class="navbar-inner">
       <div class="nav-left">
-        <a href="/index.html" class="nav-brand">
+        <a href="/index.html" class="nav-brand" aria-label="На главную">
           <img src="/assets/img/logo.png" alt="TL Loot" class="nav-logo" />
-          <span class="nav-brand-text">TL Loot</span>
         </a>
         <button class="nav-toggle" id="nav-toggle" aria-label="Меню">
           <span></span>
@@ -60,10 +59,6 @@ function renderNav(nav) {
       
       <div class="nav-center" id="nav-menu">
         <div class="nav-links">
-          <a href="/index.html" class="${isIndexPage ? 'active' : ''}">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <span>Главная</span>
-          </a>
           <a href="/pages/items.html" class="${isItemsPage ? 'active' : ''}">
             <svg viewBox="0 0 24 24" width="18" height="18"><path d="M20 7h-4.5A2.5 2.5 0 0013 4.5V3a1 1 0 00-1-1H9.5A1.5 1.5 0 008 3.5V4a2.5 2.5 0 00-2.5 2.5H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span>Предметы</span>
