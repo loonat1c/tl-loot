@@ -456,63 +456,964 @@
 
 <script type="module">
   // ============================================================
-  // ВСЕ ИМПОРТЫ И ЗАЩИТА (как в предыдущей версии)
+  // ЗАЩИТА
   // ============================================================
   
-  // ... весь код до init() функции ...
-  
-  // ============================================================
-  // ПОСЕЩАЕМОСТЬ И ЗАКРЫТИЕ РЕЙДА
-  // ============================================================
-
-  function openAttendanceModal() {
-    const grid = document.getElementById("attendance-grid");
-    grid.innerHTML = "";
-    
-    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-    
-    approvedChars.forEach(p => {
-      const el = document.createElement("div");
-      const isPresent = attendedPlayerIds.includes(p.id);
-      el.className = `attendance-player${isPresent ? ' present' : ''}`;
-      el.dataset.id = p.id;
-      
-      const weapons = p.weapons || [];
-      const weaponLabels = weapons.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return weapon?.label || w;
-      }).join(', ');
-      
-      el.innerHTML = `
-        <span>${isPresent ? '✅' : '⬜'}</span>
-        ${p.name}
-        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
-      `;
-      el.addEventListener("click", () => {
-        el.classList.toggle("present");
-        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
-      });
-      grid.appendChild(el);
-    });
-    openModal("modal-attendance");
-  }
-
-  document.getElementById("btn-save-attendance")?.addEventListener("click", async () => {
-    const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
-    const btn = document.getElementById("btn-save-attendance");
-    btn.disabled = true; btn.textContent = "Сохранение...";
-    try {
-      await updateRaid(activeRaid.id, { 
-        attended_player_ids: attendedIds 
-      });
-      attendedPlayerIds = attendedIds;
-      closeModal("modal-attendance");
-      showToast("Посещаемость сохранена");
-      selectRaid(activeRaid);
-    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-    finally { btn.disabled = false; btn.textContent = "Сохранить посещаемость"; }
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+      e.preventDefault();
+      return false;
+    }
   });
 
+  document.addEventListener('keydown', function(e) {
+    if (
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
+      (e.ctrlKey && e.key === 'u') ||
+      (e.ctrlKey && e.key === 's')
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  console.log('🔒 Защита активирована');
+
+  // ============================================================
+  // ИМПОРТЫ
+  // ============================================================
+  
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
+  
+  // ============================================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ============================================================
+  
+  // Инициализация навбара
+  initNavbar();
+  
+  // Ждем авторизацию
+  console.log('⏳ Ожидание авторизации...');
+  await initAuth();
+  await authReady;
+
+  console.log('🔐 Авторизация:', { 
+    user: currentUser?.email || 'Нет',
+    role: currentRole,
+    uid: currentUser?.uid
+  });
+
+  // Если не авторизован — редирект на логин
+  if (!currentUser) {
+    console.log('🚫 Пользователь не авторизован, редирект на логин');
+    window.location.href = '/pages/login.html';
+    throw new Error('Redirect to login');
+  }
+
+  // ============================================================
+  // ИМПОРТЫ МОДУЛЕЙ (после проверки авторизации)
+  // ============================================================
+  
+  import {
+    getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
+    getRaidTries, addTry, deleteTry,
+    getTryDrops, addDrop, deleteDrop,
+    closeRaid, updateRaidStatus, updateDropWinner
+  } from "../js/modules/raids.js";
+  import { getPlayers } from "../js/modules/players.js";
+  import { getBosses } from "../js/modules/bosses.js";
+  import { getItems } from "../js/modules/items.js";
+  import { setItemImage } from "../js/modules/images.js";
+  import { SLOTS, WEAPONS } from "../js/constants.js";
+  
+  // Импорты для работы с коллекцией characters
+  import { 
+    collection, 
+    getDocs, 
+    query, 
+    where,
+    orderBy,
+    doc,
+    onSnapshot,
+    updateDoc as firestoreUpdate
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { db } from "../js/firebase.js";
+
+  // ============================================================
+  // ПРОВЕРКА ИМПОРТОВ
+  // ============================================================
+  
+  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
+  let importsOk = true;
+  
+  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
+  for (const fn of requiredFunctions) {
+    if (typeof fnMap[fn] !== 'function') {
+      console.error(`🔒 Критическая функция ${fn} не найдена`);
+      importsOk = false;
+    }
+  }
+  
+  if (!importsOk) {
+    document.body.innerHTML = `
+      <div style="text-align:center;padding:4rem;color:var(--danger);">
+        <h2>🔒 Ошибка безопасности</h2>
+        <p>Обнаружена попытка подмены критических функций.</p>
+        <p>Пожалуйста, перезагрузите страницу.</p>
+      </div>
+    `;
+    throw new Error('Security: Function integrity check failed');
+  }
+
+  // ============================================================
+  // ОСНОВНАЯ ЛОГИКА
+  // ============================================================
+
+  let allRaids = [], allPlayers = [], allBosses = [], allItems = [];
+  let allCharacters = [];
+  let activeRaid = null;
+  let showDeleted = false;
+  let editingRaidId = null;
+  let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
+  let selectedItem = null, selectedProperty = null;
+  let attendedPlayerIds = [];
+  
+  let rollState = {
+    dropId: null,
+    raidId: null,
+    tryId: null,
+    itemName: '',
+    itemDetail: '',
+    participants: [],
+    isRolling: false,
+    isFinished: false,
+    winner: null,
+    currentUserId: null,
+    currentPlayerId: null,
+    queue: 'main',
+    itemSlot: null,
+    itemWeaponType: null,
+    rollResults: null
+  };
+
+  // ============================================================
+  // HELPER ФУНКЦИИ
+  // ============================================================
+
+  function lucentIcon(size = 'small') {
+    const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
+    return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.remove("hidden"); }
+  function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+  window.closeModal = closeModal;
+
+  function showDropError(msg) { 
+    const el = document.getElementById("drop-error"); 
+    el.textContent = msg; 
+    el.style.display = "block"; 
+  }
+  
+  function formatDate(str) { 
+    if (!str) return "—"; 
+    return new Date(str).toLocaleDateString("ru-RU", { 
+      day: "numeric", 
+      month: "long", 
+      year: "numeric" 
+    }); 
+  }
+  
+  function todayStr() { 
+    return new Date().toISOString().split("T")[0]; 
+  }
+  
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function isGuildLeader() {
+    return currentRole === 'guild_leader' || currentRole === 'admin';
+  }
+
+  function canStartRoll() {
+    return isGuildLeader() || isAdmin();
+  }
+
+  function getWeaponType(itemId) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return null;
+    if (item.weapon_type) return item.weapon_type;
+    if (item.slot === 'weapon') {
+      const weapon = WEAPONS.find(w => w.label && item.name?.toLowerCase().includes(w.label.toLowerCase()));
+      return weapon?.id || null;
+    }
+    return null;
+  }
+
+  function getCharacterWeapons(charId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return [];
+    return char.weapons || [];
+  }
+
+  function canParticipateInRoll(charId, itemId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return { can: false, reason: 'Персонаж не найден' };
+    
+    if (char.status !== 'approved' && char.approved !== true) {
+      return { can: false, reason: 'Персонаж не подтвержден' };
+    }
+    
+    if (!attendedPlayerIds.includes(charId)) {
+      return { can: false, reason: 'Персонаж не был на рейде' };
+    }
+    
+    const item = allItems.find(i => i.id === itemId);
+    if (item && item.slot === 'weapon') {
+      const charWeapons = char.weapons || [];
+      const weaponType = getWeaponType(itemId);
+      if (weaponType && !charWeapons.includes(weaponType)) {
+        return { can: false, reason: 'Оружие не подходит вашему персонажу' };
+      }
+    }
+    
+    return { can: true };
+  }
+
+  // ============================================================
+  // ЗАГРУЗКА ПЕРСОНАЖЕЙ
+  // ============================================================
+  
+  async function loadCharacters() {
+    try {
+      const charsRef = collection(db, 'characters');
+      const q = query(charsRef, orderBy('name'));
+      const querySnapshot = await getDocs(q);
+      allCharacters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return allCharacters;
+    } catch (e) {
+      console.error('❌ Ошибка загрузки персонажей:', e);
+      allCharacters = [];
+      return [];
+    }
+  }
+
+  // ============================================================
+  // ФУНКЦИИ РЕНДЕРИНГА
+  // ============================================================
+
+  function populateBossSelect() {
+    const sel = document.getElementById("try-boss-select");
+    sel.innerHTML = `<option value="">— без босса —</option>`;
+    allBosses.forEach(b => {
+      const icon = b.icon ? `<img src="/assets/img/bosses/${b.icon}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px;" />` : '👹 ';
+      sel.innerHTML += `<option value="${b.id}">${icon} ${b.name}</option>`;
+    });
+  }
+
+  function renderRaidList() {
+    const container = document.getElementById("raids-list");
+    const visible = allRaids.filter(r => showDeleted ? r.deleted : !r.deleted);
+
+    if (!visible.length) {
+      container.innerHTML = `<div class="text-muted">Рейдов нет</div>`;
+      return;
+    }
+    container.innerHTML = "";
+    visible.forEach(r => {
+      const el = document.createElement("div");
+      el.className = `raid-list-item${activeRaid?.id === r.id ? " active" : ""}${r.deleted ? " deleted" : ""}`;
+      
+      const statusMap = { open: 'Открыт', rolling: 'Ролл', closed: 'Закрыт' };
+      const statusClass = r.status || 'open';
+      
+      el.innerHTML = `
+        <div class="raid-date">${formatDate(r.date)}</div>
+        <div class="raid-meta">
+          ${r.drop_count || 0} дропов &nbsp;·&nbsp;
+          <span class="status-badge ${statusClass}">${statusMap[statusClass] || 'Открыт'}</span>
+        </div>
+      `;
+      if (!r.deleted) {
+        el.addEventListener("click", () => selectRaid(r));
+      }
+      container.appendChild(el);
+    });
+
+    const btnDel = document.getElementById("btn-show-deleted");
+    if (isAdmin()) {
+      btnDel.classList.remove("hidden");
+      btnDel.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
+    }
+  }
+
+  document.getElementById("btn-show-deleted").addEventListener("click", () => {
+    showDeleted = !showDeleted;
+    renderRaidList();
+  });
+
+  async function selectRaid(raid) {
+    activeRaid = raid;
+    renderRaidList();
+
+    const detail = document.getElementById("raid-detail");
+    detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
+
+    const tries  = await getRaidTries(raid.id);
+    const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling");
+    const admin   = isAdmin();
+
+    detail.innerHTML = `
+      <div class="card">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 style="color:var(--accent-soft)">${formatDate(raid.date)}</h3>
+            <div class="text-muted" style="font-size:0.82rem;margin-top:2px">${raid.notes || ""}</div>
+          </div>
+          <div class="flex gap-1" style="flex-wrap:wrap;justify-content:flex-end">
+            ${canEdit ? `
+              <button class="btn btn-primary btn-sm" id="btn-add-try">+ Трай</button>
+              <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
+            ` : ""}
+            ${admin && !raid.deleted ? `
+              <button class="btn btn-ghost btn-sm" id="btn-edit-raid">✏️</button>
+              <button class="btn btn-danger btn-sm" id="btn-delete-raid">🗑️</button>
+            ` : ""}
+            ${admin && raid.deleted ? `
+              <button class="btn btn-ghost btn-sm" id="btn-restore-raid">♻️ Восстановить</button>
+            ` : ""}
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem" id="tries-container">
+          ${tries.length ? "" : `<div class="text-muted" style="text-align:center;padding:1.5rem">Нет траёв — нажми "+ Трай"</div>`}
+        </div>
+      </div>
+    `;
+
+    const triesContainer = document.getElementById("tries-container");
+    for (let i = 0; i < tries.length; i++) {
+      const t = tries[i];
+      const drops = await getTryDrops(raid.id, t.id);
+      const boss  = allBosses.find(b => b.id === t.boss_id);
+      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit, raid));
+    }
+
+    document.getElementById("btn-add-try")?.addEventListener("click", () => openTryModal());
+    document.getElementById("btn-close-raid")?.addEventListener("click", openCloseRaidModal);
+    document.getElementById("btn-edit-raid")?.addEventListener("click", () => openEditRaid(raid));
+    document.getElementById("btn-delete-raid")?.addEventListener("click", () => confirmDeleteRaid(raid));
+    document.getElementById("btn-restore-raid")?.addEventListener("click", () => confirmRestoreRaid(raid));
+  }
+
+  function buildTryBlock(t, num, drops, boss, raidId, canEdit, raid) {
+    const wrap = document.createElement("div");
+    wrap.className = "try-block";
+    
+    const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
+    
+    wrap.innerHTML = `
+      <div class="try-header">
+        <div class="flex items-center gap-1">
+          <span class="try-title">Трай ${num}</span>
+          ${boss ? `
+            <span class="try-boss">
+              ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${boss.name}" />` : '👹'}
+              ${boss.name}
+            </span>
+          ` : ""}
+          <span class="text-muted" style="font-size:0.75rem">${drops.length} дропов</span>
+        </div>
+        ${canEdit ? `
+        <div class="flex gap-1">
+          <button class="btn btn-primary btn-sm" onclick="openDropModal('${raidId}','${t.id}','${t.boss_id||""}')">+ Дроп</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteTry('${raidId}','${t.id}')">🗑️</button>
+        </div>` : ""}
+      </div>
+      <div class="try-body">
+        ${drops.length ? drops.map(d => buildDropRow(d, raidId, t.id, canEdit, raid)).join("") :
+          `<div class="text-muted" style="font-size:0.82rem">Дропов нет</div>`}
+      </div>
+    `;
+    
+    drops.forEach(d => {
+      const img = wrap.querySelector(`#drop-img-${d.id}`);
+      if (img) setItemImage(img, d.item_image);
+    });
+    
+    return wrap;
+  }
+
+  function buildDropRow(d, raidId, tryId, canEdit, raid) {
+    const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
+    const hasWinner = d.winner_player_id && d.winner_nickname;
+    const canRoll = canEdit && !d.winner_player_id && raid?.status !== "closed";
+    const isRolling = raid?.status === "rolling";
+    
+    const boss = allBosses.find(b => b.id === d.boss_id);
+    const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
+    
+    return `
+      <div class="drop-row">
+        <img class="drop-img" id="drop-img-${d.id}" alt="${d.item_name}" />
+        <div>
+          <div class="drop-name">${d.item_name}</div>
+          <div class="drop-detail">
+            ${slotLabel} · ${lucentIcon()} ${(d.lucent_value_snapshot||0).toLocaleString()} L
+            ${d.property ? `<span class="drop-property">✦ ${d.property}</span>` : ''}
+          </div>
+          ${boss ? `
+            <div class="drop-boss-tag">
+              ${bossIcon ? `<img src="${bossIcon}" alt="${boss.name}" />` : '👹'}
+              ${boss.name}
+            </div>
+          ` : ''}
+        </div>
+        <div class="drop-winner">
+          ${hasWinner ? `
+            <strong>${d.winner_nickname}</strong>
+            <span>${d.roll_type === "main" ? "Основная" : "Дополнительная"}</span>
+          ` : `
+            <span class="no-winner">${isRolling ? '⏳ Ролл...' : 'Ожидает ролла'}</span>
+          `}
+        </div>
+        <div class="drop-actions">
+          ${canRoll ? `<button class="roll-btn" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}')">🎲</button>` : ''}
+          ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Новый рейд ────────────────────────────────────
+  document.getElementById("btn-new-raid").addEventListener("click", () => {
+    editingRaidId = null;
+    document.getElementById("modal-raid-title").textContent = "Новый рейд";
+    document.getElementById("raid-date").value  = todayStr();
+    document.getElementById("raid-notes").value = "";
+    document.getElementById("raid-error").style.display = "none";
+    openModal("modal-raid");
+  });
+
+  function openEditRaid(raid) {
+    editingRaidId = raid.id;
+    document.getElementById("modal-raid-title").textContent = "Редактировать рейд";
+    document.getElementById("raid-date").value  = raid.date;
+    document.getElementById("raid-notes").value = raid.notes || "";
+    document.getElementById("raid-error").style.display = "none";
+    openModal("modal-raid");
+  }
+
+  document.getElementById("btn-create-raid").addEventListener("click", async () => {
+    const date  = document.getElementById("raid-date").value;
+    const notes = document.getElementById("raid-notes").value.trim();
+    const errEl = document.getElementById("raid-error");
+    if (!date) { errEl.textContent = "Выбери дату"; errEl.style.display = "block"; return; }
+
+    const btn = document.getElementById("btn-create-raid");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+    try {
+      if (editingRaidId) {
+        await updateRaid(editingRaidId, { date, notes });
+        showToast("Рейд обновлён");
+      } else {
+        await createRaid({ date, notes });
+        showToast("Рейд создан");
+      }
+      closeModal("modal-raid");
+      allRaids = await getRaids();
+      renderRaidList();
+      if (!editingRaidId) {
+        const newRaid = allRaids.find(r => !r.deleted && r.date === date);
+        if (newRaid) selectRaid(newRaid);
+      } else {
+        activeRaid = allRaids.find(r => r.id === editingRaidId);
+        if (activeRaid) selectRaid(activeRaid);
+      }
+    } catch(e) { errEl.textContent = e.message; errEl.style.display = "block"; }
+    finally { btn.disabled = false; btn.textContent = editingRaidId ? "Сохранить" : "Создать"; }
+  });
+
+  function confirmDeleteRaid(raid) {
+    if (!confirm(`Удалить рейд от ${formatDate(raid.date)}?`)) return;
+    softDeleteRaid(raid.id).then(async () => {
+      showToast("Рейд удалён");
+      allRaids = await getRaids();
+      activeRaid = null;
+      document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
+      renderRaidList();
+    });
+  }
+
+  function confirmRestoreRaid(raid) {
+    if (!confirm("Восстановить рейд?")) return;
+    restoreRaid(raid.id).then(async () => {
+      showToast("Рейд восстановлен");
+      allRaids = await getRaids();
+      renderRaidList();
+      selectRaid(allRaids.find(r => r.id === raid.id));
+    });
+  }
+
+  // ── Трай модалка ──────────────────────────────────
+  function openTryModal() {
+    document.getElementById("try-boss-select").value = "";
+    document.getElementById("try-error").style.display = "none";
+    openModal("modal-try");
+  }
+
+  document.getElementById("btn-create-try").addEventListener("click", async () => {
+    const bossId   = document.getElementById("try-boss-select").value;
+    const boss     = allBosses.find(b => b.id === bossId);
+    const tries    = await getRaidTries(activeRaid.id);
+    const btn      = document.getElementById("btn-create-try");
+    btn.disabled   = true; btn.textContent = "Добавление...";
+    try {
+      await addTry(activeRaid.id, {
+        boss_id:   bossId || null,
+        boss_name: boss?.name || "",
+        order:     tries.length,
+      });
+      closeModal("modal-try");
+      selectRaid(activeRaid);
+      showToast("Трай добавлен");
+    } catch(e) {
+      document.getElementById("try-error").textContent = e.message;
+      document.getElementById("try-error").style.display = "block";
+    } finally { btn.disabled = false; btn.textContent = "Добавить"; }
+  });
+
+  window.confirmDeleteTry = async (raidId, tryId) => {
+    if (!confirm("Удалить трай и все его дропы?")) return;
+    await deleteTry(raidId, tryId);
+    selectRaid(activeRaid);
+    showToast("Трай удалён");
+  };
+
+  // ── Дроп модалка ─────────────────────────────────
+  window.openDropModal = async (raidId, tryId, bossId) => {
+    currentDropRaidId  = raidId;
+    currentDropTryId   = tryId;
+    currentDropBossId  = bossId || null;
+    selectedItem       = null;
+    selectedProperty   = null;
+
+    document.getElementById("item-search").value       = "";
+    document.getElementById("drop-lucent").value       = "";
+    document.getElementById("drop-error").style.display = "none";
+
+    renderDropItems("");
+    renderProperties();
+    openModal("modal-drop");
+  };
+
+  function renderDropItems(query) {
+    const boss = allBosses.find(b => b.id === currentDropBossId);
+    let itemPool = boss?.item_ids?.length
+      ? boss.item_ids.map(id => allItems.find(i => i.id === id)).filter(i => i?.id)
+      : allItems;
+
+    if (query) itemPool = itemPool.filter(i => i.name?.toLowerCase().includes(query.toLowerCase()));
+
+    const container = document.getElementById("item-search-results");
+    container.innerHTML = "";
+
+    if (boss?.item_ids?.length && !query) {
+      const header = document.createElement("div");
+      header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--accent);background:var(--accent-glow);border-bottom:1px solid var(--border)";
+      header.textContent = `📦 Предметы с ${boss.name}`;
+      container.appendChild(header);
+    }
+
+    if (!itemPool.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.82rem";
+      empty.textContent = "Нет предметов";
+      container.appendChild(empty);
+      return;
+    }
+
+    itemPool.forEach(item => {
+      const row = document.createElement("div");
+      row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
+      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+      row.innerHTML = `
+        <img class="item-search-img" alt="${item.name}" />
+        <div><div style="font-weight:600">${item.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div></div>
+      `;
+      setItemImage(row.querySelector("img"), item.image);
+      row.addEventListener("click", () => { 
+        selectedItem = item; 
+        renderDropItems(document.getElementById("item-search").value);
+        renderProperties();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function renderProperties() {
+    const container = document.getElementById("property-select-grid");
+    container.innerHTML = `<button class="property-btn selected" data-prop="">Без особенности</button>`;
+    
+    if (!selectedItem || !selectedItem.properties?.length) return;
+    
+    selectedItem.properties.forEach(prop => {
+      const btn = document.createElement("button");
+      btn.className = `property-btn${selectedProperty === prop ? " selected" : ""}`;
+      btn.dataset.prop = prop;
+      btn.textContent = prop;
+      btn.addEventListener("click", () => {
+        selectedProperty = prop;
+        document.querySelectorAll(".property-btn").forEach(b => b.classList.toggle("selected", b.dataset.prop === prop));
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  document.getElementById("item-search").addEventListener("input", e => renderDropItems(e.target.value));
+
+  document.getElementById("btn-save-drop").addEventListener("click", async () => {
+    if (!selectedItem)   return showDropError("Выбери предмет");
+
+    const boss   = allBosses.find(b => b.id === currentDropBossId);
+    const lucent = Number(document.getElementById("drop-lucent").value) || 0;
+    const btn    = document.getElementById("btn-save-drop");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      await addDrop(currentDropRaidId, currentDropTryId, {
+        item_id:               selectedItem.id,
+        item_name:             selectedItem.name,
+        item_slot:             selectedItem.slot,
+        item_image:            selectedItem.image,
+        winner_player_id:      null,
+        winner_nickname:       null,
+        boss_id:               currentDropBossId || null,
+        boss_name:             boss?.name || "",
+        lucent_value_snapshot: lucent,
+        roll_type:             null,
+        property:              selectedProperty || null,
+      });
+      
+      if (activeRaid && activeRaid.status === "open") {
+        await updateRaidStatus(currentDropRaidId, "rolling");
+        activeRaid.status = "rolling";
+      }
+      
+      closeModal("modal-drop");
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === currentDropRaidId);
+      selectRaid(activeRaid);
+      showToast("Дроп добавлен");
+    } catch(e) { showDropError("Ошибка: " + e.message); }
+    finally { btn.disabled = false; btn.textContent = "Добавить дроп"; }
+  });
+
+  window.confirmDeleteDrop = async (raidId, tryId, dropId, name) => {
+    if (!confirm(`Удалить дроп «${name}»?`)) return;
+    await deleteDrop(raidId, tryId, dropId);
+    allRaids = await getRaids();
+    activeRaid = allRaids.find(r => r.id === raidId);
+    selectRaid(activeRaid);
+    showToast("Дроп удалён");
+  };
+
+  // ── Ролл модалка ──────────────────────────────────
+  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
+    rollState.raidId = raidId;
+    rollState.tryId = tryId;
+    rollState.dropId = dropId;
+    rollState.itemName = itemName;
+    rollState.itemDetail = `${slotLabel}${property ? ` · ✦ ${property}` : ''}`;
+    rollState.participants = [];
+    rollState.isRolling = false;
+    rollState.isFinished = false;
+    rollState.winner = null;
+    rollState.queue = 'main';
+    
+    document.getElementById("roll-item-name").textContent = itemName;
+    document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
+    document.getElementById("roll-result").style.display = "none";
+    document.getElementById("btn-confirm-roll").style.display = "none";
+    document.getElementById("btn-start-roll").disabled = true;
+    document.getElementById("btn-start-roll").textContent = "🎲 Запустить ролл";
+    
+    document.querySelectorAll('.queue-btn').forEach(b => b.classList.toggle('active', b.dataset.queue === 'main'));
+    document.getElementById("queue-main").disabled = false;
+    document.getElementById("queue-open").disabled = false;
+    
+    renderRollParticipants();
+    openModal("modal-roll");
+  };
+
+  function renderRollParticipants() {
+    const list = document.getElementById("roll-players-list");
+    const count = document.getElementById("roll-players-count");
+    
+    list.innerHTML = '';
+    
+    rollState.participants.forEach(p => {
+      const div = document.createElement('div');
+      let className = 'roll-participant';
+      if (p.isBlocked) {
+        className += ' blocked';
+      } else if (rollState.winner?.playerId === p.playerId) {
+        className += ' winner';
+      } else if (!p.isBlocked) {
+        className += ' joined';
+      }
+      div.className = className;
+      
+      let statusText = p.isBlocked ? p.blockReason : (rollState.winner?.playerId === p.playerId ? '🏆 Победитель!' : 'Присоединился');
+      
+      div.innerHTML = `
+        <span class="player-name">${p.nickname}</span>
+        <span class="player-status">${statusText}</span>
+        ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
+      `;
+      list.appendChild(div);
+    });
+    
+    const approvedPlayers = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const availablePlayers = approvedPlayers.filter(p => 
+      !rollState.participants.some(part => part.playerId === p.id)
+    );
+    
+    availablePlayers.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'roll-participant';
+      
+      const isBlocked = checkPlayerBlock(p.id);
+      
+      div.innerHTML = `
+        <span class="player-name">${p.name}</span>
+        <span class="player-status">${isBlocked ? '🔒 Заблокирован' : 'Ожидает'}</span>
+        ${isBlocked ? 
+          `<span style="font-size:0.7rem;color:var(--danger);">${isBlocked}</span>` :
+          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
+        }
+      `;
+      list.appendChild(div);
+    });
+    
+    count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
+    
+    const currentPlayerId = rollState.currentPlayerId;
+    const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
+    document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
+    document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
+    document.getElementById("btn-start-roll").disabled = rollState.participants.filter(p => !p.isBlocked).length < 2 || rollState.isRolling || rollState.isFinished;
+    
+    if (!canStartRoll()) {
+      document.getElementById("btn-start-roll").disabled = true;
+      document.getElementById("btn-start-roll").title = "Только администратор или Глава гильдии может запустить ролл";
+    }
+  }
+
+  function checkPlayerBlock(playerId) {
+    if (rollState.queue === 'open') {
+      // TODO: проверить, выигрывал ли игрок что-то в этом рейде
+    }
+    return null;
+  }
+
+  window.joinRoll = (playerId, nickname) => {
+    if (rollState.isRolling || rollState.isFinished) return;
+    if (rollState.participants.some(p => p.playerId === playerId)) return;
+    
+    const blockReason = checkPlayerBlock(playerId);
+    
+    rollState.participants.push({ 
+      playerId, 
+      nickname, 
+      roll: null,
+      isBlocked: !!blockReason,
+      blockReason: blockReason || ''
+    });
+    renderRollParticipants();
+  };
+
+  document.getElementById("btn-join-roll").addEventListener("click", () => {
+    if (!rollState.currentPlayerId) {
+      showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
+      return;
+    }
+    
+    const player = allCharacters.find(p => p.id === rollState.currentPlayerId);
+    if (!player) {
+      showToast("Персонаж не найден", "error");
+      return;
+    }
+    
+    if (!isAdmin() && player.status !== 'approved' && player.approved !== true) {
+      showToast("Ваш персонаж не подтвержден администратором", "error");
+      return;
+    }
+    
+    window.joinRoll(player.id, player.name);
+  });
+
+  document.getElementById("btn-leave-roll").addEventListener("click", () => {
+    if (rollState.isRolling || rollState.isFinished) return;
+    if (!rollState.currentPlayerId) {
+      showToast("Вы не участвуете в ролле", "error");
+      return;
+    }
+    rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
+    renderRollParticipants();
+  });
+
+  document.querySelectorAll('.queue-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (rollState.isRolling || rollState.isFinished) return;
+      
+      if (!isAdmin()) {
+        showToast("🔒 Только администратор может переключать очередь", "error");
+        return;
+      }
+      
+      document.querySelectorAll('.queue-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      rollState.queue = this.dataset.queue;
+      
+      rollState.participants = [];
+      renderRollParticipants();
+      showToast(`Переключено на ${this.textContent} очередь`);
+    });
+  });
+
+  document.getElementById("btn-start-roll").addEventListener("click", async () => {
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
+    if (activeParticipants.length < 2) {
+      showToast("Нужно минимум 2 участника для ролла", "error");
+      return;
+    }
+    
+    if (rollState.isRolling || rollState.isFinished) return;
+    
+    if (!canStartRoll()) {
+      showToast("Только администратор или Глава гильдии может запустить ролл", "error");
+      return;
+    }
+    
+    rollState.isRolling = true;
+    document.getElementById("btn-start-roll").disabled = true;
+    document.getElementById("btn-start-roll").textContent = "⏳ Ролл...";
+    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
+    
+    const resultEl = document.getElementById("roll-result");
+    resultEl.style.display = "block";
+    resultEl.innerHTML = '<div style="text-align:center;padding:0.5rem;">🎲 Бросаем кубики...</div>';
+    
+    let counter = 0;
+    const interval = setInterval(() => {
+      counter++;
+      rollState.participants.forEach(p => {
+        if (!p.isBlocked) {
+          p.roll = Math.floor(Math.random() * 100) + 1;
+        }
+      });
+      renderRollParticipants();
+      if (counter >= 10) {
+        clearInterval(interval);
+        finishRoll();
+      }
+    }, 300);
+  });
+
+  function finishRoll() {
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
+    const maxRoll = Math.max(...activeParticipants.map(p => p.roll));
+    const winners = activeParticipants.filter(p => p.roll === maxRoll);
+    rollState.winner = winners[0];
+    rollState.isRolling = false;
+    rollState.isFinished = true;
+    
+    const resultEl = document.getElementById("roll-result");
+    resultEl.innerHTML = `
+      <div style="text-align:center;padding:0.5rem;">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
+          🏆 Победитель: ${rollState.winner.nickname}
+        </div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
+          Бросок: ${rollState.winner.roll} (из 100)
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Участников: ${rollState.participants.filter(p => !p.isBlocked).length}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Очередь: ${rollState.queue === 'main' ? 'Основная' : 'Дополнительная'}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById("btn-confirm-roll").style.display = "inline-block";
+    document.getElementById("btn-start-roll").textContent = "🎲 Завершено";
+    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
+    
+    renderRollParticipants();
+    showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
+  }
+
+  document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
+    if (!rollState.winner) {
+      showToast("Сначала запустите ролл", "error");
+      return;
+    }
+    
+    try {
+      const btn = document.getElementById("btn-confirm-roll");
+      btn.disabled = true;
+      btn.textContent = "Сохранение...";
+      
+      await updateDropWinner(
+        rollState.raidId,
+        rollState.tryId,
+        rollState.dropId,
+        rollState.winner.playerId,
+        rollState.winner.nickname,
+        rollState.queue
+      );
+      
+      // Сохраняем результаты ролла в дроп
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      await firestoreUpdate(dropRef, {
+        roll_results: rollState.rollResults
+      });
+      
+      showToast(`✅ ${rollState.winner.nickname} выиграл ролл!`);
+      
+      closeRollModal();
+      
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === rollState.raidId);
+      if (activeRaid) selectRaid(activeRaid);
+      
+    } catch(e) {
+      showToast("Ошибка сохранения: " + e.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "✅ Зафиксировать победителя";
+    }
+  });
+
+  function closeRollModal() {
+    closeModal("modal-roll");
+    rollState.isRolling = false;
+  }
+  window.closeRollModal = closeRollModal;
+
+  // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
     const grid = document.getElementById("attendance-grid-close");
     grid.innerHTML = "";
@@ -562,6 +1463,55 @@
     finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
   });
 
+  // ── Посещаемость ──────────────────────────────────
+  function openAttendanceModal() {
+    const grid = document.getElementById("attendance-grid");
+    grid.innerHTML = "";
+    
+    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    
+    approvedChars.forEach(p => {
+      const el = document.createElement("div");
+      const isPresent = attendedPlayerIds.includes(p.id);
+      el.className = `attendance-player${isPresent ? ' present' : ''}`;
+      el.dataset.id = p.id;
+      
+      const weapons = p.weapons || [];
+      const weaponLabels = weapons.map(w => {
+        const weapon = WEAPONS.find(wp => wp.id === w);
+        return weapon?.label || w;
+      }).join(', ');
+      
+      el.innerHTML = `
+        <span>${isPresent ? '✅' : '⬜'}</span>
+        ${p.name}
+        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
+      `;
+      el.addEventListener("click", () => {
+        el.classList.toggle("present");
+        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
+      });
+      grid.appendChild(el);
+    });
+    openModal("modal-attendance");
+  }
+
+  document.getElementById("btn-save-attendance")?.addEventListener("click", async () => {
+    const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
+    const btn = document.getElementById("btn-save-attendance");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+    try {
+      await updateRaid(activeRaid.id, { 
+        attended_player_ids: attendedIds 
+      });
+      attendedPlayerIds = attendedIds;
+      closeModal("modal-attendance");
+      showToast("Посещаемость сохранена");
+      selectRaid(activeRaid);
+    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
+    finally { btn.disabled = false; btn.textContent = "Сохранить посещаемость"; }
+  });
+
   // ============================================================
   // ЗАПУСК
   // ============================================================
@@ -588,6 +1538,11 @@
       
       if (!Array.isArray(allRaids) || !Array.isArray(allCharacters)) {
         throw new Error('Ошибка загрузки данных');
+      }
+      
+      // Загружаем посещаемость для активного рейда
+      if (activeRaid) {
+        attendedPlayerIds = activeRaid.attended_player_ids || [];
       }
       
       rollState.currentUserId = currentUser?.uid || null;
