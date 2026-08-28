@@ -572,10 +572,6 @@
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
   }
 
-  function canWrite() {
-    return currentRole === 'admin' || currentRole === 'moderator';
-  }
-
   // показать кнопку добавления
   if (canWrite()) {
     document.getElementById('btn-add-boss').classList.remove('hidden');
