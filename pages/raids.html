@@ -336,10 +336,14 @@
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
   
+  // ============================================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ============================================================
+  
   // Инициализация навбара
   initNavbar();
   
-  // Ждем авторизацию через await initAuth()
+  // Ждем авторизацию
   console.log('⏳ Ожидание авторизации...');
   await initAuth();
   await authReady;
@@ -354,9 +358,14 @@
   if (!currentUser) {
     console.log('🚫 Пользователь не авторизован, редирект на логин');
     window.location.href = '/pages/login.html';
-    return;
+    // Останавливаем выполнение
+    throw new Error('Redirect to login');
   }
 
+  // ============================================================
+  // ИМПОРТЫ МОДУЛЕЙ (после проверки авторизации)
+  // ============================================================
+  
   import {
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
     getRaidTries, addTry, deleteTry,
