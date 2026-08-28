@@ -7,13 +7,10 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   getDocs, getDoc, query, orderBy, writeBatch, increment,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { setSlotLock } from "./locks.js";
-import { updateLockCounters } from "./locks.js";
 
 const raidCol = ()       => collection(db, "raids");
 const tryCol  = (rid)    => collection(db, "raids", rid, "tries");
 const dropCol = (rid,tid)=> collection(db, "raids", rid, "tries", tid, "drops");
-const histCol = ()       => collection(db, "loot_history");
 
 // ── Рейды ─────────────────────────────────────────────
 export async function getRaids() {
@@ -33,6 +30,7 @@ export async function createRaid({ date, notes }) {
     drop_count: 0,
     created_at: new Date().toISOString(),
     deleted: false,
+    deleted_at: null,
   });
   return ref.id;
 }
@@ -49,7 +47,7 @@ export async function softDeleteRaid(id) {
   });
 }
 
-// Восстановление (в течение 30 дней)
+// Восстановление
 export async function restoreRaid(id) {
   await updateDoc(doc(db, "raids", id), {
     deleted: false,
@@ -95,6 +93,7 @@ export async function addDrop(raidId, tryId, {
   boss_id, boss_name,
   lucent_value_snapshot,
   roll_type,
+  property,
 }) {
   const batch = writeBatch(db);
 
@@ -102,27 +101,14 @@ export async function addDrop(raidId, tryId, {
   batch.set(dropRef, {
     item_id, item_name, item_slot,
     item_image: item_image || null,
-    winner_player_id, winner_nickname,
+    winner_player_id: winner_player_id || null,
+    winner_nickname: winner_nickname || null,
     boss_id: boss_id || null,
     boss_name: boss_name || "",
     lucent_value_snapshot: lucent_value_snapshot || 0,
-    roll_type,
+    roll_type: roll_type || null,
+    property: property || null,
     created_at: new Date().toISOString(),
-  });
-
-  const histRef = doc(histCol());
-  batch.set(histRef, {
-    raid_id: raidId,
-    try_id:  tryId,
-    item_id, item_name, item_slot,
-    item_image: item_image || null,
-    player_id:       winner_player_id,
-    player_nickname: winner_nickname,
-    boss_id: boss_id || null,
-    boss_name: boss_name || "",
-    lucent_value_snapshot: lucent_value_snapshot || 0,
-    roll_type,
-    date: new Date().toISOString(),
   });
 
   // Счётчик дропов в трае и рейде
@@ -134,14 +120,15 @@ export async function addDrop(raidId, tryId, {
   });
 
   await batch.commit();
-
-  if (roll_type === "main") {
-    await setSlotLock(winner_player_id, item_slot, {
-      itemId: item_id, itemName: item_name, raidId,
-    });
-  }
-
   return dropRef.id;
+}
+
+export async function updateDropWinner(raidId, tryId, dropId, winnerPlayerId, winnerNickname, rollType) {
+  await updateDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId), {
+    winner_player_id: winnerPlayerId,
+    winner_nickname: winnerNickname,
+    roll_type: rollType || "main",
+  });
 }
 
 export async function deleteDrop(raidId, tryId, dropId) {
@@ -167,8 +154,9 @@ export async function closeRaid(raidId, attendedIds, allPlayerIds) {
     attended_player_ids: attendedIds,
   });
   await batch.commit();
+}
 
-  for (const pid of allPlayerIds) {
-    await updateLockCounters(pid, attendedIds.includes(pid));
-  }
+// ── Обновить статус рейда ────────────────────────────
+export async function updateRaidStatus(raidId, status) {
+  await updateDoc(doc(db, "raids", raidId), { status });
 }
