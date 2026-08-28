@@ -107,9 +107,9 @@
 
     .boss-detail-header {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       align-items: flex-start;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
     }
 
     .boss-detail-header .boss-icon-large {
@@ -120,7 +120,7 @@
       background: var(--bg-card2);
       border: 2px solid var(--border);
       flex-shrink: 0;
-      margin-top: 2px;
+      margin-top: 0;
     }
 
     .boss-detail-header .boss-icon-large.error {
@@ -134,18 +134,21 @@
     .boss-detail-info .name-row {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.25rem;
+      gap: 0.5rem;
     }
     .boss-detail-info .name-row h2 {
       margin: 0;
       font-size: 1.4rem;
+      line-height: 1.2;
     }
     .boss-detail-info .meta {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      margin: 0.5rem 0 0.75rem 0;
+      margin: 0.25rem 0 0.5rem 0;
+    }
+    .boss-detail-info .meta .badge {
+      display: inline-block;
     }
     .boss-detail-info .description {
       color: var(--text-muted);
@@ -259,9 +262,6 @@
     .hidden { display: none !important; }
 
     @media (max-width: 640px) {
-      .boss-detail-info {
-        max-width: 100%;
-      }
       .boss-detail-bg {
         width: 100%;
         height: 60%;
@@ -272,12 +272,12 @@
       .boss-detail-bg.has-image {
         opacity: 0.2 !important;
       }
-      .boss-detail-header {
-        flex-wrap: wrap;
-      }
       .boss-detail-header .boss-icon-large {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
+      }
+      .boss-detail-info .name-row h2 {
+        font-size: 1.1rem;
       }
     }
 
