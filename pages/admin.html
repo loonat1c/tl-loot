@@ -11,6 +11,7 @@
       margin: 0 auto;
     }
 
+    /* ── Вкладки ─────────────────────────────────────────── */
     .tabs {
       display: flex;
       gap: 0.5rem;
@@ -53,6 +54,7 @@
       gap: 0.75rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
+      align-items: center;
     }
     .search-bar input {
       flex: 1;
@@ -68,18 +70,77 @@
       outline: none;
       border-color: var(--accent);
     }
+    .search-bar .info-btn {
+      padding: 0.5rem 0.8rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-bar .info-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      color: var(--accent-soft);
+    }
+
+    /* ── Информационная панель ───────────────────────────── */
+    .info-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      animation: slideDown 0.3s ease;
+    }
+    .info-panel.open {
+      display: block;
+    }
+    .info-panel .role-desc {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.15rem 0;
+    }
+    .info-panel .role-desc .role-icon {
+      font-size: 1.1rem;
+      width: 28px;
+      text-align: center;
+    }
+    .info-panel .role-desc .role-name {
+      font-weight: 600;
+      color: var(--text);
+      min-width: 100px;
+    }
+    .info-panel .role-desc .role-text {
+      color: var(--text-muted);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── Карточки пользователей ───────────────────────────── */
     .users-grid {
       display: grid;
-      gap: 0.75rem;
+      gap: 0.6rem;
     }
 
     .user-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1rem 1.25rem;
+      padding: 0.75rem 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -91,7 +152,7 @@
       border-color: var(--accent);
       box-shadow: 0 0 20px var(--accent-glow);
     }
-    .user-card .user-info {
+    .user-card .user-left {
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -100,33 +161,34 @@
       min-width: 200px;
     }
     .user-card .user-avatar {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: #fff;
       flex-shrink: 0;
     }
     .user-card .user-email {
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: var(--text);
     }
     .user-card .user-meta {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       flex-wrap: wrap;
+      margin-top: 2px;
     }
     .user-card .user-meta .badge {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.7rem;
-      border-radius: 12px;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 10px;
       font-weight: 600;
     }
     .badge.admin {
@@ -149,21 +211,28 @@
       color: #818cf8;
       border: 1px solid #818cf8;
     }
+    .user-card .user-tag {
+      font-size: 0.65rem;
+      color: var(--accent-soft);
+      background: var(--accent-glow);
+      padding: 0.05rem 0.5rem;
+      border-radius: 10px;
+    }
     .user-card .user-stats {
       display: flex;
-      gap: 1rem;
-      font-size: 0.78rem;
+      gap: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
     }
     .user-card .user-stats span {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.2rem;
     }
-    .user-card .user-actions {
+    .user-card .user-right {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.3rem;
       flex-shrink: 0;
     }
 
@@ -175,12 +244,12 @@
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.15s;
-      font-size: 0.9rem;
+      font-size: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
     }
     .role-change-btn:hover {
       border-color: var(--accent);
@@ -196,9 +265,9 @@
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.15s;
-      font-size: 0.9rem;
-      width: 36px;
-      height: 36px;
+      font-size: 1rem;
+      width: 34px;
+      height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -208,7 +277,7 @@
       background: rgba(239, 68, 68, 0.1);
     }
 
-    /* ── Модалка смены роли ───────────────────────────── */
+    /* ── Модалка смены роли ──────────────────────────────── */
     .role-modal .role-option {
       display: flex;
       align-items: center;
@@ -229,8 +298,8 @@
       border-color: var(--accent);
     }
     .role-modal .role-option .role-icon {
-      font-size: 1.5rem;
-      width: 40px;
+      font-size: 1.4rem;
+      width: 36px;
       text-align: center;
     }
     .role-modal .role-option .role-info {
@@ -238,14 +307,14 @@
     }
     .role-modal .role-option .role-name {
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
     .role-modal .role-option .role-desc {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
     .role-modal .role-option .role-check {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       opacity: 0;
       transition: opacity 0.15s;
     }
@@ -316,7 +385,7 @@
       background: var(--bg-card2);
       border-radius: var(--radius);
       margin-bottom: 1rem;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -324,8 +393,150 @@
       gap: 0.5rem;
     }
 
+    /* ── Модерация персонажей ───────────────────────────── */
+    .moderation-stats {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .moderation-stats .stat {
+      background: var(--bg-card);
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .moderation-stats .stat:hover {
+      border-color: var(--accent);
+      background: var(--bg-card2);
+    }
+    .moderation-stats .stat.active-stat {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.15);
+    }
+    .moderation-stats .stat .count {
+      font-weight: 700;
+      color: var(--accent-soft);
+    }
+
+    .moderation-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s;
+    }
+    .moderation-card:hover { border-color: var(--accent); }
+    .moderation-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .moderation-card .char-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .moderation-card .user-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .moderation-card .char-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      margin: 0.75rem 0;
+    }
+    .moderation-card .char-details .detail {
+      font-size: 0.85rem;
+    }
+    .moderation-card .char-details .detail .label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .moderation-card .char-details .detail .value {
+      font-weight: 500;
+    }
+    .moderation-card .loot-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+    .moderation-card .loot-list .loot-tag {
+      background: rgba(124, 58, 237, 0.15);
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid var(--accent);
+      color: var(--accent-soft);
+    }
+    .moderation-card .moderation-note {
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 2px solid var(--warning);
+      margin: 0.5rem 0;
+    }
+    .moderation-card .moderation-feedback {
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 2px solid var(--danger);
+      margin: 0.5rem 0;
+    }
+    .moderation-card .feedback-input {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .moderation-card .feedback-input textarea {
+      resize: vertical;
+      min-height: 50px;
+      font-size: 0.85rem;
+    }
+    .moderation-card .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid var(--warning);
+    }
+    .status-badge.approved {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
     /* ── Настройки ────────────────────────────────────────── */
-    .settings-wrap { max-width: 560px; }
+    .settings-wrap { max-width: 620px; }
     .settings-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -348,12 +559,12 @@
       grid-template-columns: 1fr auto;
       gap: 1rem;
       align-items: center;
-      padding: 0.75rem 0;
+      padding: 0.6rem 0;
       border-bottom: 1px solid var(--border);
     }
     .setting-row:last-of-type { border-bottom: none; }
     .setting-label { font-size: 0.9rem; font-weight: 600; }
-    .setting-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .setting-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
     .setting-input { width: 80px; text-align: center; }
 
     .save-bar {
@@ -370,12 +581,49 @@
     }
     .saved-msg.show { opacity: 1; }
 
+    /* ── Блокировки ────────────────────────────────────────── */
+    .lock-manage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.4rem;
+      font-size: 0.82rem;
+      gap: 0.5rem;
+      background: var(--bg-card2);
+    }
+    .lock-manage-row:hover {
+      border-color: var(--accent);
+    }
+    .lock-manage-info { flex: 1; min-width: 0; }
+    .lock-manage-name { font-weight: 600; }
+    .lock-manage-detail { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
+
+    .player-select {
+      margin-bottom: 0.75rem;
+    }
+    .player-select select {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .player-select select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
     .info-box {
       background: rgba(124,58,237,0.08);
       border: 1px solid var(--accent);
       border-radius: var(--radius);
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
       margin-bottom: 1rem;
       line-height: 1.6;
@@ -386,15 +634,15 @@
 
     .empty-state {
       text-align: center;
-      padding: 3rem 2rem;
+      padding: 2.5rem 2rem;
       color: var(--text-muted);
       border: 2px dashed var(--border);
       border-radius: var(--radius);
     }
     .empty-state .icon {
-      font-size: 3rem;
+      font-size: 2.5rem;
       display: block;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
     .flex { display: flex; }
@@ -406,10 +654,13 @@
     .text-danger { color: var(--danger); }
 
     @media (max-width: 768px) {
-      .user-card { flex-direction: column; align-items: stretch; gap: 0.75rem; }
-      .user-card .user-actions { justify-content: flex-start; }
-      .role-modal .role-option { padding: 0.5rem 0.75rem; }
+      .user-card { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .user-card .user-right { justify-content: flex-start; }
+      .role-modal .role-option { padding: 0.4rem 0.6rem; }
       .modal { margin: 0.5rem; }
+      .settings-card { padding: 1rem; }
+      .moderation-card .char-details { grid-template-columns: 1fr; }
+      .moderation-card .card-header { flex-direction: column; }
     }
   </style>
 </head>
@@ -431,6 +682,7 @@
     <!-- Вкладки -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="tab-users">👥 Пользователи</button>
+      <button class="tab-btn" data-tab="tab-moderation">🔍 Модерация <span class="badge" id="pending-badge">0</span></button>
       <button class="tab-btn" data-tab="tab-settings">⚙️ Настройки</button>
     </div>
 
@@ -438,20 +690,65 @@
          ВКЛАДКА: ПОЛЬЗОВАТЕЛИ
     ============================================ -->
     <div id="tab-users" class="tab-content active">
-      <div class="info-box">
-        <strong>👑 Администратор</strong> — полный доступ ко всему &nbsp;·&nbsp;
-        <strong>👑 Глава гильдии</strong> — запуск роллов, управление посещаемостью &nbsp;·&nbsp;
-        <strong>🛡️ Модератор</strong> — модерация персонажей &nbsp;·&nbsp;
-        <strong>👤 Пользователь</strong> — базовый доступ
-      </div>
-
       <div class="search-bar">
         <input type="text" id="user-search" placeholder="🔍 Поиск по email..." />
         <button class="btn btn-primary" id="btn-add-user">+ Добавить</button>
+        <button class="info-btn" id="btn-info-toggle" title="Информация о ролях">ℹ️</button>
+      </div>
+
+      <div class="info-panel" id="info-panel">
+        <div class="role-desc">
+          <span class="role-icon">⚡</span>
+          <span class="role-name">Администратор</span>
+          <span class="role-text">— полный доступ ко всему</span>
+        </div>
+        <div class="role-desc">
+          <span class="role-icon">👑</span>
+          <span class="role-name">Глава гильдии</span>
+          <span class="role-text">— запуск роллов, управление посещаемостью</span>
+        </div>
+        <div class="role-desc">
+          <span class="role-icon">🛡️</span>
+          <span class="role-name">Модератор</span>
+          <span class="role-text">— модерация персонажей</span>
+        </div>
+        <div class="role-desc">
+          <span class="role-icon">👤</span>
+          <span class="role-name">Пользователь</span>
+          <span class="role-text">— базовый доступ</span>
+        </div>
       </div>
 
       <div id="users-list">
         <div class="text-muted" style="text-align:center;padding:2rem;">Загрузка...</div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         ВКЛАДКА: МОДЕРАЦИЯ ПЕРСОНАЖЕЙ
+    ============================================ -->
+    <div id="tab-moderation" class="tab-content">
+      <div class="moderation-stats" id="moderation-stats">
+        <span class="stat active-stat" data-filter="pending">
+          ⏳ Ожидают: <span class="count" id="stat-pending">0</span>
+        </span>
+        <span class="stat" data-filter="approved">
+          ✅ Одобрено: <span class="count" id="stat-approved">0</span>
+        </span>
+        <span class="stat" data-filter="rejected">
+          ❌ Отклонено: <span class="count" id="stat-rejected">0</span>
+        </span>
+        <span class="stat" data-filter="all">
+          📋 Все: <span class="count" id="stat-all">0</span>
+        </span>
+      </div>
+
+      <div id="moderation-list">
+        <div class="empty-state">
+          <span class="icon">🎯</span>
+          <p>Нет персонажей с таким статусом</p>
+          <small>Попробуйте выбрать другой фильтр</small>
+        </div>
       </div>
     </div>
 
@@ -461,21 +758,19 @@
     <div id="tab-settings" class="tab-content">
       <div class="settings-wrap">
         <div class="info-box">
-          Настройки влияют на систему мягкого сброса блокировок. Изменения вступают в силу немедленно
-          и применяются при следующем закрытии рейда.
+          <strong>🔒 Блокировки слотов</strong> — после победы в основном ролле игрок блокируется в этом слоте.
+          Блокировка снимается когда игрок посетит нужное количество рейдов.
         </div>
 
         <div class="settings-card">
-          <h3>🔒 Правила блокировок слотов</h3>
+          <h3>⚙️ Правила блокировок</h3>
           <div class="card-desc">
-            После победы в основном ролле игрок блокируется в этом слоте. Блокировка снимается
-            когда игрок посетит нужное количество рейдов. Если игрок пропускает слишком много рейдов —
-            счётчик замораживается.
+            Настройки влияют на систему мягкого сброса блокировок.
           </div>
 
           <div class="setting-row">
             <div>
-              <div class="setting-label">Рейдов до сброса блокировки</div>
+              <div class="setting-label">Рейдов до сброса</div>
               <div class="setting-hint">Сколько рейдов должно пройти чтобы слот разблокировался</div>
             </div>
             <input type="number" class="setting-input" id="s-reset-after" min="1" max="20" value="6" />
@@ -496,8 +791,23 @@
         </div>
 
         <div class="settings-card">
+          <h3>🔓 Управление блокировками</h3>
+          <div class="card-desc">
+            Здесь можно вручную снять блокировку с игрока если это необходимо по решению гильдии.
+          </div>
+
+          <div class="player-select">
+            <select id="lock-player-select">
+              <option value="">— выбери игрока —</option>
+            </select>
+          </div>
+          <div id="lock-list">
+            <div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Выбери игрока</div>
+          </div>
+        </div>
+
+        <div class="settings-card">
           <h3>📖 Как это работает</h3>
-          <div class="card-desc">Пример с текущими настройками:</div>
           <div id="example-text" style="font-size:0.85rem;line-height:1.8;color:var(--text-muted)"></div>
         </div>
       </div>
@@ -595,6 +905,9 @@
   import { db, auth } from "../js/firebase.js";
   import { getPlayers } from "../js/modules/players.js";
   import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+  import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
+  import { getItems } from "../js/modules/items.js";
+  import { SLOTS, WEAPONS } from "../js/constants.js";
   import {
     collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -608,8 +921,11 @@
   
   let allUsers = [];
   let allPlayers = [];
+  let allCharacters = [];
+  let allItems = [];
   let selectedUserId = null;
   let selectedRole = null;
+  let currentFilter = 'pending';
 
   const ROLE_LABELS = {
     'admin': 'Администратор',
@@ -648,7 +964,9 @@
 
     await loadPlayers();
     await loadUsers();
+    await loadModerationData();
     loadSettings();
+    populatePlayerSelect();
   });
 
   // ─── Вкладки ──────────────────────────────────────────
@@ -667,7 +985,12 @@
     });
   });
 
-  // ─── Загрузка персонажей ─────────────────────────────
+  // ─── Информационная панель ───────────────────────────
+  document.getElementById('btn-info-toggle')?.addEventListener('click', () => {
+    document.getElementById('info-panel').classList.toggle('open');
+  });
+
+  // ─── Загрузка персонажей (для статистики) ────────────
   async function loadPlayers() {
     try {
       allPlayers = await getPlayers();
@@ -749,22 +1072,24 @@
 
       return `
         <div class="user-card" id="user-row-${u.id}">
-          <div class="user-info">
+          <div class="user-left">
             <div class="user-avatar">${avatarLetter}</div>
             <div>
               <div class="user-email">${u.email || u.id}</div>
               <div class="user-meta">
                 <span class="badge ${badgeClass}">${roleIcon} ${roleLabel}</span>
-                ${isSelf ? '<span style="font-size:0.7rem;color:var(--accent-soft);background:var(--accent-glow);padding:0.05rem 0.5rem;border-radius:10px;">Вы</span>' : ''}
-                <span style="font-size:0.7rem;color:var(--text-muted);">👤 ${playerCount} персонажей</span>
-                <span style="font-size:0.7rem;color:var(--success);">✅ ${approvedCount} одобрено</span>
+                ${isSelf ? '<span class="user-tag">Вы</span>' : ''}
+                <span class="user-stats">
+                  <span>👤 ${playerCount}</span>
+                  <span>✅ ${approvedCount}</span>
+                </span>
               </div>
             </div>
           </div>
-          <div class="user-actions">
+          <div class="user-right">
             ${canEdit ? `
               <button class="role-change-btn" onclick="openRoleModal('${u.id}')" title="Сменить роль">
-                🔄
+                👤
               </button>
               <button class="btn-icon" onclick="confirmDelete('${u.id}')" title="Удалить пользователя">
                 🗑️
@@ -932,6 +1257,294 @@
       btn.disabled = false; btn.textContent = "Создать";
     }
   });
+
+  // ─── МОДЕРАЦИЯ ПЕРСОНАЖЕЙ ────────────────────────────
+  
+  async function loadModerationData() {
+    try {
+      allItems = await getItems();
+      await loadCharacters();
+      updateModerationStats();
+      renderModeration();
+    } catch (error) {
+      console.error('Ошибка загрузки данных для модерации:', error);
+    }
+  }
+
+  async function loadCharacters() {
+    try {
+      const charsRef = collection(db, 'characters');
+      const q = query(charsRef, orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      allCharacters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Ошибка загрузки персонажей:', error);
+      allCharacters = [];
+    }
+  }
+
+  function updateModerationStats() {
+    const pending = allCharacters.filter(c => c.status === 'pending').length;
+    const approved = allCharacters.filter(c => c.status === 'approved').length;
+    const rejected = allCharacters.filter(c => c.status === 'rejected').length;
+    const all = allCharacters.length;
+
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('stat-all').textContent = all;
+
+    const badge = document.getElementById('pending-badge');
+    if (badge) {
+      badge.textContent = pending;
+      badge.style.display = pending > 0 ? 'inline' : 'none';
+    }
+  }
+
+  // ─── Фильтр по статусам ──────────────────────────────
+  document.querySelectorAll('.moderation-stats .stat').forEach(stat => {
+    stat.addEventListener('click', function() {
+      document.querySelectorAll('.moderation-stats .stat').forEach(s => s.classList.remove('active-stat'));
+      this.classList.add('active-stat');
+      currentFilter = this.dataset.filter;
+      renderModeration();
+    });
+  });
+
+  function renderModeration() {
+    const container = document.getElementById('moderation-list');
+    
+    let filtered = allCharacters;
+    if (currentFilter === 'pending') {
+      filtered = allCharacters.filter(c => c.status === 'pending');
+    } else if (currentFilter === 'approved') {
+      filtered = allCharacters.filter(c => c.status === 'approved');
+    } else if (currentFilter === 'rejected') {
+      filtered = allCharacters.filter(c => c.status === 'rejected');
+    }
+
+    if (!filtered.length) {
+      const statusLabels = {
+        'pending': 'ожидающих модерации',
+        'approved': 'одобренных',
+        'rejected': 'отклонённых',
+        'all': 'персонажей'
+      };
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="icon">🎯</span>
+          <p>Нет ${statusLabels[currentFilter] || 'персонажей'}</p>
+          <small>Попробуйте выбрать другой фильтр</small>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(char => {
+      const statusLabel = {
+        'pending': '⏳ Ожидает модерации',
+        'approved': '✅ Одобрен',
+        'rejected': '❌ Отклонён'
+      }[char.status] || char.status;
+
+      const weapons = char.weapons?.map(w => {
+        const weapon = WEAPONS.find(wp => wp.id === w);
+        return weapon?.label || w;
+      }).join(' + ') || '—';
+
+      let lootItems = '';
+      if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
+        lootItems = Object.entries(char.desired_loot)
+          .filter(([_, itemId]) => itemId)
+          .map(([slot, itemId]) => {
+            const item = allItems.find(i => i.id === itemId);
+            const slotObj = SLOTS.find(s => s.id === slot);
+            const slotLabel = slotObj?.label || slot;
+            return item ? `
+              <span class="loot-tag">${slotLabel}: ${item.name}</span>
+            ` : '';
+          }).join('');
+      }
+
+      const isPending = char.status === 'pending';
+
+      return `
+        <div class="moderation-card" id="char-${char.id}">
+          <div class="card-header">
+            <div>
+              <span class="char-name">${char.name}</span>
+              <span class="status-badge ${char.status}">${statusLabel}</span>
+            </div>
+            <div class="user-info">
+              👤 ${char.user_email || 'Неизвестно'}
+            </div>
+          </div>
+
+          <div class="char-details">
+            <div class="detail">
+              <div class="label">Оружие</div>
+              <div class="value">${weapons}</div>
+            </div>
+            <div class="detail">
+              <div class="label">Заявка создана</div>
+              <div class="value">${char.created_at ? new Date(char.created_at).toLocaleDateString() : '—'}</div>
+            </div>
+          </div>
+
+          ${lootItems ? `
+            <div style="margin-top:0.5rem;">
+              <div style="font-size:0.8rem; color: var(--text-muted); margin-bottom:0.25rem;">🎯 Желаемый лут:</div>
+              <div class="loot-list">${lootItems}</div>
+            </div>
+          ` : ''}
+
+          ${char.moderation_note ? `
+            <div class="moderation-note">
+              💬 ${char.moderation_note}
+            </div>
+          ` : ''}
+
+          ${char.moderation_feedback ? `
+            <div class="moderation-feedback">
+              📝 Ответ модератора: ${char.moderation_feedback}
+            </div>
+          ` : ''}
+
+          ${isPending ? `
+            <div class="feedback-input">
+              <div class="form-group" style="margin-bottom:0.5rem;">
+                <label style="font-size:0.8rem;">Комментарий модератора</label>
+                <textarea id="feedback-${char.id}" placeholder="Причина одобрения/отклонения..." rows="2"></textarea>
+              </div>
+              <div class="action-buttons">
+                <button class="btn btn-success btn-sm" onclick="approveCharacter('${char.id}')">
+                  ✅ Одобрить
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="rejectCharacter('${char.id}')">
+                  ❌ Отклонить
+                </button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    window.approveCharacter = async (id) => {
+      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      await moderateCharacter(id, 'approved', feedback);
+    };
+
+    window.rejectCharacter = async (id) => {
+      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      if (!feedback) {
+        if (!confirm('Вы не указали причину отклонения. Продолжить?')) {
+          return;
+        }
+      }
+      await moderateCharacter(id, 'rejected', feedback);
+    };
+  }
+
+  async function moderateCharacter(id, status, feedback) {
+    try {
+      const charRef = doc(db, 'characters', id);
+      await updateDoc(charRef, {
+        status: status,
+        moderation_feedback: feedback || null,
+        moderated_by: currentUser?.uid || 'unknown',
+        moderated_at: new Date().toISOString()
+      });
+
+      showToast(
+        status === 'approved' 
+          ? '✅ Персонаж одобрен!' 
+          : '❌ Персонаж отклонён',
+        status === 'approved' ? 'success' : 'error'
+      );
+
+      await loadModerationData();
+
+    } catch (error) {
+      console.error('Ошибка модерации:', error);
+      showToast('Ошибка: ' + error.message, 'error');
+    }
+  }
+
+  // ─── Блокировки ──────────────────────────────────────
+  function populatePlayerSelect() {
+    const sel = document.getElementById("lock-player-select");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— выбери игрока —</option>`;
+    allPlayers.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
+    });
+  }
+
+  document.getElementById("lock-player-select")?.addEventListener("change", async (e) => {
+    const id = e.target.value;
+    if (!id) {
+      document.getElementById("lock-list").innerHTML =
+        `<div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Выбери игрока</div>`;
+      return;
+    }
+    await renderLocks(id);
+  });
+
+  async function renderLocks(playerId) {
+    const container = document.getElementById("lock-list");
+    container.innerHTML = `<div class="text-muted" style="font-size:0.82rem;padding:0.5rem 0;">Загрузка...</div>`;
+
+    try {
+      const locks = await getPlayerLocks(playerId);
+      const entries = Object.entries(locks);
+
+      if (!entries.length) {
+        container.innerHTML = `<div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Блокировок нет</div>`;
+        return;
+      }
+
+      container.innerHTML = entries.map(([slot, lock]) => {
+        const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+        const frozen = lock.raids_skipped > 2;
+        return `
+          <div class="lock-manage-row">
+            <div class="lock-manage-info">
+              <div class="lock-manage-name">
+                <span class="badge badge-${frozen ? "frozen" : "locked"}">${slotLabel}</span>
+              </div>
+              <div class="lock-manage-detail">
+                ${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов
+                ${frozen ? " · ⚠️ заморожено" : ""}
+              </div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="window.removeLock('${playerId}', '${slot}')">
+              Снять
+            </button>
+          </div>
+        `;
+      }).join("");
+    } catch (e) {
+      console.error("Ошибка рендеринга блокировок:", e);
+      container.innerHTML = `<div class="text-danger" style="font-size:0.85rem;padding:0.5rem 0;">Ошибка загрузки блокировок</div>`;
+    }
+  }
+
+  window.removeLock = async (playerId, slot) => {
+    const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+    if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
+    try {
+      await removeSlotLock(playerId, slot);
+      showToast("✅ Блокировка снята");
+      await renderLocks(playerId);
+    } catch (e) {
+      console.error("Ошибка снятия блокировки:", e);
+      showToast("❌ Ошибка снятия блокировки", "error");
+    }
+  };
 
   // ─── Настройки ─────────────────────────────────────────
   function loadSettings() {
