@@ -114,15 +114,25 @@
 
     .boss-detail-header {
       display: flex;
-      gap: 1.5rem;
-      align-items: flex-start;
+      gap: 1rem;
+      align-items: center;
       flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .boss-detail-header .boss-icon-large {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
     }
 
     .boss-detail-info {
       flex: 1;
       min-width: 180px;
-      max-width: 55%;
     }
     .boss-detail-info h2 {
       margin: 0 0 0.25rem 0;
@@ -687,11 +697,7 @@
       div.className = `boss-list-item${b.id === selectedBossId ? ' active' : ''}`;
       const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
       
-      // Иконка босса
-      const iconHtml = b.icon ? `<img class="boss-icon-small" src="/assets/img/bosses/${b.icon}" alt="${b.name}" />` : '';
-      
       div.innerHTML = `
-        ${iconHtml}
         <span class="level-badge">${b.level || '?'}</span>
         <span class="name">${b.name}</span>
         <span class="class-tag badge-${b.boss_class || 'unknown'}">${clsLabel}</span>
@@ -730,11 +736,13 @@
 
     const imageFile = b.image || '';
     const bgImage = imageFile ? `url('/assets/img/bosses/${imageFile}')` : '';
+    const iconFile = b.icon ? `/assets/img/bosses/${b.icon}` : '';
 
     container.innerHTML = `
       <div class="boss-detail-bg ${bgImage ? 'has-image' : ''}" style="background-image: ${bgImage};"></div>
       <div class="boss-detail-content">
         <div class="boss-detail-header">
+          ${iconFile ? `<img class="boss-icon-large" src="${iconFile}" alt="${b.name}" />` : ''}
           <div class="boss-detail-info">
             <h2>${b.name}</h2>
             <div class="meta">
