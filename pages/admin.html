@@ -920,7 +920,6 @@
   initAuth();
   
   let allUsers = [];
-  let allPlayers = [];
   let allCharacters = [];
   let allItems = [];
   let selectedUserId = null;
@@ -962,7 +961,7 @@
     document.getElementById("access-denied").classList.add("hidden");
     document.getElementById("admin-content").classList.remove("hidden");
 
-    await loadPlayers();
+    await loadCharactersForStats();
     await loadUsers();
     await loadModerationData();
     loadSettings();
@@ -990,22 +989,28 @@
     document.getElementById('info-panel').classList.toggle('open');
   });
 
-  // ─── Загрузка персонажей (для статистики) ────────────
-  async function loadPlayers() {
+  // ─── Загрузка персонажей для статистики ──────────────
+  async function loadCharactersForStats() {
     try {
-      allPlayers = await getPlayers();
+      const charsRef = collection(db, 'characters');
+      const querySnapshot = await getDocs(charsRef);
+      allCharacters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log('📋 Загружено персонажей для статистики:', allCharacters.length);
     } catch (e) {
       console.error('Ошибка загрузки персонажей:', e);
-      allPlayers = [];
+      allCharacters = [];
     }
   }
 
   function getPlayerCount(userId) {
-    return allPlayers.filter(p => p.user_id === userId).length;
+    return allCharacters.filter(p => p.user_id === userId).length;
   }
 
   function getApprovedPlayerCount(userId) {
-    return allPlayers.filter(p => p.user_id === userId && p.approved === true).length;
+    return allCharacters.filter(p => p.user_id === userId && (p.status === 'approved' || p.approved === true)).length;
   }
 
   // ─── Загрузка пользователей ──────────────────────────
@@ -1479,8 +1484,8 @@
     const sel = document.getElementById("lock-player-select");
     if (!sel) return;
     sel.innerHTML = `<option value="">— выбери игрока —</option>`;
-    allPlayers.forEach(p => {
-      sel.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
+    allCharacters.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
     });
   }
 
