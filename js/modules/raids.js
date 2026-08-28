@@ -1,5 +1,5 @@
 // ====================================================
-// raids.js — CRUD для рейдов, траёв и дропов (ЗАЩИЩЁННАЯ ВЕРСИЯ)
+// raids.js — CRUD для рейдов, траёв и дропов
 // ====================================================
 
 import { db } from "../firebase.js";
@@ -7,33 +7,6 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   getDocs, getDoc, query, orderBy, writeBatch, increment,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-// ============================================================
-// ЗАЩИТА: Проверка прав перед каждым запросом
-// ============================================================
-
-let authCheck = null;
-export function setAuthCheck(fn) {
-  authCheck = fn;
-}
-
-function requireAuth() {
-  if (!authCheck) {
-    console.error('🔒 Система авторизации не инициализирована');
-    throw new Error('Unauthorized');
-  }
-  if (!authCheck()) {
-    throw new Error('Unauthorized: недостаточно прав');
-  }
-}
-
-function requireAdmin() {
-  requireAuth();
-  const user = JSON.parse(localStorage.getItem('tl_user') || '{}');
-  if (user.role !== 'admin') {
-    throw new Error('Unauthorized: требуется права администратора');
-  }
-}
 
 const raidCol = () => collection(db, "raids");
 const tryCol  = (rid) => collection(db, "raids", rid, "tries");
@@ -61,7 +34,6 @@ export async function getRaid(id) {
 }
 
 export async function createRaid({ date, notes }) {
-  requireAuth();
   try {
     const ref = await addDoc(raidCol(), {
       date, notes: notes || "",
@@ -80,7 +52,6 @@ export async function createRaid({ date, notes }) {
 }
 
 export async function updateRaid(id, data) {
-  requireAuth();
   try {
     await updateDoc(doc(db, "raids", id), {
       ...data,
@@ -94,7 +65,6 @@ export async function updateRaid(id, data) {
 }
 
 export async function softDeleteRaid(id) {
-  requireAdmin();
   try {
     await updateDoc(doc(db, "raids", id), {
       deleted: true,
@@ -108,7 +78,6 @@ export async function softDeleteRaid(id) {
 }
 
 export async function restoreRaid(id) {
-  requireAdmin();
   try {
     await updateDoc(doc(db, "raids", id), {
       deleted: false,
@@ -123,7 +92,6 @@ export async function restoreRaid(id) {
 }
 
 export async function hardDeleteRaid(id) {
-  requireAdmin();
   try {
     await deleteDoc(doc(db, "raids", id));
   } catch (e) {
@@ -144,7 +112,6 @@ export async function getRaidTries(raidId) {
 }
 
 export async function addTry(raidId, { boss_id, boss_name, order }) {
-  requireAuth();
   try {
     const ref = await addDoc(tryCol(raidId), {
       boss_id:    boss_id || null,
@@ -162,7 +129,6 @@ export async function addTry(raidId, { boss_id, boss_name, order }) {
 }
 
 export async function deleteTry(raidId, tryId) {
-  requireAuth();
   try {
     await deleteDoc(doc(db, "raids", raidId, "tries", tryId));
   } catch (e) {
@@ -183,8 +149,6 @@ export async function getTryDrops(raidId, tryId) {
 }
 
 export async function addDrop(raidId, tryId, dropData) {
-  requireAuth();
-  
   if (!dropData.item_id || !dropData.item_name) {
     throw new Error('Не указан предмет');
   }
@@ -219,8 +183,6 @@ export async function addDrop(raidId, tryId, dropData) {
 }
 
 export async function updateDropWinner(raidId, tryId, dropId, winnerPlayerId, winnerNickname, rollType) {
-  requireAuth();
-  
   if (!winnerPlayerId || !winnerNickname) {
     throw new Error('Не указан победитель');
   }
@@ -240,7 +202,6 @@ export async function updateDropWinner(raidId, tryId, dropId, winnerPlayerId, wi
 }
 
 export async function deleteDrop(raidId, tryId, dropId) {
-  requireAuth();
   try {
     await deleteDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId));
     await updateDoc(doc(db, "raids", raidId, "tries", tryId), { drop_count: increment(-1) });
@@ -253,8 +214,6 @@ export async function deleteDrop(raidId, tryId, dropId) {
 
 // ── Закрыть рейд ──────────────────────────────────────
 export async function closeRaid(raidId, attendedIds, allPlayerIds) {
-  requireAuth();
-  
   if (!Array.isArray(attendedIds) || !Array.isArray(allPlayerIds)) {
     throw new Error('Неверные данные для закрытия рейда');
   }
@@ -283,8 +242,6 @@ export async function closeRaid(raidId, attendedIds, allPlayerIds) {
 
 // ── Обновить статус рейда ────────────────────────────
 export async function updateRaidStatus(raidId, status) {
-  requireAuth();
-  
   const allowedStatuses = ['open', 'rolling', 'closed'];
   if (!allowedStatuses.includes(status)) {
     throw new Error('Недопустимый статус рейда');
