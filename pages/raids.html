@@ -593,7 +593,7 @@
   };
 
   // ============================================================
-  // HELPER ФУНКЦИИ (ИСПРАВЛЕННЫЕ)
+  // HELPER ФУНКЦИИ
   // ============================================================
 
   function lucentIcon(size = 'small') {
@@ -601,7 +601,6 @@
     return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
   }
 
-  // ИСПРАВЛЕННЫЕ ФУНКЦИИ МОДАЛОК
   function openModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
@@ -654,6 +653,41 @@
 
   function canStartRoll() {
     return isGuildLeader() || isAdmin();
+  }
+
+  function getWeaponType(itemId) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return null;
+    if (item.weapon_type) return item.weapon_type;
+    if (item.slot === 'weapon') {
+      const weapon = WEAPONS.find(w => w.label && item.name?.toLowerCase().includes(w.label.toLowerCase()));
+      return weapon?.id || null;
+    }
+    return null;
+  }
+
+  function canParticipateInRoll(charId, itemId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return { can: false, reason: 'Персонаж не найден' };
+    
+    if (char.status !== 'approved' && char.approved !== true) {
+      return { can: false, reason: 'Персонаж не подтвержден' };
+    }
+    
+    if (!attendedPlayerIds.includes(charId)) {
+      return { can: false, reason: 'Вы не были на этом рейде' };
+    }
+    
+    const item = allItems.find(i => i.id === itemId);
+    if (item && item.slot === 'weapon') {
+      const charWeapons = char.weapons || [];
+      const weaponType = getWeaponType(itemId);
+      if (weaponType && !charWeapons.includes(weaponType)) {
+        return { can: false, reason: 'Это оружие не подходит вашему персонажу' };
+      }
+    }
+    
+    return { can: true };
   }
 
   // ============================================================
@@ -810,14 +844,59 @@
     return wrap;
   }
 
+  // ============================================================
+  // buildDropRow — ИСПРАВЛЕННАЯ ВЕРСИЯ
+  // ============================================================
+  
   function buildDropRow(d, raidId, tryId, canEdit, raid) {
     const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
     const hasWinner = d.winner_player_id && d.winner_nickname;
-    const canRoll = canEdit && !d.winner_player_id && raid?.status !== "closed";
+    
+    // ПРОВЕРКА: может ли пользователь участвовать в ролле
+    const isClosed = raid?.status === "closed";
     const isRolling = raid?.status === "rolling";
+    const hasCharacter = !!rollState.currentPlayerId;
+    
+    // Кнопка ролла доступна если:
+    // 1. Нет победителя
+    // 2. Рейд не закрыт
+    // 3. У пользователя есть персонаж
+    const canRoll = !hasWinner && !isClosed && hasCharacter;
     
     const boss = allBosses.find(b => b.id === d.boss_id);
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
+    
+    // Проверяем, может ли пользователь участвовать в ролле
+    let participationCheck = { can: true };
+    if (rollState.currentPlayerId) {
+      participationCheck = canParticipateInRoll(rollState.currentPlayerId, d.item_id);
+    }
+    
+    let rollButtonClass = 'roll-btn';
+    let rollButtonText = '🎲';
+    let rollButtonDisabled = false;
+    let rollButtonTitle = '';
+    
+    if (hasWinner) {
+      rollButtonClass += ' finished';
+      rollButtonText = '📊';
+      rollButtonDisabled = false;
+      rollButtonTitle = 'Просмотр результатов';
+    } else if (isClosed) {
+      rollButtonDisabled = true;
+      rollButtonTitle = 'Рейд закрыт';
+    } else if (!hasCharacter) {
+      rollButtonDisabled = true;
+      rollButtonTitle = 'У вас нет персонажа';
+    } else if (!participationCheck.can) {
+      rollButtonDisabled = true;
+      rollButtonTitle = participationCheck.reason;
+    } else if (isRolling) {
+      rollButtonClass += ' rolling';
+      rollButtonText = '⏳';
+      rollButtonDisabled = true;
+      rollButtonTitle = 'Идёт ролл...';
+    }
     
     return `
       <div class="drop-row">
@@ -844,7 +923,9 @@
           `}
         </div>
         <div class="drop-actions">
-          ${canRoll ? `<button class="roll-btn" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}')">🎲</button>` : ''}
+          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" ${rollButtonDisabled ? 'disabled' : ''} title="${rollButtonTitle}">
+            ${rollButtonText}
+          </button>
           ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
         </div>
       </div>
@@ -1227,7 +1308,7 @@
         className += ' blocked';
       } else if (rollState.winner?.playerId === p.playerId) {
         className += ' winner';
-      } else if (!p.isBlocked) {
+      } else {
         className += ' joined';
       }
       div.className = className;
@@ -1242,23 +1323,27 @@
       list.appendChild(div);
     });
     
-    const approvedPlayers = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-    const availablePlayers = approvedPlayers.filter(p => 
-      !rollState.participants.some(part => part.playerId === p.id)
+    // Показываем доступных персонажей (только те, кто может участвовать)
+    const availableChars = allCharacters.filter(c => 
+      (c.status === 'approved' || c.approved === true) &&
+      attendedPlayerIds.includes(c.id) &&
+      !rollState.participants.some(p => p.playerId === c.id)
     );
     
-    availablePlayers.forEach(p => {
+    const currentPlayerId = rollState.currentPlayerId;
+    
+    availableChars.forEach(p => {
       const div = document.createElement('div');
       div.className = 'roll-participant';
       
-      const isBlocked = checkPlayerBlock(p.id);
+      const participation = canParticipateInRoll(p.id, rollState.dropId);
       
       div.innerHTML = `
         <span class="player-name">${p.name}</span>
-        <span class="player-status">${isBlocked ? '🔒 Заблокирован' : 'Ожидает'}</span>
-        ${isBlocked ? 
-          `<span style="font-size:0.7rem;color:var(--danger);">${isBlocked}</span>` :
-          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
+        <span class="player-status">${participation.can ? 'Может участвовать' : '🔒 ' + participation.reason}</span>
+        ${participation.can ? 
+          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>` :
+          `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`
         }
       `;
       list.appendChild(div);
@@ -1266,41 +1351,41 @@
     
     count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
     
-    const currentPlayerId = rollState.currentPlayerId;
+    // Обновляем кнопки
     const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
     document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-start-roll").disabled = rollState.participants.filter(p => !p.isBlocked).length < 2 || rollState.isRolling || rollState.isFinished;
     
+    // Проверка прав на запуск ролла
     if (!canStartRoll()) {
       document.getElementById("btn-start-roll").disabled = true;
       document.getElementById("btn-start-roll").title = "Только администратор или Глава гильдии может запустить ролл";
     }
   }
 
-  function checkPlayerBlock(playerId) {
-    if (rollState.queue === 'open') {
-      // TODO: проверить, выигрывал ли игрок что-то в этом рейде
-    }
-    return null;
-  }
-
+  // Присоединение к роллу
   window.joinRoll = (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (rollState.participants.some(p => p.playerId === playerId)) return;
     
-    const blockReason = checkPlayerBlock(playerId);
+    const participation = canParticipateInRoll(playerId, rollState.dropId);
+    if (!participation.can) {
+      showToast(participation.reason, 'error');
+      return;
+    }
     
     rollState.participants.push({ 
       playerId, 
       nickname, 
       roll: null,
-      isBlocked: !!blockReason,
-      blockReason: blockReason || ''
+      isBlocked: false,
+      blockReason: ''
     });
     renderRollParticipants();
   };
 
+  // Кнопка "Присоединиться"
   document.getElementById("btn-join-roll").addEventListener("click", () => {
     if (!rollState.currentPlayerId) {
       showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
@@ -1313,14 +1398,20 @@
       return;
     }
     
-    if (!isAdmin() && player.status !== 'approved' && player.approved !== true) {
+    if (player.status !== 'approved' && player.approved !== true) {
       showToast("Ваш персонаж не подтвержден администратором", "error");
+      return;
+    }
+    
+    if (!attendedPlayerIds.includes(player.id)) {
+      showToast("Ваш персонаж не был отмечен на этом рейде", "error");
       return;
     }
     
     window.joinRoll(player.id, player.name);
   });
 
+  // Кнопка "Выйти"
   document.getElementById("btn-leave-roll").addEventListener("click", () => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (!rollState.currentPlayerId) {
@@ -1331,6 +1422,7 @@
     renderRollParticipants();
   });
 
+  // Переключение очереди (только админ)
   document.querySelectorAll('.queue-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       if (rollState.isRolling || rollState.isFinished) return;
@@ -1350,6 +1442,7 @@
     });
   });
 
+  // Запуск ролла (только Глава гильдии или админ)
   document.getElementById("btn-start-roll").addEventListener("click", async () => {
     const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
     if (activeParticipants.length < 2) {
@@ -1373,6 +1466,7 @@
     resultEl.style.display = "block";
     resultEl.innerHTML = '<div style="text-align:center;padding:0.5rem;">🎲 Бросаем кубики...</div>';
     
+    // Анимация ролла
     let counter = 0;
     const interval = setInterval(() => {
       counter++;
@@ -1396,6 +1490,11 @@
     rollState.winner = winners[0];
     rollState.isRolling = false;
     rollState.isFinished = true;
+    rollState.rollResults = rollState.participants.map(p => ({
+      playerId: p.playerId,
+      nickname: p.nickname,
+      roll: p.roll
+    }));
     
     const resultEl = document.getElementById("roll-result");
     resultEl.innerHTML = `
@@ -1412,6 +1511,9 @@
         <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
           Очередь: ${rollState.queue === 'main' ? 'Основная' : 'Дополнительная'}
         </div>
+        <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">
+          ${rollState.rollResults?.map(r => `${r.nickname}: ${r.roll}`).join(' | ')}
+        </div>
       </div>
     `;
     
@@ -1423,9 +1525,15 @@
     showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
   }
 
+  // Закрепление победителя (только Глава гильдии или админ)
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
     if (!rollState.winner) {
       showToast("Сначала запустите ролл", "error");
+      return;
+    }
+    
+    if (!canStartRoll()) {
+      showToast("Только администратор или Глава гильдии может зафиксировать победителя", "error");
       return;
     }
     
