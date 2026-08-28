@@ -290,16 +290,24 @@
     });
 
     const btnDel = document.getElementById("btn-show-deleted");
-    if (isAdmin()) {
-      btnDel.classList.remove("hidden");
-      btnDel.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
+    if (btnDel) {
+      if (isAdmin()) {
+        btnDel.classList.remove("hidden");
+        btnDel.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
+      } else {
+        btnDel.classList.add("hidden");
+      }
     }
   }
 
-  document.getElementById("btn-show-deleted").addEventListener("click", () => {
-    showDeleted = !showDeleted;
-    renderRaidList();
-  });
+  // Обработчик показа удалённых рейдов
+  const btnShowDeleted = document.getElementById("btn-show-deleted");
+  if (btnShowDeleted) {
+    btnShowDeleted.addEventListener("click", () => {
+      showDeleted = !showDeleted;
+      renderRaidList();
+    });
+  }
 
   // ============================================================
   // ОБРАБОТЧИК КНОПКИ НОВОГО РЕЙДА
@@ -307,7 +315,6 @@
   
   const newRaidBtn = document.getElementById("btn-new-raid");
   if (newRaidBtn) {
-    // Показываем кнопку только если есть права
     if (canWrite()) {
       newRaidBtn.classList.remove("hidden");
     }
@@ -697,7 +704,7 @@
   };
 
   // ── Ролл модалка ──────────────────────────────────
-  // ... (код ролла, который был ранее)
+  // ... (весь код ролла без изменений)
   
   // ── Посещаемость ──────────────────────────────────
   function openAttendanceModal() {
