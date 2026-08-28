@@ -265,19 +265,39 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1rem 1.25rem;
-      min-width: 220px;
-      max-width: 320px;
+      min-width: 240px;
+      max-width: 340px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
       pointer-events: none;
       z-index: 1000;
       display: none;
       opacity: 0;
       transition: opacity 0.15s;
+      max-height: 80vh;
+      overflow-y: auto;
     }
     
     .item-tooltip.visible {
       display: block;
       opacity: 1;
+    }
+
+    .item-tooltip .item-rarity {
+      font-size: 0.75rem;
+      color: #a78bfa;
+      margin-bottom: 0.25rem;
+    }
+    
+    .item-tooltip .item-level {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    
+    .item-tooltip .item-slot {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
     }
     
     .item-tooltip .tooltip-header {
@@ -302,16 +322,19 @@
       font-size: 1rem;
       color: var(--text);
     }
-    
-    .item-tooltip .tooltip-slot {
-      font-size: 0.75rem;
+
+    .item-tooltip .tooltip-subname {
+      font-size: 0.8rem;
       color: var(--text-muted);
+      margin-top: -0.2rem;
+      margin-bottom: 0.3rem;
     }
     
     .item-tooltip .tooltip-stats {
       display: flex;
       flex-direction: column;
       gap: 0.15rem;
+      margin: 0.3rem 0;
     }
     
     .item-tooltip .stat-row {
@@ -335,6 +358,70 @@
     }
     
     .item-tooltip .stat-label {
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .stat-section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0.5rem 0 0.2rem 0;
+      font-weight: 600;
+    }
+
+    .item-tooltip .item-description {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 0.5rem 0;
+      padding: 0.3rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item-tooltip .item-quote {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 0.5rem 0 0.2rem 0;
+      padding: 0.3rem 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .item-tooltip .item-from {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 0.3rem;
+    }
+
+    .item-tooltip .possible-props {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin: 0.3rem 0;
+    }
+
+    .item-tooltip .possible-prop {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--bg-card2);
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .item-tooltip .damage-range {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text);
+      margin: 0.2rem 0;
+    }
+
+    .item-tooltip .damage-range .damage-label {
       color: var(--text-muted);
     }
   </style>
@@ -376,10 +463,11 @@
     <img id="tooltip-img" alt="" />
     <div>
       <div class="tooltip-name" id="tooltip-name">Название</div>
-      <div class="tooltip-slot" id="tooltip-slot">Слот</div>
+      <div class="tooltip-subname" id="tooltip-subname"></div>
     </div>
   </div>
-  <div class="tooltip-stats" id="tooltip-stats"></div>
+  <div id="tooltip-meta"></div>
+  <div id="tooltip-stats"></div>
 </div>
 
 <!-- модалка -->
@@ -719,7 +807,7 @@
     document.getElementById('filter-search').dispatchEvent(new Event('input'));
   });
 
-  // ── Всплывающая карточка предмета (как на странице предметов) ──
+  // ── Всплывающая карточка предмета ──────────────
   const tooltip = document.getElementById('item-tooltip');
   let tooltipTimeout;
 
@@ -728,84 +816,123 @@
     
     const img = document.getElementById('tooltip-img');
     const nameEl = document.getElementById('tooltip-name');
-    const slotEl = document.getElementById('tooltip-slot');
+    const subnameEl = document.getElementById('tooltip-subname');
+    const metaEl = document.getElementById('tooltip-meta');
     const statsEl = document.getElementById('tooltip-stats');
 
     setItemImage(img, item.image);
-    nameEl.textContent = item.name;
-    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '—';
-    slotEl.textContent = `Слот: ${slotLabel}`;
+    nameEl.textContent = item.name || 'Без названия';
+    
+    // Подзаголовок (редкость, уровень)
+    let subnameParts = [];
+    if (item.rarity) subnameParts.push(item.rarity);
+    if (item.level) subnameParts.push(`Уровень ${item.level}`);
+    subnameEl.textContent = subnameParts.join(' · ');
 
-    // Отображаем все характеристики
+    // Мета-информация (слот)
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
+    metaEl.innerHTML = `<div class="item-slot">${slotLabel}</div>`;
+
+    // Статистика
     statsEl.innerHTML = '';
     
+    // Урон
+    if (item.damage_min || item.damage_max) {
+      const dmgDiv = document.createElement('div');
+      dmgDiv.className = 'damage-range';
+      dmgDiv.innerHTML = `
+        <span class="damage-label">Урон:</span>
+        <span>${item.damage_min || 0} ~ ${item.damage_max || 0}</span>
+      `;
+      statsEl.appendChild(dmgDiv);
+    }
+
+    // Основные статы
     if (item.stats) {
       let statEntries = [];
       
-      // Парсим stats в зависимости от формата
       if (typeof item.stats === 'object' && !Array.isArray(item.stats)) {
-        // Формат: { "Атака": 12, "Защита": 9 }
         Object.entries(item.stats).forEach(([key, value]) => {
           if (value !== null && value !== undefined && value !== '') {
             statEntries.push({ key, value });
           }
         });
       } else if (Array.isArray(item.stats)) {
-        // Формат: [{ name: "Атака", value: 12 }, ...]
         item.stats.forEach(stat => {
           if (typeof stat === 'object') {
             const key = stat.name || stat.label || stat.key || 'Свойство';
             const value = stat.value || stat.val || 0;
             statEntries.push({ key, value });
-          } else if (typeof stat === 'string' && stat.includes(':')) {
-            const [key, value] = stat.split(':').map(s => s.trim());
-            statEntries.push({ key, value });
-          }
-        });
-      } else if (typeof item.stats === 'string') {
-        // Формат: "Атака: 12, Защита: 9"
-        item.stats.split(',').forEach(part => {
-          const trimmed = part.trim();
-          if (trimmed.includes(':')) {
-            const [key, value] = trimmed.split(':').map(s => s.trim());
-            statEntries.push({ key, value });
           }
         });
       }
 
-      if (statEntries.length) {
-        statEntries.forEach(({ key, value }) => {
-          const row = document.createElement('div');
-          row.className = 'stat-row';
-          
-          const num = parseFloat(value);
-          let valueClass = 'stat-neutral';
-          let displayValue = value;
-          
-          if (!isNaN(num)) {
-            if (num > 0) {
-              valueClass = 'stat-positive';
-              displayValue = `+${value}`;
-            } else if (num < 0) {
-              valueClass = 'stat-negative';
-              displayValue = value;
-            } else {
-              valueClass = 'stat-neutral';
-              displayValue = value;
-            }
+      statEntries.forEach(({ key, value }) => {
+        const row = document.createElement('div');
+        row.className = 'stat-row';
+        
+        const num = parseFloat(value);
+        let valueClass = 'stat-neutral';
+        let displayValue = value;
+        
+        if (!isNaN(num)) {
+          if (num > 0) {
+            valueClass = 'stat-positive';
+            displayValue = `+${value}`;
+          } else if (num < 0) {
+            valueClass = 'stat-negative';
+            displayValue = value;
           }
-          
-          row.innerHTML = `
-            <span class="${valueClass}">${displayValue}</span>
-            <span class="stat-label">${key}</span>
-          `;
-          statsEl.appendChild(row);
-        });
-      } else {
-        statsEl.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
-      }
-    } else {
-      statsEl.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
+        }
+        
+        row.innerHTML = `
+          <span class="${valueClass}">${displayValue}</span>
+          <span class="stat-label">${key}</span>
+        `;
+        statsEl.appendChild(row);
+      });
+    }
+
+    // Описание предмета
+    if (item.description) {
+      const descDiv = document.createElement('div');
+      descDiv.className = 'item-description';
+      descDiv.textContent = item.description;
+      statsEl.appendChild(descDiv);
+    }
+
+    // Возможные свойства
+    if (item.possible_props && Array.isArray(item.possible_props) && item.possible_props.length) {
+      const propsTitle = document.createElement('div');
+      propsTitle.className = 'stat-section-title';
+      propsTitle.textContent = 'Возможные свойства';
+      statsEl.appendChild(propsTitle);
+      
+      const propsContainer = document.createElement('div');
+      propsContainer.className = 'possible-props';
+      item.possible_props.forEach(prop => {
+        const span = document.createElement('span');
+        span.className = 'possible-prop';
+        span.textContent = prop;
+        propsContainer.appendChild(span);
+      });
+      statsEl.appendChild(propsContainer);
+    }
+
+    // Цитата
+    if (item.quote) {
+      const quoteDiv = document.createElement('div');
+      quoteDiv.className = 'item-quote';
+      quoteDiv.textContent = `«${item.quote}»`;
+      statsEl.appendChild(quoteDiv);
+    }
+
+    // От кого
+    if (item.from) {
+      const fromDiv = document.createElement('div');
+      fromDiv.className = 'item-from';
+      fromDiv.textContent = item.from;
+      statsEl.appendChild(fromDiv);
     }
 
     tooltip.classList.add('visible');
