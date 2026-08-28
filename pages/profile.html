@@ -4,104 +4,619 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Профиль — TL Loot</title>
+
   <link rel="stylesheet" href="../css/main.css" />
+
   <style>
-    .profile-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    @media (max-width: 768px) { .profile-layout { grid-template-columns: 1fr; } }
-    
-    .player-card {
+    .profile-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .profile-info h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-info .email {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .profile-info .role {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(124, 58, 237, 0.2);
+      color: var(--accent-soft);
+      border: 1px solid var(--accent);
+      margin-top: 0.25rem;
+    }
+
+    .characters-section {
+      margin-top: 2rem;
+    }
+
+    .characters-section .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: border-color 0.15s;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .player-card:hover { border-color: var(--accent); }
-    .player-card .info .name { font-weight: 600; font-size: 1rem; }
-    .player-card .info .details { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
-    .player-card .status { font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 10px; }
-    .player-card .status.approved { background: rgba(34,197,94,0.15); color: #22c55e; }
-    .player-card .status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-    .player-card .status.rejected { background: rgba(239,68,68,0.15); color: #ef4444; }
-    
-    .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
-    
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .modal-header h3 { font-size: 1.1rem; }
-    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
-    .btn-close:hover { color: var(--text); }
-    
-    .flex { display: flex; }
-    .gap-1 { gap: 0.5rem; }
-    .mt-1 { margin-top: 0.5rem; }
-    .mt-3 { margin-top: 1.5rem; }
-    .text-danger { color: #ef4444; }
-    .text-muted { color: var(--text-muted); }
-    .hidden { display: none !important; }
+
+    .characters-section .section-header h3 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .character-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .character-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .character-card.pending {
+      border-left: 4px solid var(--warning);
+    }
+
+    .character-card.approved {
+      border-left: 4px solid var(--success);
+    }
+
+    .character-card.rejected {
+      border-left: 4px solid var(--danger);
+      opacity: 0.7;
+    }
+
+    .character-card .char-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .character-card .char-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .character-card .char-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .character-card .char-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .char-status.pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+      border: 1px solid var(--warning);
+    }
+
+    .char-status.approved {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+
+    .char-status.rejected {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .character-card .char-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .character-card .char-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 0.75rem 0;
+    }
+
+    .character-card .char-body .char-weapons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .character-card .char-body .weapon-tag {
+      background: var(--bg-card2);
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .character-card .char-body .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .character-card .char-loot {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .character-card .char-loot .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 0.4rem;
+    }
+
+    .character-card .char-loot-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .character-card .char-loot-items .loot-tag {
+      background: rgba(124, 58, 237, 0.15);
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border: 1px solid var(--accent);
+      color: var(--accent-soft);
+    }
+
+    .character-card .char-moderation-note {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 3px solid var(--warning);
+    }
+
+    .character-card .char-moderation-feedback {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-left: 3px solid var(--danger);
+    }
+
+    .btn-delete {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-delete:hover {
+      opacity: 0.85;
+    }
+
+    .btn-delete:active {
+      transform: scale(0.95);
+    }
+
+    .btn-edit-char {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      background: var(--bg-card2);
+      color: var(--text);
+    }
+
+    .btn-edit-char:hover {
+      background: var(--bg-card);
+      border-color: var(--accent);
+    }
+
+    .btn-edit-char:active {
+      transform: scale(0.95);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--text-muted);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .empty-state small {
+      font-size: 0.85rem;
+    }
+
+    /* ── Модальное окно ────────────────────────────────── */
+    .modal .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .modal .form-row .form-group {
+      margin-bottom: 0;
+    }
+
+    .weapon-slots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .weapon-slots .form-group {
+      margin-bottom: 0;
+    }
+
+    .loot-selection {
+      margin-top: 0.5rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .loot-slot {
+      margin-bottom: 0.5rem;
+      padding: 0.4rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .loot-slot .loot-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .loot-select-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .loot-select-wrap .select-display {
+      width: 100%;
+      padding: 0.35rem 2rem 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .loot-select-wrap .select-display::after {
+      content: '▼';
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .loot-select-wrap .select-display:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .loot-select-wrap .dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .loot-select-wrap .dropdown.open {
+      display: block;
+    }
+
+    .loot-select-wrap .dropdown .search-input {
+      width: 100%;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      background: var(--bg-card2);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      outline: none;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .loot-select-wrap .dropdown .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .loot-select-wrap .dropdown .items-wrap {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .loot-select-wrap .dropdown .item {
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.1s;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loot-select-wrap .dropdown .item:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .loot-select-wrap .dropdown .item.selected {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .loot-select-wrap .dropdown .item.empty {
+      color: var(--text-muted);
+      cursor: default;
+      font-style: italic;
+    }
+
+    .loot-select-wrap .dropdown .item.empty:hover {
+      background: transparent;
+    }
+
+    .moderation-note {
+      margin-top: 0.5rem;
+    }
+
+    .moderation-note textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .modal .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .weapon-slots {
+        grid-template-columns: 1fr;
+      }
+
+      .character-card .char-body {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .character-card .char-top {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .character-card .char-actions {
+        justify-content: flex-start;
+        margin-top: 0.25rem;
+      }
+    }
   </style>
 </head>
+
 <body>
+
 <nav class="navbar" id="main-nav"></nav>
 
-<main class="container">
-  <div class="page-header">
-    <h2>👤 Профиль</h2>
-    <button class="btn btn-primary hidden" data-role="moderator" id="btn-add-player">+ Добавить персонажа</button>
+<main class="container profile-container">
+
+  <!-- ============================================
+       ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
+  ============================================ -->
+
+  <div class="profile-header" id="profile-header">
+    <div class="profile-avatar" id="profile-avatar">👤</div>
+    <div class="profile-info">
+      <h2 id="profile-name">Загрузка...</h2>
+      <div class="email" id="profile-email">—</div>
+      <span class="role" id="profile-role">guest</span>
+    </div>
   </div>
 
-  <div id="players-list">
-    <div class="text-muted">Загрузка...</div>
+  <!-- ============================================
+       ПЕРСОНАЖИ
+  ============================================ -->
+
+  <div class="characters-section">
+    <div class="section-header">
+      <h3>👥 Мой персонаж</h3>
+      <button class="btn btn-primary btn-sm" id="btn-add-character">
+        + Добавить персонажа
+      </button>
+    </div>
+
+    <div id="characters-list">
+      <div class="empty-state">
+        <span class="icon">🎮</span>
+        <p>У вас пока нет персонажа</p>
+        <small>Создайте персонажа, чтобы участвовать в рейдах</small>
+      </div>
+    </div>
   </div>
+
 </main>
 
-<!-- Модалка персонажа -->
-<div class="modal-overlay hidden" id="modal-player">
+
+<!-- ============================================
+     МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕРСОНАЖА
+============================================ -->
+
+<div class="modal-overlay hidden" id="modal-character">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="modal-title">Добавить персонажа</h3>
-      <button class="btn-close" onclick="closeModal('modal-player')">✕</button>
-    </div>
-    <input type="hidden" id="edit-id" />
-
-    <div class="form-group">
-      <label>Никнейм *</label>
-      <input type="text" id="f-nickname" placeholder="Введите никнейм персонажа" />
-    </div>
-    <div class="form-group">
-      <label>Класс</label>
-      <select id="f-class">
-        <option value="">— выбери класс —</option>
-        <option value="warrior">⚔️ Воин</option>
-        <option value="mage">🔮 Маг</option>
-        <option value="rogue">🗡️ Разбойник</option>
-        <option value="ranger">🏹 Следопыт</option>
-        <option value="healer">💚 Целитель</option>
-        <option value="tank">🛡️ Танк</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Уровень</label>
-      <input type="number" id="f-level" placeholder="1" min="1" max="99" />
+      <h3 id="modal-char-title">Добавить персонажа</h3>
+      <button class="btn-close" id="btn-char-close">✕</button>
     </div>
 
-    <div id="modal-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
+    <input type="hidden" id="edit-char-id" />
+
+    <div class="form-group">
+      <label>Имя персонажа *</label>
+      <input type="text" id="f-char-name" placeholder="Имя в гильдии" />
+    </div>
+
+    <div class="form-group">
+      <label>Оружие *</label>
+      <div class="weapon-slots">
+        <div class="form-group">
+          <label style="font-size:0.75rem; color:var(--text-muted);">Основное оружие</label>
+          <select id="f-char-weapon1">
+            <option value="">— выбери —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.75rem; color:var(--text-muted);">Дополнительное оружие</label>
+          <select id="f-char-weapon2">
+            <option value="">— выбери —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Желаемый лут</label>
+      <div class="loot-selection" id="loot-selection"></div>
+    </div>
+
+    <div class="form-group moderation-note">
+      <label>Сообщение модератору (опционально)</label>
+      <textarea id="f-moderation-note" placeholder="Дополнительная информация для модерации..." rows="2"></textarea>
+    </div>
+
+    <div id="char-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
+
     <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save">Сохранить</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-player')">Отмена</button>
+      <button class="btn btn-primary" id="btn-char-save">Отправить на модерацию</button>
+      <button class="btn btn-ghost" id="btn-char-cancel">Отмена</button>
     </div>
   </div>
 </div>
 
+
+<!-- ============================================
+     JAVASCRIPT
+============================================ -->
+
 <script type="module">
-  // ============================================================
+  // ============================================
   // ЗАЩИТА
-  // ============================================================
+  // ============================================
   
   document.addEventListener('contextmenu', function(e) {
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
@@ -124,228 +639,668 @@
 
   console.log('🔒 Защита активирована');
 
-  // ============================================================
+  // ============================================
   // ИМПОРТЫ
-  // ============================================================
-  
+  // ============================================
+
   import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, currentUser, canWrite, isAdmin, currentRole } from "../js/modules/auth.js";
-  
-  // Инициализация
+  import { 
+    initAuth, 
+    authReady, 
+    currentUser, 
+    currentRole,
+    isModerator,
+    isAdmin
+  } from "../js/modules/auth.js";
+  import { getItems } from "../js/modules/items.js";
+  import { getBosses } from "../js/modules/bosses.js";
+  import { WEAPONS, SLOTS, QUALITY } from "../js/constants.js";
+  import { 
+    collection, 
+    doc, 
+    getDocs, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc,
+    query,
+    where
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { db } from "../js/firebase.js";
+
+  // ============================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ============================================
+
   initNavbar();
-  
-  // Ждем авторизацию
-  console.log('⏳ Ожидание авторизации...');
   await initAuth();
   await authReady;
 
-  console.log('🔐 Авторизация:', { 
-    user: currentUser?.email || 'Нет',
-    role: currentRole,
-    uid: currentUser?.uid
-  });
-
-  // Если не авторизован — редирект на логин
   if (!currentUser) {
-    console.log('🚫 Пользователь не авторизован, редирект на логин');
     window.location.href = '/pages/login.html';
     throw new Error('Redirect to login');
   }
 
-  // ============================================================
-  // ИМПОРТЫ МОДУЛЕЙ (после проверки авторизации)
-  // ============================================================
-  
-  import { getPlayers, addPlayer, updatePlayer, deletePlayer } from "../js/modules/players.js";
-  import { BOSS_CLASSES } from "../js/constants.js";
+  // ============================================
+  // СОСТОЯНИЕ
+  // ============================================
 
-  // ============================================================
-  // ОСНОВНАЯ ЛОГИКА
-  // ============================================================
+  let allItems = [];
+  let allBosses = [];
+  let characters = [];
+  let editingCharId = null;
+  const userId = currentUser?.uid;
+  const userIsModerator = isModerator() || isAdmin();
 
-  let allPlayers = [];
-  let editingId = null;
+  // ============================================
+  // ЗАГРУЗКА ДАННЫХ
+  // ============================================
 
-  async function loadPlayers() {
+  async function loadData() {
     try {
-      allPlayers = await getPlayers();
-      renderPlayers();
-    } catch (e) {
-      console.error('Ошибка загрузки игроков:', e);
-      document.getElementById('players-list').innerHTML = `<div class="text-danger">Ошибка загрузки</div>`;
+      allItems = await getItems();
+      allBosses = await getBosses();
+      await loadCharacters();
+      renderProfile();
+      renderCharacters();
+      populateWeaponSelects();
+      populateLootSlots();
+      setupWeaponSync();
+    } catch (error) {
+      console.error('Ошибка загрузки данных:', error);
     }
   }
 
-  function renderPlayers() {
-    const container = document.getElementById('players-list');
-    const canEdit = canWrite();
-    const admin = isAdmin();
-    
-    // Показываем только персонажей текущего пользователя (обычные пользователи)
-    // Администратор видит всех
-    let players = allPlayers;
-    if (!admin) {
-      players = allPlayers.filter(p => p.user_id === currentUser.uid);
+  async function loadCharacters() {
+    try {
+      const charsRef = collection(db, 'characters');
+      const q = query(charsRef, where('user_id', '==', userId));
+      const querySnapshot = await getDocs(q);
+      characters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      characters.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+        return dateB - dateA;
+      });
+    } catch (error) {
+      console.error('Ошибка загрузки персонажей:', error);
+      characters = [];
     }
-    
-    if (!players.length) {
+  }
+
+  // ============================================
+  // ОТОБРАЖЕНИЕ ПРОФИЛЯ
+  // ============================================
+
+  function renderProfile() {
+    const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
+    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-email').textContent = currentUser?.email || '—';
+    document.getElementById('profile-role').textContent = currentRole || 'guest';
+
+    const avatar = document.getElementById('profile-avatar');
+    avatar.textContent = name.charAt(0).toUpperCase();
+  }
+
+  // ============================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ============================================
+
+  function getWeaponLabel(weaponId) {
+    const weapon = WEAPONS.find(w => w.id === weaponId);
+    return weapon?.label || weaponId;
+  }
+
+  function getBossName(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.name || '—';
+  }
+
+  function getBossIcon(bossId) {
+    const boss = allBosses.find(b => b.id === bossId);
+    return boss?.icon || null;
+  }
+
+  function getQualityLabel(quality) {
+    const q = QUALITY.find(q => q.id === quality);
+    return q?.label || quality;
+  }
+
+  function getSlotLabel(slotId) {
+    const slot = SLOTS.find(s => s.id === slotId);
+    return slot?.label || slotId;
+  }
+
+  function getWeaponTypeLabel(type) {
+    const types = {
+      'bow': '🏹 Лук', 'staff': '🪄 Посох', 'twohand_sword': '⚔️ Двуручный меч',
+      'crossbow': '🎯 Арбалеты', 'wand': '✨ Жезл', 'daggers': '🗡️ Кинжалы',
+      'sword_shield': '🛡️ Щит и меч', 'spear': '🔱 Копье'
+    };
+    return types[type] || type;
+  }
+
+  // ============================================
+  // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
+  // ============================================
+
+  function renderCharacters() {
+    const container = document.getElementById('characters-list');
+    const addBtn = document.getElementById('btn-add-character');
+
+    if (addBtn) {
+      addBtn.style.display = characters.length > 0 ? 'none' : 'inline-flex';
+    }
+
+    if (!characters.length) {
       container.innerHTML = `
         <div class="empty-state">
-          <div style="font-size:2rem">🎮</div>
-          <div class="mt-1">У вас нет созданных персонажей</div>
-          ${canEdit ? `<button class="btn btn-primary btn-sm mt-1" onclick="openAddPlayer()">+ Создать персонажа</button>` : ''}
+          <span class="icon">🎮</span>
+          <p>У вас пока нет персонажа</p>
+          <small>Создайте персонажа, чтобы участвовать в рейдах</small>
         </div>
       `;
       return;
     }
-    
-    container.innerHTML = '';
-    players.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'player-card';
-      
-      const statusClass = p.approved === true ? 'approved' : p.approved === false ? 'rejected' : 'pending';
-      const statusText = p.approved === true ? 'Подтверждён' : p.approved === false ? 'Отклонён' : 'Ожидает';
-      
-      const isOwn = p.user_id === currentUser.uid;
-      const showActions = canEdit && (isOwn || admin);
-      
-      card.innerHTML = `
-        <div class="info">
-          <div class="name">${p.nickname || 'Без имени'}</div>
-          <div class="details">
-            ${p.class ? `${p.class}` : ''} ${p.level ? `· Ур. ${p.level}` : ''}
-            <span class="status ${statusClass}">${statusText}</span>
+
+    container.innerHTML = characters.map(char => {
+      const statusClass = char.status || 'pending';
+      const statusLabel = {
+        'pending': '⏳ На модерации',
+        'approved': '✅ Одобрен',
+        'rejected': '❌ Отклонён'
+      }[statusClass] || '⏳ На модерации';
+
+      const canEdit = statusClass === 'pending' || statusClass === 'rejected';
+
+      const weaponsHtml = char.weapons?.map(w => {
+        return `<span class="weapon-tag">${getWeaponLabel(w)}</span>`;
+      }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
+
+      let lootHtml = '';
+      if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
+        const lootItems = Object.entries(char.desired_loot)
+          .filter(([_, itemId]) => itemId)
+          .map(([slot, itemId]) => {
+            const item = allItems.find(i => i.id === itemId);
+            const slotObj = SLOTS.find(s => s.id === slot);
+            const slotLabel = slotObj?.label || slot;
+            return item ? `
+              <span class="loot-tag">${slotLabel}: ${item.name}</span>
+            ` : '';
+          }).filter(Boolean).join('');
+        
+        if (lootItems) {
+          lootHtml = `
+            <div class="char-loot">
+              <div class="label">🎯 Желаемый лут</div>
+              <div class="char-loot-items">${lootItems}</div>
+            </div>
+          `;
+        }
+      }
+
+      let noteHtml = '';
+      if (char.moderation_note) {
+        noteHtml = `
+          <div class="char-moderation-note">
+            💬 ${char.moderation_note}
           </div>
+        `;
+      }
+
+      let feedbackHtml = '';
+      if (char.moderation_feedback) {
+        feedbackHtml = `
+          <div class="char-moderation-feedback">
+            📝 Ответ модератора: ${char.moderation_feedback}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="character-card ${statusClass}">
+          <div class="char-top">
+            <div class="char-name-wrap">
+              <span class="char-name">${char.name}</span>
+              <span class="char-status ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="char-actions">
+              ${canEdit ? `<button class="btn-edit-char" onclick="window.editCharacter('${char.id}')">✏️ Редактировать</button>` : ''}
+              <button class="btn-delete" onclick="window.deleteCharacter('${char.id}')">🗑️ Удалить</button>
+            </div>
+          </div>
+
+          <div class="char-body">
+            <div>
+              <span class="label">⚔️ Оружие</span>
+              <div class="char-weapons">${weaponsHtml}</div>
+            </div>
+            <div>
+              <span class="label">📅 Создан</span>
+              <div style="font-size:0.9rem; color:var(--text-muted);">
+                ${char.created_at ? new Date(char.created_at).toLocaleDateString() : '—'}
+              </div>
+            </div>
+          </div>
+
+          ${lootHtml}
+          ${noteHtml}
+          ${feedbackHtml}
         </div>
-        ${showActions ? `
-          <div class="flex gap-1">
-            <button class="btn btn-ghost btn-sm" onclick="openEditPlayer('${p.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmDelete('${p.id}','${p.nickname.replace(/'/g,"\\'")}')">🗑️</button>
-          </div>
-        ` : ''}
       `;
-      container.appendChild(card);
+    }).join('');
+
+    window.editCharacter = (id) => {
+      const char = characters.find(c => c.id === id);
+      if (char) openEditCharacter(char);
+    };
+
+    window.deleteCharacter = async (id) => {
+      const char = characters.find(c => c.id === id);
+      if (!char) return;
+      
+      const statusLabel = {
+        'pending': 'на модерации',
+        'approved': 'одобренного',
+        'rejected': 'отклонённого'
+      }[char.status] || '';
+      
+      if (!confirm(`Удалить персонажа «${char.name}» (${statusLabel})?`)) return;
+      
+      try {
+        await deleteDoc(doc(db, 'characters', id));
+        characters = characters.filter(c => c.id !== id);
+        renderCharacters();
+        showToast('Персонаж удалён. Теперь можно создать нового!');
+      } catch (error) {
+        console.error('Ошибка удаления:', error);
+        showToast('Ошибка удаления', 'error');
+      }
+    };
+  }
+
+  // ============================================
+  // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
+  // ============================================
+
+  function populateWeaponSelects() {
+    const selects = ['f-char-weapon1', 'f-char-weapon2'];
+    
+    selects.forEach(selectId => {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      const currentValue = select.value;
+      select.innerHTML = `<option value="">— выбери —</option>`;
+
+      WEAPONS.forEach(weapon => {
+        const option = document.createElement('option');
+        option.value = weapon.id;
+        option.textContent = weapon.label;
+        select.appendChild(option);
+      });
+
+      if (currentValue) {
+        select.value = currentValue;
+      }
     });
   }
 
-  function openAddPlayer() {
-    editingId = null;
-    document.getElementById('modal-title').textContent = 'Добавить персонажа';
-    document.getElementById('edit-id').value = '';
-    document.getElementById('f-nickname').value = '';
-    document.getElementById('f-class').value = '';
-    document.getElementById('f-level').value = '';
-    document.getElementById('modal-error').style.display = 'none';
-    openModal('modal-player');
-  }
-  
-  window.openAddPlayer = openAddPlayer;
+  // ============================================
+  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ
+  // ============================================
 
-  window.openEditPlayer = (id) => {
-    const p = allPlayers.find(x => x.id === id);
-    if (!p) return;
-    
-    const isOwn = p.user_id === currentUser.uid;
-    if (!isOwn && !isAdmin()) {
-      showToast('У вас нет прав на редактирование этого персонажа', 'error');
-      return;
-    }
-    
-    editingId = id;
-    document.getElementById('modal-title').textContent = 'Редактировать персонажа';
-    document.getElementById('edit-id').value = id;
-    document.getElementById('f-nickname').value = p.nickname || '';
-    document.getElementById('f-class').value = p.class || '';
-    document.getElementById('f-level').value = p.level || '';
-    document.getElementById('modal-error').style.display = 'none';
-    openModal('modal-player');
-  };
+  function setupWeaponSync() {
+    const weapon1 = document.getElementById('f-char-weapon1');
+    const weapon2 = document.getElementById('f-char-weapon2');
 
-  document.getElementById('btn-add-player').addEventListener('click', openAddPlayer);
+    function syncWeapons() {
+      const val1 = weapon1.value;
+      const val2 = weapon2.value;
 
-  document.getElementById('btn-save').addEventListener('click', async () => {
-    const nickname = document.getElementById('f-nickname').value.trim();
-    const playerClass = document.getElementById('f-class').value;
-    const level = document.getElementById('f-level').value.trim();
-    const errEl = document.getElementById('modal-error');
-    
-    if (!nickname) {
-      errEl.textContent = 'Введите никнейм';
-      errEl.style.display = 'block';
-      return;
-    }
-    
-    const btn = document.getElementById('btn-save');
-    btn.disabled = true;
-    btn.textContent = 'Сохранение...';
-    
-    try {
-      const isEdit = !!document.getElementById('edit-id').value;
-      
-      const data = {
-        nickname,
-        class: playerClass || null,
-        level: level || null,
-      };
-      
-      const id = document.getElementById('edit-id').value;
-      if (id) {
-        await updatePlayer(id, data);
-        showToast('Персонаж обновлён');
-      } else {
-        const isAdminUser = isAdmin();
-        
-        await addPlayer({
-          ...data,
-          user_id: currentUser.uid,
-          approved: isAdminUser,
-          created_at: new Date().toISOString(),
-        });
-        showToast(isAdminUser ? 'Персонаж создан и подтверждён' : 'Персонаж создан, ожидает подтверждения');
+      Array.from(weapon2.options).forEach(opt => {
+        if (opt.value && opt.value === val1) {
+          opt.disabled = true;
+        } else {
+          opt.disabled = false;
+        }
+      });
+
+      if (val2 && val2 === val1) {
+        weapon2.value = '';
       }
+    }
+
+    weapon1.removeEventListener('change', syncWeapons);
+    weapon2.removeEventListener('change', syncWeapons);
+    
+    weapon1.addEventListener('change', syncWeapons);
+    weapon2.addEventListener('change', syncWeapons);
+
+    syncWeapons();
+  }
+
+  // ============================================
+  // SELECT С ПОИСКОМ
+  // ============================================
+
+  function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
+    const container = document.createElement('div');
+    container.className = 'loot-slot';
+    
+    const selectedItem = items.find(i => i.id === selectedValue);
+    const displayText = selectedItem ? selectedItem.name : '— не выбрано —';
+
+    container.innerHTML = `
+      <span class="loot-label">${slotLabel}</span>
+      <div class="loot-select-wrap" data-slot="${slotId}">
+        <div class="select-display" data-value="${selectedValue || ''}">
+          ${displayText}
+        </div>
+        <div class="dropdown">
+          <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
+          <div class="items-wrap"></div>
+        </div>
+      </div>
+    `;
+
+    const wrap = container.querySelector('.loot-select-wrap');
+    const display = wrap.querySelector('.select-display');
+    const dropdown = wrap.querySelector('.dropdown');
+    const searchInput = wrap.querySelector('.search-input');
+    const itemsWrap = wrap.querySelector('.items-wrap');
+
+    let currentValue = selectedValue || '';
+
+    function renderItems(filter = '') {
+      const search = filter.toLowerCase().trim();
+      let filtered = items;
       
-      closeModal('modal-player');
-      await loadPlayers();
-    } catch (e) {
-      errEl.textContent = 'Ошибка: ' + e.message;
-      errEl.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Сохранить';
+      if (search) {
+        filtered = items.filter(item => 
+          item.name.toLowerCase().includes(search)
+        );
+      }
+
+      itemsWrap.innerHTML = '';
+
+      if (!filtered.length) {
+        itemsWrap.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
+      } else {
+        filtered.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          if (item.id === currentValue) {
+            div.classList.add('selected');
+          }
+          div.textContent = item.name;
+          div.dataset.value = item.id;
+          div.addEventListener('click', () => {
+            selectItem(item.id, item.name);
+          });
+          itemsWrap.appendChild(div);
+        });
+      }
+    }
+
+    function selectItem(value, label) {
+      currentValue = value;
+      display.textContent = label || '— не выбрано —';
+      display.dataset.value = value;
+      dropdown.classList.remove('open');
+      renderItems();
+    }
+
+    display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      dropdown.classList.toggle('open');
+      if (!isOpen) {
+        searchInput.value = '';
+        renderItems();
+        setTimeout(() => searchInput.focus(), 100);
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      renderItems(searchInput.value);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    if (currentValue) {
+      const item = items.find(i => i.id === currentValue);
+      if (item) {
+        display.textContent = item.name;
+      }
+    }
+
+    container.getSelected = () => currentValue;
+
+    return container;
+  }
+
+  // ============================================
+  // ЗАПОЛНЕНИЕ ЖЕЛАЕМОГО ЛУТА
+  // ============================================
+
+  function populateLootSlots() {
+    const container = document.getElementById('loot-selection');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const currentValues = {};
+    if (editingCharId) {
+      const char = characters.find(c => c.id === editingCharId);
+      if (char?.desired_loot) {
+        Object.assign(currentValues, char.desired_loot);
+      }
+    }
+
+    SLOTS.forEach(slot => {
+      const slotItems = allItems.filter(item => item.slot === slot.id);
+      const select = createSearchableSelect(
+        slot.id,
+        slot.label,
+        slotItems,
+        currentValues[slot.id] || ''
+      );
+      container.appendChild(select);
+    });
+  }
+
+  // ============================================
+  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ
+  // ============================================
+
+  function getSelectedLoot() {
+    const result = {};
+    document.querySelectorAll('.loot-slot').forEach(slot => {
+      const wrap = slot.querySelector('.loot-select-wrap');
+      if (wrap) {
+        const display = wrap.querySelector('.select-display');
+        if (display && display.dataset.value) {
+          const slotId = wrap.dataset.slot;
+          result[slotId] = display.dataset.value;
+        }
+      }
+    });
+    return result;
+  }
+
+  // ============================================
+  // МОДАЛЬНОЕ ОКНО
+  // ============================================
+
+  const modal = document.getElementById('modal-character');
+  const modalTitle = document.getElementById('modal-char-title');
+  const editCharId = document.getElementById('edit-char-id');
+  const charName = document.getElementById('f-char-name');
+  const charWeapon1 = document.getElementById('f-char-weapon1');
+  const charWeapon2 = document.getElementById('f-char-weapon2');
+  const charModerationNote = document.getElementById('f-moderation-note');
+  const charError = document.getElementById('char-error');
+
+  function openAddCharacter() {
+    if (characters.length > 0) {
+      showToast('У вас уже есть персонаж! Сначала удалите текущего.', 'error');
+      return;
+    }
+
+    editingCharId = null;
+    modalTitle.textContent = 'Добавить персонажа';
+    editCharId.value = '';
+    charName.value = '';
+    charWeapon1.value = '';
+    charWeapon2.value = '';
+    charModerationNote.value = '';
+    
+    charError.style.display = 'none';
+    modal.classList.remove('hidden');
+    
+    populateLootSlots();
+    setupWeaponSync();
+  }
+
+  function openEditCharacter(char) {
+    editingCharId = char.id;
+    modalTitle.textContent = 'Редактировать персонажа';
+    editCharId.value = char.id;
+    charName.value = char.name || '';
+    charWeapon1.value = char.weapons?.[0] || '';
+    charWeapon2.value = char.weapons?.[1] || '';
+    charModerationNote.value = char.moderation_note || '';
+
+    charError.style.display = 'none';
+    modal.classList.remove('hidden');
+    
+    populateLootSlots();
+    setupWeaponSync();
+  }
+
+  function closeCharModal() {
+    modal.classList.add('hidden');
+    editingCharId = null;
+  }
+
+  document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
+  document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
+  document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
+
+  // ============================================
+  // СОХРАНЕНИЕ ПЕРСОНАЖА
+  // ============================================
+
+  document.getElementById('btn-char-save').addEventListener('click', async () => {
+    const name = charName.value.trim();
+    const weapon1 = charWeapon1.value;
+    const weapon2 = charWeapon2.value;
+    const moderationNote = charModerationNote.value.trim();
+
+    if (!name) {
+      charError.textContent = 'Введите имя персонажа';
+      charError.style.display = 'block';
+      return;
+    }
+
+    if (!weapon1) {
+      charError.textContent = 'Выберите основное оружие';
+      charError.style.display = 'block';
+      return;
+    }
+
+    if (weapon1 === weapon2) {
+      charError.textContent = 'Основное и дополнительное оружие не могут совпадать';
+      charError.style.display = 'block';
+      return;
+    }
+
+    if (!editCharId.value && characters.length > 0) {
+      charError.textContent = 'У вас уже есть персонаж! Сначала удалите текущего.';
+      charError.style.display = 'block';
+      return;
+    }
+
+    const desiredLoot = getSelectedLoot();
+
+    // Если пользователь модератор или админ — сразу одобряем
+    const isModeratorOrAdmin = userIsModerator;
+    const status = isModeratorOrAdmin ? 'approved' : 'pending';
+
+    const charData = {
+      name,
+      weapons: [weapon1, weapon2].filter(Boolean),
+      desired_loot: desiredLoot,
+      user_id: currentUser.uid,
+      user_email: currentUser.email,
+      status: status,
+      moderation_note: moderationNote || null,
+      moderation_feedback: null,
+      moderated_by: isModeratorOrAdmin ? currentUser.uid : null,
+      moderated_at: isModeratorOrAdmin ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    };
+
+    const id = editCharId.value;
+
+    try {
+      if (id) {
+        const existing = characters.find(c => c.id === id);
+        if (existing && existing.status === 'approved' && !isModeratorOrAdmin) {
+          charError.textContent = 'Нельзя редактировать одобренного персонажа';
+          charError.style.display = 'block';
+          return;
+        }
+        await updateDoc(doc(db, 'characters', id), charData);
+        showToast(isModeratorOrAdmin ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
+      } else {
+        await addDoc(collection(db, 'characters'), {
+          ...charData,
+          created_at: new Date().toISOString()
+        });
+        showToast(isModeratorOrAdmin ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
+      }
+
+      closeCharModal();
+      await loadCharacters();
+      renderCharacters();
+
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      charError.textContent = 'Ошибка сохранения: ' + error.message;
+      charError.style.display = 'block';
     }
   });
 
-  window.confirmDelete = (id, name) => {
-    if (!confirm(`Удалить персонажа «${name}»?`)) return;
-    deletePlayer(id)
-      .then(() => {
-        showToast('Персонаж удалён');
-        loadPlayers();
-      })
-      .catch(e => {
-        console.error('Ошибка удаления:', e);
-        showToast('Ошибка удаления', 'error');
-      });
-  };
-
-  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-  window.closeModal = closeModal;
+  // ============================================
+  // HELPERS
+  // ============================================
 
   function showToast(msg, type = 'success') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
 
-  // ============================================================
-  // ЗАПУСК
-  // ============================================================
-  
-  loadPlayers();
+  // ============================================
+  // ЗАГРУЗКА ДАННЫХ
+  // ============================================
+
+  await loadData();
+
+  console.log('✅ Страница профиля загружена');
+
 </script>
+
 </body>
 </html>
