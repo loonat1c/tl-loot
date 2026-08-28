@@ -215,317 +215,13 @@
       gap: 0.4rem;
     }
 
-    /* ── Тег лута с всплывающей карточкой ──────────────── */
-    .loot-tag-wrap {
-      position: relative;
-      display: inline-block;
-    }
-
-    .loot-tag-wrap .loot-tag {
+    .character-card .char-loot-items .loot-tag {
       background: rgba(124, 58, 237, 0.15);
       padding: 0.3rem 0.8rem;
       border-radius: 6px;
       font-size: 0.8rem;
       border: 1px solid var(--accent);
       color: var(--accent-soft);
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-      display: inline-block;
-    }
-
-    .loot-tag-wrap .loot-tag:hover {
-      background: rgba(124, 58, 237, 0.25);
-      border-color: var(--accent-soft);
-    }
-
-    /* ── Всплывающая карточка предмета ─────────────────── */
-    .loot-tag-wrap .item-tooltip {
-      display: none;
-      position: absolute;
-      left: calc(100% + 12px);
-      top: 50%;
-      transform: translateY(-50%);
-      width: 380px;
-      max-width: 90vw;
-      max-height: 85vh;
-      overflow-y: auto;
-      background: var(--bg-card);
-      border: 1px solid var(--accent);
-      border-radius: var(--radius);
-      padding: 1rem;
-      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .loot-tag-wrap:last-child .item-tooltip,
-    .loot-tag-wrap:nth-last-child(2) .item-tooltip {
-      left: auto;
-      right: calc(100% + 12px);
-    }
-
-    .loot-tag-wrap .item-tooltip::before {
-      content: '';
-      position: absolute;
-      right: 100%;
-      top: 20px;
-      border: 8px solid transparent;
-      border-right-color: var(--accent);
-    }
-
-    .loot-tag-wrap:last-child .item-tooltip::before,
-    .loot-tag-wrap:nth-last-child(2) .item-tooltip::before {
-      right: auto;
-      left: 100%;
-      border-right-color: transparent;
-      border-left-color: var(--accent);
-    }
-
-    .loot-tag-wrap:hover .item-tooltip {
-      display: block;
-    }
-
-    .loot-tag-wrap .item-tooltip::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .loot-tag-wrap .item-tooltip::-webkit-scrollbar-track {
-      background: var(--bg-card2);
-      border-radius: 4px;
-    }
-
-    .loot-tag-wrap .item-tooltip::-webkit-scrollbar-thumb {
-      background: var(--accent);
-      border-radius: 4px;
-    }
-
-    .item-tooltip .tt-header {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-      align-items: flex-start;
-    }
-
-    .item-tooltip .tt-header .tt-img {
-      width: 48px;
-      height: 48px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: var(--bg-card2);
-      flex-shrink: 0;
-    }
-
-    .item-tooltip .tt-header .tt-title {
-      flex: 1;
-    }
-
-    .item-tooltip .tt-header .tt-title .tt-name {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-header .tt-title .tt-quality {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-      margin-top: 2px;
-    }
-
-    .item-tooltip .tt-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.15rem 1rem;
-      margin: 0.4rem 0;
-      padding: 0.4rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-    }
-
-    .item-tooltip .tt-stats .stat {
-      font-size: 0.75rem;
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-stats .stat .stat-label {
-      color: var(--text-muted);
-    }
-
-    .item-tooltip .tt-stats .stat .stat-value {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .item-tooltip .tt-damage {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      padding: 0.3rem 0.4rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      margin-bottom: 0.4rem;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-damage .damage-label {
-      font-weight: 400;
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      margin-right: 0.3rem;
-    }
-
-    .item-tooltip .tt-effect {
-      display: flex;
-      gap: 0.5rem;
-      margin: 0.4rem 0;
-      padding: 0.4rem;
-      background: rgba(124, 58, 237, 0.08);
-      border-radius: var(--radius);
-      border: 1px solid var(--accent-glow);
-    }
-
-    .item-tooltip .tt-effect .effect-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
-      object-fit: cover;
-      background: var(--bg-card2);
-      flex-shrink: 0;
-    }
-
-    .item-tooltip .tt-effect .effect-info {
-      flex: 1;
-      font-size: 0.75rem;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-effect .effect-info .effect-name {
-      font-weight: 600;
-      color: var(--accent-soft);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-effect .effect-info .effect-desc {
-      color: var(--text-muted);
-      margin-top: 2px;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-set-bonus {
-      margin: 0.4rem 0;
-      padding: 0.4rem 0.5rem;
-      background: rgba(245, 158, 11, 0.08);
-      border-radius: var(--radius);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .item-tooltip .tt-set-bonus .set-name {
-      font-weight: 700;
-      color: var(--warning);
-      font-size: 0.85rem;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-set-bonus .set-pieces {
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
-      margin-top: 0.2rem;
-    }
-
-    .item-tooltip .tt-set-bonus .set-pieces .set-piece {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-set-bonus .set-pieces .set-piece .pieces-label {
-      color: var(--text);
-      font-weight: 600;
-      margin-right: 0.3rem;
-    }
-
-    .item-tooltip .tt-properties {
-      margin-top: 0.4rem;
-      padding-top: 0.4rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .item-tooltip .tt-properties .prop-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 2px;
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-properties .prop-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.2rem;
-    }
-
-    .item-tooltip .tt-properties .prop-list .prop-tag {
-      background: var(--bg-card2);
-      padding: 0.1rem 0.4rem;
-      border-radius: 4px;
-      font-size: 0.65rem;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-flavor {
-      margin-top: 0.4rem;
-      padding-top: 0.4rem;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      font-style: italic;
-      border-top: 1px solid var(--border);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-boss {
-      margin-top: 0.4rem;
-      padding-top: 0.4rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
-    }
-
-    .item-tooltip .tt-boss .boss-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .item-tooltip .tt-boss .boss-name {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .item-tooltip .tt-level {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      background: var(--bg-card2);
-      padding: 0.05rem 0.4rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
     .character-card .char-moderation-note {
@@ -810,24 +506,6 @@
         justify-content: flex-start;
         margin-top: 0.25rem;
       }
-
-      .loot-tag-wrap .item-tooltip {
-        position: fixed;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        width: 92vw;
-        max-height: 80vh;
-        right: auto !important;
-      }
-
-      .loot-tag-wrap .item-tooltip::before {
-        display: none;
-      }
-
-      .item-tooltip .tt-stats {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
@@ -959,6 +637,10 @@
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
+  // ============================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ============================================
+
   initNavbar();
   initAuth();
   await authReady;
@@ -967,12 +649,20 @@
     window.location.href = '/pages/login.html';
   }
 
+  // ============================================
+  // СОСТОЯНИЕ
+  // ============================================
+
   let allItems = [];
   let allBosses = [];
   let characters = [];
   let editingCharId = null;
   const userId = currentUser?.uid;
   const userIsModerator = isModerator();
+
+  // ============================================
+  // ЗАГРУЗКА ДАННЫХ
+  // ============================================
 
   async function loadData() {
     try {
@@ -1009,6 +699,10 @@
     }
   }
 
+  // ============================================
+  // ОТОБРАЖЕНИЕ ПРОФИЛЯ
+  // ============================================
+
   function renderProfile() {
     const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
     document.getElementById('profile-name').textContent = name;
@@ -1018,6 +712,10 @@
     const avatar = document.getElementById('profile-avatar');
     avatar.textContent = name.charAt(0).toUpperCase();
   }
+
+  // ============================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ============================================
 
   function getWeaponLabel(weaponId) {
     const weapon = WEAPONS.find(w => w.id === weaponId);
@@ -1053,99 +751,9 @@
     return types[type] || type;
   }
 
-  function createItemTooltip(item) {
-    if (!item) return '';
-
-    const slotLabel = getSlotLabel(item.slot);
-    const qualityLabel = getQualityLabel(item.quality);
-    const bossName = getBossName(item.boss_id);
-    const bossIcon = getBossIcon(item.boss_id);
-    const stats = item.stats || [];
-    const effect = item.effect || {};
-    const setBonus = item.set_bonus || {};
-    const properties = item.properties || [];
-    const desc = item.description || '';
-    const level = item.level || '';
-    const damageMin = item.damage_min || '';
-    const damageMax = item.damage_max || '';
-    const isWeapon = item.slot === 'weapon';
-
-    return `
-      <div class="item-tooltip">
-        <div class="tt-header">
-          <img class="tt-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
-          <div class="tt-title">
-            <div class="tt-name">${item.name || 'Без названия'}</div>
-            <div class="tt-quality">${qualityLabel} • ${slotLabel} ${level ? `• Уровень ${level}` : ''}</div>
-          </div>
-        </div>
-
-        ${damageMin || damageMax ? `
-          <div class="tt-damage">
-            <span class="damage-label">🗡️ Урон:</span>
-            ${damageMin}${damageMax ? ` ~ ${damageMax}` : ''}
-          </div>
-        ` : ''}
-
-        ${stats.length ? `
-          <div class="tt-stats">
-            ${stats.map(s => `
-              <div class="stat">
-                <span class="stat-label">${s.label || s}</span>
-                <span class="stat-value">${s.value || ''}</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        ${!isWeapon && setBonus.name ? `
-          <div class="tt-set-bonus">
-            <div class="set-name">${setBonus.name}</div>
-            <div class="set-pieces">
-              ${setBonus.piece2 ? `
-                <div class="set-piece">
-                  <span class="pieces-label">(2):</span> ${setBonus.piece2}
-                </div>
-              ` : ''}
-              ${setBonus.piece4 ? `
-                <div class="set-piece">
-                  <span class="pieces-label">(4):</span> ${setBonus.piece4}
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        ${isWeapon && (effect.name || effect.desc) ? `
-          <div class="tt-effect">
-            ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
-            <div class="effect-info">
-              ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
-              ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        ${properties.length ? `
-          <div class="tt-properties">
-            <div class="prop-label">Возможные свойства</div>
-            <div class="prop-list">
-              ${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${desc ? `
-          <div class="tt-flavor">${desc}</div>
-        ` : ''}
-
-        <div class="tt-boss">
-          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : '<span>👹</span>'}
-          <span class="boss-name">${bossName}</span>
-        </div>
-      </div>
-    `;
-  }
+  // ============================================
+  // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
+  // ============================================
 
   function renderCharacters() {
     const container = document.getElementById('characters-list');
@@ -1181,6 +789,7 @@
         return `<span class="weapon-tag">${getWeaponLabel(w)}</span>`;
       }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
 
+      // Желаемый лут (без всплывающих карточек)
       let lootHtml = '';
       if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
         const lootItems = Object.entries(char.desired_loot)
@@ -1189,17 +798,9 @@
             const item = allItems.find(i => i.id === itemId);
             const slotObj = SLOTS.find(s => s.id === slot);
             const slotLabel = slotObj?.label || slot;
-            
-            if (item) {
-              const tooltipHtml = createItemTooltip(item);
-              return `
-                <div class="loot-tag-wrap">
-                  <span class="loot-tag">${slotLabel}: ${item.name}</span>
-                  ${tooltipHtml}
-                </div>
-              `;
-            }
-            return '';
+            return item ? `
+              <span class="loot-tag">${slotLabel}: ${item.name}</span>
+            ` : '';
           }).filter(Boolean).join('');
         
         if (lootItems) {
@@ -1292,6 +893,10 @@
     };
   }
 
+  // ============================================
+  // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
+  // ============================================
+
   function populateWeaponSelects() {
     const selects = ['f-char-weapon1', 'f-char-weapon2'];
     
@@ -1314,6 +919,10 @@
       }
     });
   }
+
+  // ============================================
+  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ
+  // ============================================
 
   function setupWeaponSync() {
     const weapon1 = document.getElementById('f-char-weapon1');
@@ -1344,6 +953,10 @@
 
     syncWeapons();
   }
+
+  // ============================================
+  // SELECT С ПОИСКОМ
+  // ============================================
 
   function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
     const container = document.createElement('div');
@@ -1445,6 +1058,10 @@
     return container;
   }
 
+  // ============================================
+  // ЗАПОЛНЕНИЕ ЖЕЛАЕМОГО ЛУТА
+  // ============================================
+
   function populateLootSlots() {
     const container = document.getElementById('loot-selection');
     if (!container) return;
@@ -1471,6 +1088,10 @@
     });
   }
 
+  // ============================================
+  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ
+  // ============================================
+
   function getSelectedLoot() {
     const result = {};
     document.querySelectorAll('.loot-slot').forEach(slot => {
@@ -1485,6 +1106,10 @@
     });
     return result;
   }
+
+  // ============================================
+  // МОДАЛЬНОЕ ОКНО
+  // ============================================
 
   const modal = document.getElementById('modal-character');
   const modalTitle = document.getElementById('modal-char-title');
@@ -1541,6 +1166,10 @@
   document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
   document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
 
+  // ============================================
+  // СОХРАНЕНИЕ ПЕРСОНАЖА
+  // ============================================
+
   document.getElementById('btn-char-save').addEventListener('click', async () => {
     const name = charName.value.trim();
     const weapon1 = charWeapon1.value;
@@ -1573,6 +1202,7 @@
 
     const desiredLoot = getSelectedLoot();
 
+    // Если пользователь модератор или админ — сразу одобряем
     const isModeratorOrAdmin = isModerator();
     const status = isModeratorOrAdmin ? 'approved' : 'pending';
 
@@ -1621,6 +1251,10 @@
     }
   });
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
   function showToast(msg, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -1628,6 +1262,10 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
+
+  // ============================================
+  // ЗАГРУЗКА ДАННЫХ
+  // ============================================
 
   await loadData();
 
