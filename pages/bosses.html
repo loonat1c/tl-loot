@@ -150,14 +150,14 @@
     .item-list {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.3rem;
     }
     
     .item-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 0.4rem 0.6rem;
+      gap: 8px;
+      padding: 0.3rem 0.5rem;
       background: var(--bg-card2);
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -171,8 +171,8 @@
     }
     
     .item-row img {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 4px;
       object-fit: cover;
       background: var(--bg-card);
@@ -180,81 +180,17 @@
     }
     
     .item-row .item-name {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 500;
       flex: 1;
     }
     
     .item-row .item-slot {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
-    }
-
-    /* ── всплывающая карточка предмета ──────────────────────── */
-    .item-tooltip {
-      position: fixed;
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem;
-      min-width: 220px;
-      max-width: 300px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      pointer-events: none;
-      z-index: 1000;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-    
-    .item-tooltip.visible {
-      display: block;
-      opacity: 1;
-    }
-    
-    .item-tooltip .tooltip-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 0.5rem;
-    }
-    
-    .item-tooltip .tooltip-header img {
-      width: 48px;
-      height: 48px;
-      border-radius: 4px;
-      object-fit: cover;
-      background: var(--bg-card2);
-    }
-    
-    .item-tooltip .tooltip-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-    
-    .item-tooltip .tooltip-slot {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-    
-    .item-tooltip .tooltip-stats {
-      margin-top: 0.5rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-    
-    .item-tooltip .tooltip-stats div {
-      padding: 0.1rem 0;
-    }
-    
-    .item-tooltip .tooltip-stats .stat-positive {
-      color: #4ade80;
-    }
-    
-    .item-tooltip .tooltip-stats .stat-negative {
-      color: #f87171;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
     }
 
     /* ── кнопка добавить ────────────────────────────────────── */
@@ -305,6 +241,79 @@
     .text-muted { color: var(--text-muted); }
     .hidden { display: none !important; }
 
+    /* ── Всплывающая карточка предмета ──────────────────────── */
+    .item-tooltip {
+      position: fixed;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      min-width: 200px;
+      max-width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    
+    .item-tooltip.visible {
+      display: block;
+      opacity: 1;
+    }
+    
+    .item-tooltip .tooltip-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.4rem;
+    }
+    
+    .item-tooltip .tooltip-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+    }
+    
+    .item-tooltip .tooltip-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .item-tooltip .tooltip-slot {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .item-tooltip .tooltip-stats {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+    
+    .item-tooltip .tooltip-stats .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.1rem 0;
+      color: var(--text-muted);
+    }
+    
+    .item-tooltip .tooltip-stats .stat-positive {
+      color: #4ade80;
+    }
+    
+    .item-tooltip .tooltip-stats .stat-negative {
+      color: #f87171;
+    }
+    
+    .item-tooltip .tooltip-stats .stat-neutral {
+      color: var(--text-muted);
+    }
+
     /* Адаптив для мобильных */
     @media (max-width: 640px) {
       .boss-detail-info {
@@ -321,9 +330,13 @@
         opacity: 0.2 !important;
       }
       .item-tooltip {
-        min-width: 180px;
-        max-width: 240px;
-        padding: 0.75rem;
+        min-width: 160px;
+        max-width: 220px;
+        padding: 0.6rem 0.8rem;
+      }
+      .item-tooltip .tooltip-header img {
+        width: 32px;
+        height: 32px;
       }
     }
   </style>
@@ -725,30 +738,55 @@
     const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '—';
     slot.textContent = `Слот: ${slotLabel}`;
 
-    // Статистика предмета (если есть)
+    // Статистика предмета
     stats.innerHTML = '';
-    if (item.stats && typeof item.stats === 'object') {
-      const entries = Object.entries(item.stats);
-      if (entries.length) {
-        entries.forEach(([key, value]) => {
+    if (item.stats) {
+      const statEntries = [];
+      
+      // Обрабатываем разные форматы stats
+      if (typeof item.stats === 'object' && !Array.isArray(item.stats)) {
+        // Формат: { statName: value }
+        Object.entries(item.stats).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            statEntries.push({ key, value });
+          }
+        });
+      } else if (Array.isArray(item.stats)) {
+        // Формат: [{ name, value }] или [name, value]
+        item.stats.forEach(stat => {
+          if (typeof stat === 'object') {
+            statEntries.push({ key: stat.name || stat.key, value: stat.value });
+          } else if (typeof stat === 'string' && stat.includes(':')) {
+            const [key, value] = stat.split(':').map(s => s.trim());
+            statEntries.push({ key, value });
+          }
+        });
+      }
+
+      if (statEntries.length) {
+        statEntries.forEach(({ key, value }) => {
           const div = document.createElement('div');
+          div.className = 'stat-row';
+          
           const num = parseFloat(value);
-          if (!isNaN(num) && num > 0) {
-            div.className = 'stat-positive';
-            div.textContent = `+${value} ${key}`;
-          } else if (!isNaN(num) && num < 0) {
-            div.className = 'stat-negative';
-            div.textContent = `${value} ${key}`;
+          if (!isNaN(num)) {
+            if (num > 0) {
+              div.innerHTML = `<span class="stat-positive">+${value}</span><span>${key}</span>`;
+            } else if (num < 0) {
+              div.innerHTML = `<span class="stat-negative">${value}</span><span>${key}</span>`;
+            } else {
+              div.innerHTML = `<span class="stat-neutral">${value}</span><span>${key}</span>`;
+            }
           } else {
-            div.textContent = `${value} ${key}`;
+            div.innerHTML = `<span class="stat-neutral">${value}</span><span>${key}</span>`;
           }
           stats.appendChild(div);
         });
       } else {
-        stats.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
+        stats.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.7rem;">Нет характеристик</div>';
       }
     } else {
-      stats.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
+      stats.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.7rem;">Нет характеристик</div>';
     }
 
     tooltip.classList.add('visible');
@@ -760,7 +798,6 @@
     let x = e.clientX + padding;
     let y = e.clientY + padding;
 
-    // Проверяем, чтобы тултип не выходил за границы экрана
     const rect = tooltip.getBoundingClientRect();
     if (x + rect.width > window.innerWidth) {
       x = e.clientX - rect.width - padding;
