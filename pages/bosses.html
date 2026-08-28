@@ -241,15 +241,32 @@
     .text-muted { color: var(--text-muted); }
     .hidden { display: none !important; }
 
-    /* ── Всплывающая карточка предмета ──────────────────────── */
+    /* Адаптив для мобильных */
+    @media (max-width: 640px) {
+      .boss-detail-info {
+        max-width: 100%;
+      }
+      .boss-detail-bg {
+        width: 100%;
+        height: 60%;
+        top: 10%;
+        right: 0;
+        opacity: 0.15 !important;
+      }
+      .boss-detail-bg.has-image {
+        opacity: 0.2 !important;
+      }
+    }
+
+    /* ── Стили тултипа как на странице предметов ────────────── */
     .item-tooltip {
       position: fixed;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.75rem 1rem;
-      min-width: 200px;
-      max-width: 280px;
+      padding: 1rem 1.25rem;
+      min-width: 220px;
+      max-width: 320px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
       pointer-events: none;
       z-index: 1000;
@@ -266,13 +283,15 @@
     .item-tooltip .tooltip-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 0.4rem;
+      gap: 12px;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
     }
     
     .item-tooltip .tooltip-header img {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 4px;
       object-fit: cover;
       background: var(--bg-card2);
@@ -280,64 +299,43 @@
     
     .item-tooltip .tooltip-name {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      color: var(--text);
     }
     
     .item-tooltip .tooltip-slot {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
     
     .item-tooltip .tooltip-stats {
-      margin-top: 0.4rem;
-      padding-top: 0.4rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
     }
     
-    .item-tooltip .tooltip-stats .stat-row {
+    .item-tooltip .stat-row {
       display: flex;
       justify-content: space-between;
       padding: 0.1rem 0;
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
     
-    .item-tooltip .tooltip-stats .stat-positive {
+    .item-tooltip .stat-positive {
       color: #4ade80;
     }
     
-    .item-tooltip .tooltip-stats .stat-negative {
+    .item-tooltip .stat-negative {
       color: #f87171;
     }
     
-    .item-tooltip .tooltip-stats .stat-neutral {
+    .item-tooltip .stat-neutral {
       color: var(--text-muted);
     }
-
-    /* Адаптив для мобильных */
-    @media (max-width: 640px) {
-      .boss-detail-info {
-        max-width: 100%;
-      }
-      .boss-detail-bg {
-        width: 100%;
-        height: 60%;
-        top: 10%;
-        right: 0;
-        opacity: 0.15 !important;
-      }
-      .boss-detail-bg.has-image {
-        opacity: 0.2 !important;
-      }
-      .item-tooltip {
-        min-width: 160px;
-        max-width: 220px;
-        padding: 0.6rem 0.8rem;
-      }
-      .item-tooltip .tooltip-header img {
-        width: 32px;
-        height: 32px;
-      }
+    
+    .item-tooltip .stat-label {
+      color: var(--text-muted);
     }
   </style>
 </head>
@@ -372,7 +370,7 @@
   </div>
 </main>
 
-<!-- Всплывающая карточка предмета -->
+<!-- Всплывающая карточка предмета как на странице предметов -->
 <div class="item-tooltip" id="item-tooltip">
   <div class="tooltip-header">
     <img id="tooltip-img" alt="" />
@@ -721,7 +719,7 @@
     document.getElementById('filter-search').dispatchEvent(new Event('input'));
   });
 
-  // ── Всплывающая карточка предмета ──────────────
+  // ── Всплывающая карточка предмета (как на странице предметов) ──
   const tooltip = document.getElementById('item-tooltip');
   let tooltipTimeout;
 
@@ -729,35 +727,47 @@
     clearTimeout(tooltipTimeout);
     
     const img = document.getElementById('tooltip-img');
-    const name = document.getElementById('tooltip-name');
-    const slot = document.getElementById('tooltip-slot');
-    const stats = document.getElementById('tooltip-stats');
+    const nameEl = document.getElementById('tooltip-name');
+    const slotEl = document.getElementById('tooltip-slot');
+    const statsEl = document.getElementById('tooltip-stats');
 
     setItemImage(img, item.image);
-    name.textContent = item.name;
+    nameEl.textContent = item.name;
     const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '—';
-    slot.textContent = `Слот: ${slotLabel}`;
+    slotEl.textContent = `Слот: ${slotLabel}`;
 
-    // Статистика предмета
-    stats.innerHTML = '';
+    // Отображаем все характеристики
+    statsEl.innerHTML = '';
+    
     if (item.stats) {
-      const statEntries = [];
+      let statEntries = [];
       
-      // Обрабатываем разные форматы stats
+      // Парсим stats в зависимости от формата
       if (typeof item.stats === 'object' && !Array.isArray(item.stats)) {
-        // Формат: { statName: value }
+        // Формат: { "Атака": 12, "Защита": 9 }
         Object.entries(item.stats).forEach(([key, value]) => {
           if (value !== null && value !== undefined && value !== '') {
             statEntries.push({ key, value });
           }
         });
       } else if (Array.isArray(item.stats)) {
-        // Формат: [{ name, value }] или [name, value]
+        // Формат: [{ name: "Атака", value: 12 }, ...]
         item.stats.forEach(stat => {
           if (typeof stat === 'object') {
-            statEntries.push({ key: stat.name || stat.key, value: stat.value });
+            const key = stat.name || stat.label || stat.key || 'Свойство';
+            const value = stat.value || stat.val || 0;
+            statEntries.push({ key, value });
           } else if (typeof stat === 'string' && stat.includes(':')) {
             const [key, value] = stat.split(':').map(s => s.trim());
+            statEntries.push({ key, value });
+          }
+        });
+      } else if (typeof item.stats === 'string') {
+        // Формат: "Атака: 12, Защита: 9"
+        item.stats.split(',').forEach(part => {
+          const trimmed = part.trim();
+          if (trimmed.includes(':')) {
+            const [key, value] = trimmed.split(':').map(s => s.trim());
             statEntries.push({ key, value });
           }
         });
@@ -765,28 +775,37 @@
 
       if (statEntries.length) {
         statEntries.forEach(({ key, value }) => {
-          const div = document.createElement('div');
-          div.className = 'stat-row';
+          const row = document.createElement('div');
+          row.className = 'stat-row';
           
           const num = parseFloat(value);
+          let valueClass = 'stat-neutral';
+          let displayValue = value;
+          
           if (!isNaN(num)) {
             if (num > 0) {
-              div.innerHTML = `<span class="stat-positive">+${value}</span><span>${key}</span>`;
+              valueClass = 'stat-positive';
+              displayValue = `+${value}`;
             } else if (num < 0) {
-              div.innerHTML = `<span class="stat-negative">${value}</span><span>${key}</span>`;
+              valueClass = 'stat-negative';
+              displayValue = value;
             } else {
-              div.innerHTML = `<span class="stat-neutral">${value}</span><span>${key}</span>`;
+              valueClass = 'stat-neutral';
+              displayValue = value;
             }
-          } else {
-            div.innerHTML = `<span class="stat-neutral">${value}</span><span>${key}</span>`;
           }
-          stats.appendChild(div);
+          
+          row.innerHTML = `
+            <span class="${valueClass}">${displayValue}</span>
+            <span class="stat-label">${key}</span>
+          `;
+          statsEl.appendChild(row);
         });
       } else {
-        stats.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.7rem;">Нет характеристик</div>';
+        statsEl.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
       }
     } else {
-      stats.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.7rem;">Нет характеристик</div>';
+      statsEl.innerHTML = '<div class="stat-row" style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
     }
 
     tooltip.classList.add('visible');
