@@ -1353,7 +1353,8 @@
 
   function getBossIcon(bossId) {
     const boss = allBosses.find(b => b.id === bossId);
-    return boss?.icon || null;
+    // Исправлено: возвращаем полный путь к иконке
+    return boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
   }
 
   function getQualityLabel(quality) {
@@ -1410,7 +1411,7 @@
         <div class="item-meta">
           <span class="slot-badge">${slotLabel}</span>
           <span class="boss-tag">
-            ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" />` : '👹'}
+            ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />` : '👹'}
             ${bossName}
           </span>
           ${item.slot === 'weapon' && item.weapon_type ? `
@@ -1489,7 +1490,7 @@
         ${desc ? `<div class="fc-flavor">${desc}</div>` : ''}
 
         <div class="fc-boss">
-          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : `<span style="font-size:1.2rem;">👹</span>`}
+          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />` : `<span style="font-size:1.2rem;">👹</span>`}
           <span class="boss-name">${bossName}</span>
         </div>
       </div>
