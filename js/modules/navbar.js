@@ -50,7 +50,14 @@ function loadThemeSettings() {
   const savedColor = localStorage.getItem('tl_color');
   
   if (savedTheme) currentTheme = savedTheme;
-  if (savedColor) currentColor = savedColor;
+  if (savedColor && COLOR_SCHEMES[savedColor]) {
+    currentColor = savedColor;
+  } else if (savedColor) {
+    // Если сохраненный цвет не найден в схеме — сбрасываем на фиолетовый
+    console.warn('⚠️ Неизвестный цвет:', savedColor, '→ сброс на violet');
+    currentColor = 'violet';
+    localStorage.setItem('tl_color', 'violet');
+  }
   
   applyTheme(currentTheme, currentColor);
 }
@@ -86,6 +93,10 @@ function renderNav(nav) {
                        currentPath === '/index.html';
 
   const isProfileActive = !isProfilePage && isAuth;
+
+  // Безопасное получение текущего цвета
+  const currentColorScheme = COLOR_SCHEMES[currentColor] || COLOR_SCHEMES.violet;
+  const currentColorHex = currentColorScheme.color;
 
   nav.innerHTML = `
     <div class="navbar-inner">
@@ -157,7 +168,7 @@ function renderNav(nav) {
             </div>
             <span class="theme-icon moon">🌙</span>
           </div>
-          <span class="color-ball" style="background:${COLOR_SCHEMES[currentColor].color};"></span>
+          <span class="color-ball" style="background:${currentColorHex};"></span>
           
           <div class="color-picker-popup" id="color-picker-popup">
             <div class="color-grid">
