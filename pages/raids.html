@@ -308,7 +308,6 @@
   // ЗАЩИТА: Легкая версия (без блокировки eval)
   // ============================================================
   
-  // Просто блокируем контекстное меню и DevTools
   document.addEventListener('contextmenu', function(e) {
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
       e.preventDefault();
@@ -327,6 +326,57 @@
       return false;
     }
   });
+
+  // ============================================================
+  // ЗАЩИТА: Усиленная защита (без блокировки eval)
+  // ============================================================
+  
+  // Защита от подмены localStorage
+  const _localStorage = window.localStorage;
+  Object.defineProperty(window, 'localStorage', {
+    get: function() {
+      return new Proxy(_localStorage, {
+        set: function(target, property, value) {
+          if (property === 'tl_user' || property === 'tl_user_id' || property === 'tl_token') {
+            console.warn('🔒 Попытка изменения защищенных данных localStorage');
+            return false;
+          }
+          target[property] = value;
+          return true;
+        },
+        deleteProperty: function(target, property) {
+          if (property === 'tl_user' || property === 'tl_user_id' || property === 'tl_token') {
+            console.warn('🔒 Попытка удаления защищенных данных localStorage');
+            return false;
+          }
+          delete target[property];
+          return true;
+        }
+      });
+    }
+  });
+
+  // Защита от XSS через innerHTML
+  const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+  if (originalInnerHTML) {
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      get: originalInnerHTML.get,
+      set: function(value) {
+        if (typeof value === 'string' && (
+          value.includes('<script') || 
+          value.includes('javascript:') ||
+          value.includes('onerror=') ||
+          value.includes('onload=')
+        )) {
+          console.warn('🔒 Попытка XSS-атаки заблокирована');
+          return;
+        }
+        originalInnerHTML.set.call(this, value);
+      }
+    });
+  }
+
+  console.log('🔒 Защита активирована');
 
   // ============================================================
   // ИМПОРТЫ
@@ -351,15 +401,14 @@
   import { SLOTS } from "../js/constants.js";
 
   // ============================================================
-  // ЗАЩИТА: Проверка импортов (без eval)
+  // ЗАЩИТА: Проверка импортов
   // ============================================================
   
   const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
   let importsOk = true;
   
+  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
   for (const fn of requiredFunctions) {
-    // Проверяем через typeof, а не через eval
-    const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
     if (typeof fnMap[fn] !== 'function') {
       console.error(`🔒 Критическая функция ${fn} не найдена или была подменена`);
       importsOk = false;
@@ -378,7 +427,7 @@
   }
 
   // ============================================================
-  // ОСТАЛЬНОЙ КОД (без изменений)
+  // ОСНОВНАЯ ЛОГИКА
   // ============================================================
 
   let allRaids = [], allPlayers = [], allBosses = [], allItems = [];
@@ -399,6 +448,7 @@
     isFinished: false,
     winner: null,
     currentUserId: null,
+    currentPlayerId: null,
     queue: 'main'
   };
 
@@ -426,6 +476,14 @@
       
       await authReady;
       rollState.currentUserId = currentUser?.uid || null;
+      
+      // Находим персонажа текущего пользователя
+      if (rollState.currentUserId) {
+        const player = allPlayers.find(p => p.user_id === rollState.currentUserId);
+        if (player) {
+          rollState.currentPlayerId = player.id;
+        }
+      }
     } catch (e) {
       console.error('Ошибка инициализации:', e);
       showToast('Ошибка загрузки данных', 'error');
@@ -910,8 +968,8 @@
     
     count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
     
-    const currentUserId = rollState.currentUserId;
-    const isParticipant = rollState.participants.some(p => p.playerId === currentUserId && !p.isBlocked);
+    const currentPlayerId = rollState.currentPlayerId;
+    const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
     document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-start-roll").disabled = rollState.participants.filter(p => !p.isBlocked).length < 2 || rollState.isRolling || rollState.isFinished;
@@ -947,27 +1005,31 @@
   };
 
   document.getElementById("btn-join-roll").addEventListener("click", () => {
-    const currentUserId = rollState.currentUserId;
-    if (!currentUserId) {
-      showToast("Вы не авторизованы", "error");
+    if (!rollState.currentPlayerId) {
+      showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
       return;
     }
-    const player = allPlayers.find(p => p.id === currentUserId);
+    
+    const player = allPlayers.find(p => p.id === rollState.currentPlayerId);
     if (!player) {
-      showToast("Игрок не найден", "error");
+      showToast("Персонаж не найден", "error");
       return;
     }
     if (player.approved === false) {
-      showToast("Ваш персонаж не аппрувнут администратором", "error");
+      showToast("Ваш персонаж не подтвержден администратором", "error");
       return;
     }
+    
     window.joinRoll(player.id, player.nickname);
   });
 
   document.getElementById("btn-leave-roll").addEventListener("click", () => {
     if (rollState.isRolling || rollState.isFinished) return;
-    const currentUserId = rollState.currentUserId;
-    rollState.participants = rollState.participants.filter(p => p.playerId !== currentUserId);
+    if (!rollState.currentPlayerId) {
+      showToast("Вы не участвуете в ролле", "error");
+      return;
+    }
+    rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
     renderRollParticipants();
   });
 
@@ -1151,6 +1213,9 @@
   function todayStr() { return new Date().toISOString().split("T")[0]; }
   function showToast(msg, type = "success") { const t = document.createElement("div"); t.className = `toast ${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 
+  // ============================================================
+  // ЗАПУСК
+  // ============================================================
   init();
 </script>
 </body>
