@@ -298,6 +298,30 @@
       color: #818cf8; 
       border: 1px solid #818cf8; 
     }
+    .badge-guild-leader {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+    }
+    .badge-moderator {
+      background: rgba(52, 211, 153, 0.2);
+      color: #34d399;
+      border: 1px solid #34d399;
+    }
+    
+    .role-select {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg-card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .role-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
     
     .status-badge {
       display: inline-block;
@@ -330,6 +354,13 @@
       }
       .moderation-card .card-header {
         flex-direction: column;
+      }
+      .user-row {
+        flex-wrap: wrap;
+      }
+      .user-row .role-select {
+        flex: 1;
+        min-width: 100px;
       }
     }
   </style>
@@ -409,11 +440,17 @@
         <div class="admin-section" id="users-section">
           <h3>👤 Пользователи системы</h3>
           <div class="info-box">
-            Создавай учётные записи для модераторов. Первый админ создаётся вручную в консоли Firebase.
+            Управляй ролями пользователей. <strong>Администратор</strong> имеет полный доступ, 
+            <strong>Глава гильдии</strong> может запускать роллы и управлять посещаемостью, 
+            <strong>Модератор</strong> может модерировать персонажей.
           </div>
-          <button class="btn btn-primary btn-sm" id="btn-add-user" style="margin-bottom:1rem">
-            + Добавить модератора
-          </button>
+          
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <button class="btn btn-primary btn-sm" id="btn-add-user">
+              + Добавить модератора
+            </button>
+          </div>
+          
           <div id="users-list">
             <div class="text-muted" style="font-size:0.85rem">Загрузка...</div>
           </div>
@@ -521,6 +558,7 @@
   let allPlayers = [];
   let allItems = [];
   let allCharacters = [];
+  let allUsers = [];
   let currentFilter = 'pending';
   
   // ─── Авторизация ──────────────────────────────────────
@@ -539,10 +577,9 @@
     if (role !== "admin") {
       document.getElementById("users-section").style.display = "none";
     } else {
-      loadUsers();
+      await loadUsers();
     }
 
-    // Загружаем данные для модерации
     await loadModerationData();
 
     getPlayers().then(players => {
@@ -638,7 +675,6 @@
   function renderModeration() {
     const container = document.getElementById('moderation-list');
     
-    // Фильтруем по статусу
     let filtered = allCharacters;
     if (currentFilter === 'pending') {
       filtered = allCharacters.filter(c => c.status === 'pending');
@@ -647,7 +683,6 @@
     } else if (currentFilter === 'rejected') {
       filtered = allCharacters.filter(c => c.status === 'rejected');
     }
-    // 'all' — показываем всех
 
     if (!filtered.length) {
       const statusLabels = {
@@ -756,7 +791,6 @@
       `;
     }).join('');
 
-    // Навешиваем обработчики
     window.approveCharacter = async (id) => {
       const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
       await moderateCharacter(id, 'approved', feedback);
@@ -869,42 +903,60 @@
     }
   };
 
-  // ─── Пользователи ────────────────────────────────────
+  // ─── УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (НОВАЯ ВЕРСИЯ) ────────
+  
+  const ROLES = [
+    { value: 'user', label: '👤 Пользователь', badge: 'badge-user' },
+    { value: 'moderator', label: '🛡️ Модератор', badge: 'badge-moderator' },
+    { value: 'guild_leader', label: '👑 Глава гильдии', badge: 'badge-guild-leader' },
+    { value: 'admin', label: '⚡ Администратор', badge: 'badge-purple' }
+  ];
+
   async function loadUsers() {
     const container = document.getElementById("users-list");
     try {
       const snap = await getDocs(collection(db, "users"));
-      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Сортируем: сначала админы, потом главы гильдии, потом модераторы, потом пользователи
+      const rolePriority = { admin: 0, guild_leader: 1, moderator: 2, user: 3 };
+      allUsers.sort((a, b) => (rolePriority[a.role] || 3) - (rolePriority[b.role] || 3));
 
-      if (!users.length) {
+      if (!allUsers.length) {
         container.innerHTML = `<div class="text-muted" style="font-size:0.85rem">Нет пользователей</div>`;
         return;
       }
 
-      container.innerHTML = users.map(u => {
-        let roleDisplay = 'Пользователь';
-        let badgeClass = 'badge-user';
+      container.innerHTML = allUsers.map(u => {
+        const currentUserRole = u.role || 'user';
+        const isSelf = u.id === currentUser?.uid;
         
-        if (u.role === 'admin') {
-          roleDisplay = 'Админ';
-          badgeClass = 'badge-purple';
-        } else if (u.role === 'moderator') {
-          roleDisplay = 'Модератор';
-          badgeClass = 'badge-free';
-        } else {
-          roleDisplay = 'Пользователь';
-          badgeClass = 'badge-user';
-        }
+        // Не даем редактировать себя (чтобы не снять себе админку)
+        const canEdit = !isSelf && currentRole === 'admin';
         
-        const canDelete = u.role !== 'admin';
-        
+        const roleDisplay = ROLES.find(r => r.value === currentUserRole)?.label || currentUserRole;
+        const badgeClass = ROLES.find(r => r.value === currentUserRole)?.badge || 'badge-user';
+
         return `
-          <div class="user-row">
-            <div class="user-email">${u.email || u.id}</div>
-            <span class="badge ${badgeClass} user-role-badge">
-              ${roleDisplay}
-            </span>
-            ${canDelete ? `
+          <div class="user-row" id="user-row-${u.id}">
+            <div class="user-email">
+              ${u.email || u.id}
+              ${isSelf ? ' <span style="font-size:0.7rem;color:var(--accent-soft);">(вы)</span>' : ''}
+            </div>
+            ${canEdit ? `
+              <select class="role-select" id="role-select-${u.id}" onchange="window.changeRole('${u.id}', this.value)">
+                ${ROLES.map(r => `
+                  <option value="${r.value}" ${r.value === currentUserRole ? 'selected' : ''}>
+                    ${r.label}
+                  </option>
+                `).join('')}
+              </select>
+            ` : `
+              <span class="badge ${badgeClass} user-role-badge">
+                ${roleDisplay}
+              </span>
+            `}
+            ${canEdit ? `
               <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
                 🗑️
               </button>
@@ -912,6 +964,53 @@
           </div>
         `;
       }).join("");
+
+      // Навешиваем глобальные функции
+      window.changeRole = async (uid, newRole) => {
+        if (!confirm(`Изменить роль пользователя на "${ROLES.find(r => r.value === newRole)?.label || newRole}"?`)) {
+          // Возвращаем предыдущее значение
+          const user = allUsers.find(u => u.id === uid);
+          if (user) {
+            const select = document.getElementById(`role-select-${uid}`);
+            if (select) select.value = user.role || 'user';
+          }
+          return;
+        }
+        
+        try {
+          await updateDoc(doc(db, 'users', uid), {
+            role: newRole,
+            updated_at: new Date().toISOString()
+          });
+          
+          showToast(`Роль обновлена на "${ROLES.find(r => r.value === newRole)?.label || newRole}"`);
+          await loadUsers();
+          
+        } catch (error) {
+          console.error('Ошибка обновления роли:', error);
+          showToast('Ошибка: ' + error.message, 'error');
+          
+          // Возвращаем предыдущее значение
+          const user = allUsers.find(u => u.id === uid);
+          if (user) {
+            const select = document.getElementById(`role-select-${uid}`);
+            if (select) select.value = user.role || 'user';
+          }
+        }
+      };
+
+      window.deleteUser = async (uid, email) => {
+        if (!confirm(`Удалить пользователя ${email}?`)) return;
+        try {
+          await deleteDoc(doc(db, "users", uid));
+          showToast("Пользователь удалён из системы");
+          await loadUsers();
+        } catch (e) {
+          console.error("Ошибка удаления пользователя:", e);
+          showToast("Ошибка удаления", "error");
+        }
+      };
+
     } catch (e) {
       console.error("Ошибка загрузки пользователей:", e);
       container.innerHTML = `<div class="text-danger" style="font-size:0.85rem">Ошибка загрузки</div>`;
@@ -919,6 +1018,10 @@
   }
 
   document.getElementById("btn-add-user")?.addEventListener("click", () => {
+    if (currentRole !== 'admin') {
+      showToast('Только администратор может добавлять пользователей', 'error');
+      return;
+    }
     document.getElementById("new-user-email").value = "";
     document.getElementById("new-user-password").value = "";
     document.getElementById("user-error").style.display = "none";
@@ -964,18 +1067,6 @@
       btn.disabled = false; btn.textContent = "Создать";
     }
   });
-
-  window.deleteUser = async (uid, email) => {
-    if (!confirm(`Удалить пользователя ${email}?`)) return;
-    try {
-      await deleteDoc(doc(db, "users", uid));
-      showToast("Пользователь удалён из системы");
-      await loadUsers();
-    } catch (e) {
-      console.error("Ошибка удаления пользователя:", e);
-      showToast("Ошибка удаления", "error");
-    }
-  };
 
   window.closeModal = () => {
     document.getElementById("modal-user").classList.add("hidden");
