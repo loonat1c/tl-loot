@@ -1,15 +1,31 @@
 // ====================================================
-// navbar.js — Навбар с адаптивным меню
+// navbar.js — Навбар с адаптивным меню и выбором темы
 // ====================================================
 
 import { initAuth, authReady, currentUser, currentRole, logout, canWrite, isModerator } from "./auth.js";
 
 let navbarInitialized = false;
 
+// Цветовые схемы
+const COLOR_SCHEMES = {
+  purple: { label: 'Фиолетовый', color: '#7c3aed' },
+  blue: { label: 'Синий', color: '#3b82f6' },
+  green: { label: 'Зеленый', color: '#22c55e' },
+  red: { label: 'Красный', color: '#ef4444' },
+  orange: { label: 'Оранжевый', color: '#f59e0b' },
+  pink: { label: 'Розовый', color: '#ec4899' }
+};
+
+let currentTheme = 'dark';
+let currentColor = 'purple';
+
 export async function initNavbar() {
 
   if (navbarInitialized) return;
   navbarInitialized = true;
+
+  // Загружаем сохраненные настройки
+  loadThemeSettings();
 
   await initAuth();
   await authReady;
@@ -20,6 +36,32 @@ export async function initNavbar() {
   renderNav(nav);
   updateRoleElements();
   setupMobileMenu();
+  setupThemeControls();
+}
+
+function loadThemeSettings() {
+  const savedTheme = localStorage.getItem('tl_theme');
+  const savedColor = localStorage.getItem('tl_color');
+  
+  if (savedTheme) currentTheme = savedTheme;
+  if (savedColor) currentColor = savedColor;
+  
+  applyTheme(currentTheme, currentColor);
+}
+
+function applyTheme(theme, color) {
+  // Применяем тему (dark/light)
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Применяем цвет акцента
+  const colorHex = COLOR_SCHEMES[color]?.color || '#7c3aed';
+  document.documentElement.style.setProperty('--accent', colorHex);
+  document.documentElement.style.setProperty('--accent-soft', colorHex + 'cc');
+  document.documentElement.style.setProperty('--accent-glow', colorHex + '40');
+  
+  // Сохраняем в localStorage
+  localStorage.setItem('tl_theme', theme);
+  localStorage.setItem('tl_color', color);
 }
 
 function renderNav(nav) {
@@ -27,7 +69,7 @@ function renderNav(nav) {
   const role = currentRole || "guest";
   const email = currentUser?.email || "";
 
-  // Определяем текущую страницу для подсветки активной ссылки
+  // Определяем текущую страницу
   const currentPath = window.location.pathname;
   const isItemsPage = currentPath.includes('items.html');
   const isAdminPage = currentPath.includes('admin.html');
@@ -43,6 +85,8 @@ function renderNav(nav) {
                        currentPath === '/index.html';
 
   const isProfileActive = !isProfilePage && isAuth;
+
+  const themeIcon = currentTheme === 'dark' ? '🌙' : '☀️';
 
   nav.innerHTML = `
     <div class="navbar-inner">
@@ -98,13 +142,36 @@ function renderNav(nav) {
             <span class="profile-avatar">${email.charAt(0).toUpperCase()}</span>
             <span class="profile-email">${email.split('@')[0]}</span>
           </a>
-          <button class="btn-logout" id="btn-logout" title="Выйти">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
         ` : `
           <a href="/pages/login.html" class="btn-login">Войти</a>
           <a href="/pages/register.html" class="btn-register">Регистрация</a>
         `}
+        
+        <!-- Кнопка темы и цветов -->
+        <div class="theme-toggle" id="theme-toggle" title="Настройка темы">
+          <span id="theme-icon">${themeIcon}</span>
+          <span class="color-dot" style="width:14px;height:14px;border-radius:50%;background:${COLOR_SCHEMES[currentColor].color};border:2px solid var(--theme-border);display:inline-block;"></span>
+          
+          <div class="color-picker-popup" id="color-picker-popup">
+            <div style="font-size:0.7rem;color:var(--theme-text-muted);margin-bottom:0.5rem;text-align:center;padding:0.25rem;">Цвет акцента</div>
+            ${Object.entries(COLOR_SCHEMES).map(([key, scheme]) => `
+              <div class="color-option" data-color="${key}">
+                <span class="color-dot ${currentColor === key ? 'active' : ''}" style="background:${scheme.color};width:20px;height:20px;border-radius:50%;border:2px solid var(--theme-border);display:inline-block;flex-shrink:0;"></span>
+                ${scheme.label}
+              </div>
+            `).join('')}
+            <div style="border-top:1px solid var(--theme-border);margin:0.4rem 0;"></div>
+            <div class="color-option" id="theme-mode-toggle">
+              <span>${currentTheme === 'dark' ? '🌙 Тёмная' : '☀️ Светлая'}</span>
+            </div>
+          </div>
+        </div>
+        
+        ${isAuth ? `
+          <button class="btn-logout" id="btn-logout" title="Выйти">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -140,7 +207,6 @@ function updateRoleElements() {
 }
 
 function setupMobileMenu() {
-  // Закрываем меню при клике вне его
   document.addEventListener("click", (e) => {
     const menu = document.getElementById("nav-menu");
     const toggle = document.getElementById("nav-toggle");
@@ -150,7 +216,6 @@ function setupMobileMenu() {
     }
   });
 
-  // Закрываем меню при клике на ссылку
   document.querySelectorAll("#nav-menu a").forEach(link => {
     link.addEventListener("click", () => {
       const menu = document.getElementById("nav-menu");
@@ -160,5 +225,67 @@ function setupMobileMenu() {
         toggle.classList.remove("open");
       }
     });
+  });
+}
+
+function setupThemeControls() {
+  const toggleBtn = document.getElementById("theme-toggle");
+  const popup = document.getElementById("color-picker-popup");
+  
+  if (!toggleBtn || !popup) return;
+
+  // Открытие/закрытие попапа
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    popup.classList.toggle("open");
+  });
+
+  // Закрытие по клику вне
+  document.addEventListener("click", (e) => {
+    if (toggleBtn && !toggleBtn.contains(e.target)) {
+      popup.classList.remove("open");
+    }
+  });
+
+  // Выбор цвета
+  document.querySelectorAll(".color-option[data-color]").forEach(option => {
+    option.addEventListener("click", () => {
+      const color = option.dataset.color;
+      currentColor = color;
+      applyTheme(currentTheme, currentColor);
+      
+      // Обновляем цветовую точку в кнопке
+      const dot = toggleBtn.querySelector('.color-dot');
+      if (dot) {
+        dot.style.background = COLOR_SCHEMES[color].color;
+      }
+      
+      // Обновляем активный класс
+      document.querySelectorAll(".color-option .color-dot").forEach(d => {
+        d.classList.toggle('active', d.parentElement.dataset.color === color);
+      });
+      
+      popup.classList.remove("open");
+    });
+  });
+
+  // Переключение темы
+  document.getElementById("theme-mode-toggle")?.addEventListener("click", () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(currentTheme, currentColor);
+    
+    // Обновляем иконку
+    const icon = document.getElementById("theme-icon");
+    if (icon) {
+      icon.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+    }
+    
+    // Обновляем текст
+    const toggleText = document.querySelector("#theme-mode-toggle span");
+    if (toggleText) {
+      toggleText.textContent = currentTheme === 'dark' ? '🌙 Тёмная' : '☀️ Светлая';
+    }
+    
+    popup.classList.remove("open");
   });
 }
