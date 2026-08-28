@@ -845,23 +845,20 @@
   }
 
   // ============================================================
-  // buildDropRow — ИСПРАВЛЕННАЯ ВЕРСИЯ
+  // buildDropRow — ИСПРАВЛЕННАЯ ВЕРСИЯ (кубик виден всем)
   // ============================================================
   
   function buildDropRow(d, raidId, tryId, canEdit, raid) {
     const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
     const hasWinner = d.winner_player_id && d.winner_nickname;
     
-    // ПРОВЕРКА: может ли пользователь участвовать в ролле
+    // КУБИК ВИДЕН ВСЕМ, но кнопки управления доступны только по условиям
     const isClosed = raid?.status === "closed";
     const isRolling = raid?.status === "rolling";
     const hasCharacter = !!rollState.currentPlayerId;
     
-    // Кнопка ролла доступна если:
-    // 1. Нет победителя
-    // 2. Рейд не закрыт
-    // 3. У пользователя есть персонаж
-    const canRoll = !hasWinner && !isClosed && hasCharacter;
+    // Кнопка ролла всегда доступна для просмотра
+    const canRoll = !hasWinner && !isClosed;
     
     const boss = allBosses.find(b => b.id === d.boss_id);
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
@@ -885,17 +882,17 @@
     } else if (isClosed) {
       rollButtonDisabled = true;
       rollButtonTitle = 'Рейд закрыт';
-    } else if (!hasCharacter) {
-      rollButtonDisabled = true;
-      rollButtonTitle = 'У вас нет персонажа';
-    } else if (!participationCheck.can) {
-      rollButtonDisabled = true;
-      rollButtonTitle = participationCheck.reason;
     } else if (isRolling) {
       rollButtonClass += ' rolling';
       rollButtonText = '⏳';
       rollButtonDisabled = true;
       rollButtonTitle = 'Идёт ролл...';
+    } else {
+      // Ролл доступен для просмотра всем
+      rollButtonTitle = 'Открыть окно ролла';
+      if (!hasCharacter || !participationCheck.can) {
+        rollButtonTitle = 'Просмотр ролла (вы не можете участвовать)';
+      }
     }
     
     return `
@@ -1295,12 +1292,17 @@
     openModal("modal-roll");
   };
 
+  // ============================================================
+  // renderRollParticipants — ИСПРАВЛЕННАЯ
+  // ============================================================
+  
   function renderRollParticipants() {
     const list = document.getElementById("roll-players-list");
     const count = document.getElementById("roll-players-count");
     
     list.innerHTML = '';
     
+    // Отображаем участников ролла
     rollState.participants.forEach(p => {
       const div = document.createElement('div');
       let className = 'roll-participant';
@@ -1323,35 +1325,58 @@
       list.appendChild(div);
     });
     
-    // Показываем доступных персонажей (только те, кто может участвовать)
-    const availableChars = allCharacters.filter(c => 
-      (c.status === 'approved' || c.approved === true) &&
-      attendedPlayerIds.includes(c.id) &&
+    // Показываем доступных персонажей (всех, но с разным статусом)
+    const allChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const availableChars = allChars.filter(c => 
       !rollState.participants.some(p => p.playerId === c.id)
     );
     
     const currentPlayerId = rollState.currentPlayerId;
+    const isRollActive = !rollState.isFinished && !rollState.isRolling;
     
     availableChars.forEach(p => {
       const div = document.createElement('div');
       div.className = 'roll-participant';
       
+      // Проверяем возможность участия
       const participation = canParticipateInRoll(p.id, rollState.dropId);
+      const wasOnRaid = attendedPlayerIds.includes(p.id);
+      
+      let statusText = '';
+      let buttonHtml = '';
+      
+      if (rollState.isFinished) {
+        // Ролл завершен — только просмотр
+        statusText = '🔒 Ролл завершен';
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Только просмотр</span>`;
+      } else if (rollState.isRolling) {
+        statusText = '⏳ Идёт ролл...';
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--warning);">Ожидайте</span>`;
+      } else if (!wasOnRaid) {
+        statusText = '👀 Просмотр';
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Вы не были на рейде</span>`;
+      } else if (!participation.can) {
+        statusText = '🔒 ' + participation.reason;
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`;
+      } else {
+        statusText = '✅ Может участвовать';
+        buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`;
+      }
+      
+      // Для текущего пользователя добавляем подсветку
+      const isCurrentUser = p.id === currentPlayerId;
       
       div.innerHTML = `
-        <span class="player-name">${p.name}</span>
-        <span class="player-status">${participation.can ? 'Может участвовать' : '🔒 ' + participation.reason}</span>
-        ${participation.can ? 
-          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>` :
-          `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`
-        }
+        <span class="player-name">${p.name}${isCurrentUser ? ' (вы)' : ''}</span>
+        <span class="player-status">${statusText}</span>
+        ${buttonHtml}
       `;
       list.appendChild(div);
     });
     
     count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
     
-    // Обновляем кнопки
+    // Обновляем кнопки управления
     const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
     document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
@@ -1375,6 +1400,12 @@
       return;
     }
     
+    // Дополнительная проверка: был ли на рейде
+    if (!attendedPlayerIds.includes(playerId)) {
+      showToast('Вы не были на этом рейде', 'error');
+      return;
+    }
+    
     rollState.participants.push({ 
       playerId, 
       nickname, 
@@ -1385,8 +1416,9 @@
     renderRollParticipants();
   };
 
-  // Кнопка "Присоединиться"
+  // Кнопка "Присоединиться" — ИСПРАВЛЕННАЯ
   document.getElementById("btn-join-roll").addEventListener("click", () => {
+    // Проверяем, был ли пользователь на рейде
     if (!rollState.currentPlayerId) {
       showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
       return;
@@ -1403,8 +1435,16 @@
       return;
     }
     
+    // Проверяем посещаемость
     if (!attendedPlayerIds.includes(player.id)) {
-      showToast("Ваш персонаж не был отмечен на этом рейде", "error");
+      showToast("Вы не были на этом рейде и не можете участвовать в ролле", "error");
+      return;
+    }
+    
+    // Проверяем оружие
+    const participation = canParticipateInRoll(player.id, rollState.dropId);
+    if (!participation.can) {
+      showToast(participation.reason, "error");
       return;
     }
     
