@@ -135,8 +135,10 @@
     }
     .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; }
+    .modal-overlay.open .modal { transform: scale(1); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
     .modal-header h3 { font-size: 1.1rem; }
     .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
@@ -317,7 +319,7 @@
   <div class="page-header">
     <h2>⚔️ Рейды</h2>
     <div class="flex gap-1">
-      <button class="btn btn-primary" id="btn-new-raid">+ Новый рейд</button>
+      <button class="btn btn-primary hidden" id="btn-new-raid">+ Новый рейд</button>
     </div>
   </div>
   <div class="raids-layout">
@@ -591,7 +593,7 @@
   };
 
   // ============================================================
-  // HELPER ФУНКЦИИ
+  // HELPER ФУНКЦИИ (ИСПРАВЛЕННЫЕ)
   // ============================================================
 
   function lucentIcon(size = 'small') {
@@ -599,14 +601,21 @@
     return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
   }
 
-  function openModal(id)  { 
+  // ИСПРАВЛЕННЫЕ ФУНКЦИИ МОДАЛОК
+  function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.remove("hidden"); 
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.classList.add("open");
+    }
   }
-  
-  function closeModal(id) { 
+
+  function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.add("hidden"); 
+    if (modal) {
+      modal.classList.remove("open");
+      modal.classList.add("hidden");
+    }
   }
   window.closeModal = closeModal;
 
@@ -743,12 +752,18 @@
     }
     
     newRaidBtn.addEventListener("click", () => {
-      console.log('🆕 Создание нового рейда...');
+      console.log('🆕 Создание нового рейда из основной кнопки...');
       editingRaidId = null;
-      document.getElementById("modal-raid-title").textContent = "Новый рейд";
-      document.getElementById("raid-date").value  = todayStr();
-      document.getElementById("raid-notes").value = "";
-      document.getElementById("raid-error").style.display = "none";
+      const titleEl = document.getElementById("modal-raid-title");
+      const dateEl = document.getElementById("raid-date");
+      const notesEl = document.getElementById("raid-notes");
+      const errorEl = document.getElementById("raid-error");
+      
+      if (titleEl) titleEl.textContent = "Новый рейд";
+      if (dateEl) dateEl.value = todayStr();
+      if (notesEl) notesEl.value = "";
+      if (errorEl) errorEl.style.display = "none";
+      
       openModal("modal-raid");
     });
   }
@@ -1172,7 +1187,288 @@
   };
 
   // ── Ролл модалка ──────────────────────────────────
-  // (код ролла без изменений, но с проверками)
+  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
+    rollState.raidId = raidId;
+    rollState.tryId = tryId;
+    rollState.dropId = dropId;
+    rollState.itemName = itemName;
+    rollState.itemDetail = `${slotLabel}${property ? ` · ✦ ${property}` : ''}`;
+    rollState.participants = [];
+    rollState.isRolling = false;
+    rollState.isFinished = false;
+    rollState.winner = null;
+    rollState.queue = 'main';
+    
+    document.getElementById("roll-item-name").textContent = itemName;
+    document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
+    document.getElementById("roll-result").style.display = "none";
+    document.getElementById("btn-confirm-roll").style.display = "none";
+    document.getElementById("btn-start-roll").disabled = true;
+    document.getElementById("btn-start-roll").textContent = "🎲 Запустить ролл";
+    
+    document.querySelectorAll('.queue-btn').forEach(b => b.classList.toggle('active', b.dataset.queue === 'main'));
+    document.getElementById("queue-main").disabled = false;
+    document.getElementById("queue-open").disabled = false;
+    
+    renderRollParticipants();
+    openModal("modal-roll");
+  };
+
+  function renderRollParticipants() {
+    const list = document.getElementById("roll-players-list");
+    const count = document.getElementById("roll-players-count");
+    
+    list.innerHTML = '';
+    
+    rollState.participants.forEach(p => {
+      const div = document.createElement('div');
+      let className = 'roll-participant';
+      if (p.isBlocked) {
+        className += ' blocked';
+      } else if (rollState.winner?.playerId === p.playerId) {
+        className += ' winner';
+      } else if (!p.isBlocked) {
+        className += ' joined';
+      }
+      div.className = className;
+      
+      let statusText = p.isBlocked ? p.blockReason : (rollState.winner?.playerId === p.playerId ? '🏆 Победитель!' : 'Присоединился');
+      
+      div.innerHTML = `
+        <span class="player-name">${p.nickname}</span>
+        <span class="player-status">${statusText}</span>
+        ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
+      `;
+      list.appendChild(div);
+    });
+    
+    const approvedPlayers = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const availablePlayers = approvedPlayers.filter(p => 
+      !rollState.participants.some(part => part.playerId === p.id)
+    );
+    
+    availablePlayers.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'roll-participant';
+      
+      const isBlocked = checkPlayerBlock(p.id);
+      
+      div.innerHTML = `
+        <span class="player-name">${p.name}</span>
+        <span class="player-status">${isBlocked ? '🔒 Заблокирован' : 'Ожидает'}</span>
+        ${isBlocked ? 
+          `<span style="font-size:0.7rem;color:var(--danger);">${isBlocked}</span>` :
+          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
+        }
+      `;
+      list.appendChild(div);
+    });
+    
+    count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
+    
+    const currentPlayerId = rollState.currentPlayerId;
+    const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
+    document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
+    document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
+    document.getElementById("btn-start-roll").disabled = rollState.participants.filter(p => !p.isBlocked).length < 2 || rollState.isRolling || rollState.isFinished;
+    
+    if (!canStartRoll()) {
+      document.getElementById("btn-start-roll").disabled = true;
+      document.getElementById("btn-start-roll").title = "Только администратор или Глава гильдии может запустить ролл";
+    }
+  }
+
+  function checkPlayerBlock(playerId) {
+    if (rollState.queue === 'open') {
+      // TODO: проверить, выигрывал ли игрок что-то в этом рейде
+    }
+    return null;
+  }
+
+  window.joinRoll = (playerId, nickname) => {
+    if (rollState.isRolling || rollState.isFinished) return;
+    if (rollState.participants.some(p => p.playerId === playerId)) return;
+    
+    const blockReason = checkPlayerBlock(playerId);
+    
+    rollState.participants.push({ 
+      playerId, 
+      nickname, 
+      roll: null,
+      isBlocked: !!blockReason,
+      blockReason: blockReason || ''
+    });
+    renderRollParticipants();
+  };
+
+  document.getElementById("btn-join-roll").addEventListener("click", () => {
+    if (!rollState.currentPlayerId) {
+      showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
+      return;
+    }
+    
+    const player = allCharacters.find(p => p.id === rollState.currentPlayerId);
+    if (!player) {
+      showToast("Персонаж не найден", "error");
+      return;
+    }
+    
+    if (!isAdmin() && player.status !== 'approved' && player.approved !== true) {
+      showToast("Ваш персонаж не подтвержден администратором", "error");
+      return;
+    }
+    
+    window.joinRoll(player.id, player.name);
+  });
+
+  document.getElementById("btn-leave-roll").addEventListener("click", () => {
+    if (rollState.isRolling || rollState.isFinished) return;
+    if (!rollState.currentPlayerId) {
+      showToast("Вы не участвуете в ролле", "error");
+      return;
+    }
+    rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
+    renderRollParticipants();
+  });
+
+  document.querySelectorAll('.queue-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (rollState.isRolling || rollState.isFinished) return;
+      
+      if (!isAdmin()) {
+        showToast("🔒 Только администратор может переключать очередь", "error");
+        return;
+      }
+      
+      document.querySelectorAll('.queue-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      rollState.queue = this.dataset.queue;
+      
+      rollState.participants = [];
+      renderRollParticipants();
+      showToast(`Переключено на ${this.textContent} очередь`);
+    });
+  });
+
+  document.getElementById("btn-start-roll").addEventListener("click", async () => {
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
+    if (activeParticipants.length < 2) {
+      showToast("Нужно минимум 2 участника для ролла", "error");
+      return;
+    }
+    
+    if (rollState.isRolling || rollState.isFinished) return;
+    
+    if (!canStartRoll()) {
+      showToast("Только администратор или Глава гильдии может запустить ролл", "error");
+      return;
+    }
+    
+    rollState.isRolling = true;
+    document.getElementById("btn-start-roll").disabled = true;
+    document.getElementById("btn-start-roll").textContent = "⏳ Ролл...";
+    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
+    
+    const resultEl = document.getElementById("roll-result");
+    resultEl.style.display = "block";
+    resultEl.innerHTML = '<div style="text-align:center;padding:0.5rem;">🎲 Бросаем кубики...</div>';
+    
+    let counter = 0;
+    const interval = setInterval(() => {
+      counter++;
+      rollState.participants.forEach(p => {
+        if (!p.isBlocked) {
+          p.roll = Math.floor(Math.random() * 100) + 1;
+        }
+      });
+      renderRollParticipants();
+      if (counter >= 10) {
+        clearInterval(interval);
+        finishRoll();
+      }
+    }, 300);
+  });
+
+  function finishRoll() {
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
+    const maxRoll = Math.max(...activeParticipants.map(p => p.roll));
+    const winners = activeParticipants.filter(p => p.roll === maxRoll);
+    rollState.winner = winners[0];
+    rollState.isRolling = false;
+    rollState.isFinished = true;
+    
+    const resultEl = document.getElementById("roll-result");
+    resultEl.innerHTML = `
+      <div style="text-align:center;padding:0.5rem;">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
+          🏆 Победитель: ${rollState.winner.nickname}
+        </div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
+          Бросок: ${rollState.winner.roll} (из 100)
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Участников: ${rollState.participants.filter(p => !p.isBlocked).length}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Очередь: ${rollState.queue === 'main' ? 'Основная' : 'Дополнительная'}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById("btn-confirm-roll").style.display = "inline-block";
+    document.getElementById("btn-start-roll").textContent = "🎲 Завершено";
+    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
+    
+    renderRollParticipants();
+    showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
+  }
+
+  document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
+    if (!rollState.winner) {
+      showToast("Сначала запустите ролл", "error");
+      return;
+    }
+    
+    try {
+      const btn = document.getElementById("btn-confirm-roll");
+      btn.disabled = true;
+      btn.textContent = "Сохранение...";
+      
+      await updateDropWinner(
+        rollState.raidId,
+        rollState.tryId,
+        rollState.dropId,
+        rollState.winner.playerId,
+        rollState.winner.nickname,
+        rollState.queue
+      );
+      
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      await firestoreUpdate(dropRef, {
+        roll_results: rollState.rollResults
+      });
+      
+      showToast(`✅ ${rollState.winner.nickname} выиграл ролл!`);
+      
+      closeRollModal();
+      
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === rollState.raidId);
+      if (activeRaid) selectRaid(activeRaid);
+      
+    } catch(e) {
+      showToast("Ошибка сохранения: " + e.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "✅ Зафиксировать победителя";
+    }
+  });
+
+  function closeRollModal() {
+    closeModal("modal-roll");
+    rollState.isRolling = false;
+  }
+  window.closeRollModal = closeRollModal;
 
   // ── Посещаемость ──────────────────────────────────
   function openAttendanceModal() {
@@ -1314,13 +1610,35 @@
       if (active) {
         selectRaid(active);
       } else {
-        document.getElementById("raid-detail").innerHTML = `
-          <div class="empty-raid">
-            <div style="font-size:2rem">⚔️</div>
-            <div class="mt-1">Нет активных рейдов</div>
-            ${canWrite() ? '<button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById(\'btn-new-raid\').click()">+ Создать рейд</button>' : ''}
-          </div>
-        `;
+        const detailEl = document.getElementById("raid-detail");
+        if (detailEl) {
+          detailEl.innerHTML = `
+            <div class="empty-raid">
+              <div style="font-size:2rem">⚔️</div>
+              <div class="mt-1">Нет активных рейдов</div>
+              ${canWrite() ? '<button class="btn btn-primary btn-sm mt-1" id="btn-create-empty-raid">+ Создать рейд</button>' : ''}
+            </div>
+          `;
+          
+          const emptyRaidBtn = document.getElementById("btn-create-empty-raid");
+          if (emptyRaidBtn) {
+            emptyRaidBtn.addEventListener("click", () => {
+              console.log('🆕 Создание рейда из пустого состояния...');
+              editingRaidId = null;
+              const titleEl = document.getElementById("modal-raid-title");
+              const dateEl = document.getElementById("raid-date");
+              const notesEl = document.getElementById("raid-notes");
+              const errorEl = document.getElementById("raid-error");
+              
+              if (titleEl) titleEl.textContent = "Новый рейд";
+              if (dateEl) dateEl.value = todayStr();
+              if (notesEl) notesEl.value = "";
+              if (errorEl) errorEl.style.display = "none";
+              
+              openModal("modal-raid");
+            });
+          }
+        }
       }
       
       rollState.currentUserId = currentUser?.uid || null;
