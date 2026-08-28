@@ -1065,20 +1065,24 @@
     }
 
     tooltip.classList.add('visible');
-    moveTooltip(e);
+    // Позиционируем сразу после отображения
+    requestAnimationFrame(() => moveTooltip(e));
   }
 
   function moveTooltip(e) {
     const padding = 15;
+    // Показываем справа от курсора
     let x = e.clientX + padding;
-    let y = e.clientY + padding;
+    let y = e.clientY;
 
     const rect = tooltip.getBoundingClientRect();
+    // Если не помещается справа - показываем слева
     if (x + rect.width > window.innerWidth) {
       x = e.clientX - rect.width - padding;
     }
+    // Если не помещается снизу - поднимаем вверх
     if (y + rect.height > window.innerHeight) {
-      y = e.clientY - rect.height - padding;
+      y = window.innerHeight - rect.height - padding;
     }
     if (x < padding) x = padding;
     if (y < padding) y = padding;
