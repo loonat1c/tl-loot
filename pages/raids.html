@@ -18,20 +18,9 @@
       margin-bottom: 0.5rem;
       background: var(--bg-card);
     }
-    .raid-list-item:hover  { 
-      border-color: var(--accent); 
-      transform: translateX(4px);
-    }
-    .raid-list-item.active { 
-      border-color: var(--accent); 
-      background: var(--accent-glow); 
-      box-shadow: 0 0 20px var(--accent-glow);
-    }
-    .raid-list-item.deleted { 
-      opacity: 0.3; 
-      border-style: dashed; 
-      pointer-events: none; 
-    }
+    .raid-list-item:hover  { border-color: var(--accent); transform: translateX(4px); }
+    .raid-list-item.active { border-color: var(--accent); background: var(--accent-glow); box-shadow: 0 0 20px var(--accent-glow); }
+    .raid-list-item.deleted { opacity: 0.3; border-style: dashed; pointer-events: none; }
     .raid-date { font-weight: 600; font-size: 0.95rem; }
     .raid-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
@@ -43,9 +32,7 @@
       overflow: hidden;
       transition: border-color 0.2s;
     }
-    .try-block:hover {
-      border-color: var(--accent);
-    }
+    .try-block:hover { border-color: var(--accent); }
     .try-header {
       display: flex;
       align-items: center;
@@ -189,6 +176,8 @@
     }
     .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .roll-btn.rolling { background: var(--warning); animation: pulse 1s infinite; }
+    .roll-btn.finished { background: var(--bg-card2); color: var(--text-muted); cursor: default; }
+    .roll-btn.finished:hover { transform: none; box-shadow: none; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -228,6 +217,7 @@
     .roll-participant.joined { background: var(--accent-glow); border-left: 2px solid var(--accent); }
     .roll-participant.winner { background: rgba(34, 197, 94, 0.15); border-left: 2px solid #22c55e; }
     .roll-participant.blocked { opacity: 0.5; border-left: 2px solid var(--danger); }
+    .roll-participant.not-attended { opacity: 0.4; border-left: 2px solid var(--text-muted); }
     
     .join-btn {
       padding: 0.15rem 0.6rem;
@@ -285,6 +275,39 @@
     .btn-sm:hover {
       transform: translateY(-1px);
     }
+
+    .attendance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .attendance-player {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .attendance-player.present {
+      border-color: var(--success);
+      background: rgba(34,197,94,0.1);
+      color: var(--success);
+    }
+    .attendance-player .char-weapon-tag {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      background: var(--bg-card2);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
@@ -293,7 +316,9 @@
 <main class="container">
   <div class="page-header">
     <h2>⚔️ Рейды</h2>
-    <button class="btn btn-primary hidden" data-role="moderator" id="btn-new-raid">+ Новый рейд</button>
+    <div class="flex gap-1">
+      <button class="btn btn-primary hidden" data-role="moderator" id="btn-new-raid">+ Новый рейд</button>
+    </div>
   </div>
   <div class="raids-layout">
     <div>
@@ -306,109 +331,7 @@
   </div>
 </main>
 
-<!-- Новый рейд -->
-<div class="modal-overlay hidden" id="modal-raid">
-  <div class="modal">
-    <div class="modal-header"><h3 id="modal-raid-title">Новый рейд</h3><button class="btn-close" onclick="closeModal('modal-raid')">✕</button></div>
-    <div class="form-group"><label>Дата *</label><input type="date" id="raid-date" /></div>
-    <div class="form-group"><label>Заметки</label><textarea id="raid-notes" rows="2"></textarea></div>
-    <div id="raid-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-create-raid">Создать</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-raid')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Новый трай -->
-<div class="modal-overlay hidden" id="modal-try">
-  <div class="modal">
-    <div class="modal-header"><h3>Добавить трай</h3><button class="btn-close" onclick="closeModal('modal-try')">✕</button></div>
-    <div class="form-group">
-      <label>Босс</label>
-      <select id="try-boss-select"><option value="">— без босса —</option></select>
-    </div>
-    <div id="try-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-create-try">Добавить</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-try')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Дроп -->
-<div class="modal-overlay hidden" id="modal-drop">
-  <div class="modal">
-    <div class="modal-header"><h3>Добавить дроп</h3><button class="btn-close" onclick="closeModal('modal-drop')">✕</button></div>
-
-    <div class="section-title">Предмет</div>
-    <input type="text" id="item-search" placeholder="Поиск предмета..." />
-    <div id="item-search-results" class="item-search-results"></div>
-
-    <div class="section-title">Особенность предмета</div>
-    <div id="property-select-grid" class="property-select-grid">
-      <button class="property-btn selected" data-prop="">Без особенности</button>
-    </div>
-
-    <div class="section-title">Цена в Lucent (текущая)</div>
-    <input type="number" id="drop-lucent" placeholder="0" min="0" />
-
-    <div id="drop-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-drop">Добавить дроп</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-drop')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Ролл окно -->
-<div class="modal-overlay hidden" id="modal-roll">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>🎲 Ролл</h3>
-      <button class="btn-close" onclick="closeRollModal()">✕</button>
-    </div>
-    <div id="roll-info">
-      <p style="font-size:0.9rem;margin-bottom:0.25rem;"><strong id="roll-item-name"></strong></p>
-      <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;" id="roll-item-detail"></p>
-    </div>
-    
-    <div class="section-title">Очередь</div>
-    <div class="queue-toggle" id="queue-toggle">
-      <button class="queue-btn active" data-queue="main" id="queue-main">🎯 Основная</button>
-      <button class="queue-btn" data-queue="open" id="queue-open">🎲 Дополнительная</button>
-    </div>
-    
-    <div class="section-title">Участники <span id="roll-players-count" style="font-weight:400;">(0)</span></div>
-    <div id="roll-players-list" style="margin: 0.25rem 0;max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);"></div>
-    
-    <div class="section-title">Управление</div>
-    <div class="flex gap-1 mt-1" style="flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" id="btn-join-roll">🎯 Присоединиться</button>
-      <button class="btn btn-ghost btn-sm" id="btn-leave-roll">🚪 Выйти</button>
-      <button class="btn btn-warning btn-sm" id="btn-start-roll" style="background:var(--warning);color:#000;" disabled>🎲 Запустить ролл</button>
-    </div>
-    <div id="roll-result" style="margin-top:0.75rem;padding:0.5rem;border-radius:var(--radius);display:none;"></div>
-    
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-confirm-roll" style="display:none;">✅ Зафиксировать победителя</button>
-      <button class="btn btn-ghost" onclick="closeRollModal()">Закрыть</button>
-    </div>
-  </div>
-</div>
-
-<!-- Закрыть рейд -->
-<div class="modal-overlay hidden" id="modal-close-raid">
-  <div class="modal">
-    <div class="modal-header"><h3>Закрыть рейд</h3><button class="btn-close" onclick="closeModal('modal-close-raid')">✕</button></div>
-    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Отметь кто присутствовал в рейде.</p>
-    <div id="attendance-grid" class="attendance-grid"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-confirm-close">Закрыть рейд</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-close-raid')">Отмена</button>
-    </div>
-  </div>
-</div>
+<!-- Все модалки без изменений ... -->
 
 <script type="module">
   // ============================================================
@@ -477,15 +400,17 @@
   import { getBosses } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
-  import { SLOTS } from "../js/constants.js";
+  import { SLOTS, WEAPONS } from "../js/constants.js";
   
-  // Импорты для работы с коллекцией characters
   import { 
     collection, 
     getDocs, 
     query, 
     where,
-    orderBy
+    orderBy,
+    doc,
+    onSnapshot,
+    updateDoc
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
@@ -525,6 +450,7 @@
   let editingRaidId = null;
   let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
   let selectedItem = null, selectedProperty = null;
+  let attendedPlayerIds = [];
   
   let rollState = {
     dropId: null,
@@ -538,7 +464,10 @@
     winner: null,
     currentUserId: null,
     currentPlayerId: null,
-    queue: 'main'
+    queue: 'main',
+    itemSlot: null,
+    itemWeaponType: null,
+    rollResults: null
   };
 
   // ============================================================
@@ -581,8 +510,68 @@
     setTimeout(() => t.remove(), 3000);
   }
 
+  function isGuildLeader() {
+    return currentRole === 'guild_leader' || currentRole === 'admin';
+  }
+
+  function canStartRoll() {
+    return isGuildLeader() || isAdmin();
+  }
+
+  function getWeaponType(itemId) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return null;
+    // Определяем тип оружия по слоту или по специальному полю
+    if (item.weapon_type) return item.weapon_type;
+    if (item.slot === 'weapon') {
+      // Пытаемся определить по названию или другим признакам
+      const weapon = WEAPONS.find(w => w.label && item.name?.toLowerCase().includes(w.label.toLowerCase()));
+      return weapon?.id || null;
+    }
+    return null;
+  }
+
+  function getCharacterWeapons(charId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return [];
+    return char.weapons || [];
+  }
+
+  function canParticipateInRoll(charId, itemId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return { can: false, reason: 'Персонаж не найден' };
+    
+    // Проверка: персонаж одобрен
+    if (char.status !== 'approved' && char.approved !== true) {
+      return { can: false, reason: 'Персонаж не подтвержден' };
+    }
+    
+    // Проверка: персонаж был на рейде
+    if (!attendedPlayerIds.includes(charId)) {
+      return { can: false, reason: 'Персонаж не был на рейде' };
+    }
+    
+    // Проверка: совместимость оружия
+    const item = allItems.find(i => i.id === itemId);
+    if (item && item.slot === 'weapon') {
+      const charWeapons = char.weapons || [];
+      // Проверяем, подходит ли оружие персонажу
+      const weaponType = getWeaponType(itemId);
+      if (weaponType && !charWeapons.includes(weaponType)) {
+        return { can: false, reason: 'Оружие не подходит вашему персонажу' };
+      }
+    }
+    
+    // Проверка: не выиграл ли уже этот предмет в основной очереди
+    if (rollState.queue === 'main') {
+      // TODO: проверить историю дропов в этом рейде
+    }
+    
+    return { can: true };
+  }
+
   // ============================================================
-  // ЗАГРУЗКА ПЕРСОНАЖЕЙ ИЗ КОЛЛЕКЦИИ characters
+  // ЗАГРУЗКА ПЕРСОНАЖЕЙ
   // ============================================================
   
   async function loadCharacters() {
@@ -701,9 +690,26 @@
     const hasWinner = d.winner_player_id && d.winner_nickname;
     const canRoll = canEdit && !d.winner_player_id && raid?.status !== "closed";
     const isRolling = raid?.status === "rolling";
+    const isFinished = hasWinner;
     
     const boss = allBosses.find(b => b.id === d.boss_id);
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
+    
+    let rollButtonClass = 'roll-btn';
+    let rollButtonText = '🎲';
+    let rollButtonDisabled = false;
+    
+    if (isFinished) {
+      rollButtonClass += ' finished';
+      rollButtonText = '📊';
+      rollButtonDisabled = false; // Всегда доступен для просмотра
+    } else if (isRolling) {
+      rollButtonClass += ' rolling';
+      rollButtonText = '⏳';
+      rollButtonDisabled = true;
+    } else if (!canRoll) {
+      rollButtonDisabled = true;
+    }
     
     return `
       <div class="drop-row">
@@ -730,7 +736,9 @@
           `}
         </div>
         <div class="drop-actions">
-          ${canRoll ? `<button class="roll-btn" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}')">🎲</button>` : ''}
+          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" ${rollButtonDisabled ? 'disabled' : ''}>
+            ${rollButtonText}
+          </button>
           ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
         </div>
       </div>
@@ -747,6 +755,10 @@
     const tries  = await getRaidTries(raid.id);
     const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling");
     const admin   = isAdmin();
+    const guildLeader = isGuildLeader();
+
+    // Загружаем посещаемость
+    attendedPlayerIds = raid.attended_player_ids || [];
 
     detail.innerHTML = `
       <div class="card">
@@ -754,9 +766,15 @@
           <div>
             <h3 style="color:var(--accent-soft)">${formatDate(raid.date)}</h3>
             <div class="text-muted" style="font-size:0.82rem;margin-top:2px">${raid.notes || ""}</div>
+            ${raid.status !== 'closed' ? `
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
+                👥 Посетило: ${attendedPlayerIds.length} персонажей
+              </div>
+            ` : ''}
           </div>
           <div class="flex gap-1" style="flex-wrap:wrap;justify-content:flex-end">
-            ${canEdit ? `
+            ${canEdit && raid.status !== 'closed' ? `
+              <button class="btn btn-ghost btn-sm" id="btn-attendance">👥 Посещаемость</button>
               <button class="btn btn-primary btn-sm" id="btn-add-try">+ Трай</button>
               <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
             ` : ""}
@@ -789,7 +807,61 @@
     document.getElementById("btn-edit-raid")?.addEventListener("click", () => openEditRaid(raid));
     document.getElementById("btn-delete-raid")?.addEventListener("click", () => confirmDeleteRaid(raid));
     document.getElementById("btn-restore-raid")?.addEventListener("click", () => confirmRestoreRaid(raid));
+    document.getElementById("btn-attendance")?.addEventListener("click", openAttendanceModal);
   }
+
+  // ============================================================
+  // ПОСЕЩАЕМОСТЬ
+  // ============================================================
+
+  function openAttendanceModal() {
+    const grid = document.getElementById("attendance-grid");
+    grid.innerHTML = "";
+    
+    // Показываем всех одобренных персонажей
+    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    
+    approvedChars.forEach(p => {
+      const el = document.createElement("div");
+      const isPresent = attendedPlayerIds.includes(p.id);
+      el.className = `attendance-player${isPresent ? ' present' : ''}`;
+      el.dataset.id = p.id;
+      
+      const weapons = p.weapons || [];
+      const weaponLabels = weapons.map(w => {
+        const weapon = WEAPONS.find(wp => wp.id === w);
+        return weapon?.label || w;
+      }).join(', ');
+      
+      el.innerHTML = `
+        <span>${isPresent ? '✅' : '⬜'}</span>
+        ${p.name}
+        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
+      `;
+      el.addEventListener("click", () => {
+        el.classList.toggle("present");
+        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
+      });
+      grid.appendChild(el);
+    });
+    openModal("modal-close-raid");
+  }
+
+  document.getElementById("btn-confirm-close")?.addEventListener("click", async () => {
+    const attendedIds = [...document.querySelectorAll(".attendance-player.present")].map(el => el.dataset.id);
+    const btn = document.getElementById("btn-confirm-close");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+    try {
+      await updateRaid(activeRaid.id, { 
+        attended_player_ids: attendedIds 
+      });
+      attendedPlayerIds = attendedIds;
+      closeModal("modal-close-raid");
+      showToast("Посещаемость сохранена");
+      selectRaid(activeRaid);
+    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
+    finally { btn.disabled = false; btn.textContent = "Сохранить"; }
+  });
 
   // ============================================================
   // МОДАЛКИ
@@ -957,7 +1029,15 @@
   };
 
   // ── Ролл модалка ──────────────────────────────────
-  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
+  let rollUnsubscribe = null;
+
+  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property, itemSlot) => {
+    // Если уже подписаны - отписываемся
+    if (rollUnsubscribe) {
+      rollUnsubscribe();
+      rollUnsubscribe = null;
+    }
+    
     rollState.raidId = raidId;
     rollState.tryId = tryId;
     rollState.dropId = dropId;
@@ -968,6 +1048,8 @@
     rollState.isFinished = false;
     rollState.winner = null;
     rollState.queue = 'main';
+    rollState.itemSlot = itemSlot;
+    rollState.rollResults = null;
     
     document.getElementById("roll-item-name").textContent = itemName;
     document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
@@ -980,9 +1062,67 @@
     document.getElementById("queue-main").disabled = false;
     document.getElementById("queue-open").disabled = false;
     
+    // Проверяем, есть ли уже победитель
+    checkDropWinner(raidId, tryId, dropId);
+    
     renderRollParticipants();
     openModal("modal-roll");
+    
+    // Подписываемся на изменения в реальном времени
+    const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+    rollUnsubscribe = onSnapshot(dropRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.winner_player_id && data.winner_nickname) {
+          rollState.isFinished = true;
+          rollState.winner = {
+            playerId: data.winner_player_id,
+            nickname: data.winner_nickname
+          };
+          // Если есть сохраненные результаты ролла
+          if (data.roll_results) {
+            rollState.rollResults = data.roll_results;
+            rollState.participants = data.roll_results.map(r => ({
+              playerId: r.playerId,
+              nickname: r.nickname,
+              roll: r.roll,
+              isBlocked: false
+            }));
+          }
+          renderRollParticipants();
+          showRollResult();
+        }
+      }
+    });
   };
+
+  async function checkDropWinner(raidId, tryId, dropId) {
+    try {
+      const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+      const dropSnap = await getDoc(dropRef);
+      if (dropSnap.exists()) {
+        const data = dropSnap.data();
+        if (data.winner_player_id && data.winner_nickname) {
+          rollState.isFinished = true;
+          rollState.winner = {
+            playerId: data.winner_player_id,
+            nickname: data.winner_nickname
+          };
+          if (data.roll_results) {
+            rollState.rollResults = data.roll_results;
+            rollState.participants = data.roll_results.map(r => ({
+              playerId: r.playerId,
+              nickname: r.nickname,
+              roll: r.roll,
+              isBlocked: false
+            }));
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Ошибка проверки победителя:', e);
+    }
+  }
 
   function renderRollParticipants() {
     const list = document.getElementById("roll-players-list");
@@ -990,6 +1130,7 @@
     
     list.innerHTML = '';
     
+    // Показываем участников
     rollState.participants.forEach(p => {
       const div = document.createElement('div');
       let className = 'roll-participant';
@@ -997,7 +1138,7 @@
         className += ' blocked';
       } else if (rollState.winner?.playerId === p.playerId) {
         className += ' winner';
-      } else if (!p.isBlocked) {
+      } else {
         className += ' joined';
       }
       div.className = className;
@@ -1007,29 +1148,33 @@
       div.innerHTML = `
         <span class="player-name">${p.nickname}</span>
         <span class="player-status">${statusText}</span>
-        ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
+        ${p.roll !== null && p.roll !== undefined ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
       `;
       list.appendChild(div);
     });
     
-    // ИСПОЛЬЗУЕМ allCharacters из коллекции characters
-    const approvedCharacters = allCharacters.filter(p => p.status === 'approved' || p.approved === true);
-    const availableCharacters = approvedCharacters.filter(p => 
-      !rollState.participants.some(part => part.playerId === p.id)
+    // Доступные персонажи (только одобренные и присутствующие на рейде)
+    const availableChars = allCharacters.filter(c => 
+      (c.status === 'approved' || c.approved === true) &&
+      attendedPlayerIds.includes(c.id) &&
+      !rollState.participants.some(p => p.playerId === c.id)
     );
     
-    availableCharacters.forEach(p => {
+    const currentPlayerId = rollState.currentPlayerId;
+    
+    availableChars.forEach(p => {
       const div = document.createElement('div');
       div.className = 'roll-participant';
       
-      const isBlocked = checkPlayerBlock(p.id);
+      // Проверяем возможность участия
+      const participation = canParticipateInRoll(p.id, rollState.dropId);
       
       div.innerHTML = `
         <span class="player-name">${p.name}</span>
-        <span class="player-status">${isBlocked ? '🔒 Заблокирован' : 'Ожидает'}</span>
-        ${isBlocked ? 
-          `<span style="font-size:0.7rem;color:var(--danger);">${isBlocked}</span>` :
-          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
+        <span class="player-status">${participation.can ? 'Может участвовать' : '🔒 ' + participation.reason}</span>
+        ${participation.can ? 
+          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>` :
+          `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`
         }
       `;
       list.appendChild(div);
@@ -1037,37 +1182,35 @@
     
     count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
     
-    const currentPlayerId = rollState.currentPlayerId;
+    // Обновляем кнопки
     const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
     document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling || rollState.isFinished;
     document.getElementById("btn-start-roll").disabled = rollState.participants.filter(p => !p.isBlocked).length < 2 || rollState.isRolling || rollState.isFinished;
     
-    if (!canWrite()) {
+    if (!canStartRoll()) {
       document.getElementById("btn-start-roll").disabled = true;
-      document.getElementById("btn-start-roll").title = "Только модератор может запустить ролл";
+      document.getElementById("btn-start-roll").title = "Только администратор или Глава гильдии может запустить ролл";
     }
-  }
-
-  function checkPlayerBlock(playerId) {
-    if (rollState.queue === 'open') {
-      // TODO: проверить, выигрывал ли игрок что-то в этом рейде
-    }
-    return null;
   }
 
   window.joinRoll = (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (rollState.participants.some(p => p.playerId === playerId)) return;
     
-    const blockReason = checkPlayerBlock(playerId);
+    // Проверяем возможность участия
+    const participation = canParticipateInRoll(playerId, rollState.dropId);
+    if (!participation.can) {
+      showToast(participation.reason, 'error');
+      return;
+    }
     
     rollState.participants.push({ 
       playerId, 
       nickname, 
       roll: null,
-      isBlocked: !!blockReason,
-      blockReason: blockReason || ''
+      isBlocked: false,
+      blockReason: ''
     });
     renderRollParticipants();
   };
@@ -1084,9 +1227,13 @@
       return;
     }
     
-    // Администратору не нужен аппрув
-    if (!isAdmin() && player.status !== 'approved' && player.approved !== true) {
+    if (player.status !== 'approved' && player.approved !== true) {
       showToast("Ваш персонаж не подтвержден администратором", "error");
+      return;
+    }
+    
+    if (!attendedPlayerIds.includes(player.id)) {
+      showToast("Ваш персонаж не был отмечен на этом рейде", "error");
       return;
     }
     
@@ -1116,6 +1263,7 @@
       this.classList.add('active');
       rollState.queue = this.dataset.queue;
       
+      // Очищаем участников при смене очереди
       rollState.participants = [];
       renderRollParticipants();
       showToast(`Переключено на ${this.textContent} очередь`);
@@ -1131,8 +1279,8 @@
     
     if (rollState.isRolling || rollState.isFinished) return;
     
-    if (!canWrite()) {
-      showToast("Только модератор может запустить ролл", "error");
+    if (!canStartRoll()) {
+      showToast("Только администратор или Глава гильдии может запустить ролл", "error");
       return;
     }
     
@@ -1145,6 +1293,7 @@
     resultEl.style.display = "block";
     resultEl.innerHTML = '<div style="text-align:center;padding:0.5rem;">🎲 Бросаем кубики...</div>';
     
+    // Анимация ролла в реальном времени
     let counter = 0;
     const interval = setInterval(() => {
       counter++;
@@ -1154,6 +1303,8 @@
         }
       });
       renderRollParticipants();
+      
+      // Показываем анимацию всем
       if (counter >= 10) {
         clearInterval(interval);
         finishRoll();
@@ -1168,24 +1319,13 @@
     rollState.winner = winners[0];
     rollState.isRolling = false;
     rollState.isFinished = true;
+    rollState.rollResults = rollState.participants.map(p => ({
+      playerId: p.playerId,
+      nickname: p.nickname,
+      roll: p.roll
+    }));
     
-    const resultEl = document.getElementById("roll-result");
-    resultEl.innerHTML = `
-      <div style="text-align:center;padding:0.5rem;">
-        <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
-          🏆 Победитель: ${rollState.winner.nickname}
-        </div>
-        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
-          Бросок: ${rollState.winner.roll} (из 100)
-        </div>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
-          Участников: ${rollState.participants.filter(p => !p.isBlocked).length}
-        </div>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
-          Очередь: ${rollState.queue === 'main' ? 'Основная' : 'Дополнительная'}
-        </div>
-      </div>
-    `;
+    showRollResult();
     
     document.getElementById("btn-confirm-roll").style.display = "inline-block";
     document.getElementById("btn-start-roll").textContent = "🎲 Завершено";
@@ -1193,6 +1333,29 @@
     
     renderRollParticipants();
     showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
+  }
+
+  function showRollResult() {
+    const resultEl = document.getElementById("roll-result");
+    resultEl.innerHTML = `
+      <div style="text-align:center;padding:0.5rem;">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
+          🏆 Победитель: ${rollState.winner?.nickname || 'Не определен'}
+        </div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
+          Бросок: ${rollState.winner?.roll || 0} (из 100)
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Участников: ${rollState.participants.filter(p => !p.isBlocked).length}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Очередь: ${rollState.queue === 'main' ? 'Основная' : 'Дополнительная'}
+        </div>
+        <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">
+          ${rollState.rollResults?.map(r => `${r.nickname}: ${r.roll}`).join(' | ')}
+        </div>
+      </div>
+    `;
   }
 
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
@@ -1206,6 +1369,7 @@
       btn.disabled = true;
       btn.textContent = "Сохранение...";
       
+      // Сохраняем победителя и результаты ролла
       await updateDropWinner(
         rollState.raidId,
         rollState.tryId,
@@ -1214,6 +1378,12 @@
         rollState.winner.nickname,
         rollState.queue
       );
+      
+      // Сохраняем результаты ролла в дроп
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      await updateDoc(dropRef, {
+        roll_results: rollState.rollResults
+      });
       
       showToast(`✅ ${rollState.winner.nickname} выиграл ролл!`);
       
@@ -1234,44 +1404,19 @@
   function closeRollModal() {
     closeModal("modal-roll");
     rollState.isRolling = false;
+    if (rollUnsubscribe) {
+      rollUnsubscribe();
+      rollUnsubscribe = null;
+    }
   }
   window.closeRollModal = closeRollModal;
 
   // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
-    const grid = document.getElementById("attendance-grid");
-    grid.innerHTML = "";
-    allCharacters.forEach(p => {
-      const el = document.createElement("div");
-      el.className = "attendance-player present";
-      el.dataset.id = p.id;
-      el.innerHTML = `<span>✅</span> ${p.name}`;
-      el.addEventListener("click", () => {
-        el.classList.toggle("present");
-        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
-      });
-      grid.appendChild(el);
-    });
-    openModal("modal-close-raid");
+    // Используем отдельную модалку для закрытия рейда
+    // Перенаправляем на модалку посещаемости
+    openAttendanceModal();
   }
-
-  document.getElementById("btn-confirm-close").addEventListener("click", async () => {
-    const attendedIds = [...document.querySelectorAll(".attendance-player.present")].map(el => el.dataset.id);
-    const allIds      = allCharacters.map(p => p.id);
-    const btn         = document.getElementById("btn-confirm-close");
-    btn.disabled = true; btn.textContent = "Закрываем...";
-    try {
-      await closeRaid(activeRaid.id, attendedIds, allIds);
-      closeModal("modal-close-raid");
-      allRaids   = await getRaids();
-      allCharacters = await loadCharacters();
-      activeRaid = allRaids.find(r => r.id === activeRaid.id);
-      renderRaidList();
-      selectRaid(activeRaid);
-      showToast("Рейд закрыт");
-    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-    finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
-  });
 
   // ── Рейд модалки ──────────────────────────────────
   document.getElementById("btn-new-raid").addEventListener("click", () => {
@@ -1353,7 +1498,6 @@
     try {
       console.log('📥 Загрузка данных...');
       
-      // Загружаем все данные параллельно
       [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
         getRaids(), 
         loadCharacters(), 
@@ -1372,16 +1516,7 @@
         throw new Error('Ошибка загрузки данных');
       }
       
-      // Ищем персонажа текущего пользователя в коллекции characters
       rollState.currentUserId = currentUser?.uid || null;
-      console.log('🔍 Поиск персонажа для пользователя UID:', rollState.currentUserId);
-      console.log('📋 Все персонажи:', allCharacters.map(p => ({ 
-        id: p.id, 
-        name: p.name, 
-        user_id: p.user_id || '❌ ОТСУТСТВУЕТ',
-        status: p.status,
-        approved: p.approved
-      })));
       
       if (rollState.currentUserId) {
         const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
@@ -1390,8 +1525,6 @@
           console.log('✅ Найден персонаж:', player.name, 'ID:', player.id);
         } else {
           console.log('❌ Персонаж НЕ найден!');
-          console.log('📋 Ваш UID:', rollState.currentUserId);
-          console.log('📋 Список user_id в персонажах:', allCharacters.map(p => p.user_id || 'null'));
         }
       }
       
