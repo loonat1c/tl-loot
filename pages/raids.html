@@ -1,3 +1,6 @@
+Вот полный исправленный файл `raids.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -538,22 +541,12 @@
   };
 
   // ============================================================
-  // HELPER ФУНКЦИИ (ДОЛЖНЫ БЫТЬ ОПРЕДЕЛЕНЫ ДО ИСПОЛЬЗОВАНИЯ)
+  // HELPER ФУНКЦИИ
   // ============================================================
 
   function lucentIcon(size = 'small') {
     const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
     return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
-  }
-
-  function getBossIcon(bossId) {
-    const boss = allBosses.find(b => b.id === bossId);
-    return boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
-  }
-
-  function getBossName(bossId) {
-    const boss = allBosses.find(b => b.id === bossId);
-    return boss?.name || null;
   }
 
   function openModal(id)  { document.getElementById(id).classList.remove("hidden"); }
@@ -1349,22 +1342,30 @@
         throw new Error('Ошибка загрузки данных');
       }
       
-      populateBossSelect();
-      renderRaidList();
-      const active = allRaids.find(r => !r.deleted);
-      if (active) selectRaid(active);
-      
-      // Находим персонажа текущего пользователя
+      // ============================================================
+      // ПОИСК ПЕРСОНАЖА ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
+      // ============================================================
       rollState.currentUserId = currentUser?.uid || null;
+      console.log('🔍 Поиск персонажа для пользователя:', rollState.currentUserId);
+      console.log('📋 Все игроки:', allPlayers);
+      
       if (rollState.currentUserId) {
+        // Ищем в коллекции players по полю user_id
         const player = allPlayers.find(p => p.user_id === rollState.currentUserId);
         if (player) {
           rollState.currentPlayerId = player.id;
           console.log('👤 Найден персонаж:', player.nickname, 'ID:', player.id);
         } else {
-          console.log('👤 Персонаж не найден для пользователя');
+          console.log('👤 Персонаж не найден для пользователя. Проверьте, что в базе есть игрок с user_id =', rollState.currentUserId);
+          console.log('📋 Доступные user_id в игроках:', allPlayers.map(p => ({ id: p.id, user_id: p.user_id, nickname: p.nickname })));
         }
       }
+      
+      populateBossSelect();
+      renderRaidList();
+      const active = allRaids.find(r => !r.deleted);
+      if (active) selectRaid(active);
+      
     } catch (e) {
       console.error('❌ Ошибка инициализации:', e);
       showToast('Ошибка загрузки данных', 'error');
@@ -1375,3 +1376,4 @@
 </script>
 </body>
 </html>
+```
