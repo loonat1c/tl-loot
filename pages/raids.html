@@ -1,6 +1,3 @@
-Вот полный исправленный файл `raids.html`:
-
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -151,7 +148,6 @@
     }
     .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
 
-    /* ── Модалки ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
@@ -451,10 +447,7 @@
   // ИНИЦИАЛИЗАЦИЯ
   // ============================================================
   
-  // Инициализация навбара
   initNavbar();
-  
-  // Ждем авторизацию
   console.log('⏳ Ожидание авторизации...');
   await initAuth();
   await authReady;
@@ -465,7 +458,6 @@
     uid: currentUser?.uid
   });
 
-  // Если не авторизован — редирект на логин
   if (!currentUser) {
     console.log('🚫 Пользователь не авторизован, редирект на логин');
     window.location.href = '/pages/login.html';
@@ -473,7 +465,7 @@
   }
 
   // ============================================================
-  // ИМПОРТЫ МОДУЛЕЙ (после проверки авторизации)
+  // ИМПОРТЫ МОДУЛЕЙ
   // ============================================================
   
   import {
@@ -482,11 +474,20 @@
     getTryDrops, addDrop, deleteDrop,
     closeRaid, updateRaidStatus, updateDropWinner
   } from "../js/modules/raids.js";
-  import { getPlayers } from "../js/modules/players.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
   import { SLOTS } from "../js/constants.js";
+  
+  // Импорты для работы с коллекцией characters
+  import { 
+    collection, 
+    getDocs, 
+    query, 
+    where,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { db } from "../js/firebase.js";
 
   // ============================================================
   // ПРОВЕРКА ИМПОРТОВ
@@ -518,7 +519,7 @@
   // ОСНОВНАЯ ЛОГИКА
   // ============================================================
 
-  let allRaids = [], allPlayers = [], allBosses = [], allItems = [];
+  let allRaids = [], allCharacters = [], allBosses = [], allItems = [];
   let activeRaid = null;
   let showDeleted = false;
   let editingRaidId = null;
@@ -578,6 +579,29 @@
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
+  }
+
+  // ============================================================
+  // ЗАГРУЗКА ПЕРСОНАЖЕЙ ИЗ КОЛЛЕКЦИИ characters
+  // ============================================================
+  
+  async function loadCharacters() {
+    try {
+      console.log('🔍 Загрузка персонажей из коллекции characters...');
+      const charsRef = collection(db, 'characters');
+      const q = query(charsRef, orderBy('name'));
+      const querySnapshot = await getDocs(q);
+      allCharacters = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log(`📋 Загружено персонажей: ${allCharacters.length}`);
+      return allCharacters;
+    } catch (e) {
+      console.error('❌ Ошибка загрузки персонажей:', e);
+      allCharacters = [];
+      return [];
+    }
   }
 
   // ============================================================
@@ -988,23 +1012,24 @@
       list.appendChild(div);
     });
     
-    const approvedPlayers = allPlayers.filter(p => p.approved !== false);
-    const availablePlayers = approvedPlayers.filter(p => 
+    // ИСПОЛЬЗУЕМ allCharacters из коллекции characters
+    const approvedCharacters = allCharacters.filter(p => p.status === 'approved' || p.approved === true);
+    const availableCharacters = approvedCharacters.filter(p => 
       !rollState.participants.some(part => part.playerId === p.id)
     );
     
-    availablePlayers.forEach(p => {
+    availableCharacters.forEach(p => {
       const div = document.createElement('div');
       div.className = 'roll-participant';
       
       const isBlocked = checkPlayerBlock(p.id);
       
       div.innerHTML = `
-        <span class="player-name">${p.nickname}</span>
+        <span class="player-name">${p.name}</span>
         <span class="player-status">${isBlocked ? '🔒 Заблокирован' : 'Ожидает'}</span>
         ${isBlocked ? 
           `<span style="font-size:0.7rem;color:var(--danger);">${isBlocked}</span>` :
-          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.nickname}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
+          `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`
         }
       `;
       list.appendChild(div);
@@ -1053,19 +1078,19 @@
       return;
     }
     
-    const player = allPlayers.find(p => p.id === rollState.currentPlayerId);
+    const player = allCharacters.find(p => p.id === rollState.currentPlayerId);
     if (!player) {
       showToast("Персонаж не найден", "error");
       return;
     }
     
     // Администратору не нужен аппрув
-    if (!isAdmin() && player.approved !== true) {
+    if (!isAdmin() && player.status !== 'approved' && player.approved !== true) {
       showToast("Ваш персонаж не подтвержден администратором", "error");
       return;
     }
     
-    window.joinRoll(player.id, player.nickname);
+    window.joinRoll(player.id, player.name);
   });
 
   document.getElementById("btn-leave-roll").addEventListener("click", () => {
@@ -1216,11 +1241,11 @@
   async function openCloseRaidModal() {
     const grid = document.getElementById("attendance-grid");
     grid.innerHTML = "";
-    allPlayers.forEach(p => {
+    allCharacters.forEach(p => {
       const el = document.createElement("div");
       el.className = "attendance-player present";
       el.dataset.id = p.id;
-      el.innerHTML = `<span>✅</span> ${p.nickname}`;
+      el.innerHTML = `<span>✅</span> ${p.name}`;
       el.addEventListener("click", () => {
         el.classList.toggle("present");
         el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
@@ -1232,14 +1257,14 @@
 
   document.getElementById("btn-confirm-close").addEventListener("click", async () => {
     const attendedIds = [...document.querySelectorAll(".attendance-player.present")].map(el => el.dataset.id);
-    const allIds      = allPlayers.map(p => p.id);
+    const allIds      = allCharacters.map(p => p.id);
     const btn         = document.getElementById("btn-confirm-close");
     btn.disabled = true; btn.textContent = "Закрываем...";
     try {
       await closeRaid(activeRaid.id, attendedIds, allIds);
       closeModal("modal-close-raid");
       allRaids   = await getRaids();
-      allPlayers = await getPlayers();
+      allCharacters = await loadCharacters();
       activeRaid = allRaids.find(r => r.id === activeRaid.id);
       renderRaidList();
       selectRaid(activeRaid);
@@ -1327,37 +1352,46 @@
     
     try {
       console.log('📥 Загрузка данных...');
-      [allRaids, allPlayers, allBosses, allItems] = await Promise.all([
-        getRaids(), getPlayers(), getBosses(), getItems()
+      
+      // Загружаем все данные параллельно
+      [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
+        getRaids(), 
+        loadCharacters(), 
+        getBosses(), 
+        getItems()
       ]);
       
       console.log('✅ Данные загружены:', {
         рейдов: allRaids.length,
-        игроков: allPlayers.length,
+        персонажей: allCharacters.length,
         боссов: allBosses.length,
         предметов: allItems.length
       });
       
-      if (!Array.isArray(allRaids) || !Array.isArray(allPlayers)) {
+      if (!Array.isArray(allRaids) || !Array.isArray(allCharacters)) {
         throw new Error('Ошибка загрузки данных');
       }
       
-      // ============================================================
-      // ПОИСК ПЕРСОНАЖА ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
-      // ============================================================
+      // Ищем персонажа текущего пользователя в коллекции characters
       rollState.currentUserId = currentUser?.uid || null;
-      console.log('🔍 Поиск персонажа для пользователя:', rollState.currentUserId);
-      console.log('📋 Все игроки:', allPlayers);
+      console.log('🔍 Поиск персонажа для пользователя UID:', rollState.currentUserId);
+      console.log('📋 Все персонажи:', allCharacters.map(p => ({ 
+        id: p.id, 
+        name: p.name, 
+        user_id: p.user_id || '❌ ОТСУТСТВУЕТ',
+        status: p.status,
+        approved: p.approved
+      })));
       
       if (rollState.currentUserId) {
-        // Ищем в коллекции players по полю user_id
-        const player = allPlayers.find(p => p.user_id === rollState.currentUserId);
+        const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
         if (player) {
           rollState.currentPlayerId = player.id;
-          console.log('👤 Найден персонаж:', player.nickname, 'ID:', player.id);
+          console.log('✅ Найден персонаж:', player.name, 'ID:', player.id);
         } else {
-          console.log('👤 Персонаж не найден для пользователя. Проверьте, что в базе есть игрок с user_id =', rollState.currentUserId);
-          console.log('📋 Доступные user_id в игроках:', allPlayers.map(p => ({ id: p.id, user_id: p.user_id, nickname: p.nickname })));
+          console.log('❌ Персонаж НЕ найден!');
+          console.log('📋 Ваш UID:', rollState.currentUserId);
+          console.log('📋 Список user_id в персонажах:', allCharacters.map(p => p.user_id || 'null'));
         }
       }
       
@@ -1376,4 +1410,3 @@
 </script>
 </body>
 </html>
-```
