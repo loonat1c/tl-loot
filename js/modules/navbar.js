@@ -1,12 +1,12 @@
 // ====================================================
-// navbar.js — Навбар с адаптивным меню и выбором темы
+// navbar.js — Навбар с адаптивным меню и выбором цвета
 // ====================================================
 
 import { initAuth, authReady, currentUser, currentRole, logout, canWrite, isModerator } from "./auth.js";
 
 let navbarInitialized = false;
 
-// Цветовые схемы
+// Цветовые схемы (только цвета акцента)
 const COLOR_SCHEMES = {
   amber: { label: 'Янтарь', color: '#f59e0b' },
   sakura: { label: 'Сакура', color: '#ec4899' },
@@ -18,7 +18,6 @@ const COLOR_SCHEMES = {
   copper: { label: 'Медь', color: '#d97706' }
 };
 
-let currentTheme = 'dark';
 let currentColor = 'violet';
 
 export async function initNavbar() {
@@ -26,8 +25,8 @@ export async function initNavbar() {
   if (navbarInitialized) return;
   navbarInitialized = true;
 
-  // Загружаем сохраненные настройки
-  loadThemeSettings();
+  // Загружаем сохраненный цвет
+  loadColorSettings();
 
   // Инициализируем авторизацию и ждем готовности
   await initAuth();
@@ -42,35 +41,29 @@ export async function initNavbar() {
   renderNav(nav);
   updateRoleElements();
   setupMobileMenu();
-  setupThemeControls();
+  setupColorControls();
 }
 
-function loadThemeSettings() {
-  const savedTheme = localStorage.getItem('tl_theme');
+function loadColorSettings() {
   const savedColor = localStorage.getItem('tl_color');
   
-  if (savedTheme) currentTheme = savedTheme;
   if (savedColor && COLOR_SCHEMES[savedColor]) {
     currentColor = savedColor;
   } else if (savedColor) {
-    // Если сохраненный цвет не найден в схеме — сбрасываем на фиолетовый
     console.warn('⚠️ Неизвестный цвет:', savedColor, '→ сброс на violet');
     currentColor = 'violet';
     localStorage.setItem('tl_color', 'violet');
   }
   
-  applyTheme(currentTheme, currentColor);
+  applyColor(currentColor);
 }
 
-function applyTheme(theme, color) {
-  document.documentElement.setAttribute('data-theme', theme);
-  
+function applyColor(color) {
   const colorHex = COLOR_SCHEMES[color]?.color || '#7c3aed';
   document.documentElement.style.setProperty('--accent', colorHex);
   document.documentElement.style.setProperty('--accent-soft', colorHex + 'cc');
   document.documentElement.style.setProperty('--accent-glow', colorHex + '40');
   
-  localStorage.setItem('tl_theme', theme);
   localStorage.setItem('tl_color', color);
 }
 
@@ -157,17 +150,8 @@ function renderNav(nav) {
           <a href="/pages/register.html" class="btn-register">Регистрация</a>
         `}
         
-        <!-- Кнопка темы и цветов -->
-        <div class="theme-toggle" id="theme-toggle" title="Настройка темы">
-          <div class="theme-toggle-inner">
-            <span class="theme-icon sun">☀️</span>
-            <div class="theme-switch" id="theme-switch">
-              <div class="theme-switch-track ${currentTheme === 'dark' ? 'dark' : 'light'}">
-                <div class="theme-switch-thumb"></div>
-              </div>
-            </div>
-            <span class="theme-icon moon">🌙</span>
-          </div>
+        <!-- Кнопка выбора цвета -->
+        <div class="theme-toggle" id="theme-toggle" title="Выбор цвета акцента">
           <span class="color-ball" style="background:${currentColorHex};"></span>
           
           <div class="color-picker-popup" id="color-picker-popup">
@@ -243,10 +227,9 @@ function setupMobileMenu() {
   });
 }
 
-function setupThemeControls() {
+function setupColorControls() {
   const toggleBtn = document.getElementById("theme-toggle");
   const popup = document.getElementById("color-picker-popup");
-  const switchElement = document.getElementById("theme-switch");
   
   if (!toggleBtn || !popup) return;
 
@@ -273,7 +256,7 @@ function setupThemeControls() {
       if (!color) return;
       
       currentColor = color;
-      applyTheme(currentTheme, currentColor);
+      applyColor(currentColor);
       
       const ball = toggleBtn.querySelector('.color-ball');
       if (ball) {
@@ -287,29 +270,4 @@ function setupThemeControls() {
       popup.classList.remove("open");
     });
   });
-
-  // Переключение темы через тумблер
-  if (switchElement) {
-    switchElement.addEventListener("click", (e) => {
-      e.stopPropagation();
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(currentTheme, currentColor);
-      
-      const track = switchElement.querySelector('.theme-switch-track');
-      if (track) {
-        track.classList.toggle('dark', currentTheme === 'dark');
-        track.classList.toggle('light', currentTheme === 'light');
-      }
-      
-      // Обновляем иконки
-      const sunIcon = toggleBtn.querySelector('.theme-icon.sun');
-      const moonIcon = toggleBtn.querySelector('.theme-icon.moon');
-      if (sunIcon && moonIcon) {
-        sunIcon.classList.toggle('active', currentTheme === 'light');
-        moonIcon.classList.toggle('active', currentTheme === 'dark');
-      }
-      
-      popup.classList.remove("open");
-    });
-  }
 }
