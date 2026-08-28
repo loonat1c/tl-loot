@@ -772,3 +772,368 @@ table {
 th, td {
   padding: 0.7rem 1rem; /* Чуть больше отступы */
 }
+
+/* ── НАВБАР ─────────────────────────────────────────────── */
+.navbar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: rgba(20, 20, 30, 0.92);
+}
+
+.navbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.15rem;
+  transition: opacity 0.2s;
+}
+
+.nav-brand:hover {
+  opacity: 0.8;
+}
+
+.nav-brand .nav-logo {
+  height: 36px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+}
+
+.nav-brand .nav-brand-text {
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Кнопка бургер */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.nav-toggle:hover {
+  background: var(--bg-card2);
+}
+
+.nav-toggle span {
+  display: block;
+  width: 24px;
+  height: 2.5px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.nav-toggle.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.nav-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.nav-links a svg {
+  flex-shrink: 0;
+}
+
+.nav-links a:hover {
+  color: var(--text);
+  background: var(--bg-card2);
+}
+
+.nav-links a.active {
+  color: var(--accent-soft);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Профиль в навбаре */
+.btn-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.4rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+}
+
+.btn-profile:hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.btn-profile.active {
+  border-color: var(--accent);
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--accent-soft);
+}
+
+.btn-profile .profile-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.btn-profile .profile-email {
+  font-size: 0.8rem;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Кнопки входа/регистрации */
+.btn-login {
+  padding: 0.35rem 1rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn-login:hover {
+  color: var(--text);
+  background: var(--bg-card2);
+}
+
+.btn-register {
+  padding: 0.35rem 1.2rem;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn-register:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* ── АДАПТИВ ────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .nav-links a span {
+    display: none;
+  }
+  .nav-links a {
+    padding: 0.4rem 0.6rem;
+  }
+  .nav-brand .nav-brand-text {
+    display: none;
+  }
+}
+
+@media (max-width: 992px) {
+  .nav-toggle {
+    display: flex;
+  }
+
+  .nav-center {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .nav-center.open {
+    max-height: 400px;
+    padding: 0.75rem 1rem;
+    overflow-y: auto;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+
+  .nav-links a {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .nav-links a span {
+    display: inline;
+  }
+
+  .nav-links a svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .nav-links a.active::after {
+    display: none;
+  }
+
+  .nav-links a.active {
+    background: rgba(139, 92, 246, 0.15);
+  }
+
+  .btn-profile .profile-email {
+    max-width: 60px;
+  }
+
+  .navbar-inner {
+    padding: 0 1rem;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-profile .profile-email {
+    display: none;
+  }
+  .btn-profile {
+    padding: 0.3rem;
+  }
+  .btn-logout svg {
+    width: 18px;
+    height: 18px;
+  }
+  .navbar-inner {
+    padding: 0 0.75rem;
+  }
+  .nav-brand .nav-logo {
+    height: 30px;
+  }
+  .btn-register {
+    padding: 0.25rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .btn-login {
+    padding: 0.25rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
