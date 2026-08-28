@@ -142,11 +142,12 @@
   function renderPlayers() {
     const container = document.getElementById('players-list');
     const canEdit = canWrite();
+    const admin = isAdmin();
     
     // Показываем только персонажей текущего пользователя (обычные пользователи)
     // Администратор видит всех
     let players = allPlayers;
-    if (!isAdmin()) {
+    if (!admin) {
       players = allPlayers.filter(p => p.user_id === currentUser.uid);
     }
     
@@ -166,17 +167,12 @@
       const card = document.createElement('div');
       card.className = 'player-card';
       
-      const statusMap = {
-        true: '✅ Подтверждён',
-        false: '⏳ Ожидает',
-        rejected: '❌ Отклонён'
-      };
       const statusClass = p.approved === true ? 'approved' : p.approved === false ? 'rejected' : 'pending';
       const statusText = p.approved === true ? 'Подтверждён' : p.approved === false ? 'Отклонён' : 'Ожидает';
       
       // Показываем кнопки только для своих персонажей или если админ
       const isOwn = p.user_id === currentUser.uid;
-      const showActions = canEdit && (isOwn || isAdmin());
+      const showActions = canEdit && (isOwn || admin);
       
       card.innerHTML = `
         <div class="info">
@@ -218,6 +214,13 @@
     const p = allPlayers.find(x => x.id === id);
     if (!p) return;
     
+    // Проверяем права на редактирование
+    const isOwn = p.user_id === currentUser.uid;
+    if (!isOwn && !isAdmin()) {
+      showToast('У вас нет прав на редактирование этого персонажа', 'error');
+      return;
+    }
+    
     editingId = id;
     document.getElementById('modal-title').textContent = 'Редактировать персонажа';
     document.getElementById('edit-id').value = id;
@@ -251,27 +254,31 @@
     btn.textContent = 'Сохранение...';
     
     try {
+      const isEdit = !!document.getElementById('edit-id').value;
+      
       const data = {
         nickname,
         class: playerClass || null,
         level: level || null,
-        // ВАЖНО: при создании нового персонажа сохраняем user_id
-        user_id: currentUser.uid,
       };
       
       const id = document.getElementById('edit-id').value;
       if (id) {
         // При редактировании обновляем все поля, но user_id не меняем
+        // И не меняем approved (если админ не редактирует)
         await updatePlayer(id, data);
         showToast('Персонаж обновлён');
       } else {
-        // При создании добавляем user_id и approved: false
+        // При создании проверяем: если админ - сразу approved: true
+        const isAdminUser = isAdmin();
+        
         await addPlayer({
           ...data,
-          approved: false,
+          user_id: currentUser.uid,
+          approved: isAdminUser, // Админы сразу одобрены!
           created_at: new Date().toISOString(),
         });
-        showToast('Персонаж создан');
+        showToast(isAdminUser ? 'Персонаж создан и подтверждён' : 'Персонаж создан, ожидает подтверждения');
       }
       
       closeModal('modal-player');
