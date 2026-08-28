@@ -328,10 +328,9 @@
   });
 
   // ============================================================
-  // ЗАЩИТА: Усиленная защита (без блокировки eval)
+  // ЗАЩИТА: Усиленная защита
   // ============================================================
   
-  // Защита от подмены localStorage
   const _localStorage = window.localStorage;
   Object.defineProperty(window, 'localStorage', {
     get: function() {
@@ -356,26 +355,6 @@
     }
   });
 
-  // Защита от XSS через innerHTML
-  const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-  if (originalInnerHTML) {
-    Object.defineProperty(Element.prototype, 'innerHTML', {
-      get: originalInnerHTML.get,
-      set: function(value) {
-        if (typeof value === 'string' && (
-          value.includes('<script') || 
-          value.includes('javascript:') ||
-          value.includes('onerror=') ||
-          value.includes('onload=')
-        )) {
-          console.warn('🔒 Попытка XSS-атаки заблокирована');
-          return;
-        }
-        originalInnerHTML.set.call(this, value);
-      }
-    });
-  }
-
   console.log('🔒 Защита активирована');
 
   // ============================================================
@@ -385,8 +364,18 @@
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
   
+  // Инициализируем навбар и авторизацию
   initNavbar();
-  initAuth((_u, _r) => {});
+  
+  // Ждем авторизацию ДО загрузки данных
+  await initAuth();
+  await authReady;
+
+  console.log('🔐 Авторизация:', { 
+    user: currentUser?.email || 'Нет',
+    role: currentRole,
+    uid: currentUser?.uid
+  });
 
   import {
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
@@ -461,9 +450,17 @@
     if (!importsOk) return;
     
     try {
+      console.log('📥 Загрузка данных...');
       [allRaids, allPlayers, allBosses, allItems] = await Promise.all([
         getRaids(), getPlayers(), getBosses(), getItems()
       ]);
+      
+      console.log('✅ Данные загружены:', {
+        рейдов: allRaids.length,
+        игроков: allPlayers.length,
+        боссов: allBosses.length,
+        предметов: allItems.length
+      });
       
       if (!Array.isArray(allRaids) || !Array.isArray(allPlayers)) {
         throw new Error('Ошибка загрузки данных');
@@ -474,18 +471,19 @@
       const active = allRaids.find(r => !r.deleted);
       if (active) selectRaid(active);
       
-      await authReady;
-      rollState.currentUserId = currentUser?.uid || null;
-      
       // Находим персонажа текущего пользователя
+      rollState.currentUserId = currentUser?.uid || null;
       if (rollState.currentUserId) {
         const player = allPlayers.find(p => p.user_id === rollState.currentUserId);
         if (player) {
           rollState.currentPlayerId = player.id;
+          console.log('👤 Найден персонаж:', player.nickname, 'ID:', player.id);
+        } else {
+          console.log('👤 Персонаж не найден для пользователя');
         }
       }
     } catch (e) {
-      console.error('Ошибка инициализации:', e);
+      console.error('❌ Ошибка инициализации:', e);
       showToast('Ошибка загрузки данных', 'error');
     }
   }
@@ -981,7 +979,6 @@
   }
 
   function checkPlayerBlock(playerId) {
-    // Проверка: не выиграл ли уже что-то в этом рейде (для дополнительной очереди)
     if (rollState.queue === 'open') {
       // TODO: проверить, выигрывал ли игрок что-то в этом рейде
     }
@@ -1015,7 +1012,9 @@
       showToast("Персонаж не найден", "error");
       return;
     }
-    if (player.approved === false) {
+    
+    // Администратору не нужен аппрув
+    if (!isAdmin() && player.approved !== true) {
       showToast("Ваш персонаж не подтвержден администратором", "error");
       return;
     }
@@ -1211,7 +1210,13 @@
   function showDropError(msg) { const el = document.getElementById("drop-error"); el.textContent = msg; el.style.display = "block"; }
   function formatDate(str) { if (!str) return "—"; return new Date(str).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }); }
   function todayStr() { return new Date().toISOString().split("T")[0]; }
-  function showToast(msg, type = "success") { const t = document.createElement("div"); t.className = `toast ${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
 
   // ============================================================
   // ЗАПУСК
