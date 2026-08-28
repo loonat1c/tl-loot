@@ -18,7 +18,7 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,  // ← ДОБАВЛЕНО!
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
@@ -61,8 +61,7 @@ export function initAuth(onReady = null) {
 
     try {
 
-      // ВАЖНО:
-      // Сначала устанавливаем persistence
+      // ВАЖНО: Сначала устанавливаем persistence
       await setPersistence(auth, browserLocalPersistence);
 
       console.log("💾 Firebase persistence установлена");
