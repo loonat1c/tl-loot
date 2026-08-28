@@ -30,14 +30,58 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.5rem 0;
+      padding: 0.6rem 0;
       border-bottom: 1px solid var(--border);
-      font-size: 0.88rem;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
     .user-row:last-child { border-bottom: none; }
-    .user-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-email { 
+      font-weight: 500; 
+      font-size: 0.95rem; 
+      flex: 1;
+      min-width: 150px;
+    }
     .user-role-badge { flex-shrink: 0; }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .role-select {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg-card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      cursor: pointer;
+      min-width: 140px;
+    }
+    .role-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .badge-purple { background: var(--accent); color: #fff; }
+    .badge-user { 
+      background: rgba(99, 102, 241, 0.2); 
+      color: #818cf8; 
+      border: 1px solid #818cf8; 
+    }
+    .badge-guild-leader {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+    }
+    .badge-moderator {
+      background: rgba(52, 211, 153, 0.2);
+      color: #34d399;
+      border: 1px solid #34d399;
+    }
 
     .lock-manage-row {
       display: flex;
@@ -99,12 +143,8 @@
       font-size: 0.65rem;
       margin-left: 0.3rem;
     }
-    .tab-content { 
-      display: none !important; 
-    }
-    .tab-content.active { 
-      display: block !important; 
-    }
+    .tab-content { display: none !important; }
+    .tab-content.active { display: block !important; }
 
     .settings-wrap { max-width: 560px; }
     .settings-card {
@@ -134,7 +174,7 @@
     }
     .setting-row:last-of-type { border-bottom: none; }
     .setting-label { font-size: 0.9rem; font-weight: 600; }
-    .setting-hint  { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .setting-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
     .setting-input { width: 80px; text-align: center; }
 
     .save-bar {
@@ -151,7 +191,6 @@
     }
     .saved-msg.show { opacity: 1; }
 
-    /* ── Модерация персонажей ────────────────────────── */
     .moderation-stats {
       display: flex;
       gap: 1rem;
@@ -188,9 +227,7 @@
       margin-bottom: 1rem;
       transition: border-color 0.15s;
     }
-    .moderation-card:hover {
-      border-color: var(--accent);
-    }
+    .moderation-card:hover { border-color: var(--accent); }
     .moderation-card .card-header {
       display: flex;
       justify-content: space-between;
@@ -292,37 +329,6 @@
     .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
     .btn-close:hover { color: var(--text); }
 
-    .badge-purple { background: var(--accent); color: #fff; }
-    .badge-user { 
-      background: rgba(99, 102, 241, 0.2); 
-      color: #818cf8; 
-      border: 1px solid #818cf8; 
-    }
-    .badge-guild-leader {
-      background: rgba(245, 158, 11, 0.2);
-      color: #f59e0b;
-      border: 1px solid #f59e0b;
-    }
-    .badge-moderator {
-      background: rgba(52, 211, 153, 0.2);
-      color: #34d399;
-      border: 1px solid #34d399;
-    }
-    
-    .role-select {
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background: var(--bg-card2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-    .role-select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
     .status-badge {
       display: inline-block;
       padding: 0.15rem 0.5rem;
@@ -347,21 +353,22 @@
     }
     
     .hidden { display: none !important; }
+    .text-muted { color: var(--text-muted); }
+    .text-danger { color: var(--danger); }
+    .flex { display: flex; }
+    .gap-1 { gap: 0.5rem; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .btn-sm { padding: 0.25rem 0.7rem; font-size: 0.78rem; }
+    .btn-danger { background: var(--danger); color: #fff; border: none; cursor: pointer; border-radius: 4px; transition: opacity 0.15s; }
+    .btn-danger:hover { opacity: 0.85; }
 
     @media (max-width: 768px) {
-      .moderation-card .char-details {
-        grid-template-columns: 1fr;
-      }
-      .moderation-card .card-header {
-        flex-direction: column;
-      }
-      .user-row {
-        flex-wrap: wrap;
-      }
-      .user-row .role-select {
-        flex: 1;
-        min-width: 100px;
-      }
+      .moderation-card .char-details { grid-template-columns: 1fr; }
+      .moderation-card .card-header { flex-direction: column; }
+      .user-row { flex-direction: column; align-items: stretch; }
+      .user-actions { justify-content: flex-start; }
+      .role-select { min-width: 100%; }
     }
   </style>
 </head>
@@ -903,7 +910,7 @@
     }
   };
 
-  // ─── УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (НОВАЯ ВЕРСИЯ) ────────
+  // ─── УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ────────────────────────
   
   const ROLES = [
     { value: 'user', label: '👤 Пользователь', badge: 'badge-user' },
@@ -912,13 +919,26 @@
     { value: 'admin', label: '⚡ Администратор', badge: 'badge-purple' }
   ];
 
+  const ROLE_ICONS = {
+    'admin': '⚡',
+    'guild_leader': '👑',
+    'moderator': '🛡️',
+    'user': '👤'
+  };
+
+  const ROLE_COLORS = {
+    'admin': '#8b5cf6',
+    'guild_leader': '#f59e0b',
+    'moderator': '#34d399',
+    'user': '#818cf8'
+  };
+
   async function loadUsers() {
     const container = document.getElementById("users-list");
     try {
       const snap = await getDocs(collection(db, "users"));
       allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      // Сортируем: сначала админы, потом главы гильдии, потом модераторы, потом пользователи
       const rolePriority = { admin: 0, guild_leader: 1, moderator: 2, user: 3 };
       allUsers.sort((a, b) => (rolePriority[a.role] || 3) - (rolePriority[b.role] || 3));
 
@@ -930,36 +950,38 @@
       container.innerHTML = allUsers.map(u => {
         const currentUserRole = u.role || 'user';
         const isSelf = u.id === currentUser?.uid;
-        
-        // Не даем редактировать себя (чтобы не снять себе админку)
         const canEdit = !isSelf && currentRole === 'admin';
         
         const roleDisplay = ROLES.find(r => r.value === currentUserRole)?.label || currentUserRole;
         const badgeClass = ROLES.find(r => r.value === currentUserRole)?.badge || 'badge-user';
+        const roleColor = ROLE_COLORS[currentUserRole] || '#818cf8';
+        const roleIcon = ROLE_ICONS[currentUserRole] || '👤';
 
         return `
           <div class="user-row" id="user-row-${u.id}">
-            <div class="user-email">
-              ${u.email || u.id}
-              ${isSelf ? ' <span style="font-size:0.7rem;color:var(--accent-soft);">(вы)</span>' : ''}
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;flex:1;min-width:150px;">
+              <span class="user-email">${u.email || u.id}</span>
+              ${isSelf ? ' <span style="font-size:0.7rem;color:var(--accent-soft);background:var(--accent-glow);padding:0.05rem 0.5rem;border-radius:10px;">(вы)</span>' : ''}
+              <span class="badge ${badgeClass} user-role-badge" style="border-color:${roleColor};color:${roleColor};background:${roleColor}20;">
+                ${roleIcon} ${roleDisplay}
+              </span>
             </div>
             ${canEdit ? `
-              <select class="role-select" id="role-select-${u.id}" onchange="window.changeRole('${u.id}', this.value)">
-                ${ROLES.map(r => `
-                  <option value="${r.value}" ${r.value === currentUserRole ? 'selected' : ''}>
-                    ${r.label}
-                  </option>
-                `).join('')}
-              </select>
-            ` : `
-              <span class="badge ${badgeClass} user-role-badge">
-                ${roleDisplay}
-              </span>
-            `}
-            ${canEdit ? `
-              <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')">
-                🗑️
-              </button>
+              <div class="user-actions">
+                <select class="role-select" id="role-select-${u.id}" onchange="window.changeRole('${u.id}', this.value)">
+                  ${ROLES.map(r => {
+                    const isSelected = r.value === currentUserRole;
+                    return `
+                      <option value="${r.value}" ${isSelected ? 'selected' : ''}>
+                        ${ROLE_ICONS[r.value] || ''} ${r.label}
+                      </option>
+                    `;
+                  }).join('')}
+                </select>
+                <button class="btn btn-danger btn-sm" onclick="window.deleteUser('${u.id}', '${u.email}')" title="Удалить пользователя">
+                  🗑️
+                </button>
+              </div>
             ` : ''}
           </div>
         `;
@@ -967,13 +989,20 @@
 
       // Навешиваем глобальные функции
       window.changeRole = async (uid, newRole) => {
-        if (!confirm(`Изменить роль пользователя на "${ROLES.find(r => r.value === newRole)?.label || newRole}"?`)) {
-          // Возвращаем предыдущее значение
-          const user = allUsers.find(u => u.id === uid);
-          if (user) {
-            const select = document.getElementById(`role-select-${uid}`);
-            if (select) select.value = user.role || 'user';
-          }
+        const user = allUsers.find(u => u.id === uid);
+        if (!user) return;
+        
+        const currentRoleName = ROLES.find(r => r.value === user.role)?.label || user.role;
+        const newRoleName = ROLES.find(r => r.value === newRole)?.label || newRole;
+        
+        if (user.role === newRole) {
+          showToast(`Роль уже установлена как "${newRoleName}"`, 'info');
+          return;
+        }
+        
+        if (!confirm(`Изменить роль пользователя "${user.email}" с "${currentRoleName}" на "${newRoleName}"?`)) {
+          const select = document.getElementById(`role-select-${uid}`);
+          if (select) select.value = user.role || 'user';
           return;
         }
         
@@ -983,31 +1012,26 @@
             updated_at: new Date().toISOString()
           });
           
-          showToast(`Роль обновлена на "${ROLES.find(r => r.value === newRole)?.label || newRole}"`);
+          showToast(`✅ Роль изменена с "${currentRoleName}" на "${newRoleName}"`);
           await loadUsers();
           
         } catch (error) {
           console.error('Ошибка обновления роли:', error);
           showToast('Ошибка: ' + error.message, 'error');
-          
-          // Возвращаем предыдущее значение
-          const user = allUsers.find(u => u.id === uid);
-          if (user) {
-            const select = document.getElementById(`role-select-${uid}`);
-            if (select) select.value = user.role || 'user';
-          }
+          const select = document.getElementById(`role-select-${uid}`);
+          if (select) select.value = user.role || 'user';
         }
       };
 
       window.deleteUser = async (uid, email) => {
-        if (!confirm(`Удалить пользователя ${email}?`)) return;
+        if (!confirm(`Удалить пользователя "${email}"? Это действие нельзя отменить.`)) return;
         try {
           await deleteDoc(doc(db, "users", uid));
-          showToast("Пользователь удалён из системы");
+          showToast(`✅ Пользователь "${email}" удалён из системы`);
           await loadUsers();
         } catch (e) {
           console.error("Ошибка удаления пользователя:", e);
-          showToast("Ошибка удаления", "error");
+          showToast("❌ Ошибка удаления: " + e.message, "error");
         }
       };
 
@@ -1055,7 +1079,7 @@
         created_at: new Date().toISOString(),
       });
       closeModal();
-      showToast("Модератор создан");
+      showToast("✅ Модератор создан");
       await loadUsers();
     } catch (e) {
       let msg = e.message;
