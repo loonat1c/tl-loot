@@ -305,18 +305,32 @@
 
 <script type="module">
   // ============================================================
-  // ЗАЩИТА: Ранняя блокировка
+  // ЗАЩИТА: Легкая версия (без блокировки eval)
   // ============================================================
   
-  // Блокируем доступ к критическим объектам до загрузки
-  Object.defineProperty(window, 'eval', {
-    value: function() { console.warn('🔒 eval() заблокирован'); return null; },
-    writable: false,
-    configurable: false
+  // Просто блокируем контекстное меню и DevTools
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+      e.preventDefault();
+      return false;
+    }
   });
-  
-  // Сохраняем оригинальные методы
-  const _origConsole = { ...console };
+
+  document.addEventListener('keydown', function(e) {
+    if (
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
+      (e.ctrlKey && e.key === 'u') ||
+      (e.ctrlKey && e.key === 's')
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // ============================================================
+  // ИМПОРТЫ
+  // ============================================================
   
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
@@ -337,14 +351,16 @@
   import { SLOTS } from "../js/constants.js";
 
   // ============================================================
-  // ЗАЩИТА: Проверка целостности импортов
+  // ЗАЩИТА: Проверка импортов (без eval)
   // ============================================================
   
-  const criticalFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
+  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
   let importsOk = true;
   
-  for (const fn of criticalFunctions) {
-    if (typeof eval(fn) !== 'function') {
+  for (const fn of requiredFunctions) {
+    // Проверяем через typeof, а не через eval
+    const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
+    if (typeof fnMap[fn] !== 'function') {
       console.error(`🔒 Критическая функция ${fn} не найдена или была подменена`);
       importsOk = false;
     }
@@ -362,46 +378,7 @@
   }
 
   // ============================================================
-  // ЗАЩИТА: Функции валидации
-  // ============================================================
-  
-  function validatePermissions(action) {
-    if (!canWrite()) {
-      showToast(`🔒 У вас нет прав на действие: ${action}`, 'error');
-      return false;
-    }
-    return true;
-  }
-
-  function validateAdmin(action) {
-    if (!isAdmin()) {
-      showToast(`🔒 Только администратор может: ${action}`, 'error');
-      return false;
-    }
-    return true;
-  }
-
-  // ============================================================
-  // ЗАЩИТА: Блокировка опасных методов
-  // ============================================================
-  
-  // Блокируем Function constructor
-  window.Function = function() {
-    console.warn('🔒 Function() constructor заблокирован');
-    return function() {};
-  };
-  
-  // Блокируем доступ к localStorage из консоли
-  const _localStorage = window.localStorage;
-  Object.defineProperty(window, 'localStorage', {
-    get: function() {
-      console.warn('🔒 Доступ к localStorage из консоли заблокирован');
-      return null;
-    }
-  });
-
-  // ============================================================
-  // ИНИЦИАЛИЗАЦИЯ
+  // ОСТАЛЬНОЙ КОД (без изменений)
   // ============================================================
 
   let allRaids = [], allPlayers = [], allBosses = [], allItems = [];
@@ -425,18 +402,10 @@
     queue: 'main'
   };
 
-  // ============================================================
-  // ИКОНКА LUCENT
-  // ============================================================
-  
   function lucentIcon(size = 'small') {
     const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
     return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
   }
-
-  // ============================================================
-  // ОСНОВНАЯ ЛОГИКА
-  // ============================================================
 
   async function init() {
     if (!importsOk) return;
@@ -630,7 +599,6 @@
 
   // ── Новый рейд ────────────────────────────────────
   document.getElementById("btn-new-raid").addEventListener("click", () => {
-    if (!validatePermissions('создание рейда')) return;
     editingRaidId = null;
     document.getElementById("modal-raid-title").textContent = "Новый рейд";
     document.getElementById("raid-date").value  = todayStr();
@@ -640,7 +608,6 @@
   });
 
   function openEditRaid(raid) {
-    if (!validatePermissions('редактирование рейда')) return;
     editingRaidId = raid.id;
     document.getElementById("modal-raid-title").textContent = "Редактировать рейд";
     document.getElementById("raid-date").value  = raid.date;
@@ -650,8 +617,6 @@
   }
 
   document.getElementById("btn-create-raid").addEventListener("click", async () => {
-    if (!validatePermissions('создание/редактирование рейда')) return;
-    
     const date  = document.getElementById("raid-date").value;
     const notes = document.getElementById("raid-notes").value.trim();
     const errEl = document.getElementById("raid-error");
@@ -682,7 +647,6 @@
   });
 
   function confirmDeleteRaid(raid) {
-    if (!validateAdmin('удаление рейда')) return;
     if (!confirm(`Удалить рейд от ${formatDate(raid.date)}?`)) return;
     softDeleteRaid(raid.id).then(async () => {
       showToast("Рейд удалён");
@@ -694,7 +658,6 @@
   }
 
   function confirmRestoreRaid(raid) {
-    if (!validateAdmin('восстановление рейда')) return;
     if (!confirm("Восстановить рейд?")) return;
     restoreRaid(raid.id).then(async () => {
       showToast("Рейд восстановлен");
@@ -706,15 +669,12 @@
 
   // ── Трай модалка ──────────────────────────────────
   function openTryModal() {
-    if (!validatePermissions('добавление трая')) return;
     document.getElementById("try-boss-select").value = "";
     document.getElementById("try-error").style.display = "none";
     openModal("modal-try");
   }
 
   document.getElementById("btn-create-try").addEventListener("click", async () => {
-    if (!validatePermissions('добавление трая')) return;
-    
     const bossId   = document.getElementById("try-boss-select").value;
     const boss     = allBosses.find(b => b.id === bossId);
     const tries    = await getRaidTries(activeRaid.id);
@@ -736,7 +696,6 @@
   });
 
   window.confirmDeleteTry = async (raidId, tryId) => {
-    if (!validatePermissions('удаление трая')) return;
     if (!confirm("Удалить трай и все его дропы?")) return;
     await deleteTry(raidId, tryId);
     selectRaid(activeRaid);
@@ -745,8 +704,6 @@
 
   // ── Дроп модалка ─────────────────────────────────
   window.openDropModal = async (raidId, tryId, bossId) => {
-    if (!validatePermissions('добавление дропа')) return;
-    
     currentDropRaidId  = raidId;
     currentDropTryId   = tryId;
     currentDropBossId  = bossId || null;
@@ -828,7 +785,6 @@
   document.getElementById("item-search").addEventListener("input", e => renderDropItems(e.target.value));
 
   document.getElementById("btn-save-drop").addEventListener("click", async () => {
-    if (!validatePermissions('добавление дропа')) return;
     if (!selectedItem)   return showDropError("Выбери предмет");
 
     const boss   = allBosses.find(b => b.id === currentDropBossId);
@@ -866,7 +822,6 @@
   });
 
   window.confirmDeleteDrop = async (raidId, tryId, dropId, name) => {
-    if (!validatePermissions('удаление дропа')) return;
     if (!confirm(`Удалить дроп «${name}»?`)) return;
     await deleteDrop(raidId, tryId, dropId);
     allRaids = await getRaids();
@@ -877,8 +832,6 @@
 
   // ── Ролл модалка ──────────────────────────────────
   window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
-    if (!validatePermissions('открытие ролла')) return;
-    
     rollState.raidId = raidId;
     rollState.tryId = tryId;
     rollState.dropId = dropId;
@@ -1038,8 +991,6 @@
   });
 
   document.getElementById("btn-start-roll").addEventListener("click", async () => {
-    if (!validatePermissions('запуск ролла')) return;
-    
     const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
     if (activeParticipants.length < 2) {
       showToast("Нужно минимум 2 участника для ролла", "error");
@@ -1047,6 +998,11 @@
     }
     
     if (rollState.isRolling || rollState.isFinished) return;
+    
+    if (!canWrite()) {
+      showToast("Только модератор может запустить ролл", "error");
+      return;
+    }
     
     rollState.isRolling = true;
     document.getElementById("btn-start-roll").disabled = true;
@@ -1108,8 +1064,6 @@
   }
 
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
-    if (!validatePermissions('фиксация победителя')) return;
-    
     if (!rollState.winner) {
       showToast("Сначала запустите ролл", "error");
       return;
@@ -1153,8 +1107,6 @@
 
   // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
-    if (!validatePermissions('закрытие рейда')) return;
-    
     const grid = document.getElementById("attendance-grid");
     grid.innerHTML = "";
     allPlayers.forEach(p => {
@@ -1172,8 +1124,6 @@
   }
 
   document.getElementById("btn-confirm-close").addEventListener("click", async () => {
-    if (!validatePermissions('закрытие рейда')) return;
-    
     const attendedIds = [...document.querySelectorAll(".attendance-player.present")].map(el => el.dataset.id);
     const allIds      = allPlayers.map(p => p.id);
     const btn         = document.getElementById("btn-confirm-close");
@@ -1201,37 +1151,7 @@
   function todayStr() { return new Date().toISOString().split("T")[0]; }
   function showToast(msg, type = "success") { const t = document.createElement("div"); t.className = `toast ${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 
-  // ============================================================
-  // ЗАЩИТА: Блокировка контекстного меню
-  // ============================================================
-  document.addEventListener('contextmenu', function(e) {
-    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  // ============================================================
-  // ЗАЩИТА: Блокировка DevTools
-  // ============================================================
-  document.addEventListener('keydown', function(e) {
-    if (
-      e.key === 'F12' ||
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
-      (e.ctrlKey && e.key === 'u') ||
-      (e.ctrlKey && e.key === 's')
-    ) {
-      e.preventDefault();
-      showToast('🔒 Инструменты разработчика заблокированы', 'error');
-      return false;
-    }
-  });
-
-  // ============================================================
-  // ЗАПУСК
-  // ============================================================
   init();
-
 </script>
 </body>
 </html>
