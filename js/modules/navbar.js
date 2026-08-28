@@ -8,23 +8,24 @@ let navbarInitialized = false;
 
 // Цветовые схемы
 const COLOR_SCHEMES = {
-  purple: { label: 'Фиолетовый', color: '#7c3aed' },
-  blue: { label: 'Синий', color: '#3b82f6' },
-  green: { label: 'Зеленый', color: '#22c55e' },
-  red: { label: 'Красный', color: '#ef4444' },
-  orange: { label: 'Оранжевый', color: '#f59e0b' },
-  pink: { label: 'Розовый', color: '#ec4899' }
+  amber: { label: 'Янтарь', color: '#f59e0b' },
+  sakura: { label: 'Сакура', color: '#ec4899' },
+  ocean: { label: 'Океан', color: '#3b82f6' },
+  forest: { label: 'Лес', color: '#22c55e' },
+  violet: { label: 'Фиолет', color: '#7c3aed' },
+  scarlet: { label: 'Алый', color: '#ef4444' },
+  steel: { label: 'Сталь', color: '#64748b' },
+  copper: { label: 'Медь', color: '#d97706' }
 };
 
 let currentTheme = 'dark';
-let currentColor = 'purple';
+let currentColor = 'violet';
 
 export async function initNavbar() {
 
   if (navbarInitialized) return;
   navbarInitialized = true;
 
-  // Загружаем сохраненные настройки
   loadThemeSettings();
 
   await initAuth();
@@ -50,26 +51,21 @@ function loadThemeSettings() {
 }
 
 function applyTheme(theme, color) {
-  // Применяем тему (dark/light)
   document.documentElement.setAttribute('data-theme', theme);
   
-  // Применяем цвет акцента
   const colorHex = COLOR_SCHEMES[color]?.color || '#7c3aed';
   document.documentElement.style.setProperty('--accent', colorHex);
   document.documentElement.style.setProperty('--accent-soft', colorHex + 'cc');
   document.documentElement.style.setProperty('--accent-glow', colorHex + '40');
   
-  // Сохраняем в localStorage
   localStorage.setItem('tl_theme', theme);
   localStorage.setItem('tl_color', color);
 }
 
 function renderNav(nav) {
   const isAuth = !!currentUser;
-  const role = currentRole || "guest";
   const email = currentUser?.email || "";
 
-  // Определяем текущую страницу
   const currentPath = window.location.pathname;
   const isItemsPage = currentPath.includes('items.html');
   const isAdminPage = currentPath.includes('admin.html');
@@ -85,8 +81,6 @@ function renderNav(nav) {
                        currentPath === '/index.html';
 
   const isProfileActive = !isProfilePage && isAuth;
-
-  const themeIcon = currentTheme === 'dark' ? '🌙' : '☀️';
 
   nav.innerHTML = `
     <div class="navbar-inner">
@@ -149,20 +143,25 @@ function renderNav(nav) {
         
         <!-- Кнопка темы и цветов -->
         <div class="theme-toggle" id="theme-toggle" title="Настройка темы">
-          <span id="theme-icon">${themeIcon}</span>
-          <span class="color-dot" style="width:14px;height:14px;border-radius:50%;background:${COLOR_SCHEMES[currentColor].color};border:2px solid var(--theme-border);display:inline-block;"></span>
+          <div class="theme-toggle-inner">
+            <span class="theme-icon sun">☀️</span>
+            <div class="theme-switch" id="theme-switch">
+              <div class="theme-switch-track ${currentTheme === 'dark' ? 'dark' : 'light'}">
+                <div class="theme-switch-thumb"></div>
+              </div>
+            </div>
+            <span class="theme-icon moon">🌙</span>
+          </div>
+          <span class="color-ball" style="background:${COLOR_SCHEMES[currentColor].color};"></span>
           
           <div class="color-picker-popup" id="color-picker-popup">
-            <div style="font-size:0.7rem;color:var(--theme-text-muted);margin-bottom:0.5rem;text-align:center;padding:0.25rem;">Цвет акцента</div>
-            ${Object.entries(COLOR_SCHEMES).map(([key, scheme]) => `
-              <div class="color-option" data-color="${key}">
-                <span class="color-dot ${currentColor === key ? 'active' : ''}" style="background:${scheme.color};width:20px;height:20px;border-radius:50%;border:2px solid var(--theme-border);display:inline-block;flex-shrink:0;"></span>
-                ${scheme.label}
-              </div>
-            `).join('')}
-            <div style="border-top:1px solid var(--theme-border);margin:0.4rem 0;"></div>
-            <div class="color-option" id="theme-mode-toggle">
-              <span>${currentTheme === 'dark' ? '🌙 Тёмная' : '☀️ Светлая'}</span>
+            <div class="color-grid">
+              ${Object.entries(COLOR_SCHEMES).map(([key, scheme]) => `
+                <div class="color-option ${currentColor === key ? 'active' : ''}" data-color="${key}" title="${scheme.label}">
+                  <span class="color-swatch" style="background:${scheme.color};"></span>
+                  <span class="color-label">${scheme.label}</span>
+                </div>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -231,14 +230,18 @@ function setupMobileMenu() {
 function setupThemeControls() {
   const toggleBtn = document.getElementById("theme-toggle");
   const popup = document.getElementById("color-picker-popup");
+  const switchElement = document.getElementById("theme-switch");
   
   if (!toggleBtn || !popup) return;
 
-  // Открытие/закрытие попапа
-  toggleBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    popup.classList.toggle("open");
-  });
+  // Открытие/закрытие попапа по клику на шарик
+  const colorBall = toggleBtn.querySelector('.color-ball');
+  if (colorBall) {
+    colorBall.addEventListener("click", (e) => {
+      e.stopPropagation();
+      popup.classList.toggle("open");
+    });
+  }
 
   // Закрытие по клику вне
   document.addEventListener("click", (e) => {
@@ -248,44 +251,49 @@ function setupThemeControls() {
   });
 
   // Выбор цвета
-  document.querySelectorAll(".color-option[data-color]").forEach(option => {
+  document.querySelectorAll(".color-option").forEach(option => {
     option.addEventListener("click", () => {
       const color = option.dataset.color;
+      if (!color) return;
+      
       currentColor = color;
       applyTheme(currentTheme, currentColor);
       
-      // Обновляем цветовую точку в кнопке
-      const dot = toggleBtn.querySelector('.color-dot');
-      if (dot) {
-        dot.style.background = COLOR_SCHEMES[color].color;
+      const ball = toggleBtn.querySelector('.color-ball');
+      if (ball) {
+        ball.style.background = COLOR_SCHEMES[color].color;
       }
       
-      // Обновляем активный класс
-      document.querySelectorAll(".color-option .color-dot").forEach(d => {
-        d.classList.toggle('active', d.parentElement.dataset.color === color);
+      document.querySelectorAll(".color-option").forEach(el => {
+        el.classList.toggle('active', el.dataset.color === color);
       });
       
       popup.classList.remove("open");
     });
   });
 
-  // Переключение темы
-  document.getElementById("theme-mode-toggle")?.addEventListener("click", () => {
-    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    applyTheme(currentTheme, currentColor);
-    
-    // Обновляем иконку
-    const icon = document.getElementById("theme-icon");
-    if (icon) {
-      icon.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
-    }
-    
-    // Обновляем текст
-    const toggleText = document.querySelector("#theme-mode-toggle span");
-    if (toggleText) {
-      toggleText.textContent = currentTheme === 'dark' ? '🌙 Тёмная' : '☀️ Светлая';
-    }
-    
-    popup.classList.remove("open");
-  });
+  // Переключение темы через тумблер
+  if (switchElement) {
+    switchElement.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme, currentColor);
+      
+      const track = switchElement.querySelector('.theme-switch-track');
+      if (track) {
+        track.classList.toggle('dark', currentTheme === 'dark');
+        track.classList.toggle('light', currentTheme === 'light');
+      }
+      
+      // Обновляем иконки
+      const sunIcon = toggleBtn.querySelector('.theme-icon.sun');
+      const moonIcon = toggleBtn.querySelector('.theme-icon.moon');
+      if (sunIcon && moonIcon) {
+        sunIcon.classList.toggle('active', currentTheme === 'light');
+        moonIcon.classList.toggle('active', currentTheme === 'dark');
+      }
+      
+      popup.classList.remove("open");
+    });
+  }
 }
