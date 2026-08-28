@@ -1,5 +1,5 @@
 // ====================================================
-// raids.js — CRUD для рейдов, траёв и дропов
+// raids.js — CRUD для рейдов, траёв и дропов (ЗАЩИЩЁННАЯ ВЕРСИЯ)
 // ====================================================
 
 import { db } from "../firebase.js";
@@ -8,155 +8,296 @@ import {
   getDocs, getDoc, query, orderBy, writeBatch, increment,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const raidCol = ()       => collection(db, "raids");
-const tryCol  = (rid)    => collection(db, "raids", rid, "tries");
-const dropCol = (rid,tid)=> collection(db, "raids", rid, "tries", tid, "drops");
+// ============================================================
+// ЗАЩИТА: Проверка прав перед каждым запросом
+// ============================================================
+
+let authCheck = null;
+export function setAuthCheck(fn) {
+  authCheck = fn;
+}
+
+function requireAuth() {
+  if (!authCheck) {
+    console.error('🔒 Система авторизации не инициализирована');
+    throw new Error('Unauthorized');
+  }
+  if (!authCheck()) {
+    throw new Error('Unauthorized: недостаточно прав');
+  }
+}
+
+function requireAdmin() {
+  requireAuth();
+  const user = JSON.parse(localStorage.getItem('tl_user') || '{}');
+  if (user.role !== 'admin') {
+    throw new Error('Unauthorized: требуется права администратора');
+  }
+}
+
+const raidCol = () => collection(db, "raids");
+const tryCol  = (rid) => collection(db, "raids", rid, "tries");
+const dropCol = (rid,tid) => collection(db, "raids", rid, "tries", tid, "drops");
 
 // ── Рейды ─────────────────────────────────────────────
 export async function getRaids() {
-  const snap = await getDocs(query(raidCol(), orderBy("date", "desc")));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const snap = await getDocs(query(raidCol(), orderBy("date", "desc")));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Ошибка получения рейдов:', e);
+    throw e;
+  }
 }
 
 export async function getRaid(id) {
-  const snap = await getDoc(doc(db, "raids", id));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  try {
+    const snap = await getDoc(doc(db, "raids", id));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (e) {
+    console.error('Ошибка получения рейда:', e);
+    throw e;
+  }
 }
 
 export async function createRaid({ date, notes }) {
-  const ref = await addDoc(raidCol(), {
-    date, notes: notes || "",
-    status: "open",
-    drop_count: 0,
-    created_at: new Date().toISOString(),
-    deleted: false,
-    deleted_at: null,
-  });
-  return ref.id;
+  requireAuth();
+  try {
+    const ref = await addDoc(raidCol(), {
+      date, notes: notes || "",
+      status: "open",
+      drop_count: 0,
+      created_at: new Date().toISOString(),
+      deleted: false,
+      deleted_at: null,
+      created_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+    return ref.id;
+  } catch (e) {
+    console.error('Ошибка создания рейда:', e);
+    throw e;
+  }
 }
 
 export async function updateRaid(id, data) {
-  await updateDoc(doc(db, "raids", id), data);
+  requireAuth();
+  try {
+    await updateDoc(doc(db, "raids", id), {
+      ...data,
+      updated_at: new Date().toISOString(),
+      updated_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+  } catch (e) {
+    console.error('Ошибка обновления рейда:', e);
+    throw e;
+  }
 }
 
-// Мягкое удаление
 export async function softDeleteRaid(id) {
-  await updateDoc(doc(db, "raids", id), {
-    deleted: true,
-    deleted_at: new Date().toISOString(),
-  });
+  requireAdmin();
+  try {
+    await updateDoc(doc(db, "raids", id), {
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+      deleted_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+  } catch (e) {
+    console.error('Ошибка удаления рейда:', e);
+    throw e;
+  }
 }
 
-// Восстановление
 export async function restoreRaid(id) {
-  await updateDoc(doc(db, "raids", id), {
-    deleted: false,
-    deleted_at: null,
-  });
+  requireAdmin();
+  try {
+    await updateDoc(doc(db, "raids", id), {
+      deleted: false,
+      deleted_at: null,
+      restored_at: new Date().toISOString(),
+      restored_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+  } catch (e) {
+    console.error('Ошибка восстановления рейда:', e);
+    throw e;
+  }
 }
 
-// Жёсткое удаление
 export async function hardDeleteRaid(id) {
-  await deleteDoc(doc(db, "raids", id));
+  requireAdmin();
+  try {
+    await deleteDoc(doc(db, "raids", id));
+  } catch (e) {
+    console.error('Ошибка жёсткого удаления рейда:', e);
+    throw e;
+  }
 }
 
 // ── Траи ──────────────────────────────────────────────
 export async function getRaidTries(raidId) {
-  const snap = await getDocs(query(tryCol(raidId), orderBy("order")));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const snap = await getDocs(query(tryCol(raidId), orderBy("order")));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Ошибка получения траёв:', e);
+    throw e;
+  }
 }
 
 export async function addTry(raidId, { boss_id, boss_name, order }) {
-  const ref = await addDoc(tryCol(raidId), {
-    boss_id:    boss_id || null,
-    boss_name:  boss_name || "",
-    order:      order || 0,
-    drop_count: 0,
-    created_at: new Date().toISOString(),
-  });
-  return ref.id;
+  requireAuth();
+  try {
+    const ref = await addDoc(tryCol(raidId), {
+      boss_id:    boss_id || null,
+      boss_name:  boss_name || "",
+      order:      order || 0,
+      drop_count: 0,
+      created_at: new Date().toISOString(),
+      created_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+    return ref.id;
+  } catch (e) {
+    console.error('Ошибка добавления трая:', e);
+    throw e;
+  }
 }
 
 export async function deleteTry(raidId, tryId) {
-  await deleteDoc(doc(db, "raids", raidId, "tries", tryId));
+  requireAuth();
+  try {
+    await deleteDoc(doc(db, "raids", raidId, "tries", tryId));
+  } catch (e) {
+    console.error('Ошибка удаления трая:', e);
+    throw e;
+  }
 }
 
 // ── Дропы ─────────────────────────────────────────────
 export async function getTryDrops(raidId, tryId) {
-  const snap = await getDocs(dropCol(raidId, tryId));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const snap = await getDocs(dropCol(raidId, tryId));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Ошибка получения дропов:', e);
+    throw e;
+  }
 }
 
-export async function addDrop(raidId, tryId, {
-  item_id, item_name, item_slot, item_image,
-  winner_player_id, winner_nickname,
-  boss_id, boss_name,
-  lucent_value_snapshot,
-  roll_type,
-  property,
-}) {
-  const batch = writeBatch(db);
+export async function addDrop(raidId, tryId, dropData) {
+  requireAuth();
+  
+  if (!dropData.item_id || !dropData.item_name) {
+    throw new Error('Не указан предмет');
+  }
+  
+  try {
+    const batch = writeBatch(db);
 
-  const dropRef = doc(dropCol(raidId, tryId));
-  batch.set(dropRef, {
-    item_id, item_name, item_slot,
-    item_image: item_image || null,
-    winner_player_id: winner_player_id || null,
-    winner_nickname: winner_nickname || null,
-    boss_id: boss_id || null,
-    boss_name: boss_name || "",
-    lucent_value_snapshot: lucent_value_snapshot || 0,
-    roll_type: roll_type || null,
-    property: property || null,
-    created_at: new Date().toISOString(),
-  });
+    const dropRef = doc(dropCol(raidId, tryId));
+    batch.set(dropRef, {
+      ...dropData,
+      winner_player_id: dropData.winner_player_id || null,
+      winner_nickname: dropData.winner_nickname || null,
+      roll_type: dropData.roll_type || null,
+      property: dropData.property || null,
+      created_at: new Date().toISOString(),
+      created_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
 
-  // Счётчик дропов в трае и рейде
-  batch.update(doc(db, "raids", raidId, "tries", tryId), {
-    drop_count: increment(1),
-  });
-  batch.update(doc(db, "raids", raidId), {
-    drop_count: increment(1),
-  });
+    batch.update(doc(db, "raids", raidId, "tries", tryId), {
+      drop_count: increment(1),
+    });
+    batch.update(doc(db, "raids", raidId), {
+      drop_count: increment(1),
+    });
 
-  await batch.commit();
-  return dropRef.id;
+    await batch.commit();
+    return dropRef.id;
+  } catch (e) {
+    console.error('Ошибка добавления дропа:', e);
+    throw e;
+  }
 }
 
 export async function updateDropWinner(raidId, tryId, dropId, winnerPlayerId, winnerNickname, rollType) {
-  await updateDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId), {
-    winner_player_id: winnerPlayerId,
-    winner_nickname: winnerNickname,
-    roll_type: rollType || "main",
-  });
+  requireAuth();
+  
+  if (!winnerPlayerId || !winnerNickname) {
+    throw new Error('Не указан победитель');
+  }
+  
+  try {
+    await updateDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId), {
+      winner_player_id: winnerPlayerId,
+      winner_nickname: winnerNickname,
+      roll_type: rollType || "main",
+      updated_at: new Date().toISOString(),
+      updated_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+  } catch (e) {
+    console.error('Ошибка обновления победителя дропа:', e);
+    throw e;
+  }
 }
 
 export async function deleteDrop(raidId, tryId, dropId) {
-  await deleteDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId));
-  // Уменьшаем счётчики
-  await updateDoc(doc(db, "raids", raidId, "tries", tryId), { drop_count: increment(-1) });
-  await updateDoc(doc(db, "raids", raidId), { drop_count: increment(-1) });
+  requireAuth();
+  try {
+    await deleteDoc(doc(db, "raids", raidId, "tries", tryId, "drops", dropId));
+    await updateDoc(doc(db, "raids", raidId, "tries", tryId), { drop_count: increment(-1) });
+    await updateDoc(doc(db, "raids", raidId), { drop_count: increment(-1) });
+  } catch (e) {
+    console.error('Ошибка удаления дропа:', e);
+    throw e;
+  }
 }
 
 // ── Закрыть рейд ──────────────────────────────────────
 export async function closeRaid(raidId, attendedIds, allPlayerIds) {
-  const batch = writeBatch(db);
-  for (const pid of allPlayerIds) {
-    const attended = attendedIds.includes(pid);
-    batch.update(doc(db, "players", pid), {
-      raids_total:    increment(1),
-      raids_attended: increment(attended ? 1 : 0),
-    });
+  requireAuth();
+  
+  if (!Array.isArray(attendedIds) || !Array.isArray(allPlayerIds)) {
+    throw new Error('Неверные данные для закрытия рейда');
   }
-  batch.update(doc(db, "raids", raidId), {
-    status: "closed",
-    closed_at: new Date().toISOString(),
-    attended_player_ids: attendedIds,
-  });
-  await batch.commit();
+  
+  try {
+    const batch = writeBatch(db);
+    for (const pid of allPlayerIds) {
+      const attended = attendedIds.includes(pid);
+      batch.update(doc(db, "players", pid), {
+        raids_total:    increment(1),
+        raids_attended: increment(attended ? 1 : 0),
+      });
+    }
+    batch.update(doc(db, "raids", raidId), {
+      status: "closed",
+      closed_at: new Date().toISOString(),
+      attended_player_ids: attendedIds,
+      closed_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+    await batch.commit();
+  } catch (e) {
+    console.error('Ошибка закрытия рейда:', e);
+    throw e;
+  }
 }
 
 // ── Обновить статус рейда ────────────────────────────
 export async function updateRaidStatus(raidId, status) {
-  await updateDoc(doc(db, "raids", raidId), { status });
+  requireAuth();
+  
+  const allowedStatuses = ['open', 'rolling', 'closed'];
+  if (!allowedStatuses.includes(status)) {
+    throw new Error('Недопустимый статус рейда');
+  }
+  
+  try {
+    await updateDoc(doc(db, "raids", raidId), { 
+      status,
+      updated_at: new Date().toISOString(),
+      updated_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+  } catch (e) {
+    console.error('Ошибка обновления статуса рейда:', e);
+    throw e;
+  }
 }
