@@ -80,7 +80,6 @@
       min-height: 450px;
     }
 
-    /* Фоновое изображение босса в правом верхнем углу */
     .boss-detail-bg {
       position: absolute;
       top: 5%;
@@ -146,7 +145,6 @@
       margin: 0 0 0.65rem 0;
     }
     
-    /* ── список предметов в столбик ─────────────────────────── */
     .item-list {
       display: flex;
       flex-direction: column;
@@ -193,7 +191,6 @@
       border-radius: 10px;
     }
 
-    /* ── кнопка добавить ────────────────────────────────────── */
     .page-header {
       display: flex;
       justify-content: space-between;
@@ -201,14 +198,12 @@
       flex-wrap: wrap;
     }
 
-    /* ── бейджи классов (для списка и деталей) ────────────── */
     .badge-beast     { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: #f59e0b; }
     .badge-undead    { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border-color: #8b5cf6; }
     .badge-humanoid  { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border-color: #3b82f6; }
     .badge-mechanism { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border-color: #9ca3af; }
     .badge-demon     { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
 
-    /* ── модалка и прочее ───────────────────────────────────── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
@@ -241,7 +236,6 @@
     .text-muted { color: var(--text-muted); }
     .hidden { display: none !important; }
 
-    /* Адаптив для мобильных */
     @media (max-width: 640px) {
       .boss-detail-info {
         max-width: 100%;
@@ -258,171 +252,281 @@
       }
     }
 
-    /* ── Стили тултипа как на странице предметов ────────────── */
+    /* ── ПОЛНАЯ КАРТОЧКА ПРИ НАВЕДЕНИИ (как в items.html) ── */
     .item-tooltip {
       position: fixed;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1px solid var(--accent);
       border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      min-width: 240px;
-      max-width: 340px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      padding: 1.25rem;
+      width: 440px;
+      max-width: 80vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.8);
       pointer-events: none;
       z-index: 1000;
       display: none;
       opacity: 0;
       transition: opacity 0.15s;
-      max-height: 80vh;
-      overflow-y: auto;
     }
-    
+
     .item-tooltip.visible {
       display: block;
       opacity: 1;
     }
 
-    .item-tooltip .item-rarity {
-      font-size: 0.75rem;
-      color: #a78bfa;
-      margin-bottom: 0.25rem;
+    .item-tooltip::-webkit-scrollbar {
+      width: 4px;
     }
-    
-    .item-tooltip .item-level {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 0.25rem;
-    }
-    
-    .item-tooltip .item-slot {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-    }
-    
-    .item-tooltip .tooltip-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .item-tooltip .tooltip-header img {
-      width: 48px;
-      height: 48px;
+    .item-tooltip::-webkit-scrollbar-track {
+      background: var(--bg-card2);
       border-radius: 4px;
+    }
+    .item-tooltip::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    .item-tooltip .fc-header {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .item-tooltip .fc-header .fc-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
       object-fit: cover;
       background: var(--bg-card2);
+      flex-shrink: 0;
+      border: 1px solid var(--border);
     }
-    
-    .item-tooltip .tooltip-name {
-      font-weight: 600;
-      font-size: 1rem;
+
+    .item-tooltip .fc-header .fc-title {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-tooltip .fc-header .fc-title .fc-name {
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text);
+      line-height: 1.3;
     }
 
-    .item-tooltip .tooltip-subname {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: -0.2rem;
-      margin-bottom: 0.3rem;
-    }
-    
-    .item-tooltip .tooltip-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      margin: 0.3rem 0;
-    }
-    
-    .item-tooltip .stat-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.1rem 0;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    
-    .item-tooltip .stat-positive {
-      color: #4ade80;
-    }
-    
-    .item-tooltip .stat-negative {
-      color: #f87171;
-    }
-    
-    .item-tooltip .stat-neutral {
-      color: var(--text-muted);
-    }
-    
-    .item-tooltip .stat-label {
-      color: var(--text-muted);
-    }
-
-    .item-tooltip .stat-section-title {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin: 0.5rem 0 0.2rem 0;
-      font-weight: 600;
-    }
-
-    .item-tooltip .item-description {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-style: italic;
-      margin: 0.5rem 0;
-      padding: 0.3rem 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .item-tooltip .item-quote {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-style: italic;
-      margin: 0.5rem 0 0.2rem 0;
-      padding: 0.3rem 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .item-tooltip .item-from {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-align: right;
-      margin-top: 0.3rem;
-    }
-
-    .item-tooltip .possible-props {
+    .item-tooltip .fc-header .fc-title .fc-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.3rem;
-      margin: 0.3rem 0;
+      align-items: center;
+      gap: 0.4rem 0.6rem;
+      margin-top: 4px;
     }
 
-    .item-tooltip .possible-prop {
+    .item-tooltip .fc-header .fc-title .fc-quality {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .fc-header .fc-title .fc-level {
       font-size: 0.7rem;
       color: var(--text-muted);
       background: var(--bg-card2);
       padding: 0.1rem 0.5rem;
-      border-radius: 10px;
+      border-radius: 4px;
       border: 1px solid var(--border);
     }
 
-    .item-tooltip .damage-range {
-      display: flex;
-      gap: 0.5rem;
-      font-size: 0.85rem;
+    .item-tooltip .fc-damage {
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text);
-      margin: 0.2rem 0;
+      padding: 0.4rem 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
     }
 
-    .item-tooltip .damage-range .damage-label {
+    .item-tooltip .fc-damage .damage-label {
+      font-weight: 400;
       color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+    }
+
+    .item-tooltip .fc-set-bonus {
+      margin: 0.5rem 0;
+      padding: 0.5rem 0.75rem;
+      background: rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .item-tooltip .fc-set-bonus .set-name {
+      font-weight: 700;
+      color: var(--warning);
+      font-size: 0.9rem;
+    }
+
+    .item-tooltip .fc-set-bonus .set-pieces {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-top: 0.3rem;
+    }
+
+    .item-tooltip .fc-set-bonus .set-pieces .set-piece {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .fc-set-bonus .set-pieces .set-piece .pieces-label {
+      color: var(--text);
+      font-weight: 600;
+      margin-right: 0.3rem;
+    }
+
+    .item-tooltip .fc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem 1rem;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+    }
+
+    .item-tooltip .fc-stats .stat {
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .item-tooltip .fc-stats .stat .stat-label {
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .fc-stats .stat .stat-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .item-tooltip .fc-effect {
+      display: flex;
+      gap: 0.75rem;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: rgba(124, 58, 237, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-glow);
+    }
+
+    .item-tooltip .fc-effect .effect-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      flex-shrink: 0;
+    }
+
+    .item-tooltip .fc-effect .effect-info {
+      flex: 1;
+      font-size: 0.82rem;
+    }
+
+    .item-tooltip .fc-effect .effect-info .effect-name {
+      font-weight: 600;
+      color: var(--accent-soft);
+    }
+
+    .item-tooltip .fc-effect .effect-info .effect-desc {
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .item-tooltip .fc-properties {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .item-tooltip .fc-properties .prop-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+
+    .item-tooltip .fc-properties .prop-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+
+    .item-tooltip .fc-properties .prop-list .prop-tag {
+      background: var(--bg-card2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .fc-flavor {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+    }
+
+    .item-tooltip .fc-boss {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .item-tooltip .fc-boss .boss-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .item-tooltip .fc-boss .boss-name {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .item-tooltip {
+        position: fixed;
+        left: 50% !important;
+        right: auto !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%);
+        width: 92vw;
+        max-height: 80vh;
+      }
+      .item-tooltip .fc-stats {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -443,12 +547,10 @@
   </div>
 
   <div class="boss-layout">
-    <!-- левая колонка: список -->
     <div class="boss-list" id="boss-list">
       <div class="text-muted" style="padding:1rem;">Загрузка...</div>
     </div>
 
-    <!-- правая колонка: детали -->
     <div class="boss-detail" id="boss-detail">
       <div class="boss-detail-content">
         <div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>
@@ -457,17 +559,26 @@
   </div>
 </main>
 
-<!-- Всплывающая карточка предмета как на странице предметов -->
+<!-- Всплывающая карточка предмета (как в items.html) -->
 <div class="item-tooltip" id="item-tooltip">
-  <div class="tooltip-header">
-    <img id="tooltip-img" alt="" />
-    <div>
-      <div class="tooltip-name" id="tooltip-name">Название</div>
-      <div class="tooltip-subname" id="tooltip-subname"></div>
+  <div class="fc-header">
+    <img class="fc-img" id="tooltip-img" alt="" />
+    <div class="fc-title">
+      <div class="fc-name" id="tooltip-name">Название</div>
+      <div class="fc-meta">
+        <span class="fc-quality" id="tooltip-quality">Качество</span>
+        <span class="fc-level" id="tooltip-level">Уровень</span>
+        <span class="fc-quality" id="tooltip-slot">Слот</span>
+      </div>
     </div>
   </div>
-  <div id="tooltip-meta"></div>
+  <div id="tooltip-damage"></div>
   <div id="tooltip-stats"></div>
+  <div id="tooltip-setbonus"></div>
+  <div id="tooltip-effect"></div>
+  <div id="tooltip-properties"></div>
+  <div id="tooltip-flavor"></div>
+  <div id="tooltip-boss"></div>
 </div>
 
 <!-- модалка -->
@@ -527,9 +638,8 @@
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
-  import { BOSS_CLASSES, SLOTS } from "../js/constants.js";
+  import { BOSS_CLASSES, SLOTS, QUALITY } from "../js/constants.js";
 
-  // ── заполняем фильтр классов ──────────────────
   const filterClass = document.getElementById("filter-class");
   const fClass = document.getElementById("f-class");
   BOSS_CLASSES.forEach(c => {
@@ -542,7 +652,6 @@
   let selectedItemIds = [];
   let selectedBossId = null;
 
-  // ── рендер списка ──────────────────────────────
   function renderList() {
     const search = document.getElementById("filter-search").value.toLowerCase();
     const cls    = document.getElementById("filter-class").value;
@@ -574,7 +683,17 @@
     });
   }
 
-  // ── отображение деталей ────────────────────────
+  function getDamageLabel(slotId) {
+    const isWeapon = slotId === 'weapon';
+    const isArmor = ['helmet', 'cloak', 'chest', 'gloves', 'pants', 'boots'].includes(slotId);
+    const isAccessory = ['necklace', 'belt', 'ring', 'bracelet'].includes(slotId);
+
+    if (isWeapon) return '🗡️ Урон';
+    if (isArmor) return '🛡️ Защита (ближний/дальний)';
+    if (isAccessory) return '🛡️ Защита (магия)';
+    return '';
+  }
+
   function renderDetail(b) {
     const container = document.getElementById("boss-detail");
     if (!b) {
@@ -590,7 +709,6 @@
     const clsId = b.boss_class || 'unknown';
     const bItems = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
 
-    // фоновое изображение
     const imageFile = b.image || '';
     const bgImage = imageFile ? `url('/assets/img/bosses/${imageFile}')` : '';
 
@@ -631,13 +749,11 @@
       </div>
     `;
 
-    // прогружаем картинки предметов
     bItems.forEach(item => {
       const img = document.getElementById(`detail-item-${item.id}`);
       if (img) setItemImage(img, item.image);
     });
 
-    // добавляем обработчики для всплывающих карточек
     document.querySelectorAll('.item-row').forEach(row => {
       const itemId = row.dataset.itemId;
       const item = allItems.find(i => i.id === itemId);
@@ -656,14 +772,12 @@
     renderDetail(b);
   }
 
-  // ── инициализация ──────────────────────────────
   async function init() {
     [allBosses, allItems] = await Promise.all([getBosses(), getItems()]);
     renderList();
     if (allBosses.length) selectBoss(allBosses[0].id);
   }
 
-  // ── пикер предметов ─────────────────────────────
   function renderPicker(filter = '') {
     const picker = document.getElementById('items-picker');
     const list = filter
@@ -695,7 +809,6 @@
 
   document.getElementById('item-filter').addEventListener('input', e => renderPicker(e.target.value));
 
-  // ── модалка ─────────────────────────────────────
   const modal = document.getElementById('modal');
 
   function resetForm() {
@@ -807,132 +920,148 @@
     document.getElementById('filter-search').dispatchEvent(new Event('input'));
   });
 
-  // ── Всплывающая карточка предмета ──────────────
+  // ── ТУЛТИП как в items.html ──────────────────
   const tooltip = document.getElementById('item-tooltip');
   let tooltipTimeout;
 
   function showTooltip(e, item) {
     clearTimeout(tooltipTimeout);
     
+    // Заполняем данные
     const img = document.getElementById('tooltip-img');
-    const nameEl = document.getElementById('tooltip-name');
-    const subnameEl = document.getElementById('tooltip-subname');
-    const metaEl = document.getElementById('tooltip-meta');
-    const statsEl = document.getElementById('tooltip-stats');
+    const name = document.getElementById('tooltip-name');
+    const quality = document.getElementById('tooltip-quality');
+    const level = document.getElementById('tooltip-level');
+    const slot = document.getElementById('tooltip-slot');
+    const damageContainer = document.getElementById('tooltip-damage');
+    const statsContainer = document.getElementById('tooltip-stats');
+    const setBonusContainer = document.getElementById('tooltip-setbonus');
+    const effectContainer = document.getElementById('tooltip-effect');
+    const propertiesContainer = document.getElementById('tooltip-properties');
+    const flavorContainer = document.getElementById('tooltip-flavor');
+    const bossContainer = document.getElementById('tooltip-boss');
 
     setItemImage(img, item.image);
-    nameEl.textContent = item.name || 'Без названия';
-    
-    // Подзаголовок (редкость, уровень)
-    let subnameParts = [];
-    if (item.rarity) subnameParts.push(item.rarity);
-    if (item.level) subnameParts.push(`Уровень ${item.level}`);
-    subnameEl.textContent = subnameParts.join(' · ');
+    name.textContent = item.name || 'Без названия';
 
-    // Мета-информация (слот)
-    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
-    metaEl.innerHTML = `<div class="item-slot">${slotLabel}</div>`;
+    const qualityLabel = QUALITY.find(q => q.id === item.quality)?.label || item.quality || 'Обычное';
+    quality.textContent = qualityLabel;
+    level.textContent = item.level ? `Уровень ${item.level}` : '';
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '—';
+    slot.textContent = slotLabel;
 
-    // Статистика
-    statsEl.innerHTML = '';
-    
-    // Урон
+    // Урон/Защита
     if (item.damage_min || item.damage_max) {
-      const dmgDiv = document.createElement('div');
-      dmgDiv.className = 'damage-range';
-      dmgDiv.innerHTML = `
-        <span class="damage-label">Урон:</span>
-        <span>${item.damage_min || 0} ~ ${item.damage_max || 0}</span>
+      const label = getDamageLabel(item.slot);
+      damageContainer.innerHTML = `
+        <div class="fc-damage">
+          <span class="damage-label">${label}:</span>
+          ${item.damage_min || 0}${item.damage_max ? ` ~ ${item.damage_max}` : ''}
+        </div>
       `;
-      statsEl.appendChild(dmgDiv);
+    } else {
+      damageContainer.innerHTML = '';
     }
 
-    // Основные статы
-    if (item.stats) {
-      let statEntries = [];
+    // Статы
+    statsContainer.innerHTML = '';
+    if (item.stats && item.stats.length) {
+      const statsDiv = document.createElement('div');
+      statsDiv.className = 'fc-stats';
       
+      let statEntries = [];
       if (typeof item.stats === 'object' && !Array.isArray(item.stats)) {
         Object.entries(item.stats).forEach(([key, value]) => {
           if (value !== null && value !== undefined && value !== '') {
-            statEntries.push({ key, value });
+            statEntries.push({ label: key, value });
           }
         });
       } else if (Array.isArray(item.stats)) {
         item.stats.forEach(stat => {
           if (typeof stat === 'object') {
-            const key = stat.name || stat.label || stat.key || 'Свойство';
-            const value = stat.value || stat.val || 0;
-            statEntries.push({ key, value });
+            statEntries.push({ label: stat.label || stat.name || 'Свойство', value: stat.value || stat.val || '' });
           }
         });
       }
 
-      statEntries.forEach(({ key, value }) => {
-        const row = document.createElement('div');
-        row.className = 'stat-row';
-        
-        const num = parseFloat(value);
-        let valueClass = 'stat-neutral';
-        let displayValue = value;
-        
-        if (!isNaN(num)) {
-          if (num > 0) {
-            valueClass = 'stat-positive';
-            displayValue = `+${value}`;
-          } else if (num < 0) {
-            valueClass = 'stat-negative';
-            displayValue = value;
-          }
-        }
-        
-        row.innerHTML = `
-          <span class="${valueClass}">${displayValue}</span>
-          <span class="stat-label">${key}</span>
+      statEntries.forEach(({ label, value }) => {
+        const div = document.createElement('div');
+        div.className = 'stat';
+        div.innerHTML = `
+          <span class="stat-label">${label}</span>
+          <span class="stat-value">${value}</span>
         `;
-        statsEl.appendChild(row);
+        statsDiv.appendChild(div);
       });
+      
+      if (statEntries.length) statsContainer.appendChild(statsDiv);
     }
 
-    // Описание предмета
-    if (item.description) {
-      const descDiv = document.createElement('div');
-      descDiv.className = 'item-description';
-      descDiv.textContent = item.description;
-      statsEl.appendChild(descDiv);
+    // Сетовый бонус
+    setBonusContainer.innerHTML = '';
+    if (item.set_bonus && item.set_bonus.name) {
+      const setDiv = document.createElement('div');
+      setDiv.className = 'fc-set-bonus';
+      let html = `<div class="set-name">${item.set_bonus.name}</div><div class="set-pieces">`;
+      if (item.set_bonus.piece2) html += `<div class="set-piece"><span class="pieces-label">(2):</span> ${item.set_bonus.piece2}</div>`;
+      if (item.set_bonus.piece4) html += `<div class="set-piece"><span class="pieces-label">(4):</span> ${item.set_bonus.piece4}</div>`;
+      html += '</div>';
+      setDiv.innerHTML = html;
+      setBonusContainer.appendChild(setDiv);
+    }
+
+    // Эффект
+    effectContainer.innerHTML = '';
+    if (item.effect && (item.effect.name || item.effect.desc)) {
+      const effectDiv = document.createElement('div');
+      effectDiv.className = 'fc-effect';
+      let html = '';
+      if (item.effect.image) {
+        html += `<img class="effect-icon" src="${item.effect.image}" alt="effect" />`;
+      }
+      html += `<div class="effect-info">`;
+      if (item.effect.name) html += `<div class="effect-name">${item.effect.name}</div>`;
+      if (item.effect.desc) html += `<div class="effect-desc">${item.effect.desc}</div>`;
+      html += `</div>`;
+      effectDiv.innerHTML = html;
+      effectContainer.appendChild(effectDiv);
     }
 
     // Возможные свойства
-    if (item.possible_props && Array.isArray(item.possible_props) && item.possible_props.length) {
-      const propsTitle = document.createElement('div');
-      propsTitle.className = 'stat-section-title';
-      propsTitle.textContent = 'Возможные свойства';
-      statsEl.appendChild(propsTitle);
-      
-      const propsContainer = document.createElement('div');
-      propsContainer.className = 'possible-props';
-      item.possible_props.forEach(prop => {
-        const span = document.createElement('span');
-        span.className = 'possible-prop';
-        span.textContent = prop;
-        propsContainer.appendChild(span);
+    propertiesContainer.innerHTML = '';
+    if (item.properties && item.properties.length) {
+      const propsDiv = document.createElement('div');
+      propsDiv.className = 'fc-properties';
+      let html = `<div class="prop-label">Возможные свойства</div><div class="prop-list">`;
+      item.properties.forEach(prop => {
+        html += `<span class="prop-tag">${prop}</span>`;
       });
-      statsEl.appendChild(propsContainer);
+      html += '</div>';
+      propsDiv.innerHTML = html;
+      propertiesContainer.appendChild(propsDiv);
     }
 
-    // Цитата
-    if (item.quote) {
-      const quoteDiv = document.createElement('div');
-      quoteDiv.className = 'item-quote';
-      quoteDiv.textContent = `«${item.quote}»`;
-      statsEl.appendChild(quoteDiv);
+    // Флейвор
+    flavorContainer.innerHTML = '';
+    if (item.description) {
+      const flavorDiv = document.createElement('div');
+      flavorDiv.className = 'fc-flavor';
+      flavorDiv.textContent = item.description;
+      flavorContainer.appendChild(flavorDiv);
     }
 
-    // От кого
-    if (item.from) {
-      const fromDiv = document.createElement('div');
-      fromDiv.className = 'item-from';
-      fromDiv.textContent = item.from;
-      statsEl.appendChild(fromDiv);
+    // Босс
+    bossContainer.innerHTML = '';
+    const boss = allBosses.find(b => b.id === item.boss_id);
+    if (boss) {
+      const bossDiv = document.createElement('div');
+      bossDiv.className = 'fc-boss';
+      const bossIcon = boss.icon || '';
+      bossDiv.innerHTML = `
+        ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${boss.name}" />` : '<span style="font-size:1.2rem;">👹</span>'}
+        <span class="boss-name">${boss.name}</span>
+      `;
+      bossContainer.appendChild(bossDiv);
     }
 
     tooltip.classList.add('visible');
