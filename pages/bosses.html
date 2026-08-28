@@ -68,6 +68,15 @@
       border: 1px solid var(--border);
       color: var(--text-muted);
     }
+    .boss-list-item .boss-icon-small {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
 
     /* ── правая колонка (детали) ───────────────────────────── */
     .boss-detail {
@@ -609,9 +618,14 @@
       <textarea id="f-description" rows="2" placeholder="Необязательно..."></textarea>
     </div>
     <div class="form-group">
-      <label>Название файла изображения (из /assets/img/bosses/)</label>
+      <label>Фоновое изображение (из /assets/img/bosses/)</label>
       <input type="text" id="f-image" placeholder="draco.png" />
       <small style="color:var(--text-muted);font-size:0.7rem;">Укажите имя файла, картинка будет показана на фоне карточки</small>
+    </div>
+    <div class="form-group">
+      <label>Иконка босса (из /assets/img/bosses/)</label>
+      <input type="text" id="f-icon" placeholder="draco_icon.png" />
+      <small style="color:var(--text-muted);font-size:0.7rem;">Укажите имя файла иконки (png, 32x32), будет использоваться в предметах</small>
     </div>
     <div class="form-group">
       <label>Предметы с босса</label>
@@ -672,7 +686,12 @@
       const div = document.createElement("div");
       div.className = `boss-list-item${b.id === selectedBossId ? ' active' : ''}`;
       const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
+      
+      // Иконка босса
+      const iconHtml = b.icon ? `<img class="boss-icon-small" src="/assets/img/bosses/${b.icon}" alt="${b.name}" />` : '';
+      
       div.innerHTML = `
+        ${iconHtml}
         <span class="level-badge">${b.level || '?'}</span>
         <span class="name">${b.name}</span>
         <span class="class-tag badge-${b.boss_class || 'unknown'}">${clsLabel}</span>
@@ -818,6 +837,7 @@
     document.getElementById('f-class').value        = '';
     document.getElementById('f-description').value  = '';
     document.getElementById('f-image').value        = '';
+    document.getElementById('f-icon').value         = '';
     document.getElementById('item-filter').value    = '';
     document.getElementById('modal-error').style.display = 'none';
     selectedItemIds = [];
@@ -841,6 +861,7 @@
     document.getElementById('f-class').value       = b.boss_class   || '';
     document.getElementById('f-description').value = b.description  || '';
     document.getElementById('f-image').value       = b.image        || '';
+    document.getElementById('f-icon').value        = b.icon         || '';
     selectedItemIds = [...(b.item_ids || [])];
     renderPicker();
     modal.classList.remove('hidden');
@@ -864,6 +885,7 @@
         boss_class:  document.getElementById('f-class').value,
         description: document.getElementById('f-description').value.trim(),
         image:       document.getElementById('f-image').value.trim(),
+        icon:        document.getElementById('f-icon').value.trim(),
         item_ids:    selectedItemIds,
       };
       const id = document.getElementById('edit-id').value;
@@ -1050,13 +1072,13 @@
       flavorContainer.appendChild(flavorDiv);
     }
 
-    // Босс
+    // Босс с иконкой
     bossContainer.innerHTML = '';
     const boss = allBosses.find(b => b.id === item.boss_id);
     if (boss) {
       const bossDiv = document.createElement('div');
       bossDiv.className = 'fc-boss';
-      const bossIcon = boss.icon || '';
+      const bossIcon = boss.icon ? `/assets/img/bosses/${boss.icon}` : '';
       bossDiv.innerHTML = `
         ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${boss.name}" />` : '<span style="font-size:1.2rem;">👹</span>'}
         <span class="boss-name">${boss.name}</span>
@@ -1065,22 +1087,18 @@
     }
 
     tooltip.classList.add('visible');
-    // Позиционируем сразу после отображения
     requestAnimationFrame(() => moveTooltip(e));
   }
 
   function moveTooltip(e) {
     const padding = 15;
-    // Показываем справа от курсора
     let x = e.clientX + padding;
     let y = e.clientY;
 
     const rect = tooltip.getBoundingClientRect();
-    // Если не помещается справа - показываем слева
     if (x + rect.width > window.innerWidth) {
       x = e.clientX - rect.width - padding;
     }
-    // Если не помещается снизу - поднимаем вверх
     if (y + rect.height > window.innerHeight) {
       y = window.innerHeight - rect.height - padding;
     }
