@@ -6,29 +6,180 @@
   <title>Боссы — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
-    .bosses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    /* ── общий макет ─────────────────────────────────────────── */
+    .boss-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
 
-    .boss-card {
+    @media (max-width: 820px) {
+      .boss-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── левая колонка (список) ─────────────────────────────── */
+    .boss-list {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem;
-      transition: border-color 0.15s;
+      padding: 0.5rem 0.25rem;
+      max-height: 75vh;
+      overflow-y: auto;
     }
-    .boss-card:hover { border-color: var(--accent); }
-    .boss-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-    .boss-name { font-size: 1.05rem; font-weight: 700; color: var(--accent-soft); }
-    .boss-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 6px; }
-    .boss-items { margin-top: 1rem; }
-    .boss-items-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-    .boss-item-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .boss-item-tag {
-      display: flex; align-items: center; gap: 6px;
-      background: var(--bg-card2); border: 1px solid var(--border);
-      border-radius: 4px; padding: 3px 8px; font-size: 0.78rem;
-    }
-    .boss-item-tag img { width: 20px; height: 20px; border-radius: 3px; object-fit: cover; }
 
+    .boss-list-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: background 0.1s, border-color 0.1s;
+      border-left: 3px solid transparent;
+    }
+    .boss-list-item:hover {
+      background: var(--bg-card2);
+    }
+    .boss-list-item.active {
+      background: var(--accent-glow);
+      border-left-color: var(--accent);
+    }
+
+    .boss-list-item .level-badge {
+      background: var(--bg-card2);
+      padding: 0.1rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .boss-list-item .name {
+      font-weight: 600;
+      flex: 1;
+    }
+    .boss-list-item .class-tag {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 12px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    /* ── правая колонка (детали) ───────────────────────────── */
+    .boss-detail {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .boss-detail-header {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .boss-detail-image {
+      flex: 0 0 160px;
+      height: 160px;
+      background: var(--bg-card2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .boss-detail-image img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      image-rendering: auto;
+    }
+    .boss-detail-image .placeholder {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    .boss-detail-info {
+      flex: 1;
+      min-width: 180px;
+    }
+    .boss-detail-info h2 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1.4rem;
+    }
+    .boss-detail-info .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.5rem 0 0.75rem 0;
+    }
+    .boss-detail-info .description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .boss-detail-items {
+      margin-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+    .boss-detail-items h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 0.65rem 0;
+    }
+    .item-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .item-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.2rem 0.7rem 0.2rem 0.4rem;
+      font-size: 0.8rem;
+    }
+    .item-chip img {
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      object-fit: cover;
+      background: var(--bg-card);
+    }
+
+    /* ── кнопка добавить ────────────────────────────────────── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── бейджи классов (для списка и деталей) ────────────── */
+    .badge-beast     { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: #f59e0b; }
+    .badge-undead    { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border-color: #8b5cf6; }
+    .badge-humanoid  { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border-color: #3b82f6; }
+    .badge-mechanism { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border-color: #9ca3af; }
+    .badge-demon     { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
+
+    /* ── модалка и прочее ───────────────────────────────────── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
@@ -36,10 +187,10 @@
     .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
     .btn-close:hover { color: var(--text); }
 
-    .items-picker { border: 1px solid var(--border); border-radius: var(--radius); max-height: 240px; overflow-y: auto; margin-top: 0.5rem; }
+    .items-picker { border: 1px solid var(--border); border-radius: var(--radius); max-height: 200px; overflow-y: auto; margin-top: 0.5rem; }
     .item-pick-row {
       display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.5rem 0.75rem; cursor: pointer;
+      padding: 0.4rem 0.75rem; cursor: pointer;
       border-bottom: 1px solid var(--border); transition: background 0.15s;
       font-size: 0.85rem;
     }
@@ -49,16 +200,17 @@
     .item-pick-row img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
     .item-pick-check { margin-left: auto; color: var(--accent); font-size: 1rem; }
 
-    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-    .filter-bar input { max-width: 240px; }
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .filter-bar input { max-width: 200px; }
     .filter-bar select { width: auto; }
 
-    /* ── Бейджи классов боссов ─────────────────────────── */
-    .badge-beast     { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
-    .badge-undead    { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid #8b5cf6; }
-    .badge-humanoid  { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
-    .badge-mechanism { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border: 1px solid #9ca3af; }
-    .badge-demon     { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+    .flex { display: flex; }
+    .gap-1 { gap: 0.5rem; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .text-danger { color: #ef4444; }
+    .text-muted { color: var(--text-muted); }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -77,11 +229,20 @@
     </select>
   </div>
 
-  <div id="bosses-grid" class="bosses-grid">
-    <div class="text-muted">Загрузка...</div>
+  <div class="boss-layout">
+    <!-- левая колонка: список -->
+    <div class="boss-list" id="boss-list">
+      <div class="text-muted" style="padding:1rem;">Загрузка...</div>
+    </div>
+
+    <!-- правая колонка: детали -->
+    <div class="boss-detail" id="boss-detail">
+      <div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>
+    </div>
   </div>
 </main>
 
+<!-- модалка -->
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -109,6 +270,11 @@
       <textarea id="f-description" rows="2" placeholder="Необязательно..."></textarea>
     </div>
     <div class="form-group">
+      <label>Название файла изображения (из /assets/img/bosses/)</label>
+      <input type="text" id="f-image" placeholder="draco.png" />
+      <small style="color:var(--text-muted);font-size:0.7rem;">Укажите имя файла, картинка будет показана справа</small>
+    </div>
+    <div class="form-group">
       <label>Предметы с босса</label>
       <input type="text" id="item-filter" placeholder="Поиск предметов..." style="margin-bottom:0.5rem" />
       <div class="items-picker" id="items-picker"></div>
@@ -126,11 +292,8 @@
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentRole } from "../js/modules/auth.js";
   
-  // Инициализация
   initNavbar();
   initAuth();
-
-  // Ждём авторизацию
   await authReady;
 
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
@@ -138,7 +301,7 @@
   import { setItemImage } from "../js/modules/images.js";
   import { BOSS_CLASSES, SLOTS } from "../js/constants.js";
 
-  // Заполнить фильтр классов
+  // ── заполняем фильтр классов ──────────────────
   const filterClass = document.getElementById("filter-class");
   const fClass = document.getElementById("f-class");
   BOSS_CLASSES.forEach(c => {
@@ -149,13 +312,10 @@
   let allBosses = [];
   let allItems  = [];
   let selectedItemIds = [];
+  let selectedBossId = null;
 
-  async function init() {
-    [allBosses, allItems] = await Promise.all([getBosses(), getItems()]);
-    renderBosses();
-  }
-
-  function renderBosses() {
+  // ── рендер списка ──────────────────────────────
+  function renderList() {
     const search = document.getElementById("filter-search").value.toLowerCase();
     const cls    = document.getElementById("filter-class").value;
     const list   = allBosses.filter(b => {
@@ -164,177 +324,261 @@
       return true;
     });
 
-    const grid = document.getElementById("bosses-grid");
-    if (!list.length) { grid.innerHTML = `<div class="text-muted">Боссов не найдено</div>`; return; }
+    const container = document.getElementById("boss-list");
+    if (!list.length) {
+      container.innerHTML = `<div class="text-muted" style="padding:1rem;">Боссов не найдено</div>`;
+      return;
+    }
 
-    grid.innerHTML = "";
-    list.forEach(b => grid.appendChild(buildCard(b)));
+    container.innerHTML = "";
+    list.forEach(b => {
+      const div = document.createElement("div");
+      div.className = `boss-list-item${b.id === selectedBossId ? ' active' : ''}`;
+      const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
+      div.innerHTML = `
+        <span class="level-badge">${b.level || '?'}</span>
+        <span class="name">${b.name}</span>
+        <span class="class-tag badge-${b.boss_class || 'unknown'}">${clsLabel}</span>
+      `;
+      div.dataset.id = b.id;
+      div.addEventListener('click', () => selectBoss(b.id));
+      container.appendChild(div);
+    });
   }
 
-  function buildCard(b) {
-    // Используем currentRole напрямую для надёжности
-    const canEdit = currentRole === "admin" || currentRole === "moderator";
-    
-    const bossClass = BOSS_CLASSES.find(c => c.id === b.boss_class);
-    const clsLabel = bossClass?.label || b.boss_class || "—";
-    const clsId = b.boss_class || "unknown";
-    
-    const bItems   = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
+  // ── отображение деталей ────────────────────────
+  function renderDetail(b) {
+    const container = document.getElementById("boss-detail");
+    if (!b) {
+      container.innerHTML = `<div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>`;
+      return;
+    }
 
-    const card = document.createElement("div");
-    card.className = "boss-card";
-    card.innerHTML = `
-      <div class="boss-card-header">
-        <div>
-          <div class="boss-name">👹 ${b.name}</div>
-          <div class="boss-meta">
-            ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ""}
+    const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
+    const clsId = b.boss_class || 'unknown';
+    const bItems = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
+
+    // изображение
+    const imageFile = b.image || '';
+    const imgSrc = imageFile ? `/assets/img/bosses/${imageFile}` : '';
+
+    container.innerHTML = `
+      <div class="boss-detail-header">
+        <div class="boss-detail-image">
+          ${imgSrc ? `<img src="${imgSrc}" alt="${b.name}" />` : `<span class="placeholder">Нет<br>изображения</span>`}
+        </div>
+        <div class="boss-detail-info">
+          <h2>${b.name}</h2>
+          <div class="meta">
+            ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ''}
             <span class="badge badge-${clsId}">${clsLabel}</span>
           </div>
-          ${b.description ? `<div class="text-muted" style="font-size:0.8rem;margin-top:6px">${b.description}</div>` : ""}
+          ${b.description ? `<div class="description">${b.description}</div>` : ''}
+          <div style="margin-top:0.5rem;">
+            ${canWrite() ? `
+              <button class="btn btn-ghost btn-sm" onclick="openEdit('${b.id}')">✏️ Редактировать</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️</button>
+            ` : ''}
+          </div>
         </div>
-        ${canEdit ? `
-        <div class="flex gap-1">
-          <button class="btn btn-ghost btn-sm" onclick="openEdit('${b.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️</button>
-        </div>` : ""}
       </div>
-      <div class="boss-items">
-        <div class="boss-items-title">Предметы (${bItems.length})</div>
-        <div class="boss-item-list" id="boss-items-${b.id}">
-          ${bItems.length ? "" : `<span class="text-muted" style="font-size:0.78rem">Не указаны</span>`}
+      <div class="boss-detail-items">
+        <h4>Предметы (${bItems.length})</h4>
+        <div class="item-chips">
+          ${bItems.length ? bItems.map(item => {
+            const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
+            return `
+              <span class="item-chip">
+                <img id="detail-item-${item.id}" alt="${item.name}" />
+                ${item.name} <span style="color:var(--text-muted);font-size:0.7rem;">(${slotLabel})</span>
+              </span>
+            `;
+          }).join('') : `<span class="text-muted" style="font-size:0.8rem;">Не указаны</span>`}
         </div>
       </div>
     `;
 
-    // Рендерим предметы с картинками
-    const itemList = card.querySelector(`#boss-items-${b.id}`);
+    // прогружаем картинки предметов
     bItems.forEach(item => {
-      const tag = document.createElement("div");
-      tag.className = "boss-item-tag";
-      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
-      tag.innerHTML = `<img id="bi-${b.id}-${item.id}" alt="${item.name}" />${item.name} <span style="color:var(--text-muted);font-size:0.7rem">(${slotLabel})</span>`;
-      setItemImage(tag.querySelector("img"), item.image);
-      itemList.appendChild(tag);
+      const img = document.getElementById(`detail-item-${item.id}`);
+      if (img) setItemImage(img, item.image);
     });
-
-    return card;
   }
 
-  // ── Пикер предметов ───────────────────────────────
-  function renderPicker(filter = "") {
-    const picker = document.getElementById("items-picker");
+  function selectBoss(id) {
+    selectedBossId = id;
+    const b = allBosses.find(x => x.id === id);
+    renderList();    // обновим active
+    renderDetail(b);
+  }
+
+  // ── инициализация ──────────────────────────────
+  async function init() {
+    [allBosses, allItems] = await Promise.all([getBosses(), getItems()]);
+    renderList();
+    if (allBosses.length) selectBoss(allBosses[0].id);
+  }
+
+  // ── пикер предметов ─────────────────────────────
+  function renderPicker(filter = '') {
+    const picker = document.getElementById('items-picker');
     const list = filter
       ? allItems.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()))
       : allItems;
 
-    picker.innerHTML = "";
+    picker.innerHTML = '';
     list.forEach(item => {
-      const row = document.createElement("div");
-      row.className = `item-pick-row${selectedItemIds.includes(item.id) ? " selected" : ""}`;
+      const row = document.createElement('div');
+      row.className = `item-pick-row${selectedItemIds.includes(item.id) ? ' selected' : ''}`;
       const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
       row.innerHTML = `
         <img alt="${item.name}" />
         <div><div style="font-weight:600">${item.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div></div>
-        ${selectedItemIds.includes(item.id) ? `<span class="item-pick-check">✓</span>` : ""}
+        ${selectedItemIds.includes(item.id) ? `<span class="item-pick-check">✓</span>` : ''}
       `;
-      setItemImage(row.querySelector("img"), item.image);
-      row.addEventListener("click", () => {
+      setItemImage(row.querySelector('img'), item.image);
+      row.addEventListener('click', () => {
         if (selectedItemIds.includes(item.id)) {
           selectedItemIds = selectedItemIds.filter(id => id !== item.id);
         } else {
           selectedItemIds.push(item.id);
         }
-        renderPicker(document.getElementById("item-filter").value);
+        renderPicker(document.getElementById('item-filter').value);
       });
       picker.appendChild(row);
     });
   }
 
-  document.getElementById("item-filter").addEventListener("input", e => renderPicker(e.target.value));
+  document.getElementById('item-filter').addEventListener('input', e => renderPicker(e.target.value));
 
-  // ── Модалка ───────────────────────────────────────
-  const modal = document.getElementById("modal");
+  // ── модалка ─────────────────────────────────────
+  const modal = document.getElementById('modal');
 
   function resetForm() {
-    document.getElementById("edit-id").value        = "";
-    document.getElementById("f-name").value         = "";
-    document.getElementById("f-level").value        = "";
-    document.getElementById("f-class").value        = "";
-    document.getElementById("f-description").value  = "";
-    document.getElementById("item-filter").value    = "";
-    document.getElementById("modal-error").style.display = "none";
+    document.getElementById('edit-id').value        = '';
+    document.getElementById('f-name').value         = '';
+    document.getElementById('f-level').value        = '';
+    document.getElementById('f-class').value        = '';
+    document.getElementById('f-description').value  = '';
+    document.getElementById('f-image').value        = '';
+    document.getElementById('item-filter').value    = '';
+    document.getElementById('modal-error').style.display = 'none';
     selectedItemIds = [];
     renderPicker();
   }
 
   function openAdd() {
-    document.getElementById("modal-title").textContent = "Добавить босса";
+    document.getElementById('modal-title').textContent = 'Добавить босса';
     resetForm();
-    modal.classList.remove("hidden");
+    modal.classList.remove('hidden');
   }
 
   window.openEdit = (id) => {
     const b = allBosses.find(x => x.id === id);
     if (!b) return;
-    document.getElementById("modal-title").textContent = "Редактировать босса";
+    document.getElementById('modal-title').textContent = 'Редактировать босса';
     resetForm();
-    document.getElementById("edit-id").value       = id;
-    document.getElementById("f-name").value        = b.name         || "";
-    document.getElementById("f-level").value       = b.level        || "";
-    document.getElementById("f-class").value       = b.boss_class   || "";
-    document.getElementById("f-description").value = b.description  || "";
+    document.getElementById('edit-id').value       = id;
+    document.getElementById('f-name').value        = b.name         || '';
+    document.getElementById('f-level').value       = b.level        || '';
+    document.getElementById('f-class').value       = b.boss_class   || '';
+    document.getElementById('f-description').value = b.description  || '';
+    document.getElementById('f-image').value       = b.image        || '';
     selectedItemIds = [...(b.item_ids || [])];
     renderPicker();
-    modal.classList.remove("hidden");
+    modal.classList.remove('hidden');
   };
 
-  function closeModal() { modal.classList.add("hidden"); }
-  document.getElementById("btn-modal-close").onclick = closeModal;
-  document.getElementById("btn-cancel").onclick      = closeModal;
-  document.getElementById("btn-add-boss").onclick    = openAdd;
+  function closeModal() { modal.classList.add('hidden'); }
+  document.getElementById('btn-modal-close').onclick = closeModal;
+  document.getElementById('btn-cancel').onclick      = closeModal;
+  document.getElementById('btn-add-boss').onclick    = openAdd;
 
-  document.getElementById("btn-save").onclick = async () => {
-    const name = document.getElementById("f-name").value.trim();
-    if (!name) return showError("Введи имя босса");
+  document.getElementById('btn-save').onclick = async () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) return showError('Введи имя босса');
 
-    const btn = document.getElementById("btn-save");
-    btn.disabled = true; btn.textContent = "Сохранение...";
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
       const data = {
         name,
-        level:       document.getElementById("f-level").value.trim(),
-        boss_class:  document.getElementById("f-class").value,
-        description: document.getElementById("f-description").value.trim(),
+        level:       document.getElementById('f-level').value.trim(),
+        boss_class:  document.getElementById('f-class').value,
+        description: document.getElementById('f-description').value.trim(),
+        image:       document.getElementById('f-image').value.trim(),
         item_ids:    selectedItemIds,
       };
-      const id = document.getElementById("edit-id").value;
-      if (id) { await updateBoss(id, data); showToast("Босс обновлён"); }
-      else    { await addBoss(data);        showToast("Босс добавлен"); }
+      const id = document.getElementById('edit-id').value;
+      if (id) { await updateBoss(id, data); showToast('Босс обновлён'); }
+      else    { await addBoss(data);        showToast('Босс добавлен'); }
       closeModal();
       allBosses = await getBosses();
-      renderBosses();
-    } catch(e) { showError("Ошибка: " + e.message); }
-    finally { btn.disabled = false; btn.textContent = "Сохранить"; }
+      renderList();
+      if (allBosses.length) {
+        const active = allBosses.find(b => b.id === selectedBossId) || allBosses[0];
+        selectBoss(active.id);
+      } else {
+        selectedBossId = null;
+        renderDetail(null);
+      }
+    } catch(e) { showError('Ошибка: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
   };
 
   window.confirmDelete = (id, name) => {
     if (!confirm(`Удалить босса «${name}»?`)) return;
     deleteBoss(id).then(async () => {
-      showToast("Босс удалён");
+      showToast('Босс удалён');
       allBosses = await getBosses();
-      renderBosses();
+      renderList();
+      if (allBosses.length) {
+        selectBoss(allBosses[0].id);
+      } else {
+        selectedBossId = null;
+        renderDetail(null);
+      }
     });
   };
 
-  document.getElementById("filter-search").addEventListener("input", renderBosses);
-  document.getElementById("filter-class").addEventListener("change", renderBosses);
+  document.getElementById('filter-search').addEventListener('input', () => {
+    renderList();
+    // если выбранный босс есть в отфильтрованном списке — оставляем, иначе сбрасываем детали
+    const visible = allBosses.filter(b => {
+      const search = document.getElementById('filter-search').value.toLowerCase();
+      const cls    = document.getElementById('filter-class').value;
+      if (search && !b.name.toLowerCase().includes(search)) return false;
+      if (cls && b.boss_class !== cls) return false;
+      return true;
+    });
+    if (selectedBossId && !visible.some(b => b.id === selectedBossId)) {
+      renderDetail(null);
+    } else if (visible.length) {
+      // если детали не показываются или показывают "выберите", показываем первого
+      const detail = document.getElementById('boss-detail');
+      if (!detail.querySelector('.boss-detail-header')) {
+        selectBoss(visible[0].id);
+      }
+    }
+  });
+  document.getElementById('filter-class').addEventListener('change', () => {
+    document.getElementById('filter-search').dispatchEvent(new Event('input'));
+  });
 
-  function showError(msg) { const el = document.getElementById("modal-error"); el.textContent = msg; el.style.display = "block"; }
-  function showToast(msg, type = "success") {
-    const t = document.createElement("div");
+  function showError(msg) { const el = document.getElementById('modal-error'); el.textContent = msg; el.style.display = 'block'; }
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
     t.className = `toast ${type}`; t.textContent = msg;
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+
+  function canWrite() {
+    return currentRole === 'admin' || currentRole === 'moderator';
+  }
+
+  // показать кнопку добавления
+  if (canWrite()) {
+    document.getElementById('btn-add-boss').classList.remove('hidden');
   }
 
   init();
