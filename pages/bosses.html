@@ -55,10 +55,29 @@
       font-size: 0.7rem;
       font-weight: 600;
       color: var(--text-muted);
+      flex-shrink: 0;
     }
-    .boss-list-item .name {
-      font-weight: 600;
+    .boss-list-item .name-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       flex: 1;
+      min-width: 0;
+    }
+    .boss-list-item .name-wrapper .boss-icon-small {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .boss-list-item .name-wrapper .name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .boss-list-item .class-tag {
       font-size: 0.65rem;
@@ -67,14 +86,6 @@
       background: var(--bg-card2);
       border: 1px solid var(--border);
       color: var(--text-muted);
-    }
-    .boss-list-item .boss-icon-small {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
       flex-shrink: 0;
     }
 
@@ -128,6 +139,10 @@
       background: var(--bg-card2);
       border: 2px solid var(--border);
       flex-shrink: 0;
+    }
+
+    .boss-detail-header .boss-icon-large.error {
+      display: none;
     }
 
     .boss-detail-info {
@@ -528,6 +543,10 @@
       flex-shrink: 0;
     }
 
+    .item-tooltip .fc-boss .boss-icon.error {
+      display: none;
+    }
+
     .item-tooltip .fc-boss .boss-name {
       color: var(--text);
       font-weight: 500;
@@ -697,9 +716,14 @@
       div.className = `boss-list-item${b.id === selectedBossId ? ' active' : ''}`;
       const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
       
+      const iconHtml = b.icon ? `<img class="boss-icon-small" src="/assets/img/bosses/${b.icon}" alt="${b.name}" onerror="this.style.display='none'" />` : '';
+      
       div.innerHTML = `
         <span class="level-badge">${b.level || '?'}</span>
-        <span class="name">${b.name}</span>
+        <span class="name-wrapper">
+          ${iconHtml}
+          <span class="name">${b.name}</span>
+        </span>
         <span class="class-tag badge-${b.boss_class || 'unknown'}">${clsLabel}</span>
       `;
       div.dataset.id = b.id;
@@ -742,7 +766,7 @@
       <div class="boss-detail-bg ${bgImage ? 'has-image' : ''}" style="background-image: ${bgImage};"></div>
       <div class="boss-detail-content">
         <div class="boss-detail-header">
-          ${iconFile ? `<img class="boss-icon-large" src="${iconFile}" alt="${b.name}" />` : ''}
+          ${iconFile ? `<img class="boss-icon-large" src="${iconFile}" alt="${b.name}" onerror="this.classList.add('error')" />` : ''}
           <div class="boss-detail-info">
             <h2>${b.name}</h2>
             <div class="meta">
@@ -1088,7 +1112,7 @@
       bossDiv.className = 'fc-boss';
       const bossIcon = boss.icon ? `/assets/img/bosses/${boss.icon}` : '';
       bossDiv.innerHTML = `
-        ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${boss.name}" />` : '<span style="font-size:1.2rem;">👹</span>'}
+        ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${boss.name}" onerror="this.classList.add('error')" />` : '<span style="font-size:1.2rem;">👹</span>'}
         <span class="boss-name">${boss.name}</span>
       `;
       bossContainer.appendChild(bossDiv);
