@@ -26,13 +26,18 @@ export async function initNavbar() {
   if (navbarInitialized) return;
   navbarInitialized = true;
 
+  // Загружаем сохраненные настройки
   loadThemeSettings();
 
+  // Инициализируем авторизацию и ждем готовности
   await initAuth();
   await authReady;
 
   const nav = document.getElementById("main-nav");
-  if (!nav) return;
+  if (!nav) {
+    console.warn('⚠️ Элемент #main-nav не найден');
+    return;
+  }
 
   renderNav(nav);
   updateRoleElements();
