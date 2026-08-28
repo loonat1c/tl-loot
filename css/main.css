@@ -806,11 +806,7 @@ th, td {
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
   text-decoration: none;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 1.15rem;
   transition: opacity 0.2s;
 }
 
@@ -819,18 +815,10 @@ th, td {
 }
 
 .nav-brand .nav-logo {
-  height: 36px;
+  height: 40px;
   width: auto;
   display: block;
   filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
-}
-
-.nav-brand .nav-brand-text {
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* Кнопка бургер */
@@ -910,16 +898,15 @@ th, td {
 
 .nav-links a.active {
   color: var(--accent-soft);
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(139, 92, 246, 0.08);
 }
 
 .nav-links a.active::after {
   content: '';
   position: absolute;
   bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 18px;
+  left: 0;
+  right: 0;
   height: 2px;
   background: var(--accent);
   border-radius: 2px;
@@ -1042,9 +1029,6 @@ th, td {
   .nav-links a {
     padding: 0.4rem 0.6rem;
   }
-  .nav-brand .nav-brand-text {
-    display: none;
-  }
 }
 
 @media (max-width: 992px) {
@@ -1126,7 +1110,7 @@ th, td {
     padding: 0 0.75rem;
   }
   .nav-brand .nav-logo {
-    height: 30px;
+    height: 34px;
   }
   .btn-register {
     padding: 0.25rem 0.8rem;
