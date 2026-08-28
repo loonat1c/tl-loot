@@ -83,20 +83,20 @@
     /* Фоновое изображение босса в правом верхнем углу */
     .boss-detail-bg {
       position: absolute;
-      top: -10%;
+      top: 5%;
       right: -10%;
       width: 70%;
-      height: 90%;
+      height: 85%;
       background-size: contain;
       background-position: right top;
       background-repeat: no-repeat;
-      opacity: 0.35;
+      opacity: 0.2;
       pointer-events: none;
       transition: opacity 0.3s;
     }
 
     .boss-detail-bg.has-image {
-      opacity: 0.5;
+      opacity: 0.3;
     }
 
     .boss-detail-content {
@@ -145,27 +145,116 @@
       color: var(--text-muted);
       margin: 0 0 0.65rem 0;
     }
-    .item-chips {
+    
+    /* ── список предметов в столбик ─────────────────────────── */
+    .item-list {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 0.4rem;
     }
-    .item-chip {
+    
+    .item-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      padding: 0.4rem 0.6rem;
       background: var(--bg-card2);
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 0.2rem 0.7rem 0.2rem 0.4rem;
-      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      position: relative;
     }
-    .item-chip img {
-      width: 28px;
-      height: 28px;
-      border-radius: 3px;
+    .item-row:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+    
+    .item-row img {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
       object-fit: cover;
       background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    
+    .item-row .item-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      flex: 1;
+    }
+    
+    .item-row .item-slot {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* ── всплывающая карточка предмета ──────────────────────── */
+    .item-tooltip {
+      position: fixed;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      min-width: 220px;
+      max-width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    
+    .item-tooltip.visible {
+      display: block;
+      opacity: 1;
+    }
+    
+    .item-tooltip .tooltip-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.5rem;
+    }
+    
+    .item-tooltip .tooltip-header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-card2);
+    }
+    
+    .item-tooltip .tooltip-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .item-tooltip .tooltip-slot {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .item-tooltip .tooltip-stats {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    
+    .item-tooltip .tooltip-stats div {
+      padding: 0.1rem 0;
+    }
+    
+    .item-tooltip .tooltip-stats .stat-positive {
+      color: #4ade80;
+    }
+    
+    .item-tooltip .tooltip-stats .stat-negative {
+      color: #f87171;
     }
 
     /* ── кнопка добавить ────────────────────────────────────── */
@@ -223,13 +312,18 @@
       }
       .boss-detail-bg {
         width: 100%;
-        height: 70%;
-        top: 0;
+        height: 60%;
+        top: 10%;
         right: 0;
-        opacity: 0.2 !important;
+        opacity: 0.15 !important;
       }
       .boss-detail-bg.has-image {
-        opacity: 0.3 !important;
+        opacity: 0.2 !important;
+      }
+      .item-tooltip {
+        min-width: 180px;
+        max-width: 240px;
+        padding: 0.75rem;
       }
     }
   </style>
@@ -264,6 +358,18 @@
     </div>
   </div>
 </main>
+
+<!-- Всплывающая карточка предмета -->
+<div class="item-tooltip" id="item-tooltip">
+  <div class="tooltip-header">
+    <img id="tooltip-img" alt="" />
+    <div>
+      <div class="tooltip-name" id="tooltip-name">Название</div>
+      <div class="tooltip-slot" id="tooltip-slot">Слот</div>
+    </div>
+  </div>
+  <div class="tooltip-stats" id="tooltip-stats"></div>
+</div>
 
 <!-- модалка -->
 <div class="modal-overlay hidden" id="modal">
@@ -410,16 +516,17 @@
         </div>
         <div class="boss-detail-items">
           <h4>Предметы (${bItems.length})</h4>
-          <div class="item-chips">
+          <div class="item-list">
             ${bItems.length ? bItems.map(item => {
               const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
               return `
-                <span class="item-chip">
+                <div class="item-row" data-item-id="${item.id}">
                   <img id="detail-item-${item.id}" alt="${item.name}" />
-                  ${item.name} <span style="color:var(--text-muted);font-size:0.7rem;">(${slotLabel})</span>
-                </span>
+                  <span class="item-name">${item.name}</span>
+                  <span class="item-slot">${slotLabel}</span>
+                </div>
               `;
-            }).join('') : `<span class="text-muted" style="font-size:0.8rem;">Не указаны</span>`}
+            }).join('') : `<span class="text-muted" style="font-size:0.8rem;padding:0.4rem;">Не указаны</span>`}
           </div>
         </div>
       </div>
@@ -430,12 +537,23 @@
       const img = document.getElementById(`detail-item-${item.id}`);
       if (img) setItemImage(img, item.image);
     });
+
+    // добавляем обработчики для всплывающих карточек
+    document.querySelectorAll('.item-row').forEach(row => {
+      const itemId = row.dataset.itemId;
+      const item = allItems.find(i => i.id === itemId);
+      if (item) {
+        row.addEventListener('mouseenter', (e) => showTooltip(e, item));
+        row.addEventListener('mouseleave', hideTooltip);
+        row.addEventListener('mousemove', moveTooltip);
+      }
+    });
   }
 
   function selectBoss(id) {
     selectedBossId = id;
     const b = allBosses.find(x => x.id === id);
-    renderList();    // обновим active
+    renderList();
     renderDetail(b);
   }
 
@@ -570,7 +688,6 @@
 
   document.getElementById('filter-search').addEventListener('input', () => {
     renderList();
-    // если выбранный босс есть в отфильтрованном списке — оставляем, иначе сбрасываем детали
     const visible = allBosses.filter(b => {
       const search = document.getElementById('filter-search').value.toLowerCase();
       const cls    = document.getElementById('filter-class').value;
@@ -581,7 +698,6 @@
     if (selectedBossId && !visible.some(b => b.id === selectedBossId)) {
       renderDetail(null);
     } else if (visible.length) {
-      // если детали не показываются или показывают "выберите", показываем первого
       const detail = document.getElementById('boss-detail');
       if (!detail.querySelector('.boss-detail-header')) {
         selectBoss(visible[0].id);
@@ -592,6 +708,79 @@
     document.getElementById('filter-search').dispatchEvent(new Event('input'));
   });
 
+  // ── Всплывающая карточка предмета ──────────────
+  const tooltip = document.getElementById('item-tooltip');
+  let tooltipTimeout;
+
+  function showTooltip(e, item) {
+    clearTimeout(tooltipTimeout);
+    
+    const img = document.getElementById('tooltip-img');
+    const name = document.getElementById('tooltip-name');
+    const slot = document.getElementById('tooltip-slot');
+    const stats = document.getElementById('tooltip-stats');
+
+    setItemImage(img, item.image);
+    name.textContent = item.name;
+    const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '—';
+    slot.textContent = `Слот: ${slotLabel}`;
+
+    // Статистика предмета (если есть)
+    stats.innerHTML = '';
+    if (item.stats && typeof item.stats === 'object') {
+      const entries = Object.entries(item.stats);
+      if (entries.length) {
+        entries.forEach(([key, value]) => {
+          const div = document.createElement('div');
+          const num = parseFloat(value);
+          if (!isNaN(num) && num > 0) {
+            div.className = 'stat-positive';
+            div.textContent = `+${value} ${key}`;
+          } else if (!isNaN(num) && num < 0) {
+            div.className = 'stat-negative';
+            div.textContent = `${value} ${key}`;
+          } else {
+            div.textContent = `${value} ${key}`;
+          }
+          stats.appendChild(div);
+        });
+      } else {
+        stats.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
+      }
+    } else {
+      stats.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;">Нет характеристик</div>';
+    }
+
+    tooltip.classList.add('visible');
+    moveTooltip(e);
+  }
+
+  function moveTooltip(e) {
+    const padding = 15;
+    let x = e.clientX + padding;
+    let y = e.clientY + padding;
+
+    // Проверяем, чтобы тултип не выходил за границы экрана
+    const rect = tooltip.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth) {
+      x = e.clientX - rect.width - padding;
+    }
+    if (y + rect.height > window.innerHeight) {
+      y = e.clientY - rect.height - padding;
+    }
+    if (x < padding) x = padding;
+    if (y < padding) y = padding;
+
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function hideTooltip() {
+    tooltipTimeout = setTimeout(() => {
+      tooltip.classList.remove('visible');
+    }, 100);
+  }
+
   function showError(msg) { const el = document.getElementById('modal-error'); el.textContent = msg; el.style.display = 'block'; }
   function showToast(msg, type = 'success') {
     const t = document.createElement('div');
@@ -599,7 +788,6 @@
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
   }
 
-  // показать кнопку добавления
   if (canWrite()) {
     document.getElementById('btn-add-boss').classList.remove('hidden');
   }
