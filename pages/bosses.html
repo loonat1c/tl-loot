@@ -75,6 +75,33 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 400px;
+    }
+
+    /* Фоновое изображение босса */
+    .boss-detail-bg {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      background-size: contain;
+      background-position: right center;
+      background-repeat: no-repeat;
+      opacity: 0.15;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .boss-detail-bg.has-image {
+      opacity: 0.25;
+    }
+
+    .boss-detail-content {
+      position: relative;
+      z-index: 1;
     }
 
     .boss-detail-header {
@@ -82,30 +109,6 @@
       gap: 1.5rem;
       align-items: flex-start;
       flex-wrap: wrap;
-    }
-
-    .boss-detail-image {
-      flex: 0 0 160px;
-      height: 160px;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .boss-detail-image img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      image-rendering: auto;
-    }
-    .boss-detail-image .placeholder {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-align: center;
-      opacity: 0.6;
     }
 
     .boss-detail-info {
@@ -127,12 +130,14 @@
       font-size: 0.9rem;
       line-height: 1.5;
       margin-bottom: 1rem;
+      max-width: 60%;
     }
 
     .boss-detail-items {
       margin-top: 1.25rem;
       border-top: 1px solid var(--border);
       padding-top: 1rem;
+      max-width: 60%;
     }
     .boss-detail-items h4 {
       font-size: 0.8rem;
@@ -211,6 +216,18 @@
     .text-danger { color: #ef4444; }
     .text-muted { color: var(--text-muted); }
     .hidden { display: none !important; }
+
+    /* Адаптив для мобильных */
+    @media (max-width: 640px) {
+      .boss-detail-info .description,
+      .boss-detail-items {
+        max-width: 100%;
+      }
+      .boss-detail-bg {
+        width: 100%;
+        opacity: 0.1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -237,7 +254,9 @@
 
     <!-- правая колонка: детали -->
     <div class="boss-detail" id="boss-detail">
-      <div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>
+      <div class="boss-detail-content">
+        <div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>
+      </div>
     </div>
   </div>
 </main>
@@ -272,7 +291,7 @@
     <div class="form-group">
       <label>Название файла изображения (из /assets/img/bosses/)</label>
       <input type="text" id="f-image" placeholder="draco.png" />
-      <small style="color:var(--text-muted);font-size:0.7rem;">Укажите имя файла, картинка будет показана справа</small>
+      <small style="color:var(--text-muted);font-size:0.7rem;">Укажите имя файла, картинка будет показана на фоне карточки</small>
     </div>
     <div class="form-group">
       <label>Предметы с босса</label>
@@ -350,7 +369,11 @@
   function renderDetail(b) {
     const container = document.getElementById("boss-detail");
     if (!b) {
-      container.innerHTML = `<div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>`;
+      container.innerHTML = `
+        <div class="boss-detail-content">
+          <div class="text-muted" style="padding:1rem 0;">Выберите босса из списка</div>
+        </div>
+      `;
       return;
     }
 
@@ -358,42 +381,42 @@
     const clsId = b.boss_class || 'unknown';
     const bItems = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
 
-    // изображение
+    // фоновое изображение
     const imageFile = b.image || '';
-    const imgSrc = imageFile ? `/assets/img/bosses/${imageFile}` : '';
+    const bgImage = imageFile ? `url('/assets/img/bosses/${imageFile}')` : '';
 
     container.innerHTML = `
-      <div class="boss-detail-header">
-        <div class="boss-detail-image">
-          ${imgSrc ? `<img src="${imgSrc}" alt="${b.name}" />` : `<span class="placeholder">Нет<br>изображения</span>`}
-        </div>
-        <div class="boss-detail-info">
-          <h2>${b.name}</h2>
-          <div class="meta">
-            ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ''}
-            <span class="badge badge-${clsId}">${clsLabel}</span>
+      <div class="boss-detail-bg ${bgImage ? 'has-image' : ''}" style="background-image: ${bgImage};"></div>
+      <div class="boss-detail-content">
+        <div class="boss-detail-header">
+          <div class="boss-detail-info">
+            <h2>${b.name}</h2>
+            <div class="meta">
+              ${b.level ? `<span class="badge badge-purple">Ур. ${b.level}</span>` : ''}
+              <span class="badge badge-${clsId}">${clsLabel}</span>
+            </div>
+            ${b.description ? `<div class="description">${b.description}</div>` : ''}
+            <div style="margin-top:0.5rem;">
+              ${canWrite() ? `
+                <button class="btn btn-ghost btn-sm" onclick="openEdit('${b.id}')">✏️ Редактировать</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️</button>
+              ` : ''}
+            </div>
           </div>
-          ${b.description ? `<div class="description">${b.description}</div>` : ''}
-          <div style="margin-top:0.5rem;">
-            ${canWrite() ? `
-              <button class="btn btn-ghost btn-sm" onclick="openEdit('${b.id}')">✏️ Редактировать</button>
-              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️</button>
-            ` : ''}
-          </div>
         </div>
-      </div>
-      <div class="boss-detail-items">
-        <h4>Предметы (${bItems.length})</h4>
-        <div class="item-chips">
-          ${bItems.length ? bItems.map(item => {
-            const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
-            return `
-              <span class="item-chip">
-                <img id="detail-item-${item.id}" alt="${item.name}" />
-                ${item.name} <span style="color:var(--text-muted);font-size:0.7rem;">(${slotLabel})</span>
-              </span>
-            `;
-          }).join('') : `<span class="text-muted" style="font-size:0.8rem;">Не указаны</span>`}
+        <div class="boss-detail-items">
+          <h4>Предметы (${bItems.length})</h4>
+          <div class="item-chips">
+            ${bItems.length ? bItems.map(item => {
+              const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot || '';
+              return `
+                <span class="item-chip">
+                  <img id="detail-item-${item.id}" alt="${item.name}" />
+                  ${item.name} <span style="color:var(--text-muted);font-size:0.7rem;">(${slotLabel})</span>
+                </span>
+              `;
+            }).join('') : `<span class="text-muted" style="font-size:0.8rem;">Не указаны</span>`}
+          </div>
         </div>
       </div>
     `;
