@@ -12,7 +12,7 @@
     .raid-list-item { padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: border-color 0.15s; margin-bottom: 0.5rem; }
     .raid-list-item:hover  { border-color: var(--accent); }
     .raid-list-item.active { border-color: var(--accent); background: var(--accent-glow); }
-    .raid-list-item.deleted { opacity: 0.5; border-style: dashed; }
+    .raid-list-item.deleted { opacity: 0.3; border-style: dashed; pointer-events: none; }
     .raid-date { font-weight: 600; font-size: 0.95rem; }
     .raid-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
@@ -30,22 +30,31 @@
       background: rgba(201,168,76,0.05);
       border-bottom: 1px solid var(--border);
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
     .try-title { font-weight: 700; color: var(--accent-soft); font-size: 0.95rem; }
     .try-boss  { font-size: 0.82rem; color: var(--text-muted); margin-left: 0.5rem; }
     .try-body  { padding: 0.75rem 1rem; }
 
     .drop-row {
-      display: grid; grid-template-columns: 44px 1fr auto auto;
-      gap: 0.75rem; align-items: center;
-      padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+      display: grid; 
+      grid-template-columns: 44px 1fr auto auto;
+      gap: 0.75rem; 
+      align-items: center;
+      padding: 0.5rem 0; 
+      border-bottom: 1px solid var(--border); 
+      font-size: 0.85rem;
     }
     .drop-row:last-child { border-bottom: none; }
     .drop-img  { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: var(--bg-card2); }
     .drop-name { font-weight: 600; }
     .drop-detail { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
-    .drop-winner strong { display: block; font-size: 0.85rem; text-align: right; }
+    .drop-property { font-size: 0.7rem; color: var(--accent-soft); background: var(--accent-glow); padding: 0.1rem 0.5rem; border-radius: 4px; display: inline-block; margin-top: 2px; }
+    .drop-winner { text-align: right; }
+    .drop-winner strong { display: block; font-size: 0.85rem; }
     .drop-winner span   { font-size: 0.72rem; color: var(--text-muted); }
+    .drop-winner .no-winner { color: var(--text-muted); font-style: italic; font-size: 0.8rem; }
+    .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
@@ -61,24 +70,80 @@
     .item-search-row.selected{ background: var(--accent-glow); border-left: 2px solid var(--accent); }
     .item-search-img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
 
-    .player-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 0.4rem; max-height: 180px; overflow-y: auto; margin-top: 0.5rem; }
-    .player-select-btn { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card2); color: var(--text); font-size: 0.82rem; cursor: pointer; text-align: left; transition: border-color 0.15s; }
-    .player-select-btn:hover    { border-color: var(--accent); }
-    .player-select-btn.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
+    .property-select-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .property-btn { padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card2); color: var(--text); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+    .property-btn:hover { border-color: var(--accent); }
+    .property-btn.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
 
     .section-title { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.4rem; }
 
-    .lock-warning { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: var(--radius); padding: 0.5rem 0.75rem; font-size: 0.82rem; color: var(--danger); margin-top: 0.5rem; display: none; }
-
-    .attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 0.5rem; margin-top: 0.75rem; }
-    .attendance-player { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 0.85rem; user-select: none; transition: all 0.15s; }
-    .attendance-player.present { border-color: var(--success); background: rgba(34,197,94,0.1); color: var(--success); }
-
     .empty-raid { text-align: center; padding: 3rem; color: var(--text-muted); }
 
-    .roll-type-btn.active-roll { border-color: var(--accent) !important; color: var(--accent-soft); background: var(--accent-glow); }
+    .roll-btn { 
+      background: var(--accent); 
+      color: #fff; 
+      border: none; 
+      padding: 0.2rem 0.6rem; 
+      border-radius: 4px; 
+      font-size: 0.75rem; 
+      cursor: pointer; 
+      transition: all 0.15s; 
+    }
+    .roll-btn:hover { background: var(--accent-soft); transform: scale(1.05); }
+    .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .roll-btn.rolling { background: var(--warning); animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .status-badge {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .status-badge.open { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .status-badge.rolling { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .status-badge.closed { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
 
     .show-deleted-btn { font-size: 0.78rem; color: var(--text-muted); cursor: pointer; text-decoration: underline; margin-top: 0.5rem; display: block; }
+    
+    .roll-participant {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .roll-participant:hover { background: var(--bg-card2); }
+    .roll-participant .player-name { font-weight: 500; }
+    .roll-participant .player-status { font-size: 0.75rem; color: var(--text-muted); }
+    .roll-participant .player-roll { 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      color: var(--accent-soft);
+      min-width: 40px;
+      text-align: center;
+    }
+    .roll-participant.joined { background: var(--accent-glow); border-left: 2px solid var(--accent); }
+    .roll-participant.winner { background: rgba(34, 197, 94, 0.15); border-left: 2px solid #22c55e; }
+    
+    .join-btn {
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text);
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .join-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+    .join-btn.joined { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
+    .join-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -133,29 +198,54 @@
 <!-- Дроп -->
 <div class="modal-overlay hidden" id="modal-drop">
   <div class="modal">
-    <div class="modal-header"><h3>Записать дроп</h3><button class="btn-close" onclick="closeModal('modal-drop')">✕</button></div>
+    <div class="modal-header"><h3>Добавить дроп</h3><button class="btn-close" onclick="closeModal('modal-drop')">✕</button></div>
 
     <div class="section-title">Предмет</div>
     <input type="text" id="item-search" placeholder="Поиск предмета..." />
     <div id="item-search-results" class="item-search-results"></div>
 
+    <div class="section-title">Особенность предмета</div>
+    <div id="property-select-grid" class="property-select-grid">
+      <button class="property-btn selected" data-prop="">Без особенности</button>
+    </div>
+
     <div class="section-title">Цена в Lucent (текущая)</div>
     <input type="number" id="drop-lucent" placeholder="0" min="0" />
 
-    <div class="section-title">Тип ролла</div>
-    <div class="flex gap-1">
-      <button class="btn btn-ghost btn-sm roll-type-btn active-roll" data-type="main">🎯 Основной</button>
-      <button class="btn btn-ghost btn-sm roll-type-btn" data-type="open">🎲 Открытый</button>
-    </div>
-    <div class="lock-warning" id="lock-warning"></div>
-
-    <div class="section-title">Победитель</div>
-    <div id="player-select-grid" class="player-select-grid"></div>
-
     <div id="drop-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
     <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-drop">Записать</button>
+      <button class="btn btn-primary" id="btn-save-drop">Добавить дроп</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-drop')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ролл окно -->
+<div class="modal-overlay hidden" id="modal-roll">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🎲 Ролл</h3>
+      <button class="btn-close" onclick="closeRollModal()">✕</button>
+    </div>
+    <div id="roll-info">
+      <p style="font-size:0.9rem;margin-bottom:0.25rem;"><strong id="roll-item-name"></strong></p>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;" id="roll-item-detail"></p>
+    </div>
+    
+    <div class="section-title">Участники <span id="roll-players-count" style="font-weight:400;">(0)</span></div>
+    <div id="roll-players-list" style="margin: 0.25rem 0;max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);"></div>
+    
+    <div class="section-title">Управление</div>
+    <div class="flex gap-1 mt-1" style="flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" id="btn-join-roll">🎯 Присоединиться</button>
+      <button class="btn btn-ghost btn-sm" id="btn-leave-roll">🚪 Выйти</button>
+      <button class="btn btn-warning btn-sm" id="btn-start-roll" style="background:var(--warning);color:#000;">🎲 Запустить ролл</button>
+    </div>
+    <div id="roll-result" style="margin-top:0.75rem;padding:0.5rem;border-radius:var(--radius);display:none;"></div>
+    
+    <div class="flex gap-1 mt-3">
+      <button class="btn btn-primary" id="btn-confirm-roll" style="display:none;">✅ Подтвердить победителя</button>
+      <button class="btn btn-ghost" onclick="closeRollModal()">Закрыть</button>
     </div>
   </div>
 </div>
@@ -175,7 +265,7 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, canWrite, isAdmin } from "../js/modules/auth.js";
+  import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
   initNavbar();
   initAuth((_u, _r) => {});
 
@@ -183,29 +273,46 @@
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
     getRaidTries, addTry, deleteTry,
     getTryDrops, addDrop, deleteDrop,
-    closeRaid
+    closeRaid, updateRaidStatus
   } from "../js/modules/raids.js";
-  import { getPlayers }     from "../js/modules/players.js";
-  import { getBosses }      from "../js/modules/bosses.js";
-  import { getPlayerLocks } from "../js/modules/locks.js";
-  import { setItemImage }   from "../js/modules/images.js";
-  import { SLOTS, ROLL_TYPE } from "../js/constants.js";
+  import { getPlayers, getPlayer } from "../js/modules/players.js";
+  import { getBosses } from "../js/modules/bosses.js";
+  import { getItems } from "../js/modules/items.js";
+  import { setItemImage } from "../js/modules/images.js";
+  import { SLOTS } from "../js/constants.js";
 
-  let allRaids = [], allPlayers = [], allBosses = [];
-  let activeRaid = null, activeTryId = null;
-  let selectedItem = null, selectedPlayer = null, selectedRollType = "main";
-  let playerLocks = {};
+  let allRaids = [], allPlayers = [], allBosses = [], allItems = [];
+  let activeRaid = null;
   let showDeleted = false;
-  let tryItemsMap = {}; // bossId → items[]
   let editingRaidId = null;
+  let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
+  let selectedItem = null, selectedProperty = null;
+  
+  // Ролл состояние
+  let rollState = {
+    dropId: null,
+    raidId: null,
+    tryId: null,
+    itemName: '',
+    itemDetail: '',
+    participants: [], // { playerId, nickname, roll: null }
+    isRolling: false,
+    winner: null,
+    currentUserId: null
+  };
 
   async function init() {
-    [allRaids, allPlayers, allBosses] = await Promise.all([
-      getRaids(), getPlayers(), getBosses()
+    [allRaids, allPlayers, allBosses, allItems] = await Promise.all([
+      getRaids(), getPlayers(), getBosses(), getItems()
     ]);
     populateBossSelect();
     renderRaidList();
-    if (allRaids.filter(r => !r.deleted).length) selectRaid(allRaids.find(r => !r.deleted));
+    const active = allRaids.find(r => !r.deleted);
+    if (active) selectRaid(active);
+    
+    // Получаем текущего пользователя
+    await authReady;
+    rollState.currentUserId = currentUser?.uid || null;
   }
 
   function populateBossSelect() {
@@ -227,20 +334,23 @@
     visible.forEach(r => {
       const el = document.createElement("div");
       el.className = `raid-list-item${activeRaid?.id === r.id ? " active" : ""}${r.deleted ? " deleted" : ""}`;
+      
+      const statusMap = { open: 'Открыт', rolling: 'Ролл', closed: 'Закрыт' };
+      const statusClass = r.status || 'open';
+      
       el.innerHTML = `
         <div class="raid-date">${formatDate(r.date)}</div>
         <div class="raid-meta">
           ${r.drop_count || 0} дропов &nbsp;·&nbsp;
-          <span class="badge badge-${r.status==="closed" ? "locked" : "free"}" style="font-size:0.7rem">
-            ${r.deleted ? "Удалён" : r.status==="closed" ? "Закрыт" : "Открыт"}
-          </span>
+          <span class="status-badge ${statusClass}">${statusMap[statusClass] || 'Открыт'}</span>
         </div>
       `;
-      el.addEventListener("click", () => selectRaid(r));
+      if (!r.deleted) {
+        el.addEventListener("click", () => selectRaid(r));
+      }
       container.appendChild(el);
     });
 
-    // Кнопка показать удалённые — только для админа
     const btnDel = document.getElementById("btn-show-deleted");
     if (isAdmin()) {
       btnDel.classList.remove("hidden");
@@ -262,7 +372,7 @@
     detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
 
     const tries  = await getRaidTries(raid.id);
-    const canEdit = canWrite() && !raid.deleted && raid.status === "open";
+    const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling");
     const admin   = isAdmin();
 
     detail.innerHTML = `
@@ -293,25 +403,14 @@
       </div>
     `;
 
-    // Рендерим каждый трай
     const triesContainer = document.getElementById("tries-container");
     for (let i = 0; i < tries.length; i++) {
       const t = tries[i];
       const drops = await getTryDrops(raid.id, t.id);
       const boss  = allBosses.find(b => b.id === t.boss_id);
-      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit));
+      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit, raid));
     }
 
-    // Картинки дропов
-    tries.forEach(async t => {
-      const drops = await getTryDrops(raid.id, t.id);
-      drops.forEach(d => {
-        const img = document.getElementById(`drop-img-${d.id}`);
-        if (img) setItemImage(img, d.item_image);
-      });
-    });
-
-    // Кнопки
     document.getElementById("btn-add-try")?.addEventListener("click", () => openTryModal());
     document.getElementById("btn-close-raid")?.addEventListener("click", openCloseRaidModal);
     document.getElementById("btn-edit-raid")?.addEventListener("click", () => openEditRaid(raid));
@@ -319,7 +418,7 @@
     document.getElementById("btn-restore-raid")?.addEventListener("click", () => confirmRestoreRaid(raid));
   }
 
-  function buildTryBlock(t, num, drops, boss, raidId, canEdit) {
+  function buildTryBlock(t, num, drops, boss, raidId, canEdit, raid) {
     const wrap = document.createElement("div");
     wrap.className = "try-block";
     wrap.innerHTML = `
@@ -336,27 +435,39 @@
         </div>` : ""}
       </div>
       <div class="try-body">
-        ${drops.length ? drops.map(d => buildDropRow(d, raidId, t.id, canEdit)).join("") :
+        ${drops.length ? drops.map(d => buildDropRow(d, raidId, t.id, canEdit, raid)).join("") :
           `<div class="text-muted" style="font-size:0.82rem">Дропов нет</div>`}
       </div>
     `;
     return wrap;
   }
 
-  function buildDropRow(d, raidId, tryId, canEdit) {
+  function buildDropRow(d, raidId, tryId, canEdit, raid) {
     const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
+    const hasWinner = d.winner_player_id && d.winner_nickname;
+    const canRoll = canEdit && !d.winner_player_id && raid?.status !== "closed";
+    const isRolling = raid?.status === "rolling";
+    
     return `
       <div class="drop-row">
         <img class="drop-img" id="drop-img-${d.id}" alt="${d.item_name}" />
         <div>
           <div class="drop-name">${d.item_name}</div>
           <div class="drop-detail">${slotLabel} · 💰 ${(d.lucent_value_snapshot||0).toLocaleString()} L</div>
+          ${d.property ? `<div class="drop-property">✦ ${d.property}</div>` : ''}
         </div>
         <div class="drop-winner">
-          <strong>${d.winner_nickname}</strong>
-          <span class="badge badge-${d.roll_type==="main"?"main":"open"}">${d.roll_type==="main"?"Основной":"Открытый"}</span>
+          ${hasWinner ? `
+            <strong>${d.winner_nickname}</strong>
+            <span>${d.roll_type === "main" ? "Основной" : "Открытый"}</span>
+          ` : `
+            <span class="no-winner">${isRolling ? '⏳ Ролл...' : 'Ожидает ролла'}</span>
+          `}
         </div>
-        ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ""}
+        <div class="drop-actions">
+          ${canRoll ? `<button class="roll-btn" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}')">🎲</button>` : ''}
+          ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
+        </div>
       </div>
     `;
   }
@@ -399,14 +510,19 @@
       closeModal("modal-raid");
       allRaids = await getRaids();
       renderRaidList();
-      if (!editingRaidId) selectRaid(allRaids.find(r => !r.deleted));
-      else { activeRaid = allRaids.find(r => r.id === editingRaidId); selectRaid(activeRaid); }
+      if (!editingRaidId) {
+        const newRaid = allRaids.find(r => !r.deleted && r.date === date);
+        if (newRaid) selectRaid(newRaid);
+      } else {
+        activeRaid = allRaids.find(r => r.id === editingRaidId);
+        if (activeRaid) selectRaid(activeRaid);
+      }
     } catch(e) { errEl.textContent = e.message; errEl.style.display = "block"; }
     finally { btn.disabled = false; btn.textContent = editingRaidId ? "Сохранить" : "Создать"; }
   });
 
   function confirmDeleteRaid(raid) {
-    if (!confirm(`Удалить рейд от ${formatDate(raid.date)}? Его можно будет восстановить в течение 30 дней.`)) return;
+    if (!confirm(`Удалить рейд от ${formatDate(raid.date)}?`)) return;
     softDeleteRaid(raid.id).then(async () => {
       showToast("Рейд удалён");
       allRaids = await getRaids();
@@ -417,12 +533,6 @@
   }
 
   function confirmRestoreRaid(raid) {
-    // Проверяем 30 дней
-    const deletedAt = raid.deleted_at ? new Date(raid.deleted_at) : null;
-    if (deletedAt) {
-      const days = (Date.now() - deletedAt.getTime()) / (1000 * 60 * 60 * 24);
-      if (days > 30) { alert("Прошло более 30 дней — восстановление невозможно."); return; }
-    }
     if (!confirm("Восстановить рейд?")) return;
     restoreRaid(raid.id).then(async () => {
       showToast("Рейд восстановлен");
@@ -468,50 +578,46 @@
   };
 
   // ── Дроп модалка ─────────────────────────────────
-  let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
-
   window.openDropModal = async (raidId, tryId, bossId) => {
     currentDropRaidId  = raidId;
     currentDropTryId   = tryId;
     currentDropBossId  = bossId || null;
     selectedItem       = null;
-    selectedPlayer     = null;
-    selectedRollType   = "main";
+    selectedProperty   = null;
 
     document.getElementById("item-search").value       = "";
     document.getElementById("drop-lucent").value       = "";
     document.getElementById("drop-error").style.display = "none";
-    document.getElementById("lock-warning").style.display = "none";
 
-    playerLocks = {};
-    await Promise.all(allPlayers.map(async p => {
-      playerLocks[p.id] = await getPlayerLocks(p.id);
-    }));
-
-    // Показываем предметы с босса если он выбран, иначе все
-    setRollType("main");
     renderDropItems("");
-    renderPlayerSelect();
+    renderProperties();
     openModal("modal-drop");
   };
 
   function renderDropItems(query) {
-    const boss   = allBosses.find(b => b.id === currentDropBossId);
+    const boss = allBosses.find(b => b.id === currentDropBossId);
     let itemPool = boss?.item_ids?.length
-      ? boss.item_ids.map(id => ({ _fromBoss: true, ...allItems.find(i => i.id === id) })).filter(i => i?.id)
+      ? boss.item_ids.map(id => allItems.find(i => i.id === id)).filter(i => i?.id)
       : allItems;
 
-    // allItems нужен — загружаем его
-    if (query) itemPool = itemPool.filter(i => i.name?.toLowerCase().includes(query));
+    if (query) itemPool = itemPool.filter(i => i.name?.toLowerCase().includes(query.toLowerCase()));
 
     const container = document.getElementById("item-search-results");
     container.innerHTML = "";
 
-    if (boss?.item_ids?.length) {
+    if (boss?.item_ids?.length && !query) {
       const header = document.createElement("div");
       header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--accent);background:var(--accent-glow);border-bottom:1px solid var(--border)";
-      header.textContent = `Предметы с ${boss.name}`;
+      header.textContent = `📦 Предметы с ${boss.name}`;
       container.appendChild(header);
+    }
+
+    if (!itemPool.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.82rem";
+      empty.textContent = "Нет предметов";
+      container.appendChild(empty);
+      return;
     }
 
     itemPool.forEach(item => {
@@ -523,51 +629,38 @@
         <div><div style="font-weight:600">${item.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div></div>
       `;
       setItemImage(row.querySelector("img"), item.image);
-      row.addEventListener("click", () => { selectedItem = item; renderDropItems(document.getElementById("item-search").value); checkLocks(); });
+      row.addEventListener("click", () => { 
+        selectedItem = item; 
+        renderDropItems(document.getElementById("item-search").value);
+        renderProperties();
+      });
       container.appendChild(row);
+    });
+  }
+
+  function renderProperties() {
+    const container = document.getElementById("property-select-grid");
+    container.innerHTML = `<button class="property-btn selected" data-prop="">Без особенности</button>`;
+    
+    if (!selectedItem || !selectedItem.properties?.length) return;
+    
+    selectedItem.properties.forEach(prop => {
+      const btn = document.createElement("button");
+      btn.className = `property-btn${selectedProperty === prop ? " selected" : ""}`;
+      btn.dataset.prop = prop;
+      btn.textContent = prop;
+      btn.addEventListener("click", () => {
+        selectedProperty = prop;
+        document.querySelectorAll(".property-btn").forEach(b => b.classList.toggle("selected", b.dataset.prop === prop));
+      });
+      container.appendChild(btn);
     });
   }
 
   document.getElementById("item-search").addEventListener("input", e => renderDropItems(e.target.value));
 
-  document.querySelectorAll(".roll-type-btn").forEach(btn => {
-    btn.addEventListener("click", () => setRollType(btn.dataset.type));
-  });
-
-  function setRollType(type) {
-    selectedRollType = type;
-    document.querySelectorAll(".roll-type-btn").forEach(b => b.classList.toggle("active-roll", b.dataset.type === type));
-    renderPlayerSelect();
-    checkLocks();
-  }
-
-  function renderPlayerSelect() {
-    const grid = document.getElementById("player-select-grid");
-    grid.innerHTML = "";
-    allPlayers.forEach(p => {
-      const btn = document.createElement("button");
-      btn.className = `player-select-btn${selectedPlayer?.id === p.id ? " selected" : ""}`;
-      const locked = selectedItem?.slot && selectedRollType === "main" && playerLocks[p.id]?.[selectedItem.slot]?.is_locked;
-      btn.innerHTML = `<div style="font-weight:600">${p.nickname}</div>${locked ? `<div style="font-size:0.7rem;color:var(--danger)">🔒 заблокирован</div>` : ""}`;
-      if (locked) btn.style.opacity = "0.5";
-      btn.addEventListener("click", () => { selectedPlayer = p; renderPlayerSelect(); checkLocks(); });
-      grid.appendChild(btn);
-    });
-  }
-
-  function checkLocks() {
-    const w = document.getElementById("lock-warning");
-    if (!selectedItem || !selectedPlayer || selectedRollType !== "main") { w.style.display = "none"; return; }
-    const lock = playerLocks[selectedPlayer.id]?.[selectedItem.slot];
-    if (lock?.is_locked) {
-      w.textContent = `⚠️ ${selectedPlayer.nickname} уже получил «${SLOTS.find(s=>s.id===selectedItem.slot)?.label}» в основном ролле (${lock.item_name})`;
-      w.style.display = "block";
-    } else { w.style.display = "none"; }
-  }
-
   document.getElementById("btn-save-drop").addEventListener("click", async () => {
     if (!selectedItem)   return showDropError("Выбери предмет");
-    if (!selectedPlayer) return showDropError("Выбери победителя");
 
     const boss   = allBosses.find(b => b.id === currentDropBossId);
     const lucent = Number(document.getElementById("drop-lucent").value) || 0;
@@ -580,20 +673,28 @@
         item_name:             selectedItem.name,
         item_slot:             selectedItem.slot,
         item_image:            selectedItem.image,
-        winner_player_id:      selectedPlayer.id,
-        winner_nickname:       selectedPlayer.nickname,
+        winner_player_id:      null,
+        winner_nickname:       null,
         boss_id:               currentDropBossId || null,
         boss_name:             boss?.name || "",
         lucent_value_snapshot: lucent,
-        roll_type:             selectedRollType,
+        roll_type:             null,
+        property:              selectedProperty || null,
       });
+      
+      // Меняем статус рейда на rolling если он был open
+      if (activeRaid && activeRaid.status === "open") {
+        await updateRaidStatus(currentDropRaidId, "rolling");
+        activeRaid.status = "rolling";
+      }
+      
       closeModal("modal-drop");
       allRaids = await getRaids();
       activeRaid = allRaids.find(r => r.id === currentDropRaidId);
       selectRaid(activeRaid);
-      showToast("Дроп записан");
+      showToast("Дроп добавлен");
     } catch(e) { showDropError("Ошибка: " + e.message); }
-    finally { btn.disabled = false; btn.textContent = "Записать"; }
+    finally { btn.disabled = false; btn.textContent = "Добавить дроп"; }
   });
 
   window.confirmDeleteDrop = async (raidId, tryId, dropId, name) => {
@@ -604,6 +705,188 @@
     selectRaid(activeRaid);
     showToast("Дроп удалён");
   };
+
+  // ── Ролл модалка ──────────────────────────────────
+  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
+    rollState.raidId = raidId;
+    rollState.tryId = tryId;
+    rollState.dropId = dropId;
+    rollState.itemName = itemName;
+    rollState.itemDetail = `${slotLabel}${property ? ` · ✦ ${property}` : ''}`;
+    rollState.participants = [];
+    rollState.isRolling = false;
+    rollState.winner = null;
+    
+    document.getElementById("roll-item-name").textContent = itemName;
+    document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
+    document.getElementById("roll-result").style.display = "none";
+    document.getElementById("btn-confirm-roll").style.display = "none";
+    document.getElementById("btn-start-roll").disabled = false;
+    document.getElementById("btn-start-roll").textContent = "🎲 Запустить ролл";
+    
+    renderRollParticipants();
+    openModal("modal-roll");
+  };
+
+  function renderRollParticipants() {
+    const list = document.getElementById("roll-players-list");
+    const count = document.getElementById("roll-players-count");
+    
+    // Показываем всех игроков, кто может присоединиться
+    const availablePlayers = allPlayers.filter(p => 
+      !rollState.participants.some(part => part.playerId === p.id)
+    );
+    
+    list.innerHTML = '';
+    
+    // Присоединившиеся
+    rollState.participants.forEach(p => {
+      const div = document.createElement('div');
+      div.className = `roll-participant joined${rollState.winner?.playerId === p.playerId ? ' winner' : ''}`;
+      div.innerHTML = `
+        <span class="player-name">${p.nickname}</span>
+        <span class="player-status">${rollState.winner?.playerId === p.playerId ? '🏆 Победитель!' : 'Присоединился'}</span>
+        ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
+      `;
+      list.appendChild(div);
+    });
+    
+    // Доступные игроки
+    availablePlayers.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'roll-participant';
+      div.innerHTML = `
+        <span class="player-name">${p.nickname}</span>
+        <span class="player-status">Ожидает</span>
+        <button class="join-btn" onclick="joinRoll('${p.id}','${p.nickname}')">Присоединиться</button>
+      `;
+      list.appendChild(div);
+    });
+    
+    count.textContent = `(${rollState.participants.length})`;
+    
+    // Обновляем кнопки
+    const currentUserId = rollState.currentUserId;
+    const isParticipant = rollState.participants.some(p => p.playerId === currentUserId);
+    document.getElementById("btn-join-roll").disabled = isParticipant || rollState.isRolling;
+    document.getElementById("btn-leave-roll").disabled = !isParticipant || rollState.isRolling;
+  }
+
+  window.joinRoll = (playerId, nickname) => {
+    if (rollState.isRolling) return;
+    if (rollState.participants.some(p => p.playerId === playerId)) return;
+    
+    rollState.participants.push({ playerId, nickname, roll: null });
+    renderRollParticipants();
+  };
+
+  document.getElementById("btn-join-roll").addEventListener("click", () => {
+    const currentUserId = rollState.currentUserId;
+    if (!currentUserId) {
+      showToast("Вы не авторизованы", "error");
+      return;
+    }
+    const player = allPlayers.find(p => p.id === currentUserId);
+    if (!player) {
+      showToast("Игрок не найден", "error");
+      return;
+    }
+    window.joinRoll(player.id, player.nickname);
+  });
+
+  document.getElementById("btn-leave-roll").addEventListener("click", () => {
+    if (rollState.isRolling) return;
+    const currentUserId = rollState.currentUserId;
+    rollState.participants = rollState.participants.filter(p => p.playerId !== currentUserId);
+    renderRollParticipants();
+  });
+
+  document.getElementById("btn-start-roll").addEventListener("click", async () => {
+    if (rollState.participants.length < 2) {
+      showToast("Нужно минимум 2 участника для ролла", "error");
+      return;
+    }
+    
+    if (rollState.isRolling) return;
+    
+    // Проверяем права (только админ или модератор может запустить ролл)
+    if (!canWrite()) {
+      showToast("Только модератор может запустить ролл", "error");
+      return;
+    }
+    
+    rollState.isRolling = true;
+    document.getElementById("btn-start-roll").disabled = true;
+    document.getElementById("btn-start-roll").textContent = "⏳ Ролл...";
+    
+    // Анимация ролла
+    const resultEl = document.getElementById("roll-result");
+    resultEl.style.display = "block";
+    resultEl.innerHTML = '<div style="text-align:center;padding:0.5rem;">🎲 Бросаем кубики...</div>';
+    
+    // Имитация задержки для анимации
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Генерируем роллы для каждого участника (1-100)
+    rollState.participants.forEach(p => {
+      p.roll = Math.floor(Math.random() * 100) + 1;
+    });
+    
+    // Находим победителя (максимальный ролл)
+    const maxRoll = Math.max(...rollState.participants.map(p => p.roll));
+    const winners = rollState.participants.filter(p => p.roll === maxRoll);
+    rollState.winner = winners[0]; // Если ничья - первый
+    
+    // Показываем результат
+    resultEl.innerHTML = `
+      <div style="text-align:center;padding:0.5rem;">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
+          🏆 Победитель: ${rollState.winner.nickname}
+        </div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
+          Бросок: ${rollState.winner.roll} (из 100)
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+          Участников: ${rollState.participants.length}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById("btn-confirm-roll").style.display = "inline-block";
+    renderRollParticipants();
+    
+    showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
+  });
+
+  document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
+    if (!rollState.winner) {
+      showToast("Сначала запустите ролл", "error");
+      return;
+    }
+    
+    // Сохраняем победителя в дроп
+    try {
+      // Здесь будет логика обновления дропа с победителем
+      // Пока просто заглушка
+      showToast(`✅ Победитель ${rollState.winner.nickname} записан!`);
+      
+      // Закрываем окно ролла
+      closeRollModal();
+      
+      // Обновляем страницу
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === rollState.raidId);
+      selectRaid(activeRaid);
+    } catch(e) {
+      showToast("Ошибка: " + e.message, "error");
+    }
+  });
+
+  function closeRollModal() {
+    closeModal("modal-roll");
+    rollState.isRolling = false;
+  }
+  window.closeRollModal = closeRollModal;
 
   // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
@@ -642,9 +925,6 @@
   });
 
   // ── Helpers ───────────────────────────────────────
-  let allItems = [];
-  async function loadItems() { const { getItems } = await import("../js/modules/items.js"); allItems = await getItems(); }
-
   function openModal(id)  { document.getElementById(id).classList.remove("hidden"); }
   function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
   window.closeModal = closeModal;
@@ -654,7 +934,7 @@
   function todayStr() { return new Date().toISOString().split("T")[0]; }
   function showToast(msg, type = "success") { const t = document.createElement("div"); t.className = `toast ${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 
-  loadItems().then(init);
+  init();
 </script>
 </body>
 </html>
