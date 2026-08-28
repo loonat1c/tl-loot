@@ -107,19 +107,20 @@
 
     .boss-detail-header {
       display: flex;
-      gap: 0.5rem;
-      align-items: center;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 0.25rem;
     }
 
     .boss-detail-header .boss-icon-large {
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       object-fit: cover;
       background: var(--bg-card2);
       border: 2px solid var(--border);
       flex-shrink: 0;
+      margin-left: 0.5rem;
     }
 
     .boss-detail-header .boss-icon-large.error {
@@ -130,13 +131,8 @@
       flex: 1;
       min-width: 0;
     }
-    .boss-detail-info .name-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
     .boss-detail-info .name-row h2 {
-      margin: 0;
+      margin: 0 0 0.25rem 0;
       font-size: 1.4rem;
       line-height: 1.2;
     }
@@ -144,7 +140,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      margin: 0.25rem 0 0.5rem 0;
+      margin: 0 0 0.5rem 0;
     }
     .boss-detail-info .meta .badge {
       display: inline-block;
@@ -273,8 +269,8 @@
         opacity: 0.2 !important;
       }
       .boss-detail-header .boss-icon-large {
-        width: 28px;
-        height: 28px;
+        width: 36px;
+        height: 36px;
       }
       .boss-detail-info .name-row h2 {
         font-size: 1.1rem;
@@ -759,7 +755,6 @@
       <div class="boss-detail-bg ${bgImage ? 'has-image' : ''}" style="background-image: ${bgImage};"></div>
       <div class="boss-detail-content">
         <div class="boss-detail-header">
-          ${iconFile ? `<img class="boss-icon-large" src="${iconFile}" alt="${b.name}" onerror="this.classList.add('error')" />` : ''}
           <div class="boss-detail-info">
             <div class="name-row">
               <h2>${b.name}</h2>
@@ -776,6 +771,7 @@
               ` : ''}
             </div>
           </div>
+          ${iconFile ? `<img class="boss-icon-large" src="${iconFile}" alt="${b.name}" onerror="this.classList.add('error')" />` : ''}
         </div>
         <div class="boss-detail-items">
           <h4>Предметы (${bItems.length})</h4>
