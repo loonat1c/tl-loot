@@ -1,5 +1,5 @@
 /* ====================================================
-   main.css — TL Loot UI
+   main.css — TL Loot UI (Только темная тема)
    ==================================================== */
 
 /* ── Сброс и базовые переменные ──────────────────── */
@@ -22,31 +22,6 @@
   --radius:      8px;
   --font:        'Segoe UI', system-ui, sans-serif;
   --font-mono:   'Consolas', monospace;
-  
-  --theme-bg: var(--bg);
-  --theme-bg-card: var(--bg-card);
-  --theme-bg-card2: var(--bg-card2);
-  --theme-bg-hover: var(--bg-hover);
-  --theme-border: var(--border);
-  --theme-text: var(--text);
-  --theme-text-muted: var(--text-muted);
-}
-
-/* ── Светлая тема ──────────────────────────────────── */
-[data-theme="light"] {
-  --bg:          #f0f2f5;
-  --bg-card:     #ffffff;
-  --bg-card2:    #e8ecf1;
-  --bg-hover:    #d5dbe5;
-  --border:      #c5cdd8;
-  --text:        #1a1a2e;
-  --text-muted:  #5a6a7e;
-  --accent:      #7c3aed;
-  --accent-soft: #9b6af5;
-  --accent-glow: rgba(124,58,237,0.15);
-  --success:     #16a34a;
-  --danger:      #dc2626;
-  --warning:     #d97706;
 }
 
 /* ── Подключение кастомного шрифта ──────────────────── */
@@ -60,11 +35,10 @@
 
 body {
   font-family: var(--font);
-  background: var(--theme-bg);
-  color: var(--theme-text);
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
   line-height: 1.5;
-  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ── Заголовки ───────────────────────────────────── */
@@ -120,9 +94,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-ghost {
-  background: var(--theme-bg-card2);
-  color: var(--theme-text);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card2);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .btn-sm {
@@ -132,8 +106,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Карточки ────────────────────────────────────── */
 .card {
-  background: var(--theme-bg-card);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.25rem;
 }
@@ -148,14 +122,14 @@ h1, h2, h3, h4, h5, h6 {
 
 label {
   font-size: 0.85rem;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
 }
 
 input, select, textarea {
-  background: var(--theme-bg-card2);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: var(--theme-text);
+  color: var(--text);
   padding: 0.5rem 0.75rem;
   font-family: var(--font);
   font-size: 0.9rem;
@@ -168,7 +142,7 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
 }
 
-select option { background: var(--theme-bg-card); }
+select option { background: var(--bg-card2); }
 
 /* ── Бейджи ──────────────────────────────────────── */
 .badge {
@@ -180,7 +154,7 @@ select option { background: var(--theme-bg-card); }
 }
 
 .badge-purple  { background: rgba(124,58,237,0.2); color: #a855f7; border: 1px solid #7c3aed; }
-.badge-secondary { background: var(--theme-bg-card2); color: var(--theme-text-muted); font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--theme-border); }
+.badge-secondary { background: var(--bg-card2); color: var(--text-muted); font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); }
 .badge-user { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #818cf8; }
 .badge-locked  { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
 .badge-free    { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; }
@@ -196,7 +170,7 @@ select option { background: var(--theme-bg-card); }
 .gap-2    { gap: 1rem; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
-.text-muted { color: var(--theme-text-muted); }
+.text-muted { color: var(--text-muted); }
 .text-danger { color: var(--danger); }
 .text-success { color: var(--success); }
 
@@ -205,14 +179,14 @@ select option { background: var(--theme-bg-card); }
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  background: var(--theme-bg-card2);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.75rem 1.25rem;
   font-size: 0.9rem;
   z-index: 9999;
   animation: slideIn 0.2s ease;
-  color: var(--theme-text);
+  color: var(--text);
 }
 
 .toast.success { border-color: var(--success); color: var(--success); }
@@ -226,7 +200,7 @@ select option { background: var(--theme-bg-card); }
 /* ── Спиннер ─────────────────────────────────────── */
 .spinner {
   width: 20px; height: 20px;
-  border: 2px solid var(--theme-border);
+  border: 2px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -277,8 +251,8 @@ select option { background: var(--theme-bg-card); }
 }
 
 .modal {
-  background: var(--theme-bg-card);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
   width: 100%;
@@ -308,7 +282,7 @@ select option { background: var(--theme-bg-card); }
 .btn-close {
   background: none;
   border: none;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   font-size: 1.25rem;
   cursor: pointer;
   line-height: 1;
@@ -318,8 +292,8 @@ select option { background: var(--theme-bg-card); }
 }
 
 .btn-close:hover {
-  background: var(--theme-bg-card2);
-  color: var(--theme-text);
+  background: var(--bg-card2);
+  color: var(--text);
 }
 
 /* ── Адаптивность ─────────────────────────────────── */
@@ -331,15 +305,14 @@ select option { background: var(--theme-bg-card); }
 
 /* ── НАВБАР ─────────────────────────────────────────────── */
 .navbar {
-  background: var(--theme-bg-card);
-  border-bottom: 1px solid var(--theme-border);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
   padding: 0.5rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
   backdrop-filter: blur(12px);
-  background: var(--theme-bg-card);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  background: var(--bg-card);
 }
 
 .navbar-inner {
@@ -392,14 +365,14 @@ select option { background: var(--theme-bg-card); }
 }
 
 .nav-toggle:hover {
-  background: var(--theme-bg-card2);
+  background: var(--bg-card2);
 }
 
 .nav-toggle span {
   display: block;
   width: 24px;
   height: 2.5px;
-  background: var(--theme-text);
+  background: var(--text);
   border-radius: 2px;
   transition: all 0.3s ease;
 }
@@ -427,7 +400,7 @@ select option { background: var(--theme-bg-card); }
   gap: 0.4rem;
   padding: 0.4rem 0.75rem;
   border-radius: 8px;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
@@ -441,8 +414,8 @@ select option { background: var(--theme-bg-card); }
 }
 
 .nav-links a:hover {
-  color: var(--theme-text);
-  background: var(--theme-bg-card2);
+  color: var(--text);
+  background: var(--bg-card2);
 }
 
 .nav-links a.active {
@@ -476,16 +449,16 @@ select option { background: var(--theme-bg-card); }
   padding: 0.3rem 0.7rem 0.3rem 0.4rem;
   border-radius: 8px;
   text-decoration: none;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   transition: all 0.2s ease;
-  background: var(--theme-bg-card2);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
 }
 
 .btn-profile:hover {
-  background: var(--theme-bg-card);
+  background: var(--bg-card);
   border-color: var(--accent);
-  color: var(--theme-text);
+  color: var(--text);
 }
 
 .btn-profile.active {
@@ -522,9 +495,9 @@ select option { background: var(--theme-bg-card); }
   gap: 0.4rem;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
-  background: var(--theme-bg-card2);
-  border: 1px solid var(--theme-border);
-  color: var(--theme-text-muted);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -539,7 +512,7 @@ select option { background: var(--theme-bg-card); }
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 2px solid var(--theme-border);
+  border: 2px solid var(--border);
   flex-shrink: 0;
   transition: background 0.3s ease, transform 0.15s ease;
   cursor: pointer;
@@ -549,76 +522,13 @@ select option { background: var(--theme-bg-card); }
   transform: scale(1.1);
 }
 
-/* ── Тумблер переключения темы ──────────────────────────── */
-.theme-toggle-inner {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.theme-toggle-inner .theme-icon {
-  font-size: 0.8rem;
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
-}
-
-.theme-toggle-inner .theme-icon.active {
-  opacity: 1;
-}
-
-.theme-switch {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.theme-switch-track {
-  width: 36px;
-  height: 18px;
-  border-radius: 10px;
-  background: var(--theme-border);
-  position: relative;
-  transition: background 0.3s ease;
-  border: 2px solid var(--theme-border);
-}
-
-.theme-switch-track.dark {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.theme-switch-track.light {
-  background: #94a3b8;
-  border-color: #94a3b8;
-}
-
-.theme-switch-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.theme-switch-track.dark .theme-switch-thumb {
-  transform: translateX(18px);
-}
-
-.theme-switch-track.light .theme-switch-thumb {
-  transform: translateX(0px);
-}
-
 /* ── Попап выбора цвета ──────────────────────────────────── */
 .color-picker-popup {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: var(--theme-bg-card);
-  border: 1px solid var(--theme-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.6rem 0.8rem;
   min-width: 160px;
@@ -657,7 +567,7 @@ select option { background: var(--theme-bg-card); }
 }
 
 .color-picker-popup .color-option:hover {
-  background: var(--theme-bg-card2);
+  background: var(--bg-card2);
 }
 
 .color-picker-popup .color-option.active {
@@ -669,7 +579,7 @@ select option { background: var(--theme-bg-card); }
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid var(--theme-border);
+  border: 2px solid var(--border);
   flex-shrink: 0;
   transition: transform 0.15s ease;
 }
@@ -680,7 +590,7 @@ select option { background: var(--theme-bg-card); }
 
 .color-picker-popup .color-option .color-label {
   font-size: 0.55rem;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -694,7 +604,7 @@ select option { background: var(--theme-bg-card); }
   border-radius: 8px;
   background: none;
   border: 1px solid transparent;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -709,7 +619,7 @@ select option { background: var(--theme-bg-card); }
 .btn-login {
   padding: 0.35rem 1rem;
   border-radius: 8px;
-  color: var(--theme-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
@@ -718,8 +628,8 @@ select option { background: var(--theme-bg-card); }
 }
 
 .btn-login:hover {
-  color: var(--theme-text);
-  background: var(--theme-bg-card2);
+  color: var(--text);
+  background: var(--bg-card2);
 }
 
 .btn-register {
@@ -755,8 +665,8 @@ select option { background: var(--theme-bg-card); }
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--theme-bg-card);
-    border-bottom: 1px solid var(--theme-border);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
     padding: 0.5rem 1rem;
     max-height: 0;
     overflow: hidden;
@@ -786,11 +696,6 @@ select option { background: var(--theme-bg-card); }
   .nav-links a svg { width: 20px; height: 20px; }
   .nav-links a.active::after { display: none; }
   .nav-links a.active { background: var(--accent-glow); }
-
-  .theme-toggle .theme-icon { display: none; }
-  .theme-switch-track { width: 30px; height: 16px; }
-  .theme-switch-thumb { width: 12px; height: 12px; }
-  .theme-switch-track.dark .theme-switch-thumb { transform: translateX(14px); }
   
   .color-picker-popup {
     right: auto;
@@ -810,11 +715,6 @@ select option { background: var(--theme-bg-card); }
   .btn-register { padding: 0.25rem 0.8rem; font-size: 0.8rem; }
   .btn-login { padding: 0.25rem 0.8rem; font-size: 0.8rem; }
   .btn-logout svg { width: 18px; height: 18px; }
-  
-  .theme-toggle .theme-icon { display: none; }
-  .theme-switch-track { width: 26px; height: 14px; }
-  .theme-switch-thumb { width: 10px; height: 10px; }
-  .theme-switch-track.dark .theme-switch-thumb { transform: translateX(12px); }
   
   .color-picker-popup {
     min-width: 120px;
