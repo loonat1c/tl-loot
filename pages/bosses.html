@@ -107,20 +107,19 @@
 
     .boss-detail-header {
       display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
+      gap: 0.5rem;
+      align-items: center;
       margin-bottom: 0.25rem;
     }
 
     .boss-detail-header .boss-icon-large {
-      width: 48px;
-      height: 48px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
       background: var(--bg-card2);
       border: 2px solid var(--border);
       flex-shrink: 0;
-      margin-top: 0;
     }
 
     .boss-detail-header .boss-icon-large.error {
@@ -155,6 +154,7 @@
       font-size: 0.9rem;
       line-height: 1.5;
       margin-bottom: 1rem;
+      max-width: 55%;
     }
 
     .boss-detail-items {
@@ -273,11 +273,14 @@
         opacity: 0.2 !important;
       }
       .boss-detail-header .boss-icon-large {
-        width: 36px;
-        height: 36px;
+        width: 28px;
+        height: 28px;
       }
       .boss-detail-info .name-row h2 {
         font-size: 1.1rem;
+      }
+      .boss-detail-info .description {
+        max-width: 100%;
       }
     }
 
