@@ -305,7 +305,7 @@
 
 <script type="module">
   // ============================================================
-  // ЗАЩИТА: Легкая версия (без блокировки eval)
+  // ЗАЩИТА
   // ============================================================
   
   document.addEventListener('contextmenu', function(e) {
@@ -327,34 +327,6 @@
     }
   });
 
-  // ============================================================
-  // ЗАЩИТА: Усиленная защита
-  // ============================================================
-  
-  const _localStorage = window.localStorage;
-  Object.defineProperty(window, 'localStorage', {
-    get: function() {
-      return new Proxy(_localStorage, {
-        set: function(target, property, value) {
-          if (property === 'tl_user' || property === 'tl_user_id' || property === 'tl_token') {
-            console.warn('🔒 Попытка изменения защищенных данных localStorage');
-            return false;
-          }
-          target[property] = value;
-          return true;
-        },
-        deleteProperty: function(target, property) {
-          if (property === 'tl_user' || property === 'tl_user_id' || property === 'tl_token') {
-            console.warn('🔒 Попытка удаления защищенных данных localStorage');
-            return false;
-          }
-          delete target[property];
-          return true;
-        }
-      });
-    }
-  });
-
   console.log('🔒 Защита активирована');
 
   // ============================================================
@@ -364,10 +336,11 @@
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole } from "../js/modules/auth.js";
   
-  // Инициализируем навбар и авторизацию
+  // Инициализация навбара
   initNavbar();
   
-  // Ждем авторизацию ДО загрузки данных
+  // Ждем авторизацию через await initAuth()
+  console.log('⏳ Ожидание авторизации...');
   await initAuth();
   await authReady;
 
@@ -376,6 +349,13 @@
     role: currentRole,
     uid: currentUser?.uid
   });
+
+  // Если не авторизован — редирект на логин
+  if (!currentUser) {
+    console.log('🚫 Пользователь не авторизован, редирект на логин');
+    window.location.href = '/pages/login.html';
+    return;
+  }
 
   import {
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
@@ -390,7 +370,7 @@
   import { SLOTS } from "../js/constants.js";
 
   // ============================================================
-  // ЗАЩИТА: Проверка импортов
+  // ПРОВЕРКА ИМПОРТОВ
   // ============================================================
   
   const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
@@ -399,7 +379,7 @@
   const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
   for (const fn of requiredFunctions) {
     if (typeof fnMap[fn] !== 'function') {
-      console.error(`🔒 Критическая функция ${fn} не найдена или была подменена`);
+      console.error(`🔒 Критическая функция ${fn} не найдена`);
       importsOk = false;
     }
   }
