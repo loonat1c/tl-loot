@@ -36,13 +36,13 @@
       z-index: 100;
     }
 
-.item-card.quality-epic {
-  box-shadow: inset 3px 0 0 #9b59b6;
-}
+    .item-card.quality-epic {
+      box-shadow: inset 3px 0 0 #9b59b6;
+    }
 
-.item-card.quality-epic_ii {
-  box-shadow: inset 3px 0 0 #8e44ad;
-}
+    .item-card.quality-epic_ii {
+      box-shadow: inset 3px 0 0 #8e44ad;
+    }
 
     .item-card .item-img-wrap {
       width: 48px;
@@ -143,7 +143,6 @@
       display: none;
       position: absolute;
 
-      /* По умолчанию окно открывается ВПРАВО */
       left: calc(100% + 12px);
       right: auto;
       top: 0;
@@ -165,67 +164,16 @@
       pointer-events: none;
     }
 
-
-    /* ─────────────────────────────────────────────
-       ПРАВАЯ КАРТОЧКА В РЯДУ
-       Окно открывается ВЛЕВО
-       ───────────────────────────────────────────── */
-
     .item-card:nth-child(3n) .full-card {
       left: auto;
       right: calc(100% + 12px);
     }
 
-
-    /* ─────────────────────────────────────────────
-       СТРЕЛКА ОКНА
-       ───────────────────────────────────────────── */
-
-    /* Обычные карточки — стрелка смотрит ВЛЕВО,
-       к карточке */
-
-    .item-card .full-card::before {
-      content: '';
-
-      position: absolute;
-
-      right: 100%;
-      left: auto;
-
-      top: 20px;
-
-      width: 0;
-      height: 0;
-
-      border: 8px solid transparent;
-      border-right-color: var(--accent);
-    }
-
-
-    /* Правая карточка — окно слева,
-       поэтому стрелка смотрит ВПРАВО */
-
-    .item-card:nth-child(3n) .full-card::before {
-      right: auto;
-      left: 100%;
-
-      border-right-color: transparent;
-      border-left-color: var(--accent);
-    }
-
-
-    /* ─────────────────────────────────────────────
-       ПОКАЗ ПОЛНОЙ КАРТОЧКИ
-       ───────────────────────────────────────────── */
-
     .item-card:hover .full-card {
       display: block;
     }
 
-
-    /* ─────────────────────────────────────────────
-       SCROLLBAR
-       ───────────────────────────────────────────── */
+    /* ── SCROLLBAR ──────────────────────────────────────── */
 
     .full-card::-webkit-scrollbar {
       width: 4px;
@@ -241,65 +189,36 @@
       border-radius: 4px;
     }
 
-
-    /* ─────────────────────────────────────────────
-       МОБИЛЬНЫЕ
-       ───────────────────────────────────────────── */
+    /* ── МОБИЛЬНЫЕ ──────────────────────────────────────── */
 
     @media (max-width: 992px) {
       .item-card .full-card {
         position: fixed;
-
         left: 50%;
         right: auto;
         top: 50%;
-
         transform: translate(-50%, -50%);
-
         width: 440px;
         max-width: 92vw;
         max-height: 80vh;
       }
-
-      /* На мобильном стрелка не нужна */
-      .item-card .full-card::before {
-        display: none;
-      }
     }
 
-    /* ─────────────────────────────────────────────
-       АДАПТАЦИЯ ДЛЯ 2 КОЛОНОК (ПЛАНШЕТЫ)
-       ───────────────────────────────────────────── */
+    /* ── ПЛАНШЕТЫ (2 колонки) ───────────────────────────── */
 
     @media (max-width: 768px) {
       .items-grid {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      /* Для 2 колонок — каждая 2-я карточка открывается влево */
       .item-card:nth-child(2n) .full-card {
         left: auto;
         right: calc(100% + 12px);
       }
 
-      .item-card:nth-child(2n) .full-card::before {
-        right: auto;
-        left: 100%;
-        border-right-color: transparent;
-        border-left-color: var(--accent);
-      }
-
-      /* Отключаем 3n логику */
       .item-card:nth-child(3n) .full-card {
         left: calc(100% + 12px);
         right: auto;
-      }
-
-      .item-card:nth-child(3n) .full-card::before {
-        right: 100%;
-        left: auto;
-        border-right-color: var(--accent);
-        border-left-color: transparent;
       }
     }
 
@@ -308,19 +227,13 @@
         grid-template-columns: 1fr;
       }
 
-      /* Для 1 колонки — все открываются вправо */
       .item-card .full-card {
         left: calc(100% + 12px);
         right: auto;
       }
-
-      .item-card .full-card::before {
-        right: 100%;
-        left: auto;
-        border-right-color: var(--accent);
-        border-left-color: transparent;
-      }
     }
+
+    /* ── ПОЛНАЯ КАРТОЧКА: ВНУТРЕННОСТИ ──────────────────── */
 
     .full-card .fc-header {
       display: flex;
@@ -535,7 +448,6 @@
       font-family: var(--font), 'Segoe UI', system-ui, sans-serif;
     }
 
-    /* ── Босс внизу всплывающей карточки ───────────────── */
     .full-card .fc-boss {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
@@ -910,7 +822,6 @@
       display: block;
     }
 
-    /* ── Скрытие полей ──────────────────────────────────── */
     .field-hidden {
       display: none !important;
     }
@@ -987,10 +898,6 @@
 
 </main>
 
-<!-- ═══════════════════════════════════════════
-     МОДАЛЬНОЕ ОКНО
-═══════════════════════════════════════════ -->
-
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -1000,7 +907,6 @@
 
     <input type="hidden" id="edit-id" />
 
-    <!-- ─── ОСНОВНАЯ ИНФОРМАЦИЯ ─── -->
     <div class="form-section">
       <div class="section-title">Основная информация</div>
 
@@ -1054,7 +960,6 @@
         </div>
       </div>
 
-      <!-- Урон / Защита -->
       <div class="form-row" id="damage-row">
         <div class="form-group" id="damage-min-group">
           <label id="damage-min-label">Урон (мин)</label>
@@ -1066,7 +971,6 @@
         </div>
       </div>
 
-      <!-- Картинка -->
       <div class="form-group">
         <label>Картинка</label>
         <div class="image-upload-area" id="upload-area">
@@ -1076,7 +980,6 @@
       </div>
     </div>
 
-    <!-- ─── ОПИСАНИЕ ─── -->
     <div class="form-section">
       <div class="section-title">Описание</div>
       <div class="form-group">
@@ -1085,7 +988,6 @@
       </div>
     </div>
 
-    <!-- ─── ХАРАКТЕРИСТИКИ ─── -->
     <div class="form-section">
       <div class="section-title">Характеристики</div>
       <div class="dynamic-fields" id="stats-fields"></div>
@@ -1094,7 +996,6 @@
       </button>
     </div>
 
-    <!-- ─── ЭФФЕКТ ─── -->
     <div class="form-section" id="effect-section">
       <div class="section-title">Эффект</div>
 
@@ -1118,7 +1019,6 @@
       </div>
     </div>
 
-    <!-- ─── СЕТОВЫЙ БОНУС ─── -->
     <div class="form-section" id="set-bonus-section" style="display:none;">
       <div class="section-title">Сетовый бонус</div>
 
@@ -1146,7 +1046,6 @@
       </div>
     </div>
 
-    <!-- ─── ВОЗМОЖНЫЕ СВОЙСТВА ─── -->
     <div class="form-section">
       <div class="section-title">Возможные свойства</div>
       <div class="dynamic-fields" id="properties-fields"></div>
@@ -1157,7 +1056,6 @@
 
     <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
 
-    <!-- ─── КНОПКИ ─── -->
     <div class="form-actions">
       <button class="btn btn-primary" id="btn-save">Сохранить</button>
       <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
@@ -1166,20 +1064,12 @@
 </div>
 
 <script type="module">
-  // ==================================================
-  // ИМПОРТЫ
-  // ==================================================
-
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, currentRole, currentUser } from "../js/modules/auth.js";
   import { getItems, addItem, updateItem, deleteItem } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { compressImage, pickFile, setItemImage } from "../js/modules/images.js";
   import { SLOTS, QUALITY } from "../js/constants.js";
-
-  // ==================================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ==================================================
 
   initNavbar();
   initAuth();
@@ -1194,10 +1084,6 @@
   const addBtn = document.getElementById('btn-add-item');
   if (addBtn) addBtn.classList.toggle('hidden', !canWrite());
 
-  // ==================================================
-  // SELECT СЛОТОВ
-  // ==================================================
-
   const slotSelect = document.getElementById("f-slot");
   const filterSlot = document.getElementById("filter-slot");
   SLOTS.forEach(slot => {
@@ -1205,18 +1091,10 @@
     filterSlot.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
   });
 
-  // ==================================================
-  // SELECT КАЧЕСТВА (ФИЛЬТР)
-  // ==================================================
-
   const filterQuality = document.getElementById("filter-quality");
   QUALITY.forEach(q => {
     filterQuality.innerHTML += `<option value="${q.id}">${q.label}</option>`;
   });
-
-  // ==================================================
-  // ЗАГРУЗКА БОССОВ
-  // ==================================================
 
   let allBosses = [];
 
@@ -1245,10 +1123,6 @@
     if (filterValue) filterBoss.value = filterValue;
   }
 
-  // ==================================================
-  // УПРАВЛЕНИЕ ПОЛЯМИ В ЗАВИСИМОСТИ ОТ СЛОТА
-  // ==================================================
-
   const weaponTypeGroup = document.getElementById('weapon-type-group');
   const damageMinGroup = document.getElementById('damage-min-group');
   const damageMaxGroup = document.getElementById('damage-max-group');
@@ -1259,11 +1133,8 @@
   const setBonusToggle = document.getElementById('f-set-bonus-toggle');
   const setBonusFields = document.getElementById('set-bonus-fields');
 
-  // Слоты для брони (защита ближний/дальний)
   const armorSlots = ['helmet', 'cloak', 'chest', 'gloves', 'pants', 'boots'];
-  // Слоты для аксессуаров (защита магия)
   const accessorySlots = ['necklace', 'belt', 'ring', 'bracelet'];
-  // Слоты для оружия (урон)
   const weaponSlot = 'weapon';
 
   function updateFieldsBySlot(slotId) {
@@ -1271,10 +1142,8 @@
     const isArmor = armorSlots.includes(slotId);
     const isAccessory = accessorySlots.includes(slotId);
 
-    // 1. Тип оружия — показываем только для оружия
     weaponTypeGroup.style.display = isWeapon ? 'block' : 'none';
 
-    // 2. Урон / Защита
     if (isWeapon) {
       damageMinGroup.style.display = 'block';
       damageMaxGroup.style.display = 'block';
@@ -1290,16 +1159,13 @@
       damageMaxGroup.style.display = 'none';
       damageMinLabel.textContent = 'Защита (магия)';
     } else {
-      // Другие слоты — скрываем
       damageMinGroup.style.display = 'none';
       damageMaxGroup.style.display = 'none';
     }
 
-    // 3. Эффект / Сетовый бонус
     effectSection.style.display = isWeapon ? 'block' : 'none';
     setBonusSection.style.display = isWeapon ? 'none' : 'block';
 
-    // Сбрасываем тумблер сетового бонуса если не оружие
     if (!isWeapon) {
       setBonusToggle.checked = false;
       setBonusFields.classList.remove('visible');
@@ -1317,10 +1183,6 @@
       setBonusFields.classList.remove('visible');
     }
   });
-
-  // ==================================================
-  // ДИНАМИЧЕСКИЕ ПОЛЯ
-  // ==================================================
 
   function addField(containerId, type = 'pair') {
     const container = document.getElementById(containerId);
@@ -1407,10 +1269,6 @@
     document.getElementById(id).innerHTML = '';
   });
 
-  // ==================================================
-  // ЗАГРУЗКА КАРТИНКИ ЭФФЕКТА
-  // ==================================================
-
   let currentEffectImage = null;
 
   document.getElementById('effect-upload-area').addEventListener('click', async () => {
@@ -1424,16 +1282,8 @@
     document.getElementById('effect-upload-hint').style.display = 'none';
   });
 
-  // ==================================================
-  // СОСТОЯНИЕ
-  // ==================================================
-
   let allItems = [];
   let currentImageBase64 = null;
-
-  // ==================================================
-  // ЗАГРУЗКА ПРЕДМЕТОВ
-  // ==================================================
 
   async function loadItems() {
     try {
@@ -1445,10 +1295,6 @@
       document.getElementById("items-grid").innerHTML = `<div class="text-danger">Не удалось загрузить предметы</div>`;
     }
   }
-
-  // ==================================================
-  // ФИЛЬТР БОССОВ
-  // ==================================================
 
   function populateBossFilter() {
     const bossIds = [...new Set(allItems.map(item => item.boss_id).filter(Boolean))];
@@ -1466,10 +1312,6 @@
     });
     if (currentValue) select.value = currentValue;
   }
-
-  // ==================================================
-  // ОТОБРАЖЕНИЕ
-  // ==================================================
 
   function renderItems() {
     const search = document.getElementById("filter-search").value.toLowerCase();
@@ -1494,10 +1336,6 @@
     grid.innerHTML = "";
     list.forEach(item => grid.appendChild(buildCard(item)));
   }
-
-  // ==================================================
-  // КАРТОЧКА ПРЕДМЕТА С ПОЛНОЙ ВЕРСИЕЙ
-  // ==================================================
 
   function getWeaponTypeLabel(type) {
     const types = {
@@ -1555,7 +1393,6 @@
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
-    // Сокращаем название, если длинное
     const shortName = item.name && item.name.length > 18 ? item.name.substring(0, 18) + '…' : item.name;
 
     card.innerHTML = `
@@ -1589,7 +1426,6 @@
         </div>
       ` : ''}
 
-      <!-- Полная карточка при наведении -->
       <div class="full-card">
         <div class="fc-header">
           <img class="fc-img" src="${item.image || ''}" alt="${item.name}" />
@@ -1625,16 +1461,8 @@
           <div class="fc-set-bonus">
             <div class="set-name">${setBonus.name}</div>
             <div class="set-pieces">
-              ${setBonus.piece2 ? `
-                <div class="set-piece">
-                  <span class="pieces-label">(2):</span> ${setBonus.piece2}
-                </div>
-              ` : ''}
-              ${setBonus.piece4 ? `
-                <div class="set-piece">
-                  <span class="pieces-label">(4):</span> ${setBonus.piece4}
-                </div>
-              ` : ''}
+              ${setBonus.piece2 ? `<div class="set-piece"><span class="pieces-label">(2):</span> ${setBonus.piece2}</div>` : ''}
+              ${setBonus.piece4 ? `<div class="set-piece"><span class="pieces-label">(4):</span> ${setBonus.piece4}</div>` : ''}
             </div>
           </div>
         ` : ''}
@@ -1658,9 +1486,7 @@
           </div>
         ` : ''}
 
-        ${desc ? `
-          <div class="fc-flavor">${desc}</div>
-        ` : ''}
+        ${desc ? `<div class="fc-flavor">${desc}</div>` : ''}
 
         <div class="fc-boss">
           ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" />` : `<span style="font-size:1.2rem;">👹</span>`}
@@ -1669,7 +1495,6 @@
       </div>
     `;
 
-    // Устанавливаем картинку
     const image = card.querySelector(`#img-${item.id}`);
     if (hasImage) {
       image.src = item.image;
@@ -1677,10 +1502,6 @@
 
     return card;
   }
-
-  // ==================================================
-  // ЗАГРУЗКА КАРТИНКИ
-  // ==================================================
 
   document.getElementById('upload-area').addEventListener('click', async () => {
     const file = await pickFile();
@@ -1692,10 +1513,6 @@
     preview.classList.remove('hidden');
     document.getElementById('upload-hint').style.display = 'none';
   });
-
-  // ==================================================
-  // MODAL
-  // ==================================================
 
   const modal = document.getElementById('modal');
   const modalTitle = document.getElementById('modal-title');
@@ -1722,7 +1539,6 @@
     setBonusToggle.checked = false;
     setBonusFields.classList.remove('visible');
 
-    // Восстанавливаем видимость секций по умолчанию
     effectSection.style.display = 'block';
     setBonusSection.style.display = 'none';
     weaponTypeGroup.style.display = 'block';
@@ -1790,12 +1606,8 @@
       }
     }
 
-    if (item.stats && item.stats.length) {
-      setFields('stats-fields', item.stats, 'pair');
-    }
-    if (item.properties && item.properties.length) {
-      setFields('properties-fields', item.properties, 'single');
-    }
+    if (item.stats && item.stats.length) setFields('stats-fields', item.stats, 'pair');
+    if (item.properties && item.properties.length) setFields('properties-fields', item.properties, 'single');
 
     if (item.image) {
       currentImageBase64 = item.image;
@@ -1822,10 +1634,6 @@
   document.getElementById('btn-modal-close').onclick = closeModal;
   document.getElementById('btn-cancel').onclick = closeModal;
   document.getElementById('btn-add-item').onclick = openAdd;
-
-  // ==================================================
-  // СОХРАНЕНИЕ
-  // ==================================================
 
   document.getElementById('btn-save').onclick = async () => {
     const name = document.getElementById('f-name').value.trim();
@@ -1871,16 +1679,12 @@
     }
 
     const data = {
-      name,
-      slot,
-      quality,
-      level,
+      name, slot, quality, level,
       damage_min: damageMin || null,
       damage_max: damageMax || null,
       boss_id: bossId,
       boss_name: bossName,
-      description,
-      stats,
+      description, stats,
       effect: slot === 'weapon' ? effect : {},
       set_bonus: slot !== 'weapon' ? setBonus : {},
       properties,
@@ -1912,10 +1716,6 @@
     }
   };
 
-  // ==================================================
-  // УДАЛЕНИЕ
-  // ==================================================
-
   window.confirmDelete = (id, name) => {
     if (!confirm(`Удалить «${name}»?`)) return;
     deleteItem(id)
@@ -1929,18 +1729,10 @@
       });
   };
 
-  // ==================================================
-  // ФИЛЬТРЫ
-  // ==================================================
-
   document.getElementById('filter-search').addEventListener('input', renderItems);
   document.getElementById('filter-slot').addEventListener('change', renderItems);
   document.getElementById('filter-quality').addEventListener('change', renderItems);
   document.getElementById('filter-boss').addEventListener('change', renderItems);
-
-  // ==================================================
-  // HELPERS
-  // ==================================================
 
   function showError(msg) {
     const el = document.getElementById('modal-error');
@@ -1959,10 +1751,6 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
-
-  // ==================================================
-  // INIT
-  // ==================================================
 
   await loadBosses();
   await loadItems();
