@@ -1860,13 +1860,19 @@
         const data = dropSnap.data();
         rollState.itemId = data.item_id || null;
         
-        // Если в дропе есть слот, используем его
         if (data.item_slot) {
           rollState.itemSlot = data.item_slot;
         }
 
         if (data.participants?.length) {
-          rollState.participants = data.participants;
+          // ⭐ Загружаем участников с userId
+          rollState.participants = data.participants.map(p => ({
+            playerId: p.playerId,
+            nickname: p.nickname,
+            roll: p.roll || null,
+            isBlocked: p.isBlocked || false,
+            userId: p.userId || null
+          }));
         }
         if (data.winner_player_id && data.winner_nickname) {
           rollState.isFinished = true;
@@ -1918,7 +1924,14 @@
       const data = snap.data();
 
       if (data.participants?.length || !rollState.isFinished) {
-        rollState.participants = data.participants || rollState.participants;
+        // ⭐ Загружаем участников с userId
+        rollState.participants = (data.participants || []).map(p => ({
+          playerId: p.playerId,
+          nickname: p.nickname,
+          roll: p.roll || null,
+          isBlocked: p.isBlocked || false,
+          userId: p.userId || null
+        }));
       }
 
       if (data.winner_player_id && data.winner_nickname && !rollState.isFinished) {
@@ -2126,14 +2139,38 @@
     });
   }
 
+  // ⭐ ОБНОВЛЁННЫЙ joinRoll с проверкой и userId
   window.joinRoll = async (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
-    if (rollState.participants.some(p => p.playerId === playerId)) return;
+    
+    // Проверка: пользователь может добавить только себя (если не админ/глава)
+    if (playerId !== rollState.currentPlayerId && !canStartRoll()) {
+      showToast('Вы можете добавить только себя', 'error');
+      return;
+    }
+    
+    if (rollState.participants.some(p => p.playerId === playerId)) {
+      showToast('Этот игрок уже в ролле', 'error');
+      return;
+    }
 
     const check = canJoinCurrentQueue(playerId);
-    if (!check.can) { showToast(check.reason, 'error'); return; }
+    if (!check.can) { 
+      showToast(check.reason, 'error'); 
+      return; 
+    }
 
-    rollState.participants.push({ playerId, nickname, roll: null, isBlocked: false });
+    const char = allCharacters.find(c => c.id === playerId);
+    
+    // ⭐ Добавляем участника с userId
+    rollState.participants.push({ 
+      playerId, 
+      nickname, 
+      roll: null, 
+      isBlocked: false,
+      userId: char?.user_id || null
+    });
+    
     await saveParticipants();
     updateRollUI();
   };
@@ -2152,6 +2189,7 @@
     updateRollUI();
   });
 
+  // ⭐ ОБНОВЛЁННЫЙ saveParticipants с сохранением userId
   async function saveParticipants() {
     try {
       const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
@@ -2161,9 +2199,18 @@
           nickname: p.nickname,
           roll: p.roll ?? null,
           isBlocked: p.isBlocked || false,
+          userId: p.userId || null // ⭐ Сохраняем userId
         }))
       });
-    } catch(e) { console.error('saveParticipants:', e); }
+    } catch(e) { 
+      console.error('saveParticipants ERROR:', e);
+      if (e.code === 'permission-denied') {
+        showToast('⚠️ Недостаточно прав для сохранения. Обратитесь к администратору.', 'error');
+      } else {
+        showToast('Ошибка сохранения: ' + e.message, 'error');
+      }
+      throw e;
+    }
   }
 
   document.querySelectorAll('.roll-queue-tab').forEach(btn => {
@@ -2238,7 +2285,11 @@
         roll_results: rollState.rollResults,
         roll_type: rollState.queue,
         participants: rollState.participants.map(p => ({
-          playerId: p.playerId, nickname: p.nickname, roll: p.roll, isBlocked: p.isBlocked || false
+          playerId: p.playerId, 
+          nickname: p.nickname, 
+          roll: p.roll, 
+          isBlocked: p.isBlocked || false,
+          userId: p.userId || null // ⭐ Сохраняем userId
         }))
       });
 
