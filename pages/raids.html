@@ -337,9 +337,9 @@
       padding: 0.35rem 0.9rem;
     }
 
-    /* ── NEW ROLL MODAL STYLES ── */
+    /* ── ROLL MODAL STYLES (УВЕЛИЧЕННЫЕ) ── */
     .roll-modal {
-      max-width: 520px;
+      max-width: 560px;
       padding: 0;
       overflow: hidden;
       background: var(--bg-card);
@@ -351,7 +351,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.1rem 1.25rem 0.9rem;
+      padding: 1.25rem 1.5rem 1rem;
       border-bottom: 1px solid var(--border);
       background: rgba(201,168,76,0.04);
     }
@@ -359,15 +359,15 @@
     .roll-modal-item-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       flex: 1;
       min-width: 0;
     }
 
     .roll-modal-item-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
       background: var(--bg-card2);
       border: 1px solid var(--border);
       display: flex;
@@ -379,7 +379,7 @@
 
     .roll-modal-item-name {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.15rem;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
@@ -387,31 +387,31 @@
     }
 
     .roll-modal-item-detail {
-      font-size: 0.77rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 3px;
     }
 
     .roll-status-bar {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1.25rem;
+      gap: 0.6rem;
+      padding: 0.6rem 1.5rem;
       background: var(--bg-card2);
       border-bottom: 1px solid var(--border);
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
 
     .roll-status-dot {
-      width: 7px;
-      height: 7px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: var(--text-muted);
       flex-shrink: 0;
     }
     .roll-status-dot.waiting { background: #888; }
-    .roll-status-dot.active  { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+    .roll-status-dot.active  { background: #22c55e; box-shadow: 0 0 8px #22c55e88; }
     .roll-status-dot.rolling { background: #f59e0b; animation: pulse-dot 0.8s infinite; }
     .roll-status-dot.done    { background: #a78bfa; }
 
@@ -422,7 +422,7 @@
 
     .roll-live-badge {
       margin-left: auto;
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: #22c55e;
       letter-spacing: 0.05em;
@@ -439,11 +439,11 @@
     .roll-queue-tab {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.65rem 1rem;
+      gap: 0.8rem;
+      padding: 0.8rem 1.25rem;
       background: none;
       border: none;
-      border-bottom: 2px solid transparent;
+      border-bottom: 3px solid transparent;
       cursor: pointer;
       color: var(--text-muted);
       text-align: left;
@@ -458,20 +458,20 @@
     }
     .roll-queue-tab:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .queue-tab-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .queue-tab-title { font-size: 0.85rem; font-weight: 600; line-height: 1.2; }
-    .queue-tab-sub   { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+    .queue-tab-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .queue-tab-title { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+    .queue-tab-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
     .roll-queue-tab.active .queue-tab-sub { color: var(--accent-soft); }
 
     .roll-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.65rem 1.25rem 0.4rem;
+      padding: 0.75rem 1.5rem 0.5rem;
     }
 
     .roll-section-label {
-      font-size: 0.72rem;
+      font-size: 0.82rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -479,23 +479,23 @@
     }
 
     .roll-count-badge {
-      font-size: 0.72rem;
+      font-size: 0.8rem;
       font-weight: 700;
       background: var(--accent-glow);
       color: var(--accent-soft);
-      padding: 0.1rem 0.5rem;
-      border-radius: 10px;
-      min-width: 22px;
+      padding: 0.1rem 0.6rem;
+      border-radius: 12px;
+      min-width: 28px;
       text-align: center;
     }
 
     .roll-players-list {
-      min-height: 60px;
-      max-height: 220px;
+      min-height: 70px;
+      max-height: 250px;
       overflow-y: auto;
-      margin: 0 0.75rem 0.25rem;
+      margin: 0 1rem 0.5rem;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       background: var(--bg-card2);
     }
 
@@ -503,10 +503,10 @@
       display: grid;
       grid-template-columns: 1fr auto auto;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.55rem 0.75rem;
+      gap: 0.6rem;
+      padding: 0.65rem 0.9rem;
       border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       transition: background 0.1s;
     }
     .roll-player-row:last-child { border-bottom: none; }
@@ -520,58 +520,58 @@
       border-left: 3px solid var(--accent);
     }
 
-    .roll-player-name { font-weight: 500; color: var(--text); }
-    .roll-player-you  { font-size: 0.65rem; color: var(--text-muted); margin-left: 4px; }
+    .roll-player-name { font-weight: 500; color: var(--text); font-size: 0.95rem; }
+    .roll-player-you  { font-size: 0.7rem; color: var(--text-muted); margin-left: 6px; }
 
     .roll-player-status {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       white-space: nowrap;
     }
 
     .roll-dice-result {
-      font-size: 1.05rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: var(--accent-soft);
-      min-width: 38px;
+      min-width: 44px;
       text-align: center;
       font-variant-numeric: tabular-nums;
     }
     .roll-dice-result.winner-dice { color: #22c55e; }
-    .roll-dice-result.pending-dice { color: var(--text-muted); font-size: 0.85rem; font-weight: 400; }
+    .roll-dice-result.pending-dice { color: var(--text-muted); font-size: 1rem; font-weight: 400; }
 
     .roll-empty-msg {
-      padding: 1rem;
+      padding: 1.2rem;
       text-align: center;
-      font-size: 0.82rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
     }
 
     .roll-result-card {
-      margin: 0.5rem 0.75rem;
+      margin: 0.5rem 1rem;
       background: rgba(167,139,250,0.08);
       border: 1px solid rgba(167,139,250,0.25);
       border-radius: 12px;
-      padding: 0.85rem 1rem;
+      padding: 1rem 1.25rem;
     }
     .roll-result-card.hidden { display: none; }
 
     .roll-result-winner {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.8rem;
       margin-bottom: 0.6rem;
     }
 
-    .roll-trophy { font-size: 1.8rem; line-height: 1; }
+    .roll-trophy { font-size: 2rem; line-height: 1; }
 
     .roll-winner-name {
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--accent-soft);
     }
     .roll-winner-roll {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 2px;
     }
@@ -579,13 +579,13 @@
     .roll-results-breakdown {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      gap: 0.5rem;
       margin-top: 0.25rem;
     }
 
     .roll-breakdown-chip {
-      font-size: 0.72rem;
-      padding: 0.15rem 0.6rem;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.7rem;
       border-radius: 20px;
       background: var(--bg-card2);
       border: 1px solid var(--border);
@@ -599,9 +599,9 @@
     }
 
     .roll-available-section {
-      margin: 0.25rem 0.75rem 0.25rem;
+      margin: 0.25rem 1rem 0.5rem;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
     }
 
@@ -609,9 +609,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.55rem 0.75rem;
+      padding: 0.65rem 0.9rem;
       cursor: pointer;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 600;
       color: var(--text-muted);
       background: var(--bg-card2);
@@ -623,43 +623,43 @@
     .roll-available-summary::-webkit-details-marker { display: none; }
     .roll-available-summary::after {
       content: '▾';
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       margin-left: auto;
       margin-right: 0.25rem;
       color: var(--text-muted);
     }
     details[open] .roll-available-summary::after { content: '▴'; }
 
-    .roll-available-list { max-height: 200px; overflow-y: auto; }
+    .roll-available-list { max-height: 220px; overflow-y: auto; }
 
     .roll-available-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.45rem 0.75rem;
+      gap: 0.6rem;
+      padding: 0.55rem 0.9rem;
       border-bottom: 1px solid var(--border);
-      font-size: 0.82rem;
+      font-size: 0.9rem;
     }
     .roll-available-row:last-child { border-bottom: none; }
 
     .roll-available-name { flex: 1; font-weight: 500; color: var(--text); }
     .roll-available-reason {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 0.2rem;
+      gap: 0.3rem;
     }
     .roll-available-reason.can-join { color: #22c55e; }
     .roll-available-reason.blocked  { color: var(--danger, #ef4444); }
 
     .btn-add-to-roll {
-      padding: 0.2rem 0.6rem;
-      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--bg-card2);
       color: var(--text);
-      font-size: 0.72rem;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.1s;
@@ -671,10 +671,10 @@
     }
 
     .roll-footer {
-      padding: 0.75rem 1.25rem;
+      padding: 0.9rem 1.5rem;
       border-top: 1px solid var(--border);
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
@@ -684,17 +684,17 @@
     .roll-footer-user-actions,
     .roll-footer-admin-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
     }
 
     .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
-      padding: 0.4rem 0.9rem;
-      border-radius: 8px;
-      font-size: 0.82rem;
+      gap: 0.45rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
       border: 1px solid;
@@ -757,6 +757,12 @@
       100% { transform: rotate(0deg) scale(1); }
     }
     .dice-rolling { animation: rolling-anim 0.3s ease-in-out infinite; display: inline-block; }
+
+    /* ── Кнопка закрытия модалки ── */
+    .roll-modal-header .btn-close {
+      font-size: 1.5rem;
+      padding: 0.25rem 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -835,14 +841,14 @@
   </div>
 </div>
 
-<!-- НОВОЕ РОЛЛ ОКНО -->
+<!-- РОЛЛ ОКНО (УВЕЛИЧЕННОЕ) -->
 <div class="modal-overlay hidden" id="modal-roll">
   <div class="modal roll-modal">
     <div class="roll-modal-header">
       <div class="roll-modal-item-info">
         <div class="roll-modal-item-icon">
-          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:none;" />
-          <span id="roll-item-icon-fallback" style="font-size:1.4rem;">🎲</span>
+          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;" />
+          <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
         </div>
         <div>
           <div class="roll-modal-item-name" id="roll-item-name">—</div>
@@ -898,7 +904,7 @@
       <div class="roll-results-breakdown" id="roll-results-breakdown"></div>
     </div>
 
-    <!-- Доступные игроки (раскрываемый блок) -->
+    <!-- Доступные игроки -->
     <details class="roll-available-section" id="roll-available-section">
       <summary class="roll-available-summary">
         <span>Могут участвовать</span>
@@ -922,7 +928,7 @@
           <i class="ti ti-dice" aria-hidden="true"></i> Запустить ролл
         </button>
         <button class="btn-roll-confirm" id="btn-confirm-roll" style="display:none;">
-          <i class="ti ti-check" aria-hidden="true"></i> Зафиксировать победителя
+          <i class="ti ti-check" aria-hidden="true"></i> Зафиксировать
         </button>
       </div>
     </div>
@@ -1083,7 +1089,7 @@
   let rollUnsubscribe = null;
 
   // ============================================================
-  // НОВОЕ СОСТОЯНИЕ РОЛЛА
+  // СОСТОЯНИЕ РОЛЛА
   // ============================================================
   
   let rollState = {
@@ -1179,7 +1185,7 @@
   }
 
   // ============================================================
-  // ЛОГИКА ОЧЕРЕДЕЙ (НОВАЯ)
+  // ЛОГИКА ОЧЕРЕДЕЙ
   // ============================================================
 
   function canJoinMainQueue(charId) {
@@ -1195,14 +1201,12 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    // Желаемый лут: desired_loot — это map {slot: itemId}
     const desired = char.desired_loot || {};
     const wantedItemId = desired[itemSlot];
     if (!wantedItemId || wantedItemId !== itemId) {
       return { can: false, reason: 'Предмет не в желаемом луте' };
     }
 
-    // Совместимость оружия
     if (itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === itemId);
       if (item?.weapon_type) {
@@ -1393,10 +1397,6 @@
     return wrap;
   }
 
-  // ============================================================
-  // buildDropRow — С ПЕРЕДАЧЕЙ itemSlot
-  // ============================================================
-  
   function buildDropRow(d, raidId, tryId, canEdit, raid) {
     const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
     const hasWinner = d.winner_player_id && d.winner_nickname;
@@ -1828,7 +1828,7 @@
   }
 
   // ============================================================
-  // НОВАЯ ЛОГИКА РОЛЛА
+  // ЛОГИКА РОЛЛА
   // ============================================================
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
@@ -1852,7 +1852,6 @@
       rollResults: null,
     };
 
-    // Подтягиваем drop из базы, чтобы знать item_id и участников
     try {
       const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
       const dropSnap = await getDoc(dropRef);
@@ -1865,7 +1864,6 @@
         }
 
         if (data.participants?.length) {
-          // ⭐ Загружаем участников с userId
           rollState.participants = data.participants.map(p => ({
             playerId: p.playerId,
             nickname: p.nickname,
@@ -1887,11 +1885,9 @@
       }
     } catch(e) { console.error('openRollModal drop fetch:', e); }
 
-    // Заполняем шапку
     document.getElementById("roll-item-name").textContent   = itemName;
     document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
 
-    // Иконка предмета
     const imgEl = document.getElementById("roll-item-img");
     const fallEl = document.getElementById("roll-item-icon-fallback");
     const dropItem = allItems.find(i => i.id === rollState.itemId);
@@ -1904,27 +1900,23 @@
       fallEl.style.display = '';
     }
 
-    // Табы очередей
     document.querySelectorAll('.roll-queue-tab').forEach(b => {
       b.classList.toggle('active', b.dataset.queue === rollState.queue);
       b.disabled = rollState.isFinished || rollState.isRolling;
     });
 
-    // Кнопки для админа
     const adminActions = document.getElementById("roll-admin-actions");
     if (adminActions) adminActions.style.display = canStartRoll() ? 'flex' : 'none';
 
     updateRollUI();
     openModal("modal-roll");
 
-    // ── Real-time подписка ──
     const dropRef2 = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
     rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
       if (!snap.exists()) return;
       const data = snap.data();
 
       if (data.participants?.length || !rollState.isFinished) {
-        // ⭐ Загружаем участников с userId
         rollState.participants = (data.participants || []).map(p => ({
           playerId: p.playerId,
           nickname: p.nickname,
@@ -1994,7 +1986,6 @@
       return;
     }
 
-    // Сортируем: победитель первый, затем по убыванию roll
     const sorted = [...active].sort((a, b) => {
       if (rollState.winner?.playerId === a.playerId) return -1;
       if (rollState.winner?.playerId === b.playerId) return 1;
@@ -2045,9 +2036,7 @@
       const check = canJoinCurrentQueue(char.id);
       const isMe  = char.id === rollState.currentPlayerId;
 
-      // Обычный пользователь видит только своего персонажа
       if (!isAdminOrLeader && !isMe) return;
-      // Если не был на рейде вообще — не показываем
       if (!attendedPlayerIds.includes(char.id)) return;
 
       visibleCount++;
@@ -2068,7 +2057,7 @@
       }
 
       row.innerHTML = `
-        <span class="roll-available-name">${char.name}${isMe ? ' <span style="font-size:0.68rem;color:var(--text-muted)">(вы)</span>' : ''}</span>
+        <span class="roll-available-name">${char.name}${isMe ? ' <span style="font-size:0.75rem;color:var(--text-muted)">(вы)</span>' : ''}</span>
         ${actionHtml}
       `;
       list.appendChild(row);
@@ -2133,17 +2122,14 @@
       confirmBtn.style.display = showConfirm ? 'flex' : 'none';
     }
 
-    // Вкладки очереди
     document.querySelectorAll('.roll-queue-tab').forEach(b => {
       b.disabled = rollState.isRolling || rollState.isFinished;
     });
   }
 
-  // ⭐ ОБНОВЛЁННЫЙ joinRoll с проверкой и userId
   window.joinRoll = async (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
     
-    // Проверка: пользователь может добавить только себя (если не админ/глава)
     if (playerId !== rollState.currentPlayerId && !canStartRoll()) {
       showToast('Вы можете добавить только себя', 'error');
       return;
@@ -2162,7 +2148,6 @@
 
     const char = allCharacters.find(c => c.id === playerId);
     
-    // ⭐ Добавляем участника с userId
     rollState.participants.push({ 
       playerId, 
       nickname, 
@@ -2189,7 +2174,6 @@
     updateRollUI();
   });
 
-  // ⭐ ОБНОВЛЁННЫЙ saveParticipants с сохранением userId
   async function saveParticipants() {
     try {
       const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
@@ -2199,7 +2183,7 @@
           nickname: p.nickname,
           roll: p.roll ?? null,
           isBlocked: p.isBlocked || false,
-          userId: p.userId || null // ⭐ Сохраняем userId
+          userId: p.userId || null
         }))
       });
     } catch(e) { 
@@ -2289,7 +2273,7 @@
           nickname: p.nickname, 
           roll: p.roll, 
           isBlocked: p.isBlocked || false,
-          userId: p.userId || null // ⭐ Сохраняем userId
+          userId: p.userId || null
         }))
       });
 
