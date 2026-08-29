@@ -1087,6 +1087,7 @@
   let selectedItem = null, selectedProperty = null;
   let attendedPlayerIds = [];
   let rollUnsubscribe = null;
+  let raidUnsubscribe = null; // ⭐ ДЛЯ ПОДПИСКИ НА РЕЙД
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1356,7 +1357,7 @@
   }
 
   // ============================================================
-  // ФУНКЦИИ РЕЙДА
+  // ФУНКЦИИ РЕЙДА - С REAL-TIME ПОДПИСКОЙ
   // ============================================================
 
   function buildTryBlock(t, num, drops, boss, raidId, canEdit, raid) {
@@ -1460,18 +1461,13 @@
     `;
   }
 
-  async function selectRaid(raid) {
-    activeRaid = raid;
-    renderRaidList();
-
+  // ⭐ ФУНКЦИЯ РЕНДЕРИНГА ДЕТАЛЕЙ РЕЙДА (ВЫНЕСЕНА)
+  async function renderRaidDetail(raid) {
     const detail = document.getElementById("raid-detail");
-    detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
-
-    const tries  = await getRaidTries(raid.id);
+    
+    const tries = await getRaidTries(raid.id);
     const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling");
-    const admin   = isAdmin();
-
-    attendedPlayerIds = raid.attended_player_ids || [];
+    const admin = isAdmin();
 
     detail.innerHTML = `
       <div class="card">
@@ -1506,10 +1502,11 @@
     for (let i = 0; i < tries.length; i++) {
       const t = tries[i];
       const drops = await getTryDrops(raid.id, t.id);
-      const boss  = allBosses.find(b => b.id === t.boss_id);
+      const boss = allBosses.find(b => b.id === t.boss_id);
       triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit, raid));
     }
 
+    // Перепривязываем события
     const btnAddTry = document.getElementById("btn-add-try");
     if (btnAddTry) btnAddTry.addEventListener("click", () => openTryModal());
     
@@ -1527,6 +1524,46 @@
     
     const btnAttendance = document.getElementById("btn-attendance");
     if (btnAttendance) btnAttendance.addEventListener("click", openAttendanceModal);
+  }
+
+  // ⭐ SELECT RAID С REAL-TIME ПОДПИСКОЙ
+  async function selectRaid(raid) {
+    activeRaid = raid;
+    renderRaidList();
+
+    const detail = document.getElementById("raid-detail");
+    detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
+
+    // Отписываемся от старого рейда
+    if (raidUnsubscribe) {
+      raidUnsubscribe();
+      raidUnsubscribe = null;
+    }
+
+    // ⭐ Подписываемся на изменения рейда в реальном времени
+    const raidRef = doc(db, "raids", raid.id);
+    raidUnsubscribe = onSnapshot(raidRef, async (docSnap) => {
+      if (!docSnap.exists()) return;
+      
+      const raidData = docSnap.data();
+      const updatedRaid = { id: docSnap.id, ...raidData };
+      
+      // Обновляем активный рейд
+      activeRaid = updatedRaid;
+      
+      // ⭐ ОБНОВЛЯЕМ ПОСЕЩАЕМОСТЬ В РЕАЛЬНОМ ВРЕМЕНИ
+      attendedPlayerIds = updatedRaid.attended_player_ids || [];
+      
+      // Обновляем список рейдов
+      allRaids = await getRaids();
+      renderRaidList();
+      
+      // Перерисовываем детали рейда с обновлёнными данными
+      await renderRaidDetail(updatedRaid);
+    });
+
+    // Первоначальная загрузка деталей
+    await renderRaidDetail(raid);
   }
 
   // ============================================================
@@ -2305,15 +2342,17 @@
   window.closeRollModal = closeRollModal;
 
   // ── Посещаемость ──────────────────────────────────
+  // ⭐ ОБНОВЛЁННАЯ - использует актуальные данные из activeRaid
   function openAttendanceModal() {
     const grid = document.getElementById("attendance-grid");
     grid.innerHTML = "";
     
     const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const currentAttended = activeRaid?.attended_player_ids || [];
     
     approvedChars.forEach(p => {
       const el = document.createElement("div");
-      const isPresent = attendedPlayerIds.includes(p.id);
+      const isPresent = currentAttended.includes(p.id);
       el.className = `attendance-player${isPresent ? ' present' : ''}`;
       el.dataset.id = p.id;
       
@@ -2337,6 +2376,7 @@
     openModal("modal-attendance");
   }
 
+  // ⭐ ОБНОВЛЁННЫЙ - не перезагружает страницу вручную
   const saveAttendanceBtn = document.getElementById("btn-save-attendance");
   if (saveAttendanceBtn) {
     saveAttendanceBtn.addEventListener("click", async () => {
@@ -2347,25 +2387,32 @@
         await updateRaid(activeRaid.id, { 
           attended_player_ids: attendedIds 
         });
-        attendedPlayerIds = attendedIds;
+        // ⭐ НЕ ОБНОВЛЯЕМ ВРУЧНУЮ — onSnapshot сам обновит
         closeModal("modal-attendance");
         showToast("Посещаемость сохранена");
-        selectRaid(activeRaid);
-      } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-      finally { btn.disabled = false; btn.textContent = "Сохранить посещаемость"; }
+        // ⭐ Не вызываем selectRaid — данные обновятся через подписку
+      } catch(e) { 
+        showToast("Ошибка: " + e.message, "error"); 
+      }
+      finally { 
+        btn.disabled = false; 
+        btn.textContent = "Сохранить посещаемость"; 
+      }
     });
   }
 
   // ── Закрыть рейд ──────────────────────────────────
+  // ⭐ ОБНОВЛЁННАЯ - использует актуальные данные из activeRaid
   async function openCloseRaidModal() {
     const grid = document.getElementById("attendance-grid-close");
     grid.innerHTML = "";
     
     const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const currentAttended = activeRaid?.attended_player_ids || [];
     
     approvedChars.forEach(p => {
       const el = document.createElement("div");
-      const isPresent = attendedPlayerIds.includes(p.id);
+      const isPresent = currentAttended.includes(p.id);
       el.className = `attendance-player${isPresent ? ' present' : ''}`;
       el.dataset.id = p.id;
       
