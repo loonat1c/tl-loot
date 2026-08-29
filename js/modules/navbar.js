@@ -2,7 +2,7 @@
 // navbar.js — Навбар с адаптивным меню и выбором цвета
 // ====================================================
 
-import { initAuth, authReady, currentUser, currentRole, logout, canWrite, isModerator } from "./auth.js";
+import { initAuth, authReady, currentUser, currentRole, logout, canWrite, isModerator, isAdmin } from "./auth.js";
 
 let navbarInitialized = false;
 
@@ -70,6 +70,7 @@ function applyColor(color) {
 function renderNav(nav) {
   const isAuth = !!currentUser;
   const email = currentUser?.email || "";
+  const isUserAdmin = isAdmin();
 
   const currentPath = window.location.pathname;
   const isItemsPage = currentPath.includes('items.html');
@@ -118,18 +119,27 @@ function renderNav(nav) {
             <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span>Рейды</span>
           </a>
-          <a href="/pages/players.html" class="${isPlayersPage ? 'active' : ''}">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <span>Игроки</span>
-          </a>
-          <a href="/pages/search.html" class="${isSearchPage ? 'active' : ''}">
-            <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <span>Поиск</span>
-          </a>
-          <a href="/pages/stats.html" class="${isStatsPage ? 'active' : ''}">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12v-2a5 5 0 00-5-5H8a5 5 0 00-5 5v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="2"/><path d="M3 16h18" stroke="currentColor" stroke-width="2"/><path d="M9 8h6" stroke="currentColor" stroke-width="2"/></svg>
-            <span>Статистика</span>
-          </a>
+          <!-- ⭐ Поиск — только для Админа -->
+          ${isUserAdmin ? `
+            <a href="/pages/search.html" class="${isSearchPage ? 'active' : ''}">
+              <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Поиск</span>
+            </a>
+          ` : ''}
+          <!-- ⭐ Игроки — только для Админа -->
+          ${isUserAdmin ? `
+            <a href="/pages/players.html" class="${isPlayersPage ? 'active' : ''}">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Игроки</span>
+            </a>
+          ` : ''}
+          <!-- ⭐ Статистика — только для Админа -->
+          ${isUserAdmin ? `
+            <a href="/pages/stats.html" class="${isStatsPage ? 'active' : ''}">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12v-2a5 5 0 00-5-5H8a5 5 0 00-5 5v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="2"/><path d="M3 16h18" stroke="currentColor" stroke-width="2"/><path d="M9 8h6" stroke="currentColor" stroke-width="2"/></svg>
+              <span>Статистика</span>
+            </a>
+          ` : ''}
           ${isAuth && isModerator() ? `
             <a href="/pages/admin.html" class="${isAdminPage ? 'active' : ''}">
               <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
