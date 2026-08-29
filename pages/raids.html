@@ -532,6 +532,7 @@
     query, 
     orderBy,
     doc,
+    onSnapshot,
     updateDoc as firestoreUpdate
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
@@ -573,6 +574,7 @@
   let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
   let selectedItem = null, selectedProperty = null;
   let attendedPlayerIds = [];
+  let rollUnsubscribe = null;
   
   let rollState = {
     dropId: null,
@@ -845,54 +847,37 @@
   }
 
   // ============================================================
-  // buildDropRow — ИСПРАВЛЕННАЯ ВЕРСИЯ (кубик виден всем)
+  // buildDropRow — КУБИК ВСЕГДА КЛИКАБЕЛЕН
   // ============================================================
   
   function buildDropRow(d, raidId, tryId, canEdit, raid) {
     const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
     const hasWinner = d.winner_player_id && d.winner_nickname;
     
-    // КУБИК ВИДЕН ВСЕМ, но кнопки управления доступны только по условиям
     const isClosed = raid?.status === "closed";
     const isRolling = raid?.status === "rolling";
-    const hasCharacter = !!rollState.currentPlayerId;
-    
-    // Кнопка ролла всегда доступна для просмотра
-    const canRoll = !hasWinner && !isClosed;
     
     const boss = allBosses.find(b => b.id === d.boss_id);
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
     
-    // Проверяем, может ли пользователь участвовать в ролле
-    let participationCheck = { can: true };
-    if (rollState.currentPlayerId) {
-      participationCheck = canParticipateInRoll(rollState.currentPlayerId, d.item_id);
-    }
-    
+    // Определяем стиль кнопки — НИКОГДА НЕ ДИСАБЛЕМ
     let rollButtonClass = 'roll-btn';
     let rollButtonText = '🎲';
-    let rollButtonDisabled = false;
     let rollButtonTitle = '';
     
     if (hasWinner) {
       rollButtonClass += ' finished';
       rollButtonText = '📊';
-      rollButtonDisabled = false;
       rollButtonTitle = 'Просмотр результатов';
     } else if (isClosed) {
-      rollButtonDisabled = true;
-      rollButtonTitle = 'Рейд закрыт';
+      rollButtonText = '🔒';
+      rollButtonTitle = 'Рейд закрыт — просмотр истории';
     } else if (isRolling) {
       rollButtonClass += ' rolling';
       rollButtonText = '⏳';
-      rollButtonDisabled = true;
-      rollButtonTitle = 'Идёт ролл...';
+      rollButtonTitle = 'Идёт ролл — просмотр в реальном времени';
     } else {
-      // Ролл доступен для просмотра всем
       rollButtonTitle = 'Открыть окно ролла';
-      if (!hasCharacter || !participationCheck.can) {
-        rollButtonTitle = 'Просмотр ролла (вы не можете участвовать)';
-      }
     }
     
     return `
@@ -920,7 +905,7 @@
           `}
         </div>
         <div class="drop-actions">
-          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" ${rollButtonDisabled ? 'disabled' : ''} title="${rollButtonTitle}">
+          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" title="${rollButtonTitle}">
             ${rollButtonText}
           </button>
           ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
@@ -1264,8 +1249,46 @@
     showToast("Дроп удалён");
   };
 
+  // ── ФУНКЦИЯ ПРОВЕРКИ ПОБЕДИТЕЛЯ ─────────────────────
+  async function checkDropWinner(raidId, tryId, dropId) {
+    try {
+      const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+      const dropSnap = await getDoc(dropRef);
+      if (dropSnap.exists()) {
+        const data = dropSnap.data();
+        if (data.winner_player_id && data.winner_nickname) {
+          rollState.isFinished = true;
+          rollState.winner = {
+            playerId: data.winner_player_id,
+            nickname: data.winner_nickname
+          };
+          if (data.roll_results) {
+            rollState.rollResults = data.roll_results;
+            rollState.participants = data.roll_results.map(r => ({
+              playerId: r.playerId,
+              nickname: r.nickname,
+              roll: r.roll,
+              isBlocked: false
+            }));
+          }
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('Ошибка проверки победителя:', e);
+      return false;
+    }
+  }
+
   // ── Ролл модалка ──────────────────────────────────
-  window.openRollModal = (raidId, tryId, dropId, itemName, slotLabel, property) => {
+  window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property) => {
+    // Убираем старую подписку если была
+    if (rollUnsubscribe) {
+      rollUnsubscribe();
+      rollUnsubscribe = null;
+    }
+    
     rollState.raidId = raidId;
     rollState.tryId = tryId;
     rollState.dropId = dropId;
@@ -1276,20 +1299,71 @@
     rollState.isFinished = false;
     rollState.winner = null;
     rollState.queue = 'main';
+    rollState.itemSlot = null;
+    rollState.rollResults = null;
     
     document.getElementById("roll-item-name").textContent = itemName;
     document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
     document.getElementById("roll-result").style.display = "none";
     document.getElementById("btn-confirm-roll").style.display = "none";
-    document.getElementById("btn-start-roll").disabled = true;
-    document.getElementById("btn-start-roll").textContent = "🎲 Запустить ролл";
     
+    // Проверяем, есть ли уже победитель
+    const hasWinner = await checkDropWinner(raidId, tryId, dropId);
+    
+    // Обновляем кнопку запуска ролла
+    const startBtn = document.getElementById("btn-start-roll");
+    if (hasWinner || rollState.isFinished) {
+      startBtn.disabled = true;
+      startBtn.textContent = "✅ Ролл завершён";
+      startBtn.style.background = "var(--success)";
+      startBtn.style.color = "#fff";
+    } else {
+      startBtn.disabled = false;
+      startBtn.textContent = "🎲 Запустить ролл";
+      startBtn.style.background = "";
+      startBtn.style.color = "";
+    }
+    
+    // Активируем кнопки очереди
     document.querySelectorAll('.queue-btn').forEach(b => b.classList.toggle('active', b.dataset.queue === 'main'));
     document.getElementById("queue-main").disabled = false;
     document.getElementById("queue-open").disabled = false;
     
     renderRollParticipants();
     openModal("modal-roll");
+    
+    // Подписываемся на изменения в реальном времени
+    const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+    rollUnsubscribe = onSnapshot(dropRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.winner_player_id && data.winner_nickname) {
+          rollState.isFinished = true;
+          rollState.winner = {
+            playerId: data.winner_player_id,
+            nickname: data.winner_nickname
+          };
+          if (data.roll_results) {
+            rollState.rollResults = data.roll_results;
+            rollState.participants = data.roll_results.map(r => ({
+              playerId: r.playerId,
+              nickname: r.nickname,
+              roll: r.roll,
+              isBlocked: false
+            }));
+          }
+          renderRollParticipants();
+          showRollResult();
+          
+          // Обновляем кнопку запуска
+          const startBtn = document.getElementById("btn-start-roll");
+          startBtn.disabled = true;
+          startBtn.textContent = "✅ Ролл завершён";
+          startBtn.style.background = "var(--success)";
+          startBtn.style.color = "#fff";
+        }
+      }
+    });
   };
 
   // ============================================================
@@ -1332,7 +1406,6 @@
     );
     
     const currentPlayerId = rollState.currentPlayerId;
-    const isRollActive = !rollState.isFinished && !rollState.isRolling;
     
     availableChars.forEach(p => {
       const div = document.createElement('div');
@@ -1536,14 +1609,25 @@
       roll: p.roll
     }));
     
+    showRollResult();
+    
+    document.getElementById("btn-confirm-roll").style.display = "inline-block";
+    document.getElementById("btn-start-roll").textContent = "🎲 Завершено";
+    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
+    
+    renderRollParticipants();
+    showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
+  }
+
+  function showRollResult() {
     const resultEl = document.getElementById("roll-result");
     resultEl.innerHTML = `
       <div style="text-align:center;padding:0.5rem;">
         <div style="font-size:1.2rem;font-weight:700;color:var(--accent-soft);">
-          🏆 Победитель: ${rollState.winner.nickname}
+          🏆 Победитель: ${rollState.winner?.nickname || 'Не определен'}
         </div>
         <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
-          Бросок: ${rollState.winner.roll} (из 100)
+          Бросок: ${rollState.winner?.roll || 0} (из 100)
         </div>
         <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
           Участников: ${rollState.participants.filter(p => !p.isBlocked).length}
@@ -1556,13 +1640,6 @@
         </div>
       </div>
     `;
-    
-    document.getElementById("btn-confirm-roll").style.display = "inline-block";
-    document.getElementById("btn-start-roll").textContent = "🎲 Завершено";
-    document.querySelectorAll('.queue-btn').forEach(b => b.disabled = true);
-    
-    renderRollParticipants();
-    showToast(`🎲 ${rollState.winner.nickname} выиграл ролл!`);
   }
 
   // Закрепление победителя (только Глава гильдии или админ)
@@ -1615,6 +1692,10 @@
   function closeRollModal() {
     closeModal("modal-roll");
     rollState.isRolling = false;
+    if (rollUnsubscribe) {
+      rollUnsubscribe();
+      rollUnsubscribe = null;
+    }
   }
   window.closeRollModal = closeRollModal;
 
