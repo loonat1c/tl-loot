@@ -1364,11 +1364,26 @@
     renderRollParticipants();
     openModal("modal-roll");
     
-    // Подписываемся на изменения в реальном времени
+    // ============================================================
+    // ПОДПИСКА НА ИЗМЕНЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ
+    // ============================================================
     const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
     rollUnsubscribe = onSnapshot(dropRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
+        // Обновляем участников из данных (если они сохранены)
+        if (data.participants && Array.isArray(data.participants)) {
+          rollState.participants = data.participants.map(p => ({
+            playerId: p.playerId,
+            nickname: p.nickname,
+            roll: p.roll || null,
+            isBlocked: p.isBlocked || false,
+            blockReason: p.blockReason || ''
+          }));
+        }
+        
+        // Проверяем победителя
         if (data.winner_player_id && data.winner_nickname) {
           rollState.isFinished = true;
           rollState.winner = {
@@ -1377,22 +1392,22 @@
           };
           if (data.roll_results) {
             rollState.rollResults = data.roll_results;
-            rollState.participants = data.roll_results.map(r => ({
-              playerId: r.playerId,
-              nickname: r.nickname,
-              roll: r.roll,
-              isBlocked: false
-            }));
           }
-          renderRollParticipants();
-          showRollResult();
           
           // Обновляем кнопку запуска
           const startBtn = document.getElementById("btn-start-roll");
-          startBtn.disabled = true;
-          startBtn.textContent = "✅ Ролл завершён";
-          startBtn.style.background = "var(--success)";
-          startBtn.style.color = "#fff";
+          if (startBtn) {
+            startBtn.disabled = true;
+            startBtn.textContent = "✅ Ролл завершён";
+            startBtn.style.background = "var(--success)";
+            startBtn.style.color = "#fff";
+          }
+        }
+        
+        // Обновляем UI
+        renderRollParticipants();
+        if (rollState.isFinished) {
+          showRollResult();
         }
       }
     });
@@ -1527,7 +1542,7 @@
   }
 
   // Присоединение к роллу (общая функция)
-  window.joinRoll = (playerId, nickname) => {
+  window.joinRoll = async (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (rollState.participants.some(p => p.playerId === playerId)) return;
     
@@ -1537,12 +1552,12 @@
       return;
     }
     
-    // Дополнительная проверка: был ли на рейде
     if (!attendedPlayerIds.includes(playerId)) {
       showToast('Этот персонаж не был на рейде', 'error');
       return;
     }
     
+    // Добавляем участника
     rollState.participants.push({ 
       playerId, 
       nickname, 
@@ -1550,6 +1565,23 @@
       isBlocked: false,
       blockReason: ''
     });
+    
+    // Сохраняем участников в базу данных
+    try {
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      await firestoreUpdate(dropRef, {
+        participants: rollState.participants.map(p => ({
+          playerId: p.playerId,
+          nickname: p.nickname,
+          roll: p.roll,
+          isBlocked: p.isBlocked,
+          blockReason: p.blockReason
+        }))
+      });
+    } catch (e) {
+      console.error('Ошибка сохранения участников:', e);
+    }
+    
     renderRollParticipants();
   };
 
@@ -1571,13 +1603,11 @@
       return;
     }
     
-    // Проверяем посещаемость
     if (!attendedPlayerIds.includes(player.id)) {
       showToast("Вы не были на этом рейде и не можете участвовать в ролле", "error");
       return;
     }
     
-    // Проверяем оружие
     const participation = canParticipateInRoll(player.id, rollState.dropId);
     if (!participation.can) {
       showToast(participation.reason, "error");
@@ -1587,14 +1617,32 @@
     window.joinRoll(player.id, player.name);
   });
 
-  // Кнопка "Выйти"
-  document.getElementById("btn-leave-roll").addEventListener("click", () => {
+  // Кнопка "Выйти" — обновляем базу
+  document.getElementById("btn-leave-roll").addEventListener("click", async () => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (!rollState.currentPlayerId) {
       showToast("Вы не участвуете в ролле", "error");
       return;
     }
+    
     rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
+    
+    // Обновляем базу данных
+    try {
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      await firestoreUpdate(dropRef, {
+        participants: rollState.participants.map(p => ({
+          playerId: p.playerId,
+          nickname: p.nickname,
+          roll: p.roll,
+          isBlocked: p.isBlocked,
+          blockReason: p.blockReason
+        }))
+      });
+    } catch (e) {
+      console.error('Ошибка обновления участников:', e);
+    }
+    
     renderRollParticipants();
   });
 
@@ -1733,13 +1781,29 @@
       
       const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
       await firestoreUpdate(dropRef, {
-        roll_results: rollState.rollResults
+        roll_results: rollState.rollResults,
+        participants: rollState.participants.map(p => ({
+          playerId: p.playerId,
+          nickname: p.nickname,
+          roll: p.roll,
+          isBlocked: p.isBlocked,
+          blockReason: p.blockReason
+        }))
       });
       
       showToast(`✅ ${rollState.winner.nickname} выиграл ролл!`);
       
-      closeRollModal();
+      // Обновляем кнопку запуска
+      const startBtn = document.getElementById("btn-start-roll");
+      startBtn.disabled = true;
+      startBtn.textContent = "✅ Ролл завершён";
+      startBtn.style.background = "var(--success)";
+      startBtn.style.color = "#fff";
       
+      rollState.isFinished = true;
+      document.getElementById("btn-confirm-roll").style.display = "none";
+      
+      // Обновляем страницу рейда
       allRaids = await getRaids();
       activeRaid = allRaids.find(r => r.id === rollState.raidId);
       if (activeRaid) selectRaid(activeRaid);
@@ -1752,7 +1816,40 @@
     }
   });
 
+  // ============================================================
+  // ЗАКРЫТИЕ МОДАЛКИ РОЛЛА — С ПРЕДУПРЕЖДЕНИЕМ
+  // ============================================================
+  
   function closeRollModal() {
+    // Проверяем: был ли запущен ролл, но не зафиксирован победитель
+    const hasWinner = rollState.winner !== null;
+    const isRolling = rollState.isRolling;
+    const hasParticipants = rollState.participants.filter(p => !p.isBlocked).length > 0;
+    
+    // Если ролл был запущен (есть результаты) и победитель не зафиксирован
+    if (!hasWinner && isRolling) {
+      // Если есть участники с роллами (был запущен ролл)
+      const hasRolls = rollState.participants.some(p => p.roll !== null);
+      if (hasRolls) {
+        const confirmClose = confirm(
+          '⚠️ Ролл был запущен, но победитель не зафиксирован!\n\n' +
+          'Если вы закроете окно, результаты ролла будут потеряны.\n' +
+          'Вы уверены, что хотите закрыть?'
+        );
+        if (!confirmClose) return;
+      }
+    }
+    
+    // Если есть участники без победителя (ролл не запущен)
+    if (!hasWinner && !isRolling && hasParticipants) {
+      const confirmClose = confirm(
+        '⚠️ Есть участники, но ролл не запущен.\n\n' +
+        'Если вы закроете окно, участники будут удалены.\n' +
+        'Вы уверены, что хотите закрыть?'
+      );
+      if (!confirmClose) return;
+    }
+    
     closeModal("modal-roll");
     rollState.isRolling = false;
     if (rollUnsubscribe) {
