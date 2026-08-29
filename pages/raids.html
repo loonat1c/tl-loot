@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -165,9 +164,9 @@
       background: var(--accent); 
       color: #fff; 
       border: none; 
-      padding: 0.25rem 0.75rem; 
+      padding: 0.3rem 0.9rem; 
       border-radius: 6px; 
-      font-size: 0.7rem; 
+      font-size: 0.85rem; 
       font-weight: 600;
       cursor: pointer; 
       transition: all 0.15s; 
@@ -203,18 +202,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.4rem 0.6rem;
+      padding: 0.5rem 0.7rem;
       border-bottom: 1px solid var(--border);
       transition: background 0.15s;
     }
     .roll-participant:hover { background: var(--bg-card2); }
-    .roll-participant .player-name { font-weight: 500; }
-    .roll-participant .player-status { font-size: 0.75rem; color: var(--text-muted); }
+    .roll-participant .player-name { font-weight: 500; flex: 1; }
+    .roll-participant .player-status { font-size: 0.75rem; color: var(--text-muted); margin: 0 0.75rem; }
     .roll-participant .player-roll { 
       font-size: 1.1rem; 
       font-weight: 700; 
       color: var(--accent-soft);
-      min-width: 40px;
+      min-width: 50px;
       text-align: center;
     }
     .roll-participant.joined { background: var(--accent-glow); border-left: 2px solid var(--accent); }
@@ -223,18 +222,33 @@
     .roll-participant.not-attended { opacity: 0.4; border-left: 2px solid var(--text-muted); }
     
     .join-btn {
-      padding: 0.15rem 0.6rem;
-      border-radius: 4px;
+      padding: 0.25rem 0.8rem;
+      border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--bg-card2);
       color: var(--text);
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: all 0.15s;
+      white-space: nowrap;
     }
     .join-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
     .join-btn.joined { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
     .join-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .roll-section-title {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0 0.3rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.3rem;
+    }
+    .roll-section-title .count {
+      color: var(--accent-soft);
+      font-weight: 600;
+    }
 
     .queue-toggle {
       display: flex;
@@ -310,6 +324,17 @@
       background: var(--bg-card2);
       padding: 0.05rem 0.4rem;
       border-radius: 10px;
+    }
+
+    .roll-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .roll-actions .btn {
+      font-size: 0.8rem;
+      padding: 0.35rem 0.9rem;
     }
   </style>
 </head>
@@ -407,11 +432,16 @@
       <button class="queue-btn" data-queue="open" id="queue-open">🎲 Дополнительная</button>
     </div>
     
-    <div class="section-title">Участники <span id="roll-players-count" style="font-weight:400;">(0)</span></div>
-    <div id="roll-players-list" style="margin: 0.25rem 0;max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);"></div>
+    <div id="roll-players-container">
+      <div class="roll-section-title" id="roll-participants-title">👥 Участники <span class="count" id="roll-players-count">(0)</span></div>
+      <div id="roll-players-list" style="margin: 0.25rem 0;max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);"></div>
+      
+      <div class="roll-section-title" id="roll-available-title">📋 Могут участвовать</div>
+      <div id="roll-available-list" style="margin: 0.25rem 0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);"></div>
+    </div>
     
     <div class="section-title">Управление</div>
-    <div class="flex gap-1 mt-1" style="flex-wrap:wrap;">
+    <div class="roll-actions">
       <button class="btn btn-primary btn-sm" id="btn-join-roll">🎯 Присоединиться</button>
       <button class="btn btn-ghost btn-sm" id="btn-leave-roll">🚪 Выйти</button>
       <button class="btn btn-warning btn-sm" id="btn-start-roll" style="background:var(--warning);color:#000;" disabled>🎲 Запустить ролл</button>
@@ -1373,51 +1403,69 @@
   // ============================================================
   
   function renderRollParticipants() {
-    const list = document.getElementById("roll-players-list");
+    const participantsList = document.getElementById("roll-players-list");
+    const availableList = document.getElementById("roll-available-list");
     const count = document.getElementById("roll-players-count");
     
-    list.innerHTML = '';
+    // Очищаем списки
+    participantsList.innerHTML = '';
+    availableList.innerHTML = '';
     
-    // Отображаем участников ролла
-    rollState.participants.forEach(p => {
-      const div = document.createElement('div');
-      let className = 'roll-participant';
-      if (p.isBlocked) {
-        className += ' blocked';
-      } else if (rollState.winner?.playerId === p.playerId) {
-        className += ' winner';
-      } else {
-        className += ' joined';
-      }
-      div.className = className;
-      
-      let statusText = p.isBlocked ? p.blockReason : (rollState.winner?.playerId === p.playerId ? '🏆 Победитель!' : 'Присоединился');
-      
-      div.innerHTML = `
-        <span class="player-name">${p.nickname}</span>
-        <span class="player-status">${statusText}</span>
-        ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
-      `;
-      list.appendChild(div);
-    });
+    // 1. УЧАСТНИКИ (кто уже присоединился)
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
     
-    // Показываем доступных персонажей
+    if (activeParticipants.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = 'padding:0.5rem 0.7rem;color:var(--text-muted);font-size:0.82rem;text-align:center;';
+      emptyMsg.textContent = 'Пока нет участников';
+      participantsList.appendChild(emptyMsg);
+    } else {
+      activeParticipants.forEach(p => {
+        const div = document.createElement('div');
+        let className = 'roll-participant';
+        if (rollState.winner?.playerId === p.playerId) {
+          className += ' winner';
+        } else {
+          className += ' joined';
+        }
+        div.className = className;
+        
+        let statusText = rollState.winner?.playerId === p.playerId ? '🏆 Победитель!' : 'Присоединился';
+        
+        div.innerHTML = `
+          <span class="player-name">${p.nickname}</span>
+          <span class="player-status">${statusText}</span>
+          ${p.roll !== null ? `<span class="player-roll">${p.roll}</span>` : '<span class="player-roll">🎲</span>'}
+        `;
+        participantsList.appendChild(div);
+      });
+    }
+    
+    count.textContent = `(${activeParticipants.length})`;
+    
+    // 2. ДОСТУПНЫЕ ДЛЯ УЧАСТИЯ (кто ещё не присоединился)
     const allChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
     const availableChars = allChars.filter(c => 
       !rollState.participants.some(p => p.playerId === c.id)
     );
     
     const currentPlayerId = rollState.currentPlayerId;
-    const isAdminOrLeader = canStartRoll(); // админ или глава гильдии
+    const isAdminOrLeader = canStartRoll();
+    const isRollActive = !rollState.isFinished && !rollState.isRolling;
+    
+    let hasAvailable = false;
     
     availableChars.forEach(p => {
-      const div = document.createElement('div');
-      div.className = 'roll-participant';
-      
-      // Проверяем возможность участия
       const participation = canParticipateInRoll(p.id, rollState.dropId);
       const wasOnRaid = attendedPlayerIds.includes(p.id);
       const isCurrentUser = p.id === currentPlayerId;
+      
+      // Показываем только тех, кто может участвовать (или был на рейде для просмотра)
+      if (!wasOnRaid && !participation.can) return;
+      
+      hasAvailable = true;
+      const div = document.createElement('div');
+      div.className = 'roll-participant';
       
       let statusText = '';
       let buttonHtml = '';
@@ -1429,8 +1477,8 @@
         statusText = '⏳ Идёт ролл...';
         buttonHtml = `<span style="font-size:0.7rem;color:var(--warning);">Ожидайте</span>`;
       } else if (!wasOnRaid) {
-        statusText = '👀 Просмотр';
-        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Не был на рейде</span>`;
+        statusText = '👀 Не был на рейде';
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Только просмотр</span>`;
       } else if (!participation.can) {
         statusText = '🔒 ' + participation.reason;
         buttonHtml = `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`;
@@ -1439,14 +1487,14 @@
         statusText = '✅ Может участвовать';
         
         if (isCurrentUser) {
-          // Свой персонаж — всегда кнопка "Присоединиться"
-          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`;
+          // Свой персонаж — кнопка "Присоединиться"
+          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${!isRollActive ? 'disabled' : ''}>Присоединиться</button>`;
         } else if (isAdminOrLeader) {
           // Админ/Глава может присоединить любого
-          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>➕ Присоединить</button>`;
+          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${!isRollActive ? 'disabled' : ''}>➕ Присоединить</button>`;
         } else {
           // Обычный пользователь видит только своего персонажа с кнопкой
-          buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Доступен для присоединения</span>`;
+          buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Доступен</span>`;
         }
       }
       
@@ -1455,10 +1503,15 @@
         <span class="player-status">${statusText}</span>
         ${buttonHtml}
       `;
-      list.appendChild(div);
+      availableList.appendChild(div);
     });
     
-    count.textContent = `(${rollState.participants.filter(p => !p.isBlocked).length})`;
+    if (!hasAvailable) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = 'padding:0.5rem 0.7rem;color:var(--text-muted);font-size:0.82rem;text-align:center;';
+      emptyMsg.textContent = 'Нет доступных персонажей';
+      availableList.appendChild(emptyMsg);
+    }
     
     // Обновляем кнопки управления
     const isParticipant = rollState.participants.some(p => p.playerId === currentPlayerId && !p.isBlocked);
@@ -1902,4 +1955,3 @@
 </script>
 </body>
 </html>
-```
