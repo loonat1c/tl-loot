@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -532,6 +533,7 @@
     query, 
     orderBy,
     doc,
+    getDoc,
     onSnapshot,
     updateDoc as firestoreUpdate
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -1399,13 +1401,14 @@
       list.appendChild(div);
     });
     
-    // Показываем доступных персонажей (всех, но с разным статусом)
+    // Показываем доступных персонажей
     const allChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
     const availableChars = allChars.filter(c => 
       !rollState.participants.some(p => p.playerId === c.id)
     );
     
     const currentPlayerId = rollState.currentPlayerId;
+    const isAdminOrLeader = canStartRoll(); // админ или глава гильдии
     
     availableChars.forEach(p => {
       const div = document.createElement('div');
@@ -1414,12 +1417,12 @@
       // Проверяем возможность участия
       const participation = canParticipateInRoll(p.id, rollState.dropId);
       const wasOnRaid = attendedPlayerIds.includes(p.id);
+      const isCurrentUser = p.id === currentPlayerId;
       
       let statusText = '';
       let buttonHtml = '';
       
       if (rollState.isFinished) {
-        // Ролл завершен — только просмотр
         statusText = '🔒 Ролл завершен';
         buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Только просмотр</span>`;
       } else if (rollState.isRolling) {
@@ -1427,17 +1430,25 @@
         buttonHtml = `<span style="font-size:0.7rem;color:var(--warning);">Ожидайте</span>`;
       } else if (!wasOnRaid) {
         statusText = '👀 Просмотр';
-        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Вы не были на рейде</span>`;
+        buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Не был на рейде</span>`;
       } else if (!participation.can) {
         statusText = '🔒 ' + participation.reason;
         buttonHtml = `<span style="font-size:0.7rem;color:var(--danger);">${participation.reason}</span>`;
       } else {
+        // Может участвовать
         statusText = '✅ Может участвовать';
-        buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`;
+        
+        if (isCurrentUser) {
+          // Свой персонаж — всегда кнопка "Присоединиться"
+          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>Присоединиться</button>`;
+        } else if (isAdminOrLeader) {
+          // Админ/Глава может присоединить любого
+          buttonHtml = `<button class="join-btn" onclick="joinRoll('${p.id}','${p.name}')" ${rollState.isRolling || rollState.isFinished ? 'disabled' : ''}>➕ Присоединить</button>`;
+        } else {
+          // Обычный пользователь видит только своего персонажа с кнопкой
+          buttonHtml = `<span style="font-size:0.7rem;color:var(--text-muted);">Доступен для присоединения</span>`;
+        }
       }
-      
-      // Для текущего пользователя добавляем подсветку
-      const isCurrentUser = p.id === currentPlayerId;
       
       div.innerHTML = `
         <span class="player-name">${p.name}${isCurrentUser ? ' (вы)' : ''}</span>
@@ -1462,7 +1473,7 @@
     }
   }
 
-  // Присоединение к роллу
+  // Присоединение к роллу (общая функция)
   window.joinRoll = (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
     if (rollState.participants.some(p => p.playerId === playerId)) return;
@@ -1475,7 +1486,7 @@
     
     // Дополнительная проверка: был ли на рейде
     if (!attendedPlayerIds.includes(playerId)) {
-      showToast('Вы не были на этом рейде', 'error');
+      showToast('Этот персонаж не был на рейде', 'error');
       return;
     }
     
@@ -1489,9 +1500,8 @@
     renderRollParticipants();
   };
 
-  // Кнопка "Присоединиться" — ИСПРАВЛЕННАЯ
+  // Кнопка "Присоединиться" (для своего персонажа)
   document.getElementById("btn-join-roll").addEventListener("click", () => {
-    // Проверяем, был ли пользователь на рейде
     if (!rollState.currentPlayerId) {
       showToast("У вас нет созданного персонажа. Создайте его в профиле.", "error");
       return;
@@ -1892,3 +1902,4 @@
 </script>
 </body>
 </html>
+```
