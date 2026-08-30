@@ -564,7 +564,7 @@
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ⭐ ИСПРАВЛЕНИЕ: initNavbar сам вызывает initAuth и ждёт authReady внутри
+  // ⭐ initNavbar сам вызывает initAuth и ждёт authReady внутри
   await initNavbar();
 
   // ⭐ Теперь currentUser и currentRole точно доступны
@@ -616,6 +616,9 @@
     populateLootSlots();
     setupWeaponSync();
 
+    // ⭐ Навешиваем обработчик на кнопку ПОСЛЕ рендера
+    setupEventListeners();
+
     console.log('✅ loadData done. items:', allItems.length, 'chars:', characters.length);
   }
 
@@ -626,6 +629,50 @@
     characters.sort((a, b) => {
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
+  }
+
+  // ── Setup Event Listeners ──────────────────────────
+  function setupEventListeners() {
+    // ⭐ Кнопка "Добавить персонажа" — через делегирование или прямой поиск
+    const addBtn = document.getElementById('btn-add-character');
+    if (addBtn) {
+      // Убираем старые обработчики (если были)
+      const newBtn = addBtn.cloneNode(true);
+      addBtn.parentNode.replaceChild(newBtn, addBtn);
+      newBtn.addEventListener('click', openAddCharacter);
+    }
+
+    // Модальные кнопки
+    const closeBtn = document.getElementById('btn-char-close');
+    if (closeBtn) {
+      const newClose = closeBtn.cloneNode(true);
+      closeBtn.parentNode.replaceChild(newClose, closeBtn);
+      newClose.addEventListener('click', closeCharModal);
+    }
+
+    const cancelBtn = document.getElementById('btn-char-cancel');
+    if (cancelBtn) {
+      const newCancel = cancelBtn.cloneNode(true);
+      cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+      newCancel.addEventListener('click', closeCharModal);
+    }
+
+    const saveBtn = document.getElementById('btn-char-save');
+    if (saveBtn) {
+      const newSave = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newSave, saveBtn);
+      newSave.addEventListener('click', saveCharacter);
+    }
+
+    // Закрытие по клику на оверлей
+    const modal = document.getElementById('modal-character');
+    if (modal) {
+      const newModal = modal.cloneNode(true);
+      modal.parentNode.replaceChild(newModal, modal);
+      newModal.addEventListener('click', (e) => {
+        if (e.target === newModal) closeCharModal();
+      });
+    }
   }
 
   // ── Render profile ─────────────────────────────────
@@ -749,16 +796,20 @@
         </div>`;
     }).join('');
 
-    // Делегирование событий — безопаснее onclick в innerHTML
+    // Делегирование событий на кнопки внутри карточек
     container.querySelectorAll('.btn-edit-char').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const char = characters.find(c => c.id === btn.dataset.id);
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', () => {
+        const char = characters.find(c => c.id === newBtn.dataset.id);
         if (char) openEditCharacter(char);
       });
     });
 
     container.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', () => deleteCharacter(btn.dataset.id));
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', () => deleteCharacter(newBtn.dataset.id));
     });
   }
 
@@ -859,11 +910,9 @@
       });
     };
 
-    // Кнопка очистки через первый пустой элемент
     display.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = dropdown.classList.contains('open');
-      // Закрываем все другие
       document.querySelectorAll('.loot-select-wrap .dropdown.open').forEach(d => {
         if (d !== dropdown) d.classList.remove('open');
       });
@@ -925,80 +974,71 @@
     return result;
   }
 
-  // ── Modal ──────────────────────────────────────────
-  const modal        = document.getElementById('modal-character');
-  const modalTitle   = document.getElementById('modal-char-title');
-  const editCharId   = document.getElementById('edit-char-id');
-  const fName        = document.getElementById('f-char-name');
-  const fWeapon1     = document.getElementById('f-char-weapon1');
-  const fWeapon2     = document.getElementById('f-char-weapon2');
-  const fNote        = document.getElementById('f-moderation-note');
-  const charError    = document.getElementById('char-error');
-
+  // ── Modal functions ────────────────────────────────
   function openAddCharacter() {
     if (characters.length > 0) {
       showToast('Сначала удалите текущего персонажа', 'error');
       return;
     }
     editingCharId = null;
-    modalTitle.textContent = 'Добавить персонажа';
-    editCharId.value = '';
-    fName.value = '';
-    fWeapon1.value = '';
-    fWeapon2.value = '';
-    fNote.value = '';
-    charError.style.display = 'none';
-    modal.classList.remove('hidden');
+    document.getElementById('modal-char-title').textContent = 'Добавить персонажа';
+    document.getElementById('edit-char-id').value = '';
+    document.getElementById('f-char-name').value = '';
+    document.getElementById('f-char-weapon1').value = '';
+    document.getElementById('f-char-weapon2').value = '';
+    document.getElementById('f-moderation-note').value = '';
+    document.getElementById('char-error').style.display = 'none';
+    document.getElementById('modal-character').classList.remove('hidden');
     populateLootSlots();
     setupWeaponSync();
   }
 
   function openEditCharacter(char) {
     editingCharId = char.id;
-    modalTitle.textContent = 'Редактировать персонажа';
-    editCharId.value = char.id;
-    fName.value = char.name || '';
-    fWeapon1.value = char.weapons?.[0] || '';
-    fWeapon2.value = char.weapons?.[1] || '';
-    fNote.value = char.moderation_note || '';
-    charError.style.display = 'none';
-    modal.classList.remove('hidden');
+    document.getElementById('modal-char-title').textContent = 'Редактировать персонажа';
+    document.getElementById('edit-char-id').value = char.id;
+    document.getElementById('f-char-name').value = char.name || '';
+    document.getElementById('f-char-weapon1').value = char.weapons?.[0] || '';
+    document.getElementById('f-char-weapon2').value = char.weapons?.[1] || '';
+    document.getElementById('f-moderation-note').value = char.moderation_note || '';
+    document.getElementById('char-error').style.display = 'none';
+    document.getElementById('modal-character').classList.remove('hidden');
     populateLootSlots();
     setupWeaponSync();
   }
 
   function closeCharModal() {
-    modal.classList.add('hidden');
+    document.getElementById('modal-character').classList.add('hidden');
     editingCharId = null;
   }
 
-  // Навешиваем обработчики сразу — ДО loadData
-  document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
-  document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
-  document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
-
-  modal.addEventListener('click', e => {
-    if (e.target === modal) closeCharModal();
-  });
-
   // ── Save character ─────────────────────────────────
-  document.getElementById('btn-char-save').addEventListener('click', async () => {
-    const name    = fName.value.trim();
-    const weapon1 = fWeapon1.value;
-    const weapon2 = fWeapon2.value;
-    const note    = fNote.value.trim();
+  async function saveCharacter() {
+    const name    = document.getElementById('f-char-name').value.trim();
+    const weapon1 = document.getElementById('f-char-weapon1').value;
+    const weapon2 = document.getElementById('f-char-weapon2').value;
+    const note    = document.getElementById('f-moderation-note').value.trim();
+    const errorEl = document.getElementById('char-error');
 
     if (!name) {
-      return showError('Введите имя персонажа');
+      errorEl.textContent = 'Введите имя персонажа';
+      errorEl.style.display = 'block';
+      return;
     }
     if (!weapon1) {
-      return showError('Выберите основное оружие');
+      errorEl.textContent = 'Выберите основное оружие';
+      errorEl.style.display = 'block';
+      return;
     }
     if (weapon1 && weapon2 && weapon1 === weapon2) {
-      return showError('Основное и дополнительное оружие не могут совпадать');
+      errorEl.textContent = 'Основное и дополнительное оружие не могут совпадать';
+      errorEl.style.display = 'block';
+      return;
     }
-    if (!editCharId.value && characters.length > 0) {
-      return showError('У вас уже есть персонаж! Сначала удалите текущего.');
+    if (!document.getElementById('edit-char-id').value && characters.length > 0) {
+      errorEl.textContent = 'У вас уже есть персонаж! Сначала удалите текущего.';
+      errorEl.style.display = 'block';
+      return;
     }
 
     const status = userIsModerator ? 'approved' : 'pending';
@@ -1017,13 +1057,15 @@
       updated_at: new Date().toISOString()
     };
 
-    const id = editCharId.value;
+    const id = document.getElementById('edit-char-id').value;
 
     try {
       if (id) {
         const existing = characters.find(c => c.id === id);
         if (existing?.status === 'approved' && !userIsModerator) {
-          return showError('Нельзя редактировать одобренного персонажа');
+          errorEl.textContent = 'Нельзя редактировать одобренного персонажа';
+          errorEl.style.display = 'block';
+          return;
         }
         await updateDoc(doc(db, 'characters', id), data);
         showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
@@ -1037,15 +1079,12 @@
       closeCharModal();
       await loadCharacters();
       renderCharacters();
+      setupEventListeners(); // Перевешиваем обработчики после рендера
     } catch (e) {
       console.error('Save error:', e);
-      showError('Ошибка сохранения: ' + e.message);
+      errorEl.textContent = 'Ошибка сохранения: ' + e.message;
+      errorEl.style.display = 'block';
     }
-  });
-
-  function showError(msg) {
-    charError.textContent = msg;
-    charError.style.display = 'block';
   }
 
   // ── Toast ──────────────────────────────────────────
