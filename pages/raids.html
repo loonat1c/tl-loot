@@ -20,7 +20,7 @@
     }
     .raid-list-item:hover  { border-color: var(--accent); transform: translateX(4px); }
     .raid-list-item.active { border-color: var(--accent); background: var(--accent-glow); box-shadow: 0 0 20px var(--accent-glow); }
-    .raid-list-item.deleted { opacity: 0.3; border-style: dashed; pointer-events: none; }
+    .raid-list-item.deleted { opacity: 0.3; border-style: dashed; }
     .raid-date { font-weight: 600; font-size: 0.95rem; }
     .raid-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
@@ -1087,7 +1087,7 @@
   let selectedItem = null, selectedProperty = null;
   let attendedPlayerIds = [];
   let rollUnsubscribe = null;
-  let raidUnsubscribe = null; // ⭐ ДЛЯ ПОДПИСКИ НА РЕЙД
+  let raidUnsubscribe = null;
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1281,6 +1281,7 @@
     });
   }
 
+  // ⭐ ИСПРАВЛЕННАЯ renderRaidList — удалённые кликабельны для админов, текст кнопки обновляется
   function renderRaidList() {
     const container = document.getElementById("raids-list");
     const visible = allRaids.filter(r => showDeleted ? r.deleted : !r.deleted);
@@ -1302,9 +1303,11 @@
         <div class="raid-meta">
           ${r.drop_count || 0} дропов &nbsp;·&nbsp;
           <span class="status-badge ${statusClass}">${statusMap[statusClass] || 'Открыт'}</span>
+          ${r.deleted ? ' <span style="color:var(--danger);font-size:0.65rem;">🗑️ Удалён</span>' : ''}
         </div>
       `;
-      if (!r.deleted) {
+      // ⭐ Разрешаем клик по удалённым рейдам для админов
+      if (isAdmin() || !r.deleted) {
         el.addEventListener("click", () => selectRaid(r));
       }
       container.appendChild(el);
@@ -1325,11 +1328,13 @@
   // ОБРАБОТЧИК КНОПОК
   // ============================================================
 
+  // ⭐ ИСПРАВЛЕННЫЙ btnShowDeleted — обновляет текст кнопки
   const btnShowDeleted = document.getElementById("btn-show-deleted");
   if (btnShowDeleted) {
     btnShowDeleted.addEventListener("click", () => {
       showDeleted = !showDeleted;
       renderRaidList();
+      btnShowDeleted.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
     });
   }
 
@@ -1461,7 +1466,6 @@
     `;
   }
 
-  // ⭐ ФУНКЦИЯ РЕНДЕРИНГА ДЕТАЛЕЙ РЕЙДА (ВЫНЕСЕНА)
   async function renderRaidDetail(raid) {
     const detail = document.getElementById("raid-detail");
     
@@ -1506,7 +1510,6 @@
       triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit, raid));
     }
 
-    // Перепривязываем события
     const btnAddTry = document.getElementById("btn-add-try");
     if (btnAddTry) btnAddTry.addEventListener("click", () => openTryModal());
     
@@ -1534,13 +1537,11 @@
     const detail = document.getElementById("raid-detail");
     detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
 
-    // Отписываемся от старого рейда
     if (raidUnsubscribe) {
       raidUnsubscribe();
       raidUnsubscribe = null;
     }
 
-    // ⭐ Подписываемся на изменения рейда в реальном времени
     const raidRef = doc(db, "raids", raid.id);
     raidUnsubscribe = onSnapshot(raidRef, async (docSnap) => {
       if (!docSnap.exists()) return;
@@ -1548,21 +1549,14 @@
       const raidData = docSnap.data();
       const updatedRaid = { id: docSnap.id, ...raidData };
       
-      // Обновляем активный рейд
       activeRaid = updatedRaid;
-      
-      // ⭐ ОБНОВЛЯЕМ ПОСЕЩАЕМОСТЬ В РЕАЛЬНОМ ВРЕМЕНИ
       attendedPlayerIds = updatedRaid.attended_player_ids || [];
       
-      // Обновляем список рейдов
       allRaids = await getRaids();
       renderRaidList();
-      
-      // Перерисовываем детали рейда с обновлёнными данными
       await renderRaidDetail(updatedRaid);
     });
 
-    // Первоначальная загрузка деталей
     await renderRaidDetail(raid);
   }
 
@@ -1579,6 +1573,7 @@
     openModal("modal-raid");
   }
 
+  // ⭐ ИСПРАВЛЕННЫЙ createRaidBtn — редактирование обновляет существующий рейд
   const createRaidBtn = document.getElementById("btn-create-raid");
   if (createRaidBtn) {
     createRaidBtn.addEventListener("click", async () => {
@@ -1600,19 +1595,19 @@
         if (editingRaidId) {
           await updateRaid(editingRaidId, { date, notes });
           showToast("Рейд обновлён");
-        } else {
-          await createRaid({ date, notes });
-          showToast("Рейд создан");
-        }
-        closeModal("modal-raid");
-        allRaids = await getRaids();
-        renderRaidList();
-        if (!editingRaidId) {
-          const newRaid = allRaids.find(r => !r.deleted && r.date === date);
-          if (newRaid) selectRaid(newRaid);
-        } else {
+          closeModal("modal-raid");
+          allRaids = await getRaids();
+          renderRaidList();
           activeRaid = allRaids.find(r => r.id === editingRaidId);
           if (activeRaid) selectRaid(activeRaid);
+        } else {
+          const newId = await createRaid({ date, notes });
+          showToast("Рейд создан");
+          closeModal("modal-raid");
+          allRaids = await getRaids();
+          renderRaidList();
+          const newRaid = allRaids.find(r => r.id === newId);
+          if (newRaid) selectRaid(newRaid);
         }
       } catch(e) { 
         if (errEl) {
@@ -1868,7 +1863,30 @@
   // ЛОГИКА РОЛЛА
   // ============================================================
 
+  // ⭐ ИСПРАВЛЕННЫЙ openRollModal — проверяет посещаемость перед открытием
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
+    // Проверяем, отмечена ли посещаемость
+    const raid = allRaids.find(r => r.id === raidId);
+    if (raid && (!raid.attended_player_ids || raid.attended_player_ids.length === 0)) {
+      if (confirm('⚠️ Посещаемость рейда не отмечена!\n\nСначала отметьте кто присутствовал на рейде, чтобы участники могли присоединиться к роллу.\n\nОткрыть посещаемость?')) {
+        sessionStorage.setItem('pending_roll_data', JSON.stringify({
+          raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw
+        }));
+        
+        const raidData = allRaids.find(r => r.id === raidId);
+        if (raidData) {
+          const tempRaid = activeRaid;
+          activeRaid = raidData;
+          openAttendanceModal();
+          setTimeout(() => {
+            activeRaid = tempRaid;
+          }, 100);
+        }
+        return;
+      }
+      return;
+    }
+
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
     rollState = {
@@ -2342,7 +2360,6 @@
   window.closeRollModal = closeRollModal;
 
   // ── Посещаемость ──────────────────────────────────
-  // ⭐ ОБНОВЛЁННАЯ - использует актуальные данные из activeRaid
   function openAttendanceModal() {
     const grid = document.getElementById("attendance-grid");
     grid.innerHTML = "";
@@ -2376,7 +2393,7 @@
     openModal("modal-attendance");
   }
 
-  // ⭐ ОБНОВЛЁННЫЙ - не перезагружает страницу вручную
+  // ⭐ ИСПРАВЛЕННЫЙ saveAttendanceBtn — после сохранения открывает ожидающий ролл
   const saveAttendanceBtn = document.getElementById("btn-save-attendance");
   if (saveAttendanceBtn) {
     saveAttendanceBtn.addEventListener("click", async () => {
@@ -2387,10 +2404,18 @@
         await updateRaid(activeRaid.id, { 
           attended_player_ids: attendedIds 
         });
-        // ⭐ НЕ ОБНОВЛЯЕМ ВРУЧНУЮ — onSnapshot сам обновит
         closeModal("modal-attendance");
         showToast("Посещаемость сохранена");
-        // ⭐ Не вызываем selectRaid — данные обновятся через подписку
+        
+        // Проверяем, есть ли ожидающий ролл
+        const pendingRoll = sessionStorage.getItem('pending_roll_data');
+        if (pendingRoll) {
+          sessionStorage.removeItem('pending_roll_data');
+          const data = JSON.parse(pendingRoll);
+          setTimeout(() => {
+            openRollModal(data.raidId, data.tryId, data.dropId, data.itemName, data.slotLabel, data.property, data.itemSlotRaw);
+          }, 300);
+        }
       } catch(e) { 
         showToast("Ошибка: " + e.message, "error"); 
       }
@@ -2402,7 +2427,6 @@
   }
 
   // ── Закрыть рейд ──────────────────────────────────
-  // ⭐ ОБНОВЛЁННАЯ - использует актуальные данные из activeRaid
   async function openCloseRaidModal() {
     const grid = document.getElementById("attendance-grid-close");
     grid.innerHTML = "";
