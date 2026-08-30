@@ -509,3 +509,6 @@ export async function updateUserProfile(data) {
     };
   }
 }
+
+export function getUser() { return currentUser; }
+export function getRole() { return currentRole; }
