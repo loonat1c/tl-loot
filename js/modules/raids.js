@@ -6,6 +6,7 @@ import { db } from "../firebase.js";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   getDocs, getDoc, query, orderBy, writeBatch, increment,
+  where, // ⭐ ДОБАВЛЯЕМ where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const raidCol = () => collection(db, "raids");
@@ -257,6 +258,12 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
     
     const batch = writeBatch(db);
     
+    // Получаем дату рейда для истории
+    const raidRef = doc(db, "raids", raidId);
+    const raidSnap = await getDoc(raidRef);
+    const raidData = raidSnap.exists() ? raidSnap.data() : {};
+    const raidDate = raidData.date || new Date().toISOString().split('T')[0];
+    
     // ── 1. Сохраняем историю лута ──
     for (const drop of drops) {
       if (drop.winner_player_id && drop.winner_nickname) {
@@ -264,7 +271,7 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
           const lootRef = doc(collection(db, 'loot_history'));
           batch.set(lootRef, {
             raid_id: raidId,
-            raid_date: null, // будет обновлено позже
+            raid_date: raidDate,
             player_id: drop.winner_player_id,
             player_name: drop.winner_nickname,
             item_id: drop.item_id,
@@ -304,7 +311,7 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
           
           const updates = {
             raids_attended: (charData.raids_attended || 0) + 1,
-            last_raid_date: new Date().toISOString().split('T')[0]
+            last_raid_date: raidDate
           };
           
           if (hasLoot) {
@@ -322,10 +329,6 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
     }
     
     // ── 3. Обновляем статус рейда ──
-    const raidRef = doc(db, "raids", raidId);
-    const raidSnap = await getDoc(raidRef);
-    const raidData = raidSnap.exists() ? raidSnap.data() : {};
-    
     batch.update(raidRef, {
       status: "closed",
       closed_at: new Date().toISOString(),
@@ -333,28 +336,8 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
       closed_by: localStorage.getItem('tl_user_id') || 'unknown',
     });
     
-    // ── 4. Обновляем дату в истории лута (если есть дропы) ──
-    // Это делается отдельно, так как мы не можем обновить batch после set
-    // Но историю мы уже сохранили выше с raid_date = null
-    
     await batch.commit();
     console.log('✅ Рейд закрыт');
-    
-    // ── 5. Дополнительно обновляем raid_date в истории лута ──
-    if (drops.some(d => d.winner_player_id)) {
-      try {
-        const historyRef = collection(db, 'loot_history');
-        const q = query(historyRef, where('raid_id', '==', raidId));
-        const historySnap = await getDocs(q);
-        for (const doc of historySnap.docs) {
-          await updateDoc(doc.ref, {
-            raid_date: raidData.date || new Date().toISOString().split('T')[0]
-          });
-        }
-      } catch (e) {
-        console.warn('⚠️ Не удалось обновить raid_date в истории:', e);
-      }
-    }
     
     return { success: true };
     
