@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1097,10 +1098,10 @@
   // ПРОВЕРКА ИМПОРТОВ
   // ============================================================
   
-  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid'];
+  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid', 'updateTryAttendance'];
   let importsOk = true;
   
-  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus, hardDeleteRaid };
+  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus, hardDeleteRaid, updateTryAttendance };
   for (const fn of requiredFunctions) {
     if (typeof fnMap[fn] !== 'function') {
       console.error(`🔒 Критическая функция ${fn} не найдена`);
@@ -1132,8 +1133,8 @@
   let attendedPlayerIds = [];
   let rollUnsubscribe = null;
   let raidUnsubscribe = null;
-  let previousAttendedIds = [];
-  let currentEditingTryId = null; // ⭐ Для модалки участия
+  let currentEditingTryId = null;
+  let tryAttendanceCache = {};
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1841,13 +1842,18 @@
     
     const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
     
-    // Получаем текущее участие для этого трая
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
     const currentAttended = currentTry?.attended_player_ids || [];
     
-    // Сохраняем как "предыдущее" для копирования
-    previousAttendedIds = [...currentAttended];
+    tryAttendanceCache[tryId] = [...currentAttended];
+    
+    const currentIndex = tries.findIndex(t => t.id === tryId);
+    let previousTryAttended = [];
+    if (currentIndex > 0) {
+      const previousTry = tries[currentIndex - 1];
+      previousTryAttended = previousTry?.attended_player_ids || [];
+    }
     
     approvedChars.forEach(p => {
       const el = document.createElement("div");
@@ -1872,10 +1878,13 @@
       });
       grid.appendChild(el);
     });
+    
+    window._previousTryAttendance = previousTryAttended;
+    
     openModal("modal-attendance");
   };
 
-  // ⭐ КНОПКА "ВЫБРАТЬ ВСЕХ"
+  // КНОПКА "ВЫБРАТЬ ВСЕХ"
   document.getElementById("btn-attendance-all")?.addEventListener("click", () => {
     document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
       el.classList.add("present");
@@ -1883,18 +1892,19 @@
     });
   });
 
-  // ⭐ КНОПКА "СКОПИРОВАТЬ С ПРОШЛОГО ТРАЯ"
+  // КНОПКА "СКОПИРОВАТЬ С ПРОШЛОГО ТРАЯ"
   document.getElementById("btn-attendance-copy")?.addEventListener("click", () => {
-    if (previousAttendedIds.length === 0) {
-      showToast('Нет предыдущего участия для копирования', 'error');
+    const previousAttended = window._previousTryAttendance || [];
+    if (previousAttended.length === 0) {
+      showToast('Нет предыдущего трая для копирования', 'error');
       return;
     }
     document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
-      const isPresent = previousAttendedIds.includes(el.dataset.id);
+      const isPresent = previousAttended.includes(el.dataset.id);
       el.classList.toggle("present", isPresent);
       el.querySelector("span").textContent = isPresent ? "✅" : "⬜";
     });
-    showToast(`Скопировано ${previousAttendedIds.length} участников`);
+    showToast(`Скопировано ${previousAttended.length} участников`);
   });
 
   const saveAttendanceBtn = document.getElementById("btn-save-attendance");
@@ -1905,6 +1915,7 @@
       btn.disabled = true; btn.textContent = "Сохранение...";
       try {
         await updateTryAttendance(activeRaid.id, currentEditingTryId, attendedIds);
+        tryAttendanceCache[currentEditingTryId] = attendedIds;
         closeModal("modal-attendance");
         showToast("Участие сохранено");
         selectRaid(activeRaid);
@@ -2724,3 +2735,4 @@
 </script>
 </body>
 </html>
+```
