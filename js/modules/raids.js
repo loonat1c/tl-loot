@@ -6,7 +6,7 @@ import { db } from "../firebase.js";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   getDocs, getDoc, query, orderBy, writeBatch, increment,
-  where, // ⭐ ДОБАВЛЯЕМ where
+  where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const raidCol = () => collection(db, "raids");
@@ -112,6 +112,7 @@ export async function getRaidTries(raidId) {
   }
 }
 
+// ⭐ ИСПРАВЛЕННЫЙ addTry — добавляем поле attended_player_ids
 export async function addTry(raidId, { boss_id, boss_name, order }) {
   try {
     const ref = await addDoc(tryCol(raidId), {
@@ -119,6 +120,7 @@ export async function addTry(raidId, { boss_id, boss_name, order }) {
       boss_name:  boss_name || "",
       order:      order || 0,
       drop_count: 0,
+      attended_player_ids: [], // ⭐ ДОБАВЛЯЕМ
       created_at: new Date().toISOString(),
       created_by: localStorage.getItem('tl_user_id') || 'unknown',
     });
@@ -142,6 +144,22 @@ export async function deleteTry(raidId, tryId) {
     await deleteDoc(doc(db, "raids", raidId, "tries", tryId));
   } catch (e) {
     console.error('Ошибка удаления трая:', e);
+    throw e;
+  }
+}
+
+// ⭐ НОВАЯ ФУНКЦИЯ: ОБНОВЛЕНИЕ УЧАСТИЯ В ТРАЕ
+export async function updateTryAttendance(raidId, tryId, attendedPlayerIds) {
+  try {
+    const tryRef = doc(db, "raids", raidId, "tries", tryId);
+    await updateDoc(tryRef, {
+      attended_player_ids: attendedPlayerIds || [],
+      updated_at: new Date().toISOString(),
+      updated_by: localStorage.getItem('tl_user_id') || 'unknown',
+    });
+    return { success: true };
+  } catch (e) {
+    console.error('Ошибка обновления участия в трае:', e);
     throw e;
   }
 }
