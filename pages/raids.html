@@ -61,6 +61,15 @@
       border: 1px solid var(--border);
     }
     .try-body  { padding: 0.75rem 1rem; }
+    .try-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .try-actions .btn-sm {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+    }
 
     .drop-row {
       display: grid; 
@@ -324,6 +333,17 @@
       background: var(--bg-card2);
       padding: 0.05rem 0.4rem;
       border-radius: 10px;
+    }
+
+    .attendance-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .attendance-actions .btn {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.8rem;
     }
 
     .roll-actions {
@@ -763,6 +783,24 @@
       font-size: 1.5rem;
       padding: 0.25rem 0.5rem;
     }
+
+    /* ── Бейдж участия в трае ── */
+    .attendance-badge {
+      font-size: 0.6rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .attendance-badge.has-attendance {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(34,197,94,0.1);
+    }
   </style>
 </head>
 <body>
@@ -935,17 +973,23 @@
   </div>
 </div>
 
-<!-- Модалка посещаемости -->
+<!-- Модалка участия (для трая) -->
 <div class="modal-overlay hidden" id="modal-attendance">
   <div class="modal">
     <div class="modal-header">
-      <h3>👥 Посещаемость рейда</h3>
+      <h3>👥 Участие в трае</h3>
       <button class="btn-close" onclick="closeModal('modal-attendance')">✕</button>
     </div>
-    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Отметь кто присутствовал в рейде.</p>
+    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Отметь кто участвовал в этом трае.</p>
+    
+    <div class="attendance-actions">
+      <button class="btn btn-primary btn-sm" id="btn-attendance-all">✅ Выбрать всех</button>
+      <button class="btn btn-ghost btn-sm" id="btn-attendance-copy">📋 Скопировать с прошлого трая</button>
+    </div>
+    
     <div id="attendance-grid" class="attendance-grid"></div>
     <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-attendance">Сохранить посещаемость</button>
+      <button class="btn btn-primary" id="btn-save-attendance">Сохранить участие</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-attendance')">Отмена</button>
     </div>
   </div>
@@ -958,8 +1002,7 @@
       <h3>Закрыть рейд</h3>
       <button class="btn-close" onclick="closeModal('modal-close-raid')">✕</button>
     </div>
-    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Закрыть рейд и зафиксировать посещаемость?</p>
-    <div id="attendance-grid-close" class="attendance-grid"></div>
+    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Закрыть рейд и зафиксировать все траи?</p>
     <div class="flex gap-1 mt-3">
       <button class="btn btn-primary" id="btn-confirm-close">Закрыть рейд</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-close-raid')">Отмена</button>
@@ -1027,10 +1070,11 @@
   // ============================================================
   
   import {
-    getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid,
+    getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid, hardDeleteRaid,
     getRaidTries, addTry, deleteTry,
     getTryDrops, addDrop, deleteDrop,
-    closeRaid, updateRaidStatus, updateDropWinner
+    closeRaid, updateRaidStatus, updateDropWinner,
+    updateTryAttendance
   } from "../js/modules/raids.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { getItems } from "../js/modules/items.js";
@@ -1053,10 +1097,10 @@
   // ПРОВЕРКА ИМПОРТОВ
   // ============================================================
   
-  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus'];
+  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid'];
   let importsOk = true;
   
-  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus };
+  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus, hardDeleteRaid };
   for (const fn of requiredFunctions) {
     if (typeof fnMap[fn] !== 'function') {
       console.error(`🔒 Критическая функция ${fn} не найдена`);
@@ -1088,6 +1132,8 @@
   let attendedPlayerIds = [];
   let rollUnsubscribe = null;
   let raidUnsubscribe = null;
+  let previousAttendedIds = [];
+  let currentEditingTryId = null; // ⭐ Для модалки участия
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1185,21 +1231,61 @@
     return null;
   }
 
-  // ============================================================
-  // ЛОГИКА ОЧЕРЕДЕЙ
-  // ============================================================
+  // ⭐ ПРОВЕРКА НА ПОЛУЧЕННЫЕ ПРЕДМЕТЫ В РЕЙДЕ
+  function hasWonItemInRaid(charId, itemId) {
+    // Проверяем все дропы в текущем рейде
+    const triesContainer = document.getElementById('tries-container');
+    if (!triesContainer) return false;
+    
+    const allDrops = [];
+    const tryBlocks = triesContainer.querySelectorAll('.try-block');
+    tryBlocks.forEach(block => {
+      const dropRows = block.querySelectorAll('.drop-row');
+      dropRows.forEach(row => {
+        const winnerName = row.querySelector('.drop-winner strong');
+        if (winnerName) {
+          const char = allCharacters.find(c => c.name === winnerName.textContent);
+          if (char && char.id === charId) {
+            const dropName = row.querySelector('.drop-name')?.textContent || '';
+            const item = allItems.find(i => i.name === dropName);
+            if (item) {
+              allDrops.push({ itemId: item.id, item });
+            }
+          }
+        }
+      });
+    });
+    
+    const currentItem = allItems.find(i => i.id === itemId);
+    if (!currentItem) return false;
+    
+    return allDrops.some(d => {
+      if (d.itemId === itemId) return true;
+      if (currentItem.slot === 'weapon' && d.item.slot === 'weapon') {
+        return getWeaponType(d.itemId) === getWeaponType(itemId);
+      }
+      return false;
+    });
+  }
 
+  // ⭐ ПРОВЕРКА ДЛЯ ОСНОВНОЙ ОЧЕРЕДИ
   function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
-    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не был на рейде' };
+    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
     const itemSlot = rollState.itemSlot;
     const itemId   = rollState.itemId;
 
     if (!itemSlot || !itemId) {
       return { can: false, reason: 'Данные предмета не загружены' };
+    }
+
+    if (hasWonItemInRaid(charId, itemId)) {
+      const item = allItems.find(i => i.id === itemId);
+      const type = item?.slot === 'weapon' ? getWeaponType(itemId) : item?.name;
+      return { can: false, reason: `Уже получил ${type || 'этот предмет'} в этом рейде` };
     }
 
     const desired = char.desired_loot || {};
@@ -1225,7 +1311,13 @@
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
-    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не был на рейде' };
+    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
+
+    if (hasWonItemInRaid(charId, rollState.itemId)) {
+      const item = allItems.find(i => i.id === rollState.itemId);
+      const type = item?.slot === 'weapon' ? getWeaponType(rollState.itemId) : item?.name;
+      return { can: false, reason: `Уже получил ${type || 'этот предмет'} в этом рейде` };
+    }
 
     if (rollState.itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === rollState.itemId);
@@ -1281,7 +1373,6 @@
     });
   }
 
-  // ⭐ ИСПРАВЛЕННАЯ renderRaidList — удалённые кликабельны для админов, текст кнопки обновляется
   function renderRaidList() {
     const container = document.getElementById("raids-list");
     const visible = allRaids.filter(r => showDeleted ? r.deleted : !r.deleted);
@@ -1306,7 +1397,6 @@
           ${r.deleted ? ' <span style="color:var(--danger);font-size:0.65rem;">🗑️ Удалён</span>' : ''}
         </div>
       `;
-      // ⭐ Разрешаем клик по удалённым рейдам для админов
       if (isAdmin() || !r.deleted) {
         el.addEventListener("click", () => selectRaid(r));
       }
@@ -1328,7 +1418,6 @@
   // ОБРАБОТЧИК КНОПОК
   // ============================================================
 
-  // ⭐ ИСПРАВЛЕННЫЙ btnShowDeleted — обновляет текст кнопки
   const btnShowDeleted = document.getElementById("btn-show-deleted");
   if (btnShowDeleted) {
     btnShowDeleted.addEventListener("click", () => {
@@ -1370,6 +1459,7 @@
     wrap.className = "try-block";
     
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
+    const hasAttendance = t.attended_player_ids && t.attended_player_ids.length > 0;
     
     wrap.innerHTML = `
       <div class="try-header">
@@ -1382,12 +1472,17 @@
             </span>
           ` : ""}
           <span class="text-muted" style="font-size:0.75rem">${drops.length} дропов</span>
+          <span class="attendance-badge ${hasAttendance ? 'has-attendance' : ''}">
+            ${hasAttendance ? '✅' : '⬜'} Участие: ${t.attended_player_ids?.length || 0}
+          </span>
         </div>
-        ${canEdit ? `
-        <div class="flex gap-1">
-          <button class="btn btn-primary btn-sm" onclick="openDropModal('${raidId}','${t.id}','${t.boss_id||""}')">+ Дроп</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteTry('${raidId}','${t.id}')">🗑️</button>
-        </div>` : ""}
+        <div class="try-actions">
+          ${canEdit ? `
+            <button class="btn btn-ghost btn-sm" onclick="openAttendanceModalForTry('${raidId}','${t.id}')">👥</button>
+            <button class="btn btn-primary btn-sm" onclick="openDropModal('${raidId}','${t.id}','${t.boss_id||""}')">+ Дроп</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteTry('${raidId}','${t.id}')">🗑️</button>
+          ` : ""}
+        </div>
       </div>
       <div class="try-body">
         ${drops.length ? drops.map(d => buildDropRow(d, raidId, t.id, canEdit, raid)).join("") :
@@ -1470,8 +1565,9 @@
     const detail = document.getElementById("raid-detail");
     
     const tries = await getRaidTries(raid.id);
-    const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling");
+    const canEdit = canWrite() && !raid.deleted && (raid.status === "open" || raid.status === "rolling" || raid.status === "closed");
     const admin = isAdmin();
+    const isClosed = raid.status === "closed";
 
     detail.innerHTML = `
       <div class="card">
@@ -1482,9 +1578,12 @@
           </div>
           <div class="flex gap-1" style="flex-wrap:wrap;justify-content:flex-end">
             ${canEdit ? `
-              <button class="btn btn-ghost btn-sm" id="btn-attendance">👥 Посещаемость</button>
-              <button class="btn btn-primary btn-sm" id="btn-add-try">+ Трай</button>
-              <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
+              ${isClosed ? `
+                <button class="btn btn-warning btn-sm" id="btn-reopen-raid" style="background:var(--warning);color:#000;border-color:var(--warning);">🔓 Открыть рейд</button>
+              ` : `
+                <button class="btn btn-primary btn-sm" id="btn-add-try">+ Трай</button>
+                <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
+              `}
             ` : ""}
             ${admin && !raid.deleted ? `
               <button class="btn btn-ghost btn-sm" id="btn-edit-raid">✏️</button>
@@ -1492,6 +1591,7 @@
             ` : ""}
             ${admin && raid.deleted ? `
               <button class="btn btn-ghost btn-sm" id="btn-restore-raid">♻️ Восстановить</button>
+              <button class="btn btn-danger btn-sm" id="btn-hard-delete-raid">💀 Удалить навсегда</button>
             ` : ""}
           </div>
         </div>
@@ -1507,7 +1607,7 @@
       const t = tries[i];
       const drops = await getTryDrops(raid.id, t.id);
       const boss = allBosses.find(b => b.id === t.boss_id);
-      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit, raid));
+      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit && !isClosed, raid));
     }
 
     const btnAddTry = document.getElementById("btn-add-try");
@@ -1515,6 +1615,9 @@
     
     const btnCloseRaid = document.getElementById("btn-close-raid");
     if (btnCloseRaid) btnCloseRaid.addEventListener("click", openCloseRaidModal);
+    
+    const btnReopenRaid = document.getElementById("btn-reopen-raid");
+    if (btnReopenRaid) btnReopenRaid.addEventListener("click", reopenRaid);
     
     const btnEditRaid = document.getElementById("btn-edit-raid");
     if (btnEditRaid) btnEditRaid.addEventListener("click", () => openEditRaid(raid));
@@ -1525,11 +1628,49 @@
     const btnRestoreRaid = document.getElementById("btn-restore-raid");
     if (btnRestoreRaid) btnRestoreRaid.addEventListener("click", () => confirmRestoreRaid(raid));
     
-    const btnAttendance = document.getElementById("btn-attendance");
-    if (btnAttendance) btnAttendance.addEventListener("click", openAttendanceModal);
+    const btnHardDeleteRaid = document.getElementById("btn-hard-delete-raid");
+    if (btnHardDeleteRaid) btnHardDeleteRaid.addEventListener("click", () => confirmHardDeleteRaid(raid));
   }
 
-  // ⭐ SELECT RAID С REAL-TIME ПОДПИСКОЙ
+  // ⭐ ПЕРЕОТКРЫТИЕ РЕЙДА
+  async function reopenRaid() {
+    if (!confirm('Открыть рейд для редактирования?\n\nВы сможете добавлять/удалять траи и дропы.')) return;
+    try {
+      await updateRaid(activeRaid.id, { status: 'open' });
+      showToast('Рейд открыт для редактирования');
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === activeRaid.id);
+      renderRaidList();
+      selectRaid(activeRaid);
+    } catch(e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  }
+
+  // ⭐ УДАЛЕНИЕ БЕЗ ВОССТАНОВЛЕНИЯ
+  async function confirmHardDeleteRaid(raid) {
+    if (!confirm(`💀 ВНИМАНИЕ! Вы собираетесь навсегда удалить рейд от ${formatDate(raid.date)}.\n\nЭто действие НЕЛЬЗЯ будет отменить!\n\nВсе траи и дропы будут удалены безвозвратно.\n\nВы уверены?`)) return;
+    if (!confirm('Последнее предупреждение: удалить рейд навсегда?')) return;
+    try {
+      const tries = await getRaidTries(raid.id);
+      for (const t of tries) {
+        await deleteTry(raid.id, t.id);
+      }
+      await hardDeleteRaid(raid.id);
+      showToast('Рейд удалён навсегда');
+      allRaids = await getRaids();
+      activeRaid = null;
+      document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
+      renderRaidList();
+    } catch(e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  }
+
+  // ============================================================
+  // SELECT RAID С REAL-TIME ПОДПИСКОЙ
+  // ============================================================
+
   async function selectRaid(raid) {
     activeRaid = raid;
     renderRaidList();
@@ -1550,7 +1691,6 @@
       const updatedRaid = { id: docSnap.id, ...raidData };
       
       activeRaid = updatedRaid;
-      attendedPlayerIds = updatedRaid.attended_player_ids || [];
       
       allRaids = await getRaids();
       renderRaidList();
@@ -1573,7 +1713,6 @@
     openModal("modal-raid");
   }
 
-  // ⭐ ИСПРАВЛЕННЫЙ createRaidBtn — редактирование обновляет существующий рейд
   const createRaidBtn = document.getElementById("btn-create-raid");
   if (createRaidBtn) {
     createRaidBtn.addEventListener("click", async () => {
@@ -1692,6 +1831,92 @@
     selectRaid(activeRaid);
     showToast("Трай удалён");
   };
+
+  // ── Участие в трае ──────────────────────────────
+  window.openAttendanceModalForTry = async (raidId, tryId) => {
+    currentEditingTryId = tryId;
+    
+    const grid = document.getElementById("attendance-grid");
+    grid.innerHTML = "";
+    
+    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    
+    // Получаем текущее участие для этого трая
+    const tries = await getRaidTries(raidId);
+    const currentTry = tries.find(t => t.id === tryId);
+    const currentAttended = currentTry?.attended_player_ids || [];
+    
+    // Сохраняем как "предыдущее" для копирования
+    previousAttendedIds = [...currentAttended];
+    
+    approvedChars.forEach(p => {
+      const el = document.createElement("div");
+      const isPresent = currentAttended.includes(p.id);
+      el.className = `attendance-player${isPresent ? ' present' : ''}`;
+      el.dataset.id = p.id;
+      
+      const weapons = p.weapons || [];
+      const weaponLabels = weapons.map(w => {
+        const weapon = WEAPONS.find(wp => wp.id === w);
+        return weapon?.label || w;
+      }).join(', ');
+      
+      el.innerHTML = `
+        <span>${isPresent ? '✅' : '⬜'}</span>
+        ${p.name}
+        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
+      `;
+      el.addEventListener("click", () => {
+        el.classList.toggle("present");
+        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
+      });
+      grid.appendChild(el);
+    });
+    openModal("modal-attendance");
+  };
+
+  // ⭐ КНОПКА "ВЫБРАТЬ ВСЕХ"
+  document.getElementById("btn-attendance-all")?.addEventListener("click", () => {
+    document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
+      el.classList.add("present");
+      el.querySelector("span").textContent = "✅";
+    });
+  });
+
+  // ⭐ КНОПКА "СКОПИРОВАТЬ С ПРОШЛОГО ТРАЯ"
+  document.getElementById("btn-attendance-copy")?.addEventListener("click", () => {
+    if (previousAttendedIds.length === 0) {
+      showToast('Нет предыдущего участия для копирования', 'error');
+      return;
+    }
+    document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
+      const isPresent = previousAttendedIds.includes(el.dataset.id);
+      el.classList.toggle("present", isPresent);
+      el.querySelector("span").textContent = isPresent ? "✅" : "⬜";
+    });
+    showToast(`Скопировано ${previousAttendedIds.length} участников`);
+  });
+
+  const saveAttendanceBtn = document.getElementById("btn-save-attendance");
+  if (saveAttendanceBtn) {
+    saveAttendanceBtn.addEventListener("click", async () => {
+      const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
+      const btn = document.getElementById("btn-save-attendance");
+      btn.disabled = true; btn.textContent = "Сохранение...";
+      try {
+        await updateTryAttendance(activeRaid.id, currentEditingTryId, attendedIds);
+        closeModal("modal-attendance");
+        showToast("Участие сохранено");
+        selectRaid(activeRaid);
+      } catch(e) { 
+        showToast("Ошибка: " + e.message, "error"); 
+      }
+      finally { 
+        btn.disabled = false; 
+        btn.textContent = "Сохранить участие"; 
+      }
+    });
+  }
 
   // ── Дроп модалка ─────────────────────────────────
   window.openDropModal = async (raidId, tryId, bossId) => {
@@ -1863,29 +2088,25 @@
   // ЛОГИКА РОЛЛА
   // ============================================================
 
-  // ⭐ ИСПРАВЛЕННЫЙ openRollModal — проверяет посещаемость перед открытием
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
-    // Проверяем, отмечена ли посещаемость
-    const raid = allRaids.find(r => r.id === raidId);
-    if (raid && (!raid.attended_player_ids || raid.attended_player_ids.length === 0)) {
-      if (confirm('⚠️ Посещаемость рейда не отмечена!\n\nСначала отметьте кто присутствовал на рейде, чтобы участники могли присоединиться к роллу.\n\nОткрыть посещаемость?')) {
+    // ⭐ Проверяем участие в этом трае
+    const tries = await getRaidTries(raidId);
+    const currentTry = tries.find(t => t.id === tryId);
+    const tryAttendedIds = currentTry?.attended_player_ids || [];
+    
+    if (tryAttendedIds.length === 0) {
+      if (confirm('⚠️ Участие в этом трае не отмечено!\n\nСначала отметьте кто участвовал в этом трае, чтобы участники могли присоединиться к роллу.\n\nОткрыть участие?')) {
         sessionStorage.setItem('pending_roll_data', JSON.stringify({
           raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw
         }));
-        
-        const raidData = allRaids.find(r => r.id === raidId);
-        if (raidData) {
-          const tempRaid = activeRaid;
-          activeRaid = raidData;
-          openAttendanceModal();
-          setTimeout(() => {
-            activeRaid = tempRaid;
-          }, 100);
-        }
+        openAttendanceModalForTry(raidId, tryId);
         return;
       }
       return;
     }
+    
+    // ⭐ Используем участников этого трая для ролла
+    attendedPlayerIds = tryAttendedIds;
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
@@ -2359,114 +2580,49 @@
   }
   window.closeRollModal = closeRollModal;
 
-  // ── Посещаемость ──────────────────────────────────
-  function openAttendanceModal() {
-    const grid = document.getElementById("attendance-grid");
-    grid.innerHTML = "";
-    
-    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-    const currentAttended = activeRaid?.attended_player_ids || [];
-    
-    approvedChars.forEach(p => {
-      const el = document.createElement("div");
-      const isPresent = currentAttended.includes(p.id);
-      el.className = `attendance-player${isPresent ? ' present' : ''}`;
-      el.dataset.id = p.id;
-      
-      const weapons = p.weapons || [];
-      const weaponLabels = weapons.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return weapon?.label || w;
-      }).join(', ');
-      
-      el.innerHTML = `
-        <span>${isPresent ? '✅' : '⬜'}</span>
-        ${p.name}
-        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
-      `;
-      el.addEventListener("click", () => {
-        el.classList.toggle("present");
-        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
-      });
-      grid.appendChild(el);
-    });
-    openModal("modal-attendance");
-  }
-
-  // ⭐ ИСПРАВЛЕННЫЙ saveAttendanceBtn — после сохранения открывает ожидающий ролл
-  const saveAttendanceBtn = document.getElementById("btn-save-attendance");
-  if (saveAttendanceBtn) {
-    saveAttendanceBtn.addEventListener("click", async () => {
-      const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
-      const btn = document.getElementById("btn-save-attendance");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-      try {
-        await updateRaid(activeRaid.id, { 
-          attended_player_ids: attendedIds 
-        });
-        closeModal("modal-attendance");
-        showToast("Посещаемость сохранена");
-        
-        // Проверяем, есть ли ожидающий ролл
-        const pendingRoll = sessionStorage.getItem('pending_roll_data');
-        if (pendingRoll) {
-          sessionStorage.removeItem('pending_roll_data');
-          const data = JSON.parse(pendingRoll);
-          setTimeout(() => {
-            openRollModal(data.raidId, data.tryId, data.dropId, data.itemName, data.slotLabel, data.property, data.itemSlotRaw);
-          }, 300);
-        }
-      } catch(e) { 
-        showToast("Ошибка: " + e.message, "error"); 
-      }
-      finally { 
-        btn.disabled = false; 
-        btn.textContent = "Сохранить посещаемость"; 
-      }
-    });
-  }
-
   // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
-    const grid = document.getElementById("attendance-grid-close");
-    grid.innerHTML = "";
+    // Проверяем, есть ли участие во всех траях
+    const tries = await getRaidTries(activeRaid.id);
+    let allHaveAttendance = true;
+    let missingTry = null;
     
-    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-    const currentAttended = activeRaid?.attended_player_ids || [];
+    for (const t of tries) {
+      if (!t.attended_player_ids || t.attended_player_ids.length === 0) {
+        allHaveAttendance = false;
+        missingTry = t;
+        break;
+      }
+    }
     
-    approvedChars.forEach(p => {
-      const el = document.createElement("div");
-      const isPresent = currentAttended.includes(p.id);
-      el.className = `attendance-player${isPresent ? ' present' : ''}`;
-      el.dataset.id = p.id;
-      
-      const weapons = p.weapons || [];
-      const weaponLabels = weapons.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return weapon?.label || w;
-      }).join(', ');
-      
-      el.innerHTML = `
-        <span>${isPresent ? '✅' : '⬜'}</span>
-        ${p.name}
-        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
-      `;
-      el.addEventListener("click", () => {
-        el.classList.toggle("present");
-        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
-      });
-      grid.appendChild(el);
-    });
+    if (!allHaveAttendance && tries.length > 0) {
+      const tryNum = tries.findIndex(t => t.id === missingTry.id) + 1;
+      if (!confirm(`⚠️ В трае #${tryNum} не отмечено участие!\n\nРекомендуется отметить участие во всех траях перед закрытием рейда.\n\nПродолжить закрытие?`)) {
+        // Открываем модалку участия для этого трая
+        openAttendanceModalForTry(activeRaid.id, missingTry.id);
+        return;
+      }
+    }
+    
     openModal("modal-close-raid");
   }
 
   const confirmCloseBtn = document.getElementById("btn-confirm-close");
   if (confirmCloseBtn) {
     confirmCloseBtn.addEventListener("click", async () => {
-      const attendedIds = [...document.querySelectorAll("#attendance-grid-close .attendance-player.present")].map(el => el.dataset.id);
       const btn = document.getElementById("btn-confirm-close");
       btn.disabled = true; btn.textContent = "Закрываем...";
       try {
+        // Собираем всех участников из всех траев
+        const tries = await getRaidTries(activeRaid.id);
+        const allAttended = new Set();
+        for (const t of tries) {
+          if (t.attended_player_ids) {
+            t.attended_player_ids.forEach(id => allAttended.add(id));
+          }
+        }
+        const attendedIds = Array.from(allAttended);
+        
         await closeRaid(activeRaid.id, attendedIds, allCharacters.map(p => p.id));
         closeModal("modal-close-raid");
         allRaids   = await getRaids();
