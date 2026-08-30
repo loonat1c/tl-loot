@@ -8,322 +8,330 @@
   <link rel="stylesheet" href="../css/main.css" />
 
   <style>
+    /* ── Layout ─────────────────────────────────────── */
     .profile-container {
-      max-width: 900px;
+      max-width: 860px;
       margin: 0 auto;
     }
 
+    /* ── Profile header ──────────────────────────────── */
     .profile-header {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1.25rem;
       padding: 1.5rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 14px;
       margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-soft, #a78bff), transparent);
     }
 
     .profile-avatar {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #4f2fcf);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: #fff;
       flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(124, 80, 255, 0.2);
     }
 
     .profile-info h2 {
       font-size: 1.2rem;
-      margin-bottom: 0.25rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
     }
 
     .profile-info .email {
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      margin-bottom: 0.4rem;
     }
 
     .profile-info .role {
-      display: inline-block;
-      padding: 0.15rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 700;
       text-transform: uppercase;
-      background: rgba(124, 58, 237, 0.2);
-      color: var(--accent-soft);
+      letter-spacing: 0.5px;
+      background: rgba(124, 58, 237, 0.15);
+      color: var(--accent-soft, #a78bff);
       border: 1px solid var(--accent);
-      margin-top: 0.25rem;
     }
 
-    .characters-section {
-      margin-top: 2rem;
+    .profile-info .role::before {
+      content: '◆';
+      font-size: 0.45rem;
     }
 
+    /* ── Section header ──────────────────────────────── */
     .characters-section .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
 
     .characters-section .section-header h3 {
-      font-size: 1.1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin: 0;
     }
 
+    /* ── Character card ──────────────────────────────── */
     .character-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      border-radius: 14px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .character-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 0 20px var(--accent-glow);
+      box-shadow: 0 0 28px var(--accent-glow);
     }
 
-    .character-card.pending {
-      border-left: 4px solid var(--warning);
-    }
+    .character-card.pending  { border-left: 3px solid var(--warning); }
+    .character-card.approved { border-left: 3px solid var(--success); }
+    .character-card.rejected { border-left: 3px solid var(--danger); opacity: 0.72; }
 
-    .character-card.approved {
-      border-left: 4px solid var(--success);
-    }
+    .char-card-inner { padding: 1.25rem 1.5rem; }
 
-    .character-card.rejected {
-      border-left: 4px solid var(--danger);
-      opacity: 0.7;
-    }
-
-    .character-card .char-top {
+    /* top row */
+    .char-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
+      margin-bottom: 1rem;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
-    .character-card .char-name-wrap {
+    .char-left {
       display: flex;
       align-items: center;
       gap: 0.75rem;
       flex-wrap: wrap;
     }
 
-    .character-card .char-name {
-      font-size: 1.2rem;
+    .char-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .char-name {
+      font-size: 1.05rem;
       font-weight: 700;
       color: var(--text);
+      margin-bottom: 0.3rem;
     }
 
-    .character-card .char-status {
+    .char-status {
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
-      padding: 0.25rem 0.75rem;
+      gap: 5px;
+      padding: 3px 10px;
       border-radius: 20px;
-      font-size: 0.7rem;
-      font-weight: 600;
+      font-size: 0.68rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      border: 1px solid;
     }
 
-    .char-status.pending {
-      background: rgba(245, 158, 11, 0.2);
-      color: var(--warning);
-      border: 1px solid var(--warning);
+    .char-status .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+      flex-shrink: 0;
     }
 
-    .char-status.approved {
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
+    .char-status.pending  { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.35); }
+    .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35);  }
+    .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35);  }
 
-    .char-status.rejected {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--danger);
-      border: 1px solid var(--danger);
-    }
-
-    .character-card .char-actions {
+    .char-actions {
       display: flex;
       gap: 0.5rem;
       flex-shrink: 0;
     }
 
-    .character-card .char-body {
+    /* info block */
+    .char-info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin: 0.75rem 0;
-    }
-
-    .character-card .char-body .char-weapons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-
-    .character-card .char-body .weapon-tag {
+      gap: 0.75rem;
       background: var(--bg-card2);
-      padding: 0.3rem 0.8rem;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .char-info-block .label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.4rem;
+    }
+
+    .char-weapons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    .weapon-tag {
+      background: var(--bg-card);
+      padding: 0.25rem 0.7rem;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       border: 1px solid var(--border);
       color: var(--text);
     }
 
-    .character-card .char-body .label {
-      font-size: 0.75rem;
+    .date-val {
+      font-size: 0.85rem;
       color: var(--text-muted);
-      display: block;
-      margin-bottom: 0.25rem;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
     }
 
-    .character-card .char-loot {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
+    /* loot */
+    .char-loot {
       border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
+      margin-top: 0.25rem;
     }
 
-    .character-card .char-loot .label {
-      font-size: 0.75rem;
+    .char-loot .label {
+      font-size: 0.68rem;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+      display: block;
       margin-bottom: 0.4rem;
     }
 
-    .character-card .char-loot-items {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
+    .char-loot-items { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
-    .character-card .char-loot-items .loot-tag {
-      background: rgba(124, 58, 237, 0.15);
-      padding: 0.3rem 0.8rem;
+    .loot-tag {
+      background: rgba(124, 58, 237, 0.12);
+      padding: 0.25rem 0.7rem;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       border: 1px solid var(--accent);
-      color: var(--accent-soft);
+      color: var(--accent-soft, #a78bff);
     }
 
-    .character-card .char-moderation-note {
+    /* notes */
+    .char-moderation-note,
+    .char-moderation-feedback {
       margin-top: 0.75rem;
-      padding: 0.75rem;
+      padding: 0.65rem 0.85rem;
       background: var(--bg-card2);
-      border-radius: var(--radius);
-      font-size: 0.85rem;
+      border-radius: 8px;
+      font-size: 0.83rem;
       color: var(--text-muted);
-      border-left: 3px solid var(--warning);
     }
 
-    .character-card .char-moderation-feedback {
-      margin-top: 0.75rem;
-      padding: 0.75rem;
+    .char-moderation-note     { border-left: 3px solid var(--warning); }
+    .char-moderation-feedback { border-left: 3px solid var(--danger);  }
+
+    /* buttons */
+    .btn-edit-char {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
       background: var(--bg-card2);
-      border-radius: var(--radius);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      border-left: 3px solid var(--danger);
+      color: var(--text);
+      transition: border-color 0.15s;
     }
+
+    .btn-edit-char:hover { border-color: var(--accent); }
+    .btn-edit-char:active { transform: scale(0.96); }
 
     .btn-delete {
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-      padding: 0.3rem 0.8rem;
-      border-radius: 6px;
-      border: none;
+      padding: 0.3rem 0.75rem;
+      border-radius: 7px;
+      border: 1px solid rgba(239,68,68,0.2);
       font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      background: var(--danger);
-      color: #fff;
+      background: rgba(239,68,68,0.1);
+      color: var(--danger);
+      transition: background 0.15s;
     }
 
-    .btn-delete:hover {
-      opacity: 0.85;
-    }
+    .btn-delete:hover  { background: rgba(239,68,68,0.2); }
+    .btn-delete:active { transform: scale(0.96); }
 
-    .btn-delete:active {
-      transform: scale(0.95);
-    }
-
-    .btn-edit-char {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.3rem 0.8rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      background: var(--bg-card2);
-      color: var(--text);
-    }
-
-    .btn-edit-char:hover {
-      background: var(--bg-card);
-      border-color: var(--accent);
-    }
-
-    .btn-edit-char:active {
-      transform: scale(0.95);
-    }
-
+    /* empty state */
     .empty-state {
       text-align: center;
       padding: 3rem 2rem;
+      border: 1.5px dashed rgba(255,255,255,0.08);
+      border-radius: 14px;
       color: var(--text-muted);
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
     }
 
     .empty-state .icon {
-      font-size: 3rem;
+      font-size: 2.5rem;
       display: block;
       margin-bottom: 0.75rem;
     }
 
-    .empty-state p {
-      font-size: 1rem;
-      margin-bottom: 0.25rem;
-    }
+    .empty-state p    { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; font-weight: 500; }
+    .empty-state small { font-size: 0.82rem; }
 
-    .empty-state small {
-      font-size: 0.85rem;
-    }
-
-    /* ── Модальное окно ────────────────────────────────── */
+    /* ── Modal ───────────────────────────────────────── */
     .modal .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
     }
 
-    .modal .form-row .form-group {
-      margin-bottom: 0;
-    }
+    .modal .form-row .form-group { margin-bottom: 0; }
 
     .weapon-slots {
       display: grid;
@@ -331,9 +339,7 @@
       gap: 0.75rem;
     }
 
-    .weapon-slots .form-group {
-      margin-bottom: 0;
-    }
+    .weapon-slots .form-group { margin-bottom: 0; }
 
     .loot-selection {
       margin-top: 0.5rem;
@@ -357,10 +363,7 @@
       margin-bottom: 0.2rem;
     }
 
-    .loot-select-wrap {
-      position: relative;
-      width: 100%;
-    }
+    .loot-select-wrap { position: relative; width: 100%; }
 
     .loot-select-wrap .select-display {
       width: 100%;
@@ -371,8 +374,6 @@
       border-radius: 4px;
       color: var(--text);
       cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
       user-select: none;
       white-space: nowrap;
       overflow: hidden;
@@ -380,40 +381,23 @@
       position: relative;
     }
 
-    .loot-select-wrap .select-display::after {
-      content: '▼';
-      position: absolute;
-      right: 0.6rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      pointer-events: none;
-    }
-
-    .loot-select-wrap .select-display:focus {
-      border-color: var(--accent);
-      outline: none;
-    }
+    .loot-select-wrap .select-display:focus { border-color: var(--accent); outline: none; }
 
     .loot-select-wrap .dropdown {
       display: none;
       position: absolute;
       top: calc(100% + 2px);
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       max-height: 200px;
       overflow-y: auto;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 4px;
       z-index: 50;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
-    .loot-select-wrap .dropdown.open {
-      display: block;
-    }
+    .loot-select-wrap .dropdown.open { display: block; }
 
     .loot-select-wrap .dropdown .search-input {
       width: 100%;
@@ -429,35 +413,23 @@
       z-index: 1;
     }
 
-    .loot-select-wrap .dropdown .search-input:focus {
-      border-color: var(--accent);
-    }
+    .loot-select-wrap .dropdown .search-input:focus { border-color: var(--accent); }
 
-    .loot-select-wrap .dropdown .items-wrap {
-      max-height: 160px;
-      overflow-y: auto;
-    }
+    .loot-select-wrap .dropdown .items-wrap { max-height: 160px; overflow-y: auto; }
 
     .loot-select-wrap .dropdown .item {
       padding: 0.3rem 0.6rem;
       cursor: pointer;
       font-size: 0.85rem;
-      transition: background 0.1s;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: background 0.1s;
     }
 
-    .loot-select-wrap .dropdown .item:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .loot-select-wrap .dropdown .item.selected {
-      background: var(--accent);
-      color: #fff;
-    }
+    .loot-select-wrap .dropdown .item:hover,
+    .loot-select-wrap .dropdown .item.selected { background: var(--accent); color: #fff; }
 
     .loot-select-wrap .dropdown .item.empty {
       color: var(--text-muted);
@@ -465,47 +437,18 @@
       font-style: italic;
     }
 
-    .loot-select-wrap .dropdown .item.empty:hover {
-      background: transparent;
-    }
+    .loot-select-wrap .dropdown .item.empty:hover { background: transparent; }
 
-    .moderation-note {
-      margin-top: 0.5rem;
-    }
+    .moderation-note textarea { resize: vertical; min-height: 60px; }
 
-    .moderation-note textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    @media (max-width: 768px) {
-      .profile-header {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .modal .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .weapon-slots {
-        grid-template-columns: 1fr;
-      }
-
-      .character-card .char-body {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-      }
-
-      .character-card .char-top {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .character-card .char-actions {
-        justify-content: flex-start;
-        margin-top: 0.25rem;
-      }
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 640px) {
+      .profile-header { flex-direction: column; text-align: center; }
+      .modal .form-row { grid-template-columns: 1fr; }
+      .weapon-slots    { grid-template-columns: 1fr; }
+      .char-info-grid  { grid-template-columns: 1fr; }
+      .char-top        { flex-direction: column; }
+      .char-actions    { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -516,10 +459,6 @@
 
 <main class="container profile-container">
 
-  <!-- ============================================
-       ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
-  ============================================ -->
-
   <div class="profile-header" id="profile-header">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
@@ -529,16 +468,10 @@
     </div>
   </div>
 
-  <!-- ============================================
-       ПЕРСОНАЖИ
-  ============================================ -->
-
   <div class="characters-section">
     <div class="section-header">
-      <h3>👥 Мой персонаж</h3>
-      <button class="btn btn-primary btn-sm" id="btn-add-character">
-        + Добавить персонажа
-      </button>
+      <h3>Персонаж</h3>
+      <button class="btn btn-primary btn-sm" id="btn-add-character">+ Добавить персонажа</button>
     </div>
 
     <div id="characters-list">
@@ -553,9 +486,7 @@
 </main>
 
 
-<!-- ============================================
-     МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕРСОНАЖА
-============================================ -->
+<!-- ── MODAL ─────────────────────────────────────────── -->
 
 <div class="modal-overlay hidden" id="modal-character">
   <div class="modal">
@@ -575,13 +506,13 @@
       <label>Оружие *</label>
       <div class="weapon-slots">
         <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Основное оружие</label>
+          <label style="font-size:0.75rem; color:var(--text-muted);">Основное</label>
           <select id="f-char-weapon1">
             <option value="">— выбери —</option>
           </select>
         </div>
         <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Дополнительное оружие</label>
+          <label style="font-size:0.75rem; color:var(--text-muted);">Дополнительное</label>
           <select id="f-char-weapon2">
             <option value="">— выбери —</option>
           </select>
@@ -596,7 +527,7 @@
 
     <div class="form-group moderation-note">
       <label>Сообщение модератору (опционально)</label>
-      <textarea id="f-moderation-note" placeholder="Дополнительная информация для модерации..." rows="2"></textarea>
+      <textarea id="f-moderation-note" placeholder="Дополнительная информация..." rows="2"></textarea>
     </div>
 
     <div id="char-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
@@ -609,189 +540,131 @@
 </div>
 
 
-<!-- ============================================
-     JAVASCRIPT
-============================================ -->
-
 <script type="module">
-  // ============================================
-  // ЗАЩИТА
-  // ============================================
-  
-  document.addEventListener('contextmenu', function(e) {
-    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (
-      e.key === 'F12' ||
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
-      (e.ctrlKey && e.key === 'u') ||
-      (e.ctrlKey && e.key === 's')
-    ) {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  console.log('🔒 Защита активирована');
-
-  // ============================================
-  // ИМПОРТЫ
-  // ============================================
-
+  // ── Imports ────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
-  import { 
-    initAuth, 
-    authReady, 
-    currentUser, 
+  import {
+    initAuth,
+    authReady,
+    currentUser,
     currentRole,
     isModerator,
     isAdmin
   } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
-  import { WEAPONS, SLOTS, QUALITY } from "../js/constants.js";
-  import { 
-    collection, 
-    doc, 
-    getDocs, 
-    addDoc, 
-    updateDoc, 
+  import { WEAPONS, SLOTS } from "../js/constants.js";
+  import {
+    collection,
+    doc,
+    getDocs,
+    addDoc,
+    updateDoc,
     deleteDoc,
     query,
     where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ============================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ============================================
-
+  // ── Init ───────────────────────────────────────────
   initNavbar();
-  await initAuth();
-  await authReady;
 
-  if (!currentUser) {
-    window.location.href = '/pages/login.html';
-    throw new Error('Redirect to login');
+  let authResult;
+  try {
+    await initAuth();
+    authResult = await authReady;
+  } catch (err) {
+    console.error('❌ Auth error:', err);
   }
 
-  // ============================================
-  // СОСТОЯНИЕ
-  // ============================================
+  // currentUser — живой экспорт, читаем после await
+  const { currentUser: user, currentRole: userRole } = authResult || {};
 
-  let allItems = [];
+  if (!user) {
+    window.location.href = '/pages/login.html';
+    throw new Error('Not authenticated');
+  }
+
+  // ── State ──────────────────────────────────────────
+  let allItems  = [];
   let allBosses = [];
   let characters = [];
   let editingCharId = null;
-  const userId = currentUser?.uid;
+
+  const userId = user.uid;
   const userIsModerator = isModerator() || isAdmin();
 
-  // ============================================
-  // ЗАГРУЗКА ДАННЫХ
-  // ============================================
-
+  // ── Load ───────────────────────────────────────────
   async function loadData() {
     try {
       allItems = await getItems();
-      allBosses = await getBosses();
-      await loadCharacters();
-      renderProfile();
-      renderCharacters();
-      populateWeaponSelects();
-      populateLootSlots();
-      setupWeaponSync();
-    } catch (error) {
-      console.error('Ошибка загрузки данных:', error);
+    } catch (e) {
+      console.warn('⚠️ getItems failed:', e);
+      allItems = [];
     }
+
+    try {
+      allBosses = await getBosses();
+    } catch (e) {
+      console.warn('⚠️ getBosses failed:', e);
+      allBosses = [];
+    }
+
+    try {
+      await loadCharacters();
+    } catch (e) {
+      console.warn('⚠️ loadCharacters failed:', e);
+      characters = [];
+    }
+
+    // Рендер всегда, даже если что-то упало
+    renderProfile();
+    renderCharacters();
+    populateWeaponSelects();
+    populateLootSlots();
+    setupWeaponSync();
+
+    console.log('✅ loadData done. items:', allItems.length, 'chars:', characters.length);
   }
 
   async function loadCharacters() {
-    try {
-      const charsRef = collection(db, 'characters');
-      const q = query(charsRef, where('user_id', '==', userId));
-      const querySnapshot = await getDocs(q);
-      characters = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      characters.sort((a, b) => {
-        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
-        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
-        return dateB - dateA;
-      });
-    } catch (error) {
-      console.error('Ошибка загрузки персонажей:', error);
-      characters = [];
-    }
+    const q = query(collection(db, 'characters'), where('user_id', '==', userId));
+    const snap = await getDocs(q);
+    characters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    characters.sort((a, b) => {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
   }
 
-  // ============================================
-  // ОТОБРАЖЕНИЕ ПРОФИЛЯ
-  // ============================================
-
+  // ── Render profile ─────────────────────────────────
   function renderProfile() {
-    const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Пользователь';
+    const name = user.displayName || user.email?.split('@')[0] || 'Пользователь';
     document.getElementById('profile-name').textContent = name;
-    document.getElementById('profile-email').textContent = currentUser?.email || '—';
-    document.getElementById('profile-role').textContent = currentRole || 'guest';
-
-    const avatar = document.getElementById('profile-avatar');
-    avatar.textContent = name.charAt(0).toUpperCase();
+    document.getElementById('profile-email').textContent = user.email || '—';
+    document.getElementById('profile-role').textContent = currentRole || userRole || 'guest';
+    document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
   }
 
-  // ============================================
-  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-  // ============================================
-
-  function getWeaponLabel(weaponId) {
-    const weapon = WEAPONS.find(w => w.id === weaponId);
-    return weapon?.label || weaponId;
+  // ── Helpers ────────────────────────────────────────
+  function getWeaponLabel(id) {
+    return WEAPONS.find(w => w.id === id)?.label || id;
   }
 
-  function getBossName(bossId) {
-    const boss = allBosses.find(b => b.id === bossId);
-    return boss?.name || '—';
-  }
-
-  function getBossIcon(bossId) {
-    const boss = allBosses.find(b => b.id === bossId);
-    return boss?.icon || null;
-  }
-
-  function getQualityLabel(quality) {
-    const q = QUALITY.find(q => q.id === quality);
-    return q?.label || quality;
-  }
-
-  function getSlotLabel(slotId) {
-    const slot = SLOTS.find(s => s.id === slotId);
-    return slot?.label || slotId;
-  }
-
-  function getWeaponTypeLabel(type) {
-    const types = {
-      'bow': '🏹 Лук', 'staff': '🪄 Посох', 'twohand_sword': '⚔️ Двуручный меч',
-      'crossbow': '🎯 Арбалеты', 'wand': '✨ Жезл', 'daggers': '🗡️ Кинжалы',
-      'sword_shield': '🛡️ Щит и меч', 'spear': '🔱 Копье'
+  function getWeaponIcon(id) {
+    const icons = {
+      bow: '🏹', staff: '🪄', wand: '✨', greatsword: '⚔️',
+      sword_shield: '🛡️', spear: '🔱', crossbow: '🎯', daggers: '🗡️'
     };
-    return types[type] || type;
+    return icons[id] || '⚔️';
   }
 
-  // ============================================
-  // ОТОБРАЖЕНИЕ ПЕРСОНАЖЕЙ
-  // ============================================
-
+  // ── Render characters ──────────────────────────────
   function renderCharacters() {
     const container = document.getElementById('characters-list');
-    const addBtn = document.getElementById('btn-add-character');
+    const addBtn    = document.getElementById('btn-add-character');
 
     if (addBtn) {
-      addBtn.style.display = characters.length > 0 ? 'none' : 'inline-flex';
+      addBtn.style.display = characters.length > 0 ? 'none' : '';
     }
 
     if (!characters.length) {
@@ -800,372 +673,290 @@
           <span class="icon">🎮</span>
           <p>У вас пока нет персонажа</p>
           <small>Создайте персонажа, чтобы участвовать в рейдах</small>
-        </div>
-      `;
+        </div>`;
       return;
     }
 
     container.innerHTML = characters.map(char => {
-      const statusClass = char.status || 'pending';
+      const status = char.status || 'pending';
       const statusLabel = {
-        'pending': '⏳ На модерации',
-        'approved': '✅ Одобрен',
-        'rejected': '❌ Отклонён'
-      }[statusClass] || '⏳ На модерации';
+        pending:  '⏳ На модерации',
+        approved: '✅ Одобрен',
+        rejected: '❌ Отклонён'
+      }[status] || '⏳ На модерации';
 
-      const canEdit = statusClass === 'pending' || statusClass === 'rejected';
+      const canEdit = status === 'pending' || status === 'rejected';
 
-      const weaponsHtml = char.weapons?.map(w => {
-        return `<span class="weapon-tag">${getWeaponLabel(w)}</span>`;
-      }).join('') || '<span class="weapon-tag" style="color:var(--text-muted);">Нет оружия</span>';
+      const firstWeapon = char.weapons?.[0];
+      const icon = getWeaponIcon(firstWeapon);
 
-      let lootHtml = '';
-      if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
-        const lootItems = Object.entries(char.desired_loot)
-          .filter(([_, itemId]) => itemId)
-          .map(([slot, itemId]) => {
-            const item = allItems.find(i => i.id === itemId);
-            const slotObj = SLOTS.find(s => s.id === slot);
-            const slotLabel = slotObj?.label || slot;
-            return item ? `
-              <span class="loot-tag">${slotLabel}: ${item.name}</span>
-            ` : '';
-          }).filter(Boolean).join('');
-        
-        if (lootItems) {
-          lootHtml = `
-            <div class="char-loot">
-              <div class="label">🎯 Желаемый лут</div>
-              <div class="char-loot-items">${lootItems}</div>
-            </div>
-          `;
-        }
-      }
+      const weaponsHtml = char.weapons?.length
+        ? char.weapons.map(w => `<span class="weapon-tag">${getWeaponLabel(w)}</span>`).join('')
+        : '<span class="weapon-tag" style="color:var(--text-muted)">Нет</span>';
 
-      let noteHtml = '';
-      if (char.moderation_note) {
-        noteHtml = `
-          <div class="char-moderation-note">
-            💬 ${char.moderation_note}
+      const lootEntries = char.desired_loot
+        ? Object.entries(char.desired_loot).filter(([, v]) => v)
+        : [];
+
+      const lootHtml = lootEntries.length ? `
+        <div class="char-loot">
+          <span class="label">🎯 Желаемый лут</span>
+          <div class="char-loot-items">
+            ${lootEntries.map(([slot, itemId]) => {
+              const item = allItems.find(i => i.id === itemId);
+              const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+              return item ? `<span class="loot-tag">${slotLabel}: ${item.name}</span>` : '';
+            }).filter(Boolean).join('')}
           </div>
-        `;
-      }
+        </div>` : '';
 
-      let feedbackHtml = '';
-      if (char.moderation_feedback) {
-        feedbackHtml = `
-          <div class="char-moderation-feedback">
-            📝 Ответ модератора: ${char.moderation_feedback}
-          </div>
-        `;
-      }
+      const noteHtml = char.moderation_note
+        ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : '';
+
+      const feedbackHtml = char.moderation_feedback
+        ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
+
+      const date = char.created_at
+        ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '—';
 
       return `
-        <div class="character-card ${statusClass}">
-          <div class="char-top">
-            <div class="char-name-wrap">
-              <span class="char-name">${char.name}</span>
-              <span class="char-status ${statusClass}">${statusLabel}</span>
-            </div>
-            <div class="char-actions">
-              ${canEdit ? `<button class="btn-edit-char" onclick="window.editCharacter('${char.id}')">✏️ Редактировать</button>` : ''}
-              <button class="btn-delete" onclick="window.deleteCharacter('${char.id}')">🗑️ Удалить</button>
-            </div>
-          </div>
-
-          <div class="char-body">
-            <div>
-              <span class="label">⚔️ Оружие</span>
-              <div class="char-weapons">${weaponsHtml}</div>
-            </div>
-            <div>
-              <span class="label">📅 Создан</span>
-              <div style="font-size:0.9rem; color:var(--text-muted);">
-                ${char.created_at ? new Date(char.created_at).toLocaleDateString() : '—'}
+        <div class="character-card ${status}">
+          <div class="char-card-inner">
+            <div class="char-top">
+              <div class="char-left">
+                <div class="char-icon">${icon}</div>
+                <div>
+                  <div class="char-name">${char.name}</div>
+                  <span class="char-status ${status}">
+                    <span class="dot"></span>${statusLabel}
+                  </span>
+                </div>
+              </div>
+              <div class="char-actions">
+                ${canEdit ? `<button class="btn-edit-char" data-id="${char.id}">✏️ Редактировать</button>` : ''}
+                <button class="btn-delete" data-id="${char.id}">🗑️ Удалить</button>
               </div>
             </div>
-          </div>
 
-          ${lootHtml}
-          ${noteHtml}
-          ${feedbackHtml}
-        </div>
-      `;
+            <div class="char-info-grid">
+              <div class="char-info-block">
+                <span class="label">⚔️ Оружие</span>
+                <div class="char-weapons">${weaponsHtml}</div>
+              </div>
+              <div class="char-info-block">
+                <span class="label">📅 Создан</span>
+                <div class="date-val">${date}</div>
+              </div>
+            </div>
+
+            ${lootHtml}
+            ${noteHtml}
+            ${feedbackHtml}
+          </div>
+        </div>`;
     }).join('');
 
-    window.editCharacter = (id) => {
-      const char = characters.find(c => c.id === id);
-      if (char) openEditCharacter(char);
-    };
-
-    window.deleteCharacter = async (id) => {
-      const char = characters.find(c => c.id === id);
-      if (!char) return;
-      
-      const statusLabel = {
-        'pending': 'на модерации',
-        'approved': 'одобренного',
-        'rejected': 'отклонённого'
-      }[char.status] || '';
-      
-      if (!confirm(`Удалить персонажа «${char.name}» (${statusLabel})?`)) return;
-      
-      try {
-        await deleteDoc(doc(db, 'characters', id));
-        characters = characters.filter(c => c.id !== id);
-        renderCharacters();
-        showToast('Персонаж удалён. Теперь можно создать нового!');
-      } catch (error) {
-        console.error('Ошибка удаления:', error);
-        showToast('Ошибка удаления', 'error');
-      }
-    };
-  }
-
-  // ============================================
-  // ЗАПОЛНЕНИЕ SELECT ОРУЖИЙ
-  // ============================================
-
-  function populateWeaponSelects() {
-    const selects = ['f-char-weapon1', 'f-char-weapon2'];
-    
-    selects.forEach(selectId => {
-      const select = document.getElementById(selectId);
-      if (!select) return;
-
-      const currentValue = select.value;
-      select.innerHTML = `<option value="">— выбери —</option>`;
-
-      WEAPONS.forEach(weapon => {
-        const option = document.createElement('option');
-        option.value = weapon.id;
-        option.textContent = weapon.label;
-        select.appendChild(option);
+    // Делегирование событий — безопаснее onclick в innerHTML
+    container.querySelectorAll('.btn-edit-char').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const char = characters.find(c => c.id === btn.dataset.id);
+        if (char) openEditCharacter(char);
       });
+    });
 
-      if (currentValue) {
-        select.value = currentValue;
-      }
+    container.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteCharacter(btn.dataset.id));
     });
   }
 
-  // ============================================
-  // СИНХРОНИЗАЦИЯ ВЫБОРА ОРУЖИЯ
-  // ============================================
-
-  function setupWeaponSync() {
-    const weapon1 = document.getElementById('f-char-weapon1');
-    const weapon2 = document.getElementById('f-char-weapon2');
-
-    function syncWeapons() {
-      const val1 = weapon1.value;
-      const val2 = weapon2.value;
-
-      Array.from(weapon2.options).forEach(opt => {
-        if (opt.value && opt.value === val1) {
-          opt.disabled = true;
-        } else {
-          opt.disabled = false;
-        }
-      });
-
-      if (val2 && val2 === val1) {
-        weapon2.value = '';
-      }
+  async function deleteCharacter(id) {
+    const char = characters.find(c => c.id === id);
+    if (!char) return;
+    const label = { pending: 'на модерации', approved: 'одобренного', rejected: 'отклонённого' }[char.status] || '';
+    if (!confirm(`Удалить персонажа «${char.name}» (${label})?`)) return;
+    try {
+      await deleteDoc(doc(db, 'characters', id));
+      characters = characters.filter(c => c.id !== id);
+      renderCharacters();
+      showToast('Персонаж удалён. Теперь можно создать нового!');
+    } catch (e) {
+      console.error('deleteCharacter:', e);
+      showToast('Ошибка удаления', 'error');
     }
-
-    weapon1.removeEventListener('change', syncWeapons);
-    weapon2.removeEventListener('change', syncWeapons);
-    
-    weapon1.addEventListener('change', syncWeapons);
-    weapon2.addEventListener('change', syncWeapons);
-
-    syncWeapons();
   }
 
-  // ============================================
-  // SELECT С ПОИСКОМ
-  // ============================================
+  // ── Weapon selects ─────────────────────────────────
+  function populateWeaponSelects() {
+    ['f-char-weapon1', 'f-char-weapon2'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">— выбери —</option>`;
+      WEAPONS.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.id;
+        opt.textContent = w.label;
+        sel.appendChild(opt);
+      });
+      if (cur) sel.value = cur;
+    });
+  }
 
+  function setupWeaponSync() {
+    const w1 = document.getElementById('f-char-weapon1');
+    const w2 = document.getElementById('f-char-weapon2');
+    if (!w1 || !w2) return;
+
+    const sync = () => {
+      const v1 = w1.value;
+      Array.from(w2.options).forEach(o => { o.disabled = o.value && o.value === v1; });
+      if (w2.value && w2.value === v1) w2.value = '';
+    };
+
+    w1.addEventListener('change', sync);
+    w2.addEventListener('change', sync);
+    sync();
+  }
+
+  // ── Searchable select ──────────────────────────────
   function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
     const container = document.createElement('div');
     container.className = 'loot-slot';
-    
-    const selectedItem = items.find(i => i.id === selectedValue);
-    const displayText = selectedItem ? selectedItem.name : '— не выбрано —';
+
+    const selected = items.find(i => i.id === selectedValue);
+    const displayText = selected ? selected.name : '— не выбрано —';
 
     container.innerHTML = `
       <span class="loot-label">${slotLabel}</span>
       <div class="loot-select-wrap" data-slot="${slotId}">
-        <div class="select-display" data-value="${selectedValue || ''}">
-          ${displayText}
-        </div>
+        <div class="select-display" tabindex="0" data-value="${selectedValue}">${displayText}</div>
         <div class="dropdown">
           <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
           <div class="items-wrap"></div>
         </div>
-      </div>
-    `;
+      </div>`;
 
-    const wrap = container.querySelector('.loot-select-wrap');
-    const display = wrap.querySelector('.select-display');
-    const dropdown = wrap.querySelector('.dropdown');
-    const searchInput = wrap.querySelector('.search-input');
+    const wrap      = container.querySelector('.loot-select-wrap');
+    const display   = wrap.querySelector('.select-display');
+    const dropdown  = wrap.querySelector('.dropdown');
+    const search    = wrap.querySelector('.search-input');
     const itemsWrap = wrap.querySelector('.items-wrap');
+    let current     = selectedValue;
 
-    let currentValue = selectedValue || '';
-
-    function renderItems(filter = '') {
-      const search = filter.toLowerCase().trim();
-      let filtered = items;
-      
-      if (search) {
-        filtered = items.filter(item => 
-          item.name.toLowerCase().includes(search)
-        );
-      }
-
+    const renderItems = (filter = '') => {
+      const q = filter.toLowerCase();
+      const filtered = q ? items.filter(i => i.name.toLowerCase().includes(q)) : items;
       itemsWrap.innerHTML = '';
-
       if (!filtered.length) {
         itemsWrap.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
-      } else {
-        filtered.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'item';
-          if (item.id === currentValue) {
-            div.classList.add('selected');
-          }
-          div.textContent = item.name;
-          div.dataset.value = item.id;
-          div.addEventListener('click', () => {
-            selectItem(item.id, item.name);
-          });
-          itemsWrap.appendChild(div);
-        });
+        return;
       }
-    }
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item' + (item.id === current ? ' selected' : '');
+        div.textContent = item.name;
+        div.addEventListener('click', () => {
+          current = item.id;
+          display.textContent = item.name;
+          display.dataset.value = item.id;
+          dropdown.classList.remove('open');
+          renderItems();
+        });
+        itemsWrap.appendChild(div);
+      });
+    };
 
-    function selectItem(value, label) {
-      currentValue = value;
-      display.textContent = label || '— не выбрано —';
-      display.dataset.value = value;
-      dropdown.classList.remove('open');
-      renderItems();
-    }
-
-    display.addEventListener('click', (e) => {
+    // Кнопка очистки через первый пустой элемент
+    display.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = dropdown.classList.contains('open');
-      dropdown.classList.toggle('open');
+      // Закрываем все другие
+      document.querySelectorAll('.loot-select-wrap .dropdown.open').forEach(d => {
+        if (d !== dropdown) d.classList.remove('open');
+      });
       if (!isOpen) {
-        searchInput.value = '';
+        dropdown.classList.add('open');
+        search.value = '';
         renderItems();
-        setTimeout(() => searchInput.focus(), 100);
-      }
-    });
-
-    searchInput.addEventListener('input', () => {
-      renderItems(searchInput.value);
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!container.contains(e.target)) {
+        setTimeout(() => search.focus(), 80);
+      } else {
         dropdown.classList.remove('open');
       }
     });
 
-    if (currentValue) {
-      const item = items.find(i => i.id === currentValue);
-      if (item) {
-        display.textContent = item.name;
+    display.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        display.click();
       }
-    }
+    });
 
-    container.getSelected = () => currentValue;
+    search.addEventListener('input', () => renderItems(search.value));
 
+    document.addEventListener('click', e => {
+      if (!container.contains(e.target)) dropdown.classList.remove('open');
+    });
+
+    container.getSelected = () => current;
     return container;
   }
 
-  // ============================================
-  // ЗАПОЛНЕНИЕ ЖЕЛАЕМОГО ЛУТА
-  // ============================================
-
+  // ── Loot slots ─────────────────────────────────────
   function populateLootSlots() {
     const container = document.getElementById('loot-selection');
     if (!container) return;
-
     container.innerHTML = '';
 
     const currentValues = {};
     if (editingCharId) {
       const char = characters.find(c => c.id === editingCharId);
-      if (char?.desired_loot) {
-        Object.assign(currentValues, char.desired_loot);
-      }
+      if (char?.desired_loot) Object.assign(currentValues, char.desired_loot);
     }
 
     SLOTS.forEach(slot => {
-      const slotItems = allItems.filter(item => item.slot === slot.id);
-      const select = createSearchableSelect(
-        slot.id,
-        slot.label,
-        slotItems,
-        currentValues[slot.id] || ''
+      const slotItems = allItems.filter(i => i.slot === slot.id);
+      container.appendChild(
+        createSearchableSelect(slot.id, slot.label, slotItems, currentValues[slot.id] || '')
       );
-      container.appendChild(select);
     });
   }
-
-  // ============================================
-  // ПОЛУЧЕНИЕ ВЫБРАННЫХ ЗНАЧЕНИЙ
-  // ============================================
 
   function getSelectedLoot() {
     const result = {};
     document.querySelectorAll('.loot-slot').forEach(slot => {
       const wrap = slot.querySelector('.loot-select-wrap');
-      if (wrap) {
-        const display = wrap.querySelector('.select-display');
-        if (display && display.dataset.value) {
-          const slotId = wrap.dataset.slot;
-          result[slotId] = display.dataset.value;
-        }
-      }
+      if (!wrap) return;
+      const val = wrap.querySelector('.select-display')?.dataset.value;
+      if (val) result[wrap.dataset.slot] = val;
     });
     return result;
   }
 
-  // ============================================
-  // МОДАЛЬНОЕ ОКНО
-  // ============================================
-
-  const modal = document.getElementById('modal-character');
-  const modalTitle = document.getElementById('modal-char-title');
-  const editCharId = document.getElementById('edit-char-id');
-  const charName = document.getElementById('f-char-name');
-  const charWeapon1 = document.getElementById('f-char-weapon1');
-  const charWeapon2 = document.getElementById('f-char-weapon2');
-  const charModerationNote = document.getElementById('f-moderation-note');
-  const charError = document.getElementById('char-error');
+  // ── Modal ──────────────────────────────────────────
+  const modal        = document.getElementById('modal-character');
+  const modalTitle   = document.getElementById('modal-char-title');
+  const editCharId   = document.getElementById('edit-char-id');
+  const fName        = document.getElementById('f-char-name');
+  const fWeapon1     = document.getElementById('f-char-weapon1');
+  const fWeapon2     = document.getElementById('f-char-weapon2');
+  const fNote        = document.getElementById('f-moderation-note');
+  const charError    = document.getElementById('char-error');
 
   function openAddCharacter() {
     if (characters.length > 0) {
-      showToast('У вас уже есть персонаж! Сначала удалите текущего.', 'error');
+      showToast('Сначала удалите текущего персонажа', 'error');
       return;
     }
-
     editingCharId = null;
     modalTitle.textContent = 'Добавить персонажа';
     editCharId.value = '';
-    charName.value = '';
-    charWeapon1.value = '';
-    charWeapon2.value = '';
-    charModerationNote.value = '';
-    
+    fName.value = '';
+    fWeapon1.value = '';
+    fWeapon2.value = '';
+    fNote.value = '';
     charError.style.display = 'none';
     modal.classList.remove('hidden');
-    
     populateLootSlots();
     setupWeaponSync();
   }
@@ -1174,14 +965,12 @@
     editingCharId = char.id;
     modalTitle.textContent = 'Редактировать персонажа';
     editCharId.value = char.id;
-    charName.value = char.name || '';
-    charWeapon1.value = char.weapons?.[0] || '';
-    charWeapon2.value = char.weapons?.[1] || '';
-    charModerationNote.value = char.moderation_note || '';
-
+    fName.value = char.name || '';
+    fWeapon1.value = char.weapons?.[0] || '';
+    fWeapon2.value = char.weapons?.[1] || '';
+    fNote.value = char.moderation_note || '';
     charError.style.display = 'none';
     modal.classList.remove('hidden');
-    
     populateLootSlots();
     setupWeaponSync();
   }
@@ -1191,61 +980,48 @@
     editingCharId = null;
   }
 
+  // Навешиваем обработчики сразу — ДО loadData
   document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
   document.getElementById('btn-char-close').addEventListener('click', closeCharModal);
   document.getElementById('btn-char-cancel').addEventListener('click', closeCharModal);
 
-  // ============================================
-  // СОХРАНЕНИЕ ПЕРСОНАЖА
-  // ============================================
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeCharModal();
+  });
 
+  // ── Save character ─────────────────────────────────
   document.getElementById('btn-char-save').addEventListener('click', async () => {
-    const name = charName.value.trim();
-    const weapon1 = charWeapon1.value;
-    const weapon2 = charWeapon2.value;
-    const moderationNote = charModerationNote.value.trim();
+    const name    = fName.value.trim();
+    const weapon1 = fWeapon1.value;
+    const weapon2 = fWeapon2.value;
+    const note    = fNote.value.trim();
 
     if (!name) {
-      charError.textContent = 'Введите имя персонажа';
-      charError.style.display = 'block';
-      return;
+      return showError('Введите имя персонажа');
     }
-
     if (!weapon1) {
-      charError.textContent = 'Выберите основное оружие';
-      charError.style.display = 'block';
-      return;
+      return showError('Выберите основное оружие');
     }
-
-    if (weapon1 === weapon2) {
-      charError.textContent = 'Основное и дополнительное оружие не могут совпадать';
-      charError.style.display = 'block';
-      return;
+    if (weapon1 && weapon2 && weapon1 === weapon2) {
+      return showError('Основное и дополнительное оружие не могут совпадать');
     }
-
     if (!editCharId.value && characters.length > 0) {
-      charError.textContent = 'У вас уже есть персонаж! Сначала удалите текущего.';
-      charError.style.display = 'block';
-      return;
+      return showError('У вас уже есть персонаж! Сначала удалите текущего.');
     }
 
-    const desiredLoot = getSelectedLoot();
+    const status = userIsModerator ? 'approved' : 'pending';
 
-    // Если пользователь модератор или админ — сразу одобряем
-    const isModeratorOrAdmin = userIsModerator;
-    const status = isModeratorOrAdmin ? 'approved' : 'pending';
-
-    const charData = {
+    const data = {
       name,
       weapons: [weapon1, weapon2].filter(Boolean),
-      desired_loot: desiredLoot,
-      user_id: currentUser.uid,
-      user_email: currentUser.email,
-      status: status,
-      moderation_note: moderationNote || null,
+      desired_loot: getSelectedLoot(),
+      user_id: user.uid,
+      user_email: user.email,
+      status,
+      moderation_note: note || null,
       moderation_feedback: null,
-      moderated_by: isModeratorOrAdmin ? currentUser.uid : null,
-      moderated_at: isModeratorOrAdmin ? new Date().toISOString() : null,
+      moderated_by: userIsModerator ? user.uid : null,
+      moderated_at: userIsModerator ? new Date().toISOString() : null,
       updated_at: new Date().toISOString()
     };
 
@@ -1254,52 +1030,45 @@
     try {
       if (id) {
         const existing = characters.find(c => c.id === id);
-        if (existing && existing.status === 'approved' && !isModeratorOrAdmin) {
-          charError.textContent = 'Нельзя редактировать одобренного персонажа';
-          charError.style.display = 'block';
-          return;
+        if (existing?.status === 'approved' && !userIsModerator) {
+          return showError('Нельзя редактировать одобренного персонажа');
         }
-        await updateDoc(doc(db, 'characters', id), charData);
-        showToast(isModeratorOrAdmin ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
+        await updateDoc(doc(db, 'characters', id), data);
+        showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
       } else {
         await addDoc(collection(db, 'characters'), {
-          ...charData,
+          ...data,
           created_at: new Date().toISOString()
         });
-        showToast(isModeratorOrAdmin ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
+        showToast(userIsModerator ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
       }
-
       closeCharModal();
       await loadCharacters();
       renderCharacters();
-
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
-      charError.textContent = 'Ошибка сохранения: ' + error.message;
-      charError.style.display = 'block';
+    } catch (e) {
+      console.error('Save error:', e);
+      showError('Ошибка сохранения: ' + e.message);
     }
   });
 
-  // ============================================
-  // HELPERS
-  // ============================================
-
-  function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+  function showError(msg) {
+    charError.textContent = msg;
+    charError.style.display = 'block';
   }
 
-  // ============================================
-  // ЗАГРУЗКА ДАННЫХ
-  // ============================================
+  // ── Toast ──────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
 
+  // ── Run ────────────────────────────────────────────
   await loadData();
 
-  console.log('✅ Страница профиля загружена');
-
+  console.log('✅ Profile page ready');
 </script>
 
 </body>
