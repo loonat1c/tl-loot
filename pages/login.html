@@ -120,7 +120,9 @@
   // Если уже авторизован — перенаправить на главную
   await authReady;
   if (currentUser) {
-    window.location.href = "/index.html";
+    const redirect = sessionStorage.getItem('redirect_after_login');
+    sessionStorage.removeItem('redirect_after_login');
+    window.location.href = redirect || "/index.html";
   }
 
   const form = document.getElementById('login-form');
@@ -156,7 +158,9 @@
       const result = await login(email, password);
       
       if (result.success) {
-        window.location.href = "/index.html";
+        const redirect = sessionStorage.getItem('redirect_after_login');
+        sessionStorage.removeItem('redirect_after_login');
+        window.location.href = redirect || "/index.html";
       } else {
         errorDiv.textContent = result.error || 'Ошибка входа';
         errorDiv.style.display = 'block';
