@@ -542,16 +542,14 @@
 
 <script type="module">
   // ── Imports ────────────────────────────────────────
-import { initNavbar } from "../js/modules/navbar.js";
-import {
-  initAuth,
-  authReady,
-  getUser,
-  getRole,
-  isModerator,
-  isAdmin
-} from "../js/modules/auth.js";
-import { getItems } from "../js/modules/items.js";
+  import { initNavbar } from "../js/modules/navbar.js";
+  import {
+    getUser,
+    getRole,
+    isModerator,
+    isAdmin
+  } from "../js/modules/auth.js";
+  import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { WEAPONS, SLOTS } from "../js/constants.js";
   import {
@@ -566,20 +564,21 @@ import { getItems } from "../js/modules/items.js";
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ── Init ───────────────────────────────────────────
-initNavbar();
-await initAuth();
-await authReady;
+  // ⭐ ИСПРАВЛЕНИЕ: initNavbar сам вызывает initAuth и ждёт authReady внутри
+  await initNavbar();
 
-const user     = getUser();
-const userRole = getRole();
+  // ⭐ Теперь currentUser и currentRole точно доступны
+  const user = getUser();
+  const userRole = getRole();
 
-if (!user) {
-  window.location.href = '/pages/login.html';
-  throw new Error('Not authenticated');
-  
+  if (!user) {
+    sessionStorage.setItem('redirect_after_login', window.location.pathname);
+    window.location.href = '/pages/login.html';
+    throw new Error('Not authenticated');
+  }
+
   // ── State ──────────────────────────────────────────
-  let allItems  = [];
+  let allItems = [];
   let allBosses = [];
   let characters = [];
   let editingCharId = null;
@@ -634,7 +633,7 @@ if (!user) {
     const name = user.displayName || user.email?.split('@')[0] || 'Пользователь';
     document.getElementById('profile-name').textContent = name;
     document.getElementById('profile-email').textContent = user.email || '—';
-    document.getElementById('profile-role').textContent = currentRole || userRole || 'guest';
+    document.getElementById('profile-role').textContent = userRole || 'guest';
     document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
   }
 
