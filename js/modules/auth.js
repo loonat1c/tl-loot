@@ -510,5 +510,6 @@ export async function updateUserProfile(data) {
   }
 }
 
+// ⭐ ДОБАВЛЕННЫЕ ЭКСПОРТЫ
 export function getUser() { return currentUser; }
 export function getRole() { return currentRole; }
