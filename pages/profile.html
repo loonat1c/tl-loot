@@ -542,16 +542,16 @@
 
 <script type="module">
   // ── Imports ────────────────────────────────────────
-  import { initNavbar } from "../js/modules/navbar.js";
-  import {
-    initAuth,
-    authReady,
-    currentUser,
-    currentRole,
-    isModerator,
-    isAdmin
-  } from "../js/modules/auth.js";
-  import { getItems } from "../js/modules/items.js";
+import { initNavbar } from "../js/modules/navbar.js";
+import {
+  initAuth,
+  authReady,
+  getUser,
+  getRole,
+  isModerator,
+  isAdmin
+} from "../js/modules/auth.js";
+import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { WEAPONS, SLOTS } from "../js/constants.js";
   import {
@@ -567,24 +567,17 @@
   import { db } from "../js/firebase.js";
 
   // ── Init ───────────────────────────────────────────
-  initNavbar();
+initNavbar();
+await initAuth();
+await authReady;
 
-  let authResult;
-  try {
-    await initAuth();
-    authResult = await authReady;
-  } catch (err) {
-    console.error('❌ Auth error:', err);
-  }
+const user     = getUser();
+const userRole = getRole();
 
-  // currentUser — живой экспорт, читаем после await
-  const { currentUser: user, currentRole: userRole } = authResult || {};
-
-  if (!user) {
-    window.location.href = '/pages/login.html';
-    throw new Error('Not authenticated');
-  }
-
+if (!user) {
+  window.location.href = '/pages/login.html';
+  throw new Error('Not authenticated');
+  
   // ── State ──────────────────────────────────────────
   let allItems  = [];
   let allBosses = [];
