@@ -1123,6 +1123,7 @@
     getDocs, 
     query, 
     orderBy,
+    where,
     doc,
     getDoc,
     onSnapshot,
@@ -1219,6 +1220,7 @@
   let raidUnsubscribe = null;
   let currentEditingTryId = null;
   let tryAttendanceCache = {};
+  let lockSettings = { raids_to_unlock: 999, max_misses: 0 };
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1316,42 +1318,126 @@
     return null;
   }
 
-  function hasWonItemInRaid(charId, itemId) {
-    const triesContainer = document.getElementById('tries-container');
-    if (!triesContainer) return false;
-    
-    const allDrops = [];
-    const tryBlocks = triesContainer.querySelectorAll('.try-block');
-    tryBlocks.forEach(block => {
-      const dropRows = block.querySelectorAll('.drop-row');
-      dropRows.forEach(row => {
-        const winnerName = row.querySelector('.drop-winner strong');
-        if (winnerName) {
-          const char = allCharacters.find(c => c.name === winnerName.textContent);
-          if (char && char.id === charId) {
-            const dropName = row.querySelector('.drop-name')?.textContent || '';
-            const item = allItems.find(i => i.name === dropName);
-            if (item) {
-              allDrops.push({ itemId: item.id, item });
-            }
-          }
-        }
-      });
-    });
-    
-    const currentItem = allItems.find(i => i.id === itemId);
-    if (!currentItem) return false;
-    
-    return allDrops.some(d => {
-      if (d.itemId === itemId) return true;
-      if (currentItem.slot === 'weapon' && d.item.slot === 'weapon') {
-        return getWeaponType(d.itemId) === getWeaponType(itemId);
-      }
-      return false;
-    });
+  function getWeaponLabel(id) {
+    return WEAPONS.find(w => w.id === id)?.label || id;
   }
 
-  function canJoinMainQueue(charId) {
+  // ⭐ ЗАГРУЗКА НАСТРОЕК БЛОКИРОВОК
+  async function loadLockSettings() {
+    try {
+      const settingsRef = doc(db, 'settings', 'locks');
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        lockSettings = settingsSnap.data();
+        console.log('🔒 Настройки блокировок загружены:', lockSettings);
+      }
+    } catch (e) {
+      console.warn('⚠️ Не удалось загрузить настройки блокировок:', e);
+    }
+  }
+
+  // ⭐ ПОЛУЧЕНИЕ ПОБЕД ИГРОКА В ИСТОРИИ (ГЛОБАЛЬНО)
+  async function getPlayerWins(playerId) {
+    try {
+      const historyRef = collection(db, 'loot_history');
+      const q = query(historyRef, where('player_id', '==', playerId));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    } catch (e) {
+      console.warn('⚠️ Ошибка получения истории побед:', e);
+      return [];
+    }
+  }
+
+  // ⭐ ПОЛУЧЕНИЕ ПОБЕД ИГРОКА В ТЕКУЩЕМ РЕЙДЕ
+  async function getPlayerWinsInCurrentRaid(playerId) {
+    if (!activeRaid) return [];
+    try {
+      const historyRef = collection(db, 'loot_history');
+      const q = query(historyRef, 
+        where('player_id', '==', playerId),
+        where('raid_id', '==', activeRaid.id)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    } catch (e) {
+      console.warn('⚠️ Ошибка получения побед в рейде:', e);
+      return [];
+    }
+  }
+
+  // ⭐ ПРОВЕРКА ГЛОБАЛЬНОЙ БЛОКИРОВКИ СЛОТА (ДЛЯ ОСНОВНОЙ ОЧЕРЕДИ)
+  async function isSlotLocked(playerId, itemSlot, itemId) {
+    const wins = await getPlayerWins(playerId);
+    const char = allCharacters.find(c => c.id === playerId);
+    
+    if (!char) return { locked: false, reason: '' };
+    
+    // ---- ОРУЖИЕ ----
+    if (itemSlot === 'weapon') {
+      const item = allItems.find(i => i.id === itemId);
+      if (!item) return { locked: false, reason: '' };
+      
+      const weaponType = item.weapon_type || getWeaponType(itemId);
+      if (!weaponType) return { locked: false, reason: '' };
+      
+      // Проверяем, сколько оружий этого типа уже выиграно
+      const weaponWins = wins.filter(w => {
+        const winItem = allItems.find(i => i.id === w.item_id);
+        return winItem?.slot === 'weapon' && 
+               (winItem.weapon_type === weaponType || getWeaponType(w.item_id) === weaponType);
+      });
+      
+      // Если уже выиграл оружие этого типа — заблокировано
+      if (weaponWins.length > 0) {
+        return { 
+          locked: true, 
+          reason: `Уже выиграл оружие типа ${weaponType} в другом рейде` 
+        };
+      }
+      
+      // Проверяем, сколько всего оружий из спека уже выиграно
+      const charWeapons = char.weapons || [];
+      const totalWeaponWins = wins.filter(w => {
+        const winItem = allItems.find(i => i.id === w.item_id);
+        if (!winItem || winItem.slot !== 'weapon') return false;
+        const wType = winItem.weapon_type || getWeaponType(w.item_id);
+        return charWeapons.includes(wType);
+      });
+      
+      // Если выиграл 2 оружия из своего спека — больше не может участвовать в основной очереди
+      if (totalWeaponWins.length >= 2) {
+        return { 
+          locked: true, 
+          reason: `Уже выиграл 2 оружия из своего спека (${charWeapons.map(w => getWeaponLabel(w)).join(', ')})` 
+        };
+      }
+    }
+    
+    // ---- ДРУГИЕ СЛОТЫ (не оружие) ----
+    const slotWins = wins.filter(w => {
+      const winItem = allItems.find(i => i.id === w.item_id);
+      return winItem?.slot === itemSlot;
+    });
+    
+    if (slotWins.length > 0) {
+      return { 
+        locked: true, 
+        reason: `Уже выиграл предмет в слоте ${SLOTS.find(s => s.id === itemSlot)?.label || itemSlot}` 
+      };
+    }
+    
+    return { locked: false, reason: '' };
+  }
+
+  // ⭐ ПРОВЕРКА ПОБЕДЫ КОНКРЕТНОГО ПРЕДМЕТА В ТЕКУЩЕМ РЕЙДЕ
+  async function hasWonItemInCurrentRaid(playerId, itemId) {
+    const winsInRaid = await getPlayerWinsInCurrentRaid(playerId);
+    return winsInRaid.some(w => w.item_id === itemId);
+  }
+
+  // ⭐ ОБНОВЛЁННАЯ canJoinMainQueue
+  async function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
@@ -1364,18 +1450,25 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    if (hasWonItemInRaid(charId, itemId)) {
-      const item = allItems.find(i => i.id === itemId);
-      const type = item?.slot === 'weapon' ? getWeaponType(itemId) : item?.name;
-      return { can: false, reason: `Уже получил ${type || 'этот предмет'} в этом рейде` };
+    // ⭐ Проверка победы этого предмета в текущем рейде
+    if (await hasWonItemInCurrentRaid(charId, itemId)) {
+      return { can: false, reason: 'Уже выиграл этот предмет в текущем рейде' };
     }
 
+    // ⭐ Проверка глобальной блокировки слота
+    const slotLock = await isSlotLocked(charId, itemSlot, itemId);
+    if (slotLock.locked) {
+      return { can: false, reason: slotLock.reason };
+    }
+
+    // Проверка желаемого лута
     const desired = char.desired_loot || {};
     const wantedItemId = desired[itemSlot];
     if (!wantedItemId || wantedItemId !== itemId) {
       return { can: false, reason: 'Предмет не в желаемом луте' };
     }
 
+    // Проверка совместимости оружия
     if (itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === itemId);
       if (item?.weapon_type) {
@@ -1389,35 +1482,27 @@
     return { can: true };
   }
 
-  function canJoinOpenQueue(charId) {
+  // ⭐ ОБНОВЛЁННАЯ canJoinOpenQueue — только проверка на победу в текущем рейде
+  async function canJoinOpenQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
-    if (hasWonItemInRaid(charId, rollState.itemId)) {
-      const item = allItems.find(i => i.id === rollState.itemId);
-      const type = item?.slot === 'weapon' ? getWeaponType(rollState.itemId) : item?.name;
-      return { can: false, reason: `Уже получил ${type || 'этот предмет'} в этом рейде` };
-    }
-
-    if (rollState.itemSlot === 'weapon') {
-      const item = allItems.find(i => i.id === rollState.itemId);
-      if (item?.weapon_type) {
-        const charWeapons = char.weapons || [];
-        if (!charWeapons.includes(item.weapon_type)) {
-          return { can: false, reason: `Нужен спек: ${item.weapon_type}` };
-        }
-      }
+    // ⭐ Проверяем, выигрывал ли уже в этом рейде
+    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
+    if (winsInRaid.length > 0) {
+      return { can: false, reason: 'Уже выиграл предмет в этом рейде' };
     }
 
     return { can: true };
   }
 
-  function canJoinCurrentQueue(charId) {
+  // ⭐ ОБНОВЛЁННАЯ canJoinCurrentQueue
+  async function canJoinCurrentQueue(charId) {
     return rollState.queue === 'main'
-      ? canJoinMainQueue(charId)
-      : canJoinOpenQueue(charId);
+      ? await canJoinMainQueue(charId)
+      : await canJoinOpenQueue(charId);
   }
 
   // ============================================================
@@ -2461,8 +2546,8 @@
     const isAdminOrLeader = canStartRoll();
     let visibleCount = 0;
 
-    available.forEach(char => {
-      const check = canJoinCurrentQueue(char.id);
+    Promise.all(available.map(async (char) => {
+      const check = await canJoinCurrentQueue(char.id);
       const isMe  = char.id === rollState.currentPlayerId;
 
       if (!isAdminOrLeader && !isMe) return;
@@ -2490,12 +2575,12 @@
         ${actionHtml}
       `;
       list.appendChild(row);
+    })).then(() => {
+      count.textContent = visibleCount;
+      if (!visibleCount) {
+        list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
+      }
     });
-
-    count.textContent = visibleCount;
-    if (!visibleCount) {
-      list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
-    }
   }
 
   function updateResultCard() {
@@ -2569,7 +2654,7 @@
       return;
     }
 
-    const check = canJoinCurrentQueue(playerId);
+    const check = await canJoinCurrentQueue(playerId);
     if (!check.can) { 
       showToast(check.reason, 'error'); 
       return; 
@@ -2827,6 +2912,10 @@
         getBosses(), 
         getItems()
       ]);
+      
+      // ⭐ Загружаем настройки блокировок
+      await loadLockSettings();
+      console.log('🔒 Настройки блокировок:', lockSettings);
       
       console.log('✅ Данные загружены:', {
         рейдов: allRaids.length,
