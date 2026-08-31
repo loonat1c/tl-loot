@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -802,6 +801,26 @@
       color: var(--success);
       background: rgba(34,197,94,0.1);
     }
+
+    /* ── ДИАЛОГОВОЕ ОКНО ── */
+    #modal-dialog .modal {
+      max-width: 420px;
+    }
+    #modal-dialog .modal-header h3 {
+      font-size: 1.1rem;
+    }
+    #dialog-message {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+    #dialog-message br {
+      display: block;
+      content: '';
+      margin: 0.25rem 0;
+    }
   </style>
 </head>
 <body>
@@ -1011,6 +1030,23 @@
   </div>
 </div>
 
+<!-- ⭐ УНИВЕРСАЛЬНОЕ ДИАЛОГОВОЕ ОКНО -->
+<div class="modal-overlay hidden" id="modal-dialog">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 id="dialog-title">Подтверждение</h3>
+      <button class="btn-close" onclick="closeDialog()">✕</button>
+    </div>
+    <div id="dialog-message" style="font-size:0.95rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.5;">
+      Вы уверены?
+    </div>
+    <div class="flex gap-1" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="dialog-cancel">Отмена</button>
+      <button class="btn btn-primary" id="dialog-confirm">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   // ============================================================
   // ЗАЩИТА
@@ -1119,6 +1155,54 @@
     `;
     throw new Error('Security: Function integrity check failed');
   }
+
+  // ============================================================
+  // УНИВЕРСАЛЬНЫЙ ДИАЛОГ
+  // ============================================================
+
+  let dialogResolve = null;
+
+  function openDialog(title, message, confirmText = 'Подтвердить', cancelText = 'Отмена') {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('modal-dialog');
+      document.getElementById('dialog-title').textContent = title;
+      document.getElementById('dialog-message').textContent = message;
+      document.getElementById('dialog-confirm').textContent = confirmText;
+      document.getElementById('dialog-cancel').textContent = cancelText;
+      
+      dialogResolve = resolve;
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('open');
+    });
+  }
+
+  function closeDialog() {
+    const modal = document.getElementById('modal-dialog');
+    modal.classList.remove('open');
+    modal.classList.add('hidden');
+    if (dialogResolve) {
+      dialogResolve(false);
+      dialogResolve = null;
+    }
+  }
+
+  // Навешиваем обработчики
+  document.getElementById('dialog-confirm')?.addEventListener('click', () => {
+    const modal = document.getElementById('modal-dialog');
+    modal.classList.remove('open');
+    modal.classList.add('hidden');
+    if (dialogResolve) {
+      dialogResolve(true);
+      dialogResolve = null;
+    }
+  });
+
+  document.getElementById('dialog-cancel')?.addEventListener('click', closeDialog);
+
+  document.getElementById('modal-dialog')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeDialog();
+  });
 
   // ============================================================
   // ОСНОВНАЯ ЛОГИКА
@@ -1232,9 +1316,7 @@
     return null;
   }
 
-  // ⭐ ПРОВЕРКА НА ПОЛУЧЕННЫЕ ПРЕДМЕТЫ В РЕЙДЕ
   function hasWonItemInRaid(charId, itemId) {
-    // Проверяем все дропы в текущем рейде
     const triesContainer = document.getElementById('tries-container');
     if (!triesContainer) return false;
     
@@ -1269,7 +1351,6 @@
     });
   }
 
-  // ⭐ ПРОВЕРКА ДЛЯ ОСНОВНОЙ ОЧЕРЕДИ
   function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
@@ -1624,18 +1705,24 @@
     if (btnEditRaid) btnEditRaid.addEventListener("click", () => openEditRaid(raid));
     
     const btnDeleteRaid = document.getElementById("btn-delete-raid");
-    if (btnDeleteRaid) btnDeleteRaid.addEventListener("click", () => confirmDeleteRaid(raid));
+    if (btnDeleteRaid) btnDeleteRaid.addEventListener("click", confirmDeleteRaid);
     
     const btnRestoreRaid = document.getElementById("btn-restore-raid");
-    if (btnRestoreRaid) btnRestoreRaid.addEventListener("click", () => confirmRestoreRaid(raid));
+    if (btnRestoreRaid) btnRestoreRaid.addEventListener("click", confirmRestoreRaid);
     
     const btnHardDeleteRaid = document.getElementById("btn-hard-delete-raid");
-    if (btnHardDeleteRaid) btnHardDeleteRaid.addEventListener("click", () => confirmHardDeleteRaid(raid));
+    if (btnHardDeleteRaid) btnHardDeleteRaid.addEventListener("click", confirmHardDeleteRaid);
   }
 
-  // ⭐ ПЕРЕОТКРЫТИЕ РЕЙДА
   async function reopenRaid() {
-    if (!confirm('Открыть рейд для редактирования?\n\nВы сможете добавлять/удалять траи и дропы.')) return;
+    const confirmed = await openDialog(
+      '🔓 Открыть рейд',
+      'Открыть рейд для редактирования?\n\nВы сможете добавлять/удалять траи и дропы.',
+      'Открыть',
+      'Отмена'
+    );
+    if (!confirmed) return;
+    
     try {
       await updateRaid(activeRaid.id, { status: 'open' });
       showToast('Рейд открыт для редактирования');
@@ -1648,10 +1735,26 @@
     }
   }
 
-  // ⭐ УДАЛЕНИЕ БЕЗ ВОССТАНОВЛЕНИЯ
-  async function confirmHardDeleteRaid(raid) {
-    if (!confirm(`💀 ВНИМАНИЕ! Вы собираетесь навсегда удалить рейд от ${formatDate(raid.date)}.\n\nЭто действие НЕЛЬЗЯ будет отменить!\n\nВсе траи и дропы будут удалены безвозвратно.\n\nВы уверены?`)) return;
-    if (!confirm('Последнее предупреждение: удалить рейд навсегда?')) return;
+  async function confirmHardDeleteRaid() {
+    const raid = activeRaid;
+    if (!raid) return;
+    
+    const confirmed1 = await openDialog(
+      '💀 Удалить навсегда!',
+      `Вы собираетесь навсегда удалить рейд от ${formatDate(raid.date)}.\n\nЭто действие НЕЛЬЗЯ будет отменить!\n\nВсе траи и дропы будут удалены безвозвратно.\n\nВы уверены?`,
+      'Да, удалить навсегда',
+      'Отмена'
+    );
+    if (!confirmed1) return;
+    
+    const confirmed2 = await openDialog(
+      '⚠️ Последнее предупреждение',
+      'Вы точно уверены? Это действие необратимо!',
+      'Да, я уверен',
+      'Нет, отмена'
+    );
+    if (!confirmed2) return;
+    
     try {
       const tries = await getRaidTries(raid.id);
       for (const t of tries) {
@@ -1666,6 +1769,45 @@
     } catch(e) {
       showToast('Ошибка: ' + e.message, 'error');
     }
+  }
+
+  async function confirmDeleteRaid() {
+    const raid = activeRaid;
+    if (!raid) return;
+    
+    const confirmed = await openDialog(
+      '🗑️ Удалить рейд?',
+      `Вы уверены, что хотите удалить рейд от ${formatDate(raid.date)}?`,
+      'Удалить',
+      'Отмена'
+    );
+    if (!confirmed) return;
+    
+    await softDeleteRaid(raid.id);
+    showToast("Рейд удалён");
+    allRaids = await getRaids();
+    activeRaid = null;
+    document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
+    renderRaidList();
+  }
+
+  async function confirmRestoreRaid() {
+    const raid = activeRaid;
+    if (!raid) return;
+    
+    const confirmed = await openDialog(
+      '♻️ Восстановить рейд?',
+      `Восстановить рейд от ${formatDate(raid.date)}?`,
+      'Восстановить',
+      'Отмена'
+    );
+    if (!confirmed) return;
+    
+    await restoreRaid(raid.id);
+    showToast("Рейд восстановлен");
+    allRaids = await getRaids();
+    renderRaidList();
+    selectRaid(allRaids.find(r => r.id === raid.id));
   }
 
   // ============================================================
@@ -1762,27 +1904,6 @@
     });
   }
 
-  function confirmDeleteRaid(raid) {
-    if (!confirm(`Удалить рейд от ${formatDate(raid.date)}?`)) return;
-    softDeleteRaid(raid.id).then(async () => {
-      showToast("Рейд удалён");
-      allRaids = await getRaids();
-      activeRaid = null;
-      document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
-      renderRaidList();
-    });
-  }
-
-  function confirmRestoreRaid(raid) {
-    if (!confirm("Восстановить рейд?")) return;
-    restoreRaid(raid.id).then(async () => {
-      showToast("Рейд восстановлен");
-      allRaids = await getRaids();
-      renderRaidList();
-      selectRaid(allRaids.find(r => r.id === raid.id));
-    });
-  }
-
   // ── Трай модалка ──────────────────────────────────
   function openTryModal() {
     document.getElementById("try-boss-select").value = "";
@@ -1826,12 +1947,20 @@
     });
   }
 
-  window.confirmDeleteTry = async (raidId, tryId) => {
-    if (!confirm("Удалить трай и все его дропы?")) return;
+  async function confirmDeleteTry(raidId, tryId) {
+    const confirmed = await openDialog(
+      '🗑️ Удалить трай?',
+      'Удалить трай и все его дропы?',
+      'Удалить',
+      'Отмена'
+    );
+    if (!confirmed) return;
+    
     await deleteTry(raidId, tryId);
     selectRaid(activeRaid);
     showToast("Трай удалён");
-  };
+  }
+  window.confirmDeleteTry = confirmDeleteTry;
 
   // ── Участие в трае ──────────────────────────────
   window.openAttendanceModalForTry = async (raidId, tryId) => {
@@ -2054,14 +2183,22 @@
     });
   }
 
-  window.confirmDeleteDrop = async (raidId, tryId, dropId, name) => {
-    if (!confirm(`Удалить дроп «${name}»?`)) return;
+  async function confirmDeleteDrop(raidId, tryId, dropId, name) {
+    const confirmed = await openDialog(
+      '🗑️ Удалить дроп?',
+      `Удалить дроп «${name}»?`,
+      'Удалить',
+      'Отмена'
+    );
+    if (!confirmed) return;
+    
     await deleteDrop(raidId, tryId, dropId);
     allRaids = await getRaids();
     activeRaid = allRaids.find(r => r.id === raidId);
     selectRaid(activeRaid);
     showToast("Дроп удалён");
-  };
+  }
+  window.confirmDeleteDrop = confirmDeleteDrop;
 
   // ── ФУНКЦИЯ ПРОВЕРКИ ПОБЕДИТЕЛЯ ─────────────────────
   async function checkDropWinner(raidId, tryId, dropId) {
@@ -2100,23 +2237,28 @@
   // ============================================================
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
-    // ⭐ Проверяем участие в этом трае
+    // Проверяем участие в этом трае
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
     const tryAttendedIds = currentTry?.attended_player_ids || [];
     
     if (tryAttendedIds.length === 0) {
-      if (confirm('⚠️ Участие в этом трае не отмечено!\n\nСначала отметьте кто участвовал в этом трае, чтобы участники могли присоединиться к роллу.\n\nОткрыть участие?')) {
+      const confirmed = await openDialog(
+        '⚠️ Участие не отмечено',
+        'Участие в этом трае не отмечено!\n\nСначала отметьте кто участвовал в этом трае, чтобы участники могли присоединиться к роллу.',
+        'Открыть участие',
+        'Отмена'
+      );
+      if (confirmed) {
         sessionStorage.setItem('pending_roll_data', JSON.stringify({
           raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw
         }));
         openAttendanceModalForTry(raidId, tryId);
-        return;
       }
       return;
     }
     
-    // ⭐ Используем участников этого трая для ролла
+    // Используем участников этого трая для ролла
     attendedPlayerIds = tryAttendedIds;
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
@@ -2575,14 +2717,31 @@
     finally { btn.disabled = false; btn.textContent = '✅ Зафиксировать победителя'; }
   });
 
+  // ⭐ ИСПРАВЛЕННАЯ closeRollModal — с красивым диалогом
   function closeRollModal() {
     const hasUnfinishedRoll = !rollState.isFinished && rollState.participants.some(p => p.roll !== null);
     const hasParticipants   = !rollState.isFinished && rollState.participants.filter(p => !p.isBlocked).length > 0;
 
     if (hasUnfinishedRoll) {
-      if (!confirm('⚠️ Ролл запущен, но победитель не зафиксирован. Закрыть?')) return;
+      openDialog('⚠️ Ролл не завершён', 'Ролл уже запущен, но победитель не зафиксирован.\n\nВы уверены, что хотите выйти?', 'Выйти', 'Остаться')
+        .then(confirmed => {
+          if (confirmed) {
+            closeModal("modal-roll");
+            if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
+            rollState.isRolling = false;
+          }
+        });
+      return;
     } else if (hasParticipants) {
-      if (!confirm('⚠️ Есть участники без ролла. Закрыть?')) return;
+      openDialog('⚠️ Есть участники', 'В ролле есть участники, но ролл ещё не запущен.\n\nВы уверены, что хотите выйти?', 'Выйти', 'Остаться')
+        .then(confirmed => {
+          if (confirmed) {
+            closeModal("modal-roll");
+            if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
+            rollState.isRolling = false;
+          }
+        });
+      return;
     }
 
     closeModal("modal-roll");
@@ -2608,8 +2767,13 @@
     
     if (!allHaveAttendance && tries.length > 0) {
       const tryNum = tries.findIndex(t => t.id === missingTry.id) + 1;
-      if (!confirm(`⚠️ В трае #${tryNum} не отмечено участие!\n\nРекомендуется отметить участие во всех траях перед закрытием рейда.\n\nПродолжить закрытие?`)) {
-        // Открываем модалку участия для этого трая
+      const confirmed = await openDialog(
+        '⚠️ Участие не отмечено',
+        `В трае #${tryNum} не отмечено участие!\n\nРекомендуется отметить участие во всех траях перед закрытием рейда.`,
+        'Открыть участие',
+        'Продолжить закрытие'
+      );
+      if (confirmed) {
         openAttendanceModalForTry(activeRaid.id, missingTry.id);
         return;
       }
@@ -2735,4 +2899,3 @@
 </script>
 </body>
 </html>
-```
