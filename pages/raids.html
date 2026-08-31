@@ -1322,6 +1322,39 @@
     return WEAPONS.find(w => w.id === id)?.label || id;
   }
 
+  // ⭐ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РУССКОГО НАЗВАНИЯ ТИПА ОРУЖИЯ
+  function getWeaponTypeLabel(weaponType) {
+    const typeMap = {
+      'staff': 'Посох',
+      'bow': 'Лук',
+      'greatsword': 'Двуручный меч',
+      'sword_shield': 'Щит и меч',
+      'wand': 'Жезл',
+      'spear': 'Копьё',
+      'crossbow': 'Арбалеты',
+      'daggers': 'Кинжалы'
+    };
+    return typeMap[weaponType] || weaponType;
+  }
+
+  // ⭐ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РУССКОГО НАЗВАНИЯ СЛОТА
+  function getSlotLabel(slotId) {
+    const slotMap = {
+      'weapon': 'Оружие',
+      'head': 'Шлем',
+      'chest': 'Нагрудник',
+      'legs': 'Поножи',
+      'feet': 'Сапоги',
+      'hands': 'Перчатки',
+      'neck': 'Ожерелье',
+      'ring': 'Кольцо',
+      'belt': 'Пояс',
+      'cloak': 'Плащ',
+      'bracelet': 'Браслет'
+    };
+    return slotMap[slotId] || slotId;
+  }
+
   // ⭐ ЗАГРУЗКА НАСТРОЕК БЛОКИРОВОК
   async function loadLockSettings() {
     try {
@@ -1381,49 +1414,113 @@
       const weaponType = item.weapon_type || getWeaponType(itemId);
       if (!weaponType) return { locked: false, reason: '' };
       
-      // Проверяем, сколько оружий этого типа уже выиграно
-      const weaponWins = wins.filter(w => {
+      const weaponTypeLabel = getWeaponTypeLabel(weaponType);
+      
+      // Проверяем, выигрывал ли уже это конкретное оружие (по item_id)
+      const exactWeaponWins = wins.filter(w => w.item_id === itemId);
+      if (exactWeaponWins.length > 0) {
+        return { 
+          locked: true, 
+          reason: `Уже выиграл «${item.name}» в другом рейде` 
+        };
+      }
+      
+      // Проверяем, выигрывал ли уже оружие этого типа (например, любой посох)
+      const weaponTypeWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         return winItem?.slot === 'weapon' && 
                (winItem.weapon_type === weaponType || getWeaponType(w.item_id) === weaponType);
       });
       
-      // Если уже выиграл оружие этого типа — заблокировано
-      if (weaponWins.length > 0) {
+      if (weaponTypeWins.length > 0) {
         return { 
           locked: true, 
-          reason: `Уже выиграл оружие типа ${weaponType} в другом рейде` 
+          reason: `Уже выиграл оружие типа «${weaponTypeLabel}» в другом рейде` 
         };
       }
       
       // Проверяем, сколько всего оружий из спека уже выиграно
       const charWeapons = char.weapons || [];
-      const totalWeaponWins = wins.filter(w => {
+      const charWeaponLabels = charWeapons.map(w => getWeaponTypeLabel(w));
+      
+      // Собираем все победы на оружие из спека
+      const weaponWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         if (!winItem || winItem.slot !== 'weapon') return false;
         const wType = winItem.weapon_type || getWeaponType(w.item_id);
         return charWeapons.includes(wType);
       });
       
-      // Если выиграл 2 оружия из своего спека — больше не может участвовать в основной очереди
-      if (totalWeaponWins.length >= 2) {
+      // Уникальные типы оружий, которые уже выиграны
+      const wonWeaponTypes = new Set();
+      weaponWins.forEach(w => {
+        const winItem = allItems.find(i => i.id === w.item_id);
+        const wType = winItem?.weapon_type || getWeaponType(w.item_id);
+        if (wType) wonWeaponTypes.add(wType);
+      });
+      
+      // Если выиграл 2 разных типа оружия из спека — больше не может участвовать в основной очереди на оружие
+      if (wonWeaponTypes.size >= 2) {
+        const wonLabels = Array.from(wonWeaponTypes).map(t => getWeaponTypeLabel(t));
         return { 
           locked: true, 
-          reason: `Уже выиграл 2 оружия из своего спека (${charWeapons.map(w => getWeaponLabel(w)).join(', ')})` 
+          reason: `Уже выиграл 2 оружия из своего спека (${wonLabels.join(', ')})` 
         };
       }
     }
     
-    // ---- ДРУГИЕ СЛОТЫ (не оружие) ----
+    // ---- КОЛЬЦО ----
+    if (itemSlot === 'ring') {
+      const item = allItems.find(i => i.id === itemId);
+      if (!item) return { locked: false, reason: '' };
+      
+      // Проверяем, выигрывал ли уже это конкретное кольцо (по item_id)
+      const exactRingWins = wins.filter(w => w.item_id === itemId);
+      if (exactRingWins.length > 0) {
+        return { 
+          locked: true, 
+          reason: `Уже выиграл «${item.name}» в другом рейде` 
+        };
+      }
+      
+      // Проверяем, сколько всего колец уже выиграно
+      const ringWins = wins.filter(w => {
+        const winItem = allItems.find(i => i.id === w.item_id);
+        return winItem?.slot === 'ring';
+      });
+      
+      // Если уже выиграл 2 кольца — больше не может участвовать в основной очереди на кольца
+      if (ringWins.length >= 2) {
+        return { 
+          locked: true, 
+          reason: `Уже выиграл 2 кольца, больше нельзя роллить на кольца` 
+        };
+      }
+    }
+    
+    // ---- ДРУГИЕ СЛОТЫ (не оружие и не кольцо) ----
     const slotWins = wins.filter(w => {
       const winItem = allItems.find(i => i.id === w.item_id);
       return winItem?.slot === itemSlot;
     });
     
-    if (slotWins.length > 0) {
+    // Проверяем, выигрывал ли уже этот конкретный предмет
+    const exactSlotWins = slotWins.filter(w => w.item_id === itemId);
+    if (exactSlotWins.length > 0) {
+      const item = allItems.find(i => i.id === itemId);
+      const slotLabel = getSlotLabel(itemSlot);
       return { 
         locked: true, 
-        reason: `Уже выиграл предмет в слоте ${SLOTS.find(s => s.id === itemSlot)?.label || itemSlot}` 
+        reason: `Уже выиграл «${item?.name || 'предмет'}» (слот «${slotLabel}») в другом рейде` 
+      };
+    }
+    
+    // Для остальных слотов: если уже выиграл предмет в этом слоте — блокировка
+    if (slotWins.length > 0) {
+      const slotLabel = getSlotLabel(itemSlot);
+      return { 
+        locked: true, 
+        reason: `Уже выиграл предмет в слоте «${slotLabel}» в другом рейде` 
       };
     }
     
@@ -1450,12 +1547,13 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    // ⭐ Проверка победы этого предмета в текущем рейде
+    // Проверка победы этого предмета в текущем рейде
     if (await hasWonItemInCurrentRaid(charId, itemId)) {
-      return { can: false, reason: 'Уже выиграл этот предмет в текущем рейде' };
+      const item = allItems.find(i => i.id === itemId);
+      return { can: false, reason: `Уже выиграл «${item?.name || 'этот предмет'}» в текущем рейде` };
     }
 
-    // ⭐ Проверка глобальной блокировки слота
+    // Проверка глобальной блокировки слота
     const slotLock = await isSlotLocked(charId, itemSlot, itemId);
     if (slotLock.locked) {
       return { can: false, reason: slotLock.reason };
@@ -1465,7 +1563,8 @@
     const desired = char.desired_loot || {};
     const wantedItemId = desired[itemSlot];
     if (!wantedItemId || wantedItemId !== itemId) {
-      return { can: false, reason: 'Предмет не в желаемом луте' };
+      const slotLabel = getSlotLabel(itemSlot);
+      return { can: false, reason: `Предмет не в желаемом луте (слот «${slotLabel}»)` };
     }
 
     // Проверка совместимости оружия
@@ -1473,8 +1572,9 @@
       const item = allItems.find(i => i.id === itemId);
       if (item?.weapon_type) {
         const charWeapons = char.weapons || [];
+        const weaponTypeLabel = getWeaponTypeLabel(item.weapon_type);
         if (!charWeapons.includes(item.weapon_type)) {
-          return { can: false, reason: `Нужен спек: ${item.weapon_type}` };
+          return { can: false, reason: `Нужен спек: ${weaponTypeLabel}` };
         }
       }
     }
@@ -1482,17 +1582,19 @@
     return { can: true };
   }
 
-  // ⭐ ОБНОВЛЁННАЯ canJoinOpenQueue — только проверка на победу в текущем рейде
+  // ⭐ ОБНОВЛЁННАЯ canJoinOpenQueue
   async function canJoinOpenQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
-    // ⭐ Проверяем, выигрывал ли уже в этом рейде
+    // Проверяем, выигрывал ли уже в этом рейде
     const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
     if (winsInRaid.length > 0) {
-      return { can: false, reason: 'Уже выиграл предмет в этом рейде' };
+      const lastWin = winsInRaid[0];
+      const item = allItems.find(i => i.id === lastWin.item_id);
+      return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде` };
     }
 
     return { can: true };
