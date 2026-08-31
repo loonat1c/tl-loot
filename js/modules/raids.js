@@ -65,6 +65,7 @@ export async function updateRaid(id, data) {
   }
 }
 
+// ⭐ ИСПРАВЛЕННЫЙ softDeleteRaid — обновляет raid_deleted в истории
 export async function softDeleteRaid(id) {
   try {
     await updateDoc(doc(db, "raids", id), {
@@ -72,12 +73,28 @@ export async function softDeleteRaid(id) {
       deleted_at: new Date().toISOString(),
       deleted_by: localStorage.getItem('tl_user_id') || 'unknown',
     });
+    
+    // ⭐ Обновляем историю лута — помечаем как удалённые
+    try {
+      const historyRef = collection(db, 'loot_history');
+      const q = query(historyRef, where('raid_id', '==', id));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.forEach(doc => {
+        batch.update(doc.ref, { raid_deleted: true });
+      });
+      await batch.commit();
+      console.log(`✅ История лута для рейда ${id} помечена как удалённая`);
+    } catch (e) {
+      console.warn('⚠️ Не удалось обновить raid_deleted в истории:', e);
+    }
   } catch (e) {
     console.error('Ошибка удаления рейда:', e);
     throw e;
   }
 }
 
+// ⭐ ИСПРАВЛЕННЫЙ restoreRaid — обновляет raid_deleted в истории
 export async function restoreRaid(id) {
   try {
     await updateDoc(doc(db, "raids", id), {
@@ -86,6 +103,21 @@ export async function restoreRaid(id) {
       restored_at: new Date().toISOString(),
       restored_by: localStorage.getItem('tl_user_id') || 'unknown',
     });
+    
+    // ⭐ Обновляем историю лута — помечаем как не удалённые
+    try {
+      const historyRef = collection(db, 'loot_history');
+      const q = query(historyRef, where('raid_id', '==', id));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.forEach(doc => {
+        batch.update(doc.ref, { raid_deleted: false });
+      });
+      await batch.commit();
+      console.log(`✅ История лута для рейда ${id} помечена как восстановленная`);
+    } catch (e) {
+      console.warn('⚠️ Не удалось обновить raid_deleted в истории:', e);
+    }
   } catch (e) {
     console.error('Ошибка восстановления рейда:', e);
     throw e;
@@ -94,6 +126,11 @@ export async function restoreRaid(id) {
 
 export async function hardDeleteRaid(id) {
   try {
+    // Удаляем все траи и дропы
+    const tries = await getRaidTries(id);
+    for (const t of tries) {
+      await deleteTry(id, t.id);
+    }
     await deleteDoc(doc(db, "raids", id));
   } catch (e) {
     console.error('Ошибка жёсткого удаления рейда:', e);
@@ -112,7 +149,6 @@ export async function getRaidTries(raidId) {
   }
 }
 
-// ⭐ ИСПРАВЛЕННЫЙ addTry — добавляем поле attended_player_ids
 export async function addTry(raidId, { boss_id, boss_name, order }) {
   try {
     const ref = await addDoc(tryCol(raidId), {
@@ -120,7 +156,7 @@ export async function addTry(raidId, { boss_id, boss_name, order }) {
       boss_name:  boss_name || "",
       order:      order || 0,
       drop_count: 0,
-      attended_player_ids: [], // ⭐ ДОБАВЛЯЕМ
+      attended_player_ids: [],
       created_at: new Date().toISOString(),
       created_by: localStorage.getItem('tl_user_id') || 'unknown',
     });
@@ -148,7 +184,6 @@ export async function deleteTry(raidId, tryId) {
   }
 }
 
-// ⭐ НОВАЯ ФУНКЦИЯ: ОБНОВЛЕНИЕ УЧАСТИЯ В ТРАЕ
 export async function updateTryAttendance(raidId, tryId, attendedPlayerIds) {
   try {
     const tryRef = doc(db, "raids", raidId, "tries", tryId);
@@ -260,7 +295,7 @@ async function getAllDrops(raidId) {
   return allDrops;
 }
 
-// ── Закрыть рейд (ИСПРАВЛЕННАЯ) ──────────────────────
+// ⭐ ИСПРАВЛЕННЫЙ closeRaid — добавляем поле raid_deleted: false
 export async function closeRaid(raidId, attendedIds, allCharacterIds) {
   if (!Array.isArray(attendedIds) || !Array.isArray(allCharacterIds)) {
     throw new Error('Неверные данные для закрытия рейда');
@@ -270,13 +305,11 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
     console.log('📦 Закрытие рейда:', raidId);
     console.log('👥 Присутствовали:', attendedIds);
     
-    // Получаем все дропы в рейде для истории лута
     const drops = await getAllDrops(raidId);
     console.log('📊 Дропов в рейде:', drops.length);
     
     const batch = writeBatch(db);
     
-    // Получаем дату рейда для истории
     const raidRef = doc(db, "raids", raidId);
     const raidSnap = await getDoc(raidRef);
     const raidData = raidSnap.exists() ? raidSnap.data() : {};
@@ -290,6 +323,7 @@ export async function closeRaid(raidId, attendedIds, allCharacterIds) {
           batch.set(lootRef, {
             raid_id: raidId,
             raid_date: raidDate,
+            raid_deleted: false, // ⭐ ДОБАВЛЯЕМ — по умолчанию не удалён
             player_id: drop.winner_player_id,
             player_name: drop.winner_nickname,
             item_id: drop.item_id,
