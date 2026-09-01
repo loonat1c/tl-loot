@@ -118,7 +118,6 @@
     .character-card.pending  { border-left: 3px solid var(--warning); }
     .character-card.approved { border-left: 3px solid var(--success); }
     .character-card.rejected { border-left: 3px solid var(--danger); opacity: 0.72; }
-    .character-card.edit-pending { border-left: 3px solid var(--warning); border-style: dashed; }
 
     .char-card-inner { padding: 1.25rem 1.5rem; }
 
@@ -184,7 +183,6 @@
     .char-status.pending  { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.35); }
     .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35);  }
     .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35);  }
-    .char-status.edit-pending { background: rgba(245,158,11,0.08); color: var(--warning); border-color: rgba(245,158,11,0.25); }
 
     .char-actions {
       display: flex;
@@ -259,8 +257,7 @@
 
     /* notes */
     .char-moderation-note,
-    .char-moderation-feedback,
-    .char-edit-note {
+    .char-moderation-feedback {
       margin-top: 0.75rem;
       padding: 0.65rem 0.85rem;
       background: var(--bg-card2);
@@ -271,7 +268,6 @@
 
     .char-moderation-note     { border-left: 3px solid var(--warning); }
     .char-moderation-feedback { border-left: 3px solid var(--danger);  }
-    .char-edit-note           { border-left: 3px solid var(--warning); border-style: dashed; }
 
     /* buttons */
     .btn-edit-char {
@@ -714,17 +710,19 @@
 
     container.innerHTML = characters.map(char => {
       const status = char.status || 'pending';
-      const isEditPending = char.edit_pending === true;
-      const displayStatus = isEditPending ? 'edit-pending' : status;
+      // ⭐ Если есть previous_status === 'approved' — значит персонаж на модерации изменений
+      const isEditPending = char.previous_status === 'approved';
+      const displayStatus = isEditPending ? 'pending' : status;
       
       const statusLabel = {
-        pending:  '⏳ На модерации',
+        pending: isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
         approved: '✅ Одобрен',
-        rejected: '❌ Отклонён',
-        'edit-pending': '✏️ Изменение на модерации'
+        rejected: '❌ Отклонён'
       }[displayStatus] || '⏳ На модерации';
 
-      const canEdit = status === 'pending' || status === 'rejected' || isEditPending;
+      // ⭐ Можно редактировать если статус не approved
+      const canEdit = status !== 'approved';
+      // ⭐ Для approved показываем специальную кнопку "Внести изменения"
       const isApproved = status === 'approved' && !isEditPending;
 
       const firstWeapon = char.weapons?.[0];
@@ -756,8 +754,8 @@
       const feedbackHtml = char.moderation_feedback
         ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
 
-      const editNoteHtml = isEditPending && char.edit_note
-        ? `<div class="char-edit-note">✏️ Ожидает подтверждения изменений: ${char.edit_note}</div>` : '';
+      const editInfoHtml = isEditPending && char.edit_note
+        ? `<div class="char-moderation-note">✏️ Изменения на модерации: ${char.edit_note}</div>` : '';
 
       const date = char.created_at
         ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -796,7 +794,7 @@
             ${lootHtml}
             ${noteHtml}
             ${feedbackHtml}
-            ${editNoteHtml}
+            ${editInfoHtml}
           </div>
         </div>`;
     }).join('');
@@ -1213,22 +1211,22 @@
     // ⭐ Если персонаж уже одобрен — отправляем на повторную модерацию
     const isEdit = !!id;
     let status = userIsModerator ? 'approved' : 'pending';
-    let editPending = false;
+    let oldStatus = null;
     let editNote = null;
 
     if (isEdit && currentStatus === 'approved' && !userIsModerator) {
       // Одобренный персонаж редактируется — отправляем на модерацию
-      status = 'approved'; // сохраняем старый статус
-      editPending = true;
+      status = 'pending'; // ⭐ Меняем статус на pending
+      oldStatus = 'approved'; // ⭐ Сохраняем старый статус
       editNote = note || 'Изменение персонажа';
     } else if (isEdit && currentStatus === 'approved' && userIsModerator) {
       // Модератор редактирует — сразу одобряем
       status = 'approved';
-      editPending = false;
+      oldStatus = null;
     } else if (isEdit) {
       // Персонаж в pending/rejected — просто обновляем
       status = userIsModerator ? 'approved' : 'pending';
-      editPending = false;
+      oldStatus = null;
     }
 
     const selectedLoot = getSelectedLoot();
@@ -1247,7 +1245,7 @@
       user_id: user.uid,
       user_email: user.email,
       status,
-      edit_pending: editPending,
+      previous_status: oldStatus || null,
       edit_note: editNote || null,
       moderation_note: note || null,
       moderation_feedback: null,
@@ -1259,7 +1257,7 @@
     try {
       if (id) {
         await updateDoc(doc(db, 'characters', id), data);
-        if (editPending) {
+        if (oldStatus === 'approved') {
           showToast('Изменения отправлены на модерацию!');
         } else {
           showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён!');
