@@ -1326,8 +1326,11 @@
   }
 
   function updateModerationStats() {
-    const pending = allCharacters.filter(c => c.status === 'pending').length;
-    const approved = allCharacters.filter(c => c.status === 'approved').length;
+    // ⭐ Считаем все заявки на модерацию: status === 'pending' ИЛИ previous_status === 'approved'
+    const pending = allCharacters.filter(c => 
+      c.status === 'pending' || c.previous_status === 'approved'
+    ).length;
+    const approved = allCharacters.filter(c => c.status === 'approved' && !c.previous_status).length;
     const rejected = allCharacters.filter(c => c.status === 'rejected').length;
     const all = allCharacters.length;
 
@@ -1358,9 +1361,15 @@
     
     let filtered = allCharacters;
     if (currentFilter === 'pending') {
-      filtered = allCharacters.filter(c => c.status === 'pending');
+      // ⭐ Показываем всех, кто требует модерации:
+      // 1. status === 'pending' (новые заявки)
+      // 2. previous_status === 'approved' (изменение одобренного персонажа)
+      filtered = allCharacters.filter(c => 
+        c.status === 'pending' || 
+        c.previous_status === 'approved'
+      );
     } else if (currentFilter === 'approved') {
-      filtered = allCharacters.filter(c => c.status === 'approved');
+      filtered = allCharacters.filter(c => c.status === 'approved' && !c.previous_status);
     } else if (currentFilter === 'rejected') {
       filtered = allCharacters.filter(c => c.status === 'rejected');
     }
@@ -1383,11 +1392,23 @@
     }
 
     container.innerHTML = filtered.map(char => {
+      // ⭐ Определяем реальный статус для отображения
+      const isEditPending = char.previous_status === 'approved';
+      const displayStatus = isEditPending ? 'pending' : char.status;
+      
       const statusLabel = {
-        'pending': '⏳ Ожидает модерации',
+        'pending': isEditPending ? '✏️ Изменение на модерации' : '⏳ Ожидает модерации',
         'approved': '✅ Одобрен',
         'rejected': '❌ Отклонён'
-      }[char.status] || char.status;
+      }[displayStatus] || '⏳ Ожидает модерации';
+
+      // ⭐ Если это изменение одобренного персонажа — показываем дополнительную информацию
+      const editInfo = isEditPending ? `
+        <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(245,158,11,0.1);border-radius:4px;font-size:0.8rem;color:var(--warning);">
+          ✏️ Изменение одобренного персонажа
+          ${char.edit_note ? `<br>💬 ${char.edit_note}` : ''}
+        </div>
+      ` : '';
 
       const weapons = char.weapons?.map(w => {
         const weapon = WEAPONS.find(wp => wp.id === w);
@@ -1408,19 +1429,20 @@
           }).join('');
       }
 
-      const isPending = char.status === 'pending';
+      const isPending = char.status === 'pending' || char.previous_status === 'approved';
 
       return `
         <div class="moderation-card" id="char-${char.id}">
           <div class="card-header">
             <div>
               <span class="char-name">${char.name}</span>
-              <span class="status-badge ${char.status}">${statusLabel}</span>
+              <span class="status-badge ${displayStatus}">${statusLabel}</span>
             </div>
             <div class="user-info">
               👤 ${char.user_email || 'Неизвестно'}
             </div>
           </div>
+          ${editInfo}
 
           <div class="char-details">
             <div class="detail">
@@ -1491,12 +1513,22 @@
   async function moderateCharacter(id, status, feedback) {
     try {
       const charRef = doc(db, 'characters', id);
-      await updateDoc(charRef, {
+      const updates = {
         status: status,
         moderation_feedback: feedback || null,
         moderated_by: currentUser?.uid || 'unknown',
         moderated_at: new Date().toISOString()
-      });
+      };
+      
+      // ⭐ Если персонаж был на модерации изменений (previous_status === 'approved')
+      // и мы его одобряем — сбрасываем previous_status
+      const char = allCharacters.find(c => c.id === id);
+      if (char?.previous_status === 'approved' && status === 'approved') {
+        updates.previous_status = null;
+        updates.edit_note = null;
+      }
+      
+      await updateDoc(charRef, updates);
 
       showToast(
         status === 'approved' 
