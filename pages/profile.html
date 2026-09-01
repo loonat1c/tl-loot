@@ -635,7 +635,17 @@
     renderProfile();
     renderCharacters();
     populateWeaponSelects();
-    populateLootSlots();
+    // ⭐ Заполняем лут только после загрузки allItems
+    if (allItems.length > 0) {
+      populateLootSlots();
+    } else {
+      console.warn('⚠️ allItems пуст, повторная попытка загрузки лута через 500ms');
+      setTimeout(() => {
+        if (allItems.length > 0) {
+          populateLootSlots();
+        }
+      }, 500);
+    }
     setupWeaponSync();
 
     console.log('✅ loadData done. items:', allItems.length, 'chars:', characters.length);
@@ -952,6 +962,25 @@
     if (!container) return;
     container.innerHTML = '';
 
+    // ⭐ Проверяем, что allItems загружены
+    if (!allItems || allItems.length === 0) {
+      console.warn('⚠️ allItems пуст, пропускаем populateLootSlots');
+      container.innerHTML = `
+        <div style="padding:0.5rem;color:var(--text-muted);font-size:0.85rem;">
+          ⏳ Загрузка предметов...
+        </div>
+      `;
+      // Пробуем ещё раз через секунду
+      setTimeout(() => {
+        if (allItems && allItems.length > 0) {
+          populateLootSlots();
+        }
+      }, 1000);
+      return;
+    }
+
+    console.log('📦 Заполняем слоты лута, предметов:', allItems.length);
+
     const currentValues = {};
     if (editingCharId) {
       const char = characters.find(c => c.id === editingCharId);
@@ -1216,8 +1245,8 @@
 
     if (isEdit && currentStatus === 'approved' && !userIsModerator) {
       // Одобренный персонаж редактируется — отправляем на модерацию
-      status = 'pending'; // ⭐ Меняем статус на pending
-      oldStatus = 'approved'; // ⭐ Сохраняем старый статус
+      status = 'pending';
+      oldStatus = 'approved';
       editNote = note || 'Изменение персонажа';
     } else if (isEdit && currentStatus === 'approved' && userIsModerator) {
       // Модератор редактирует — сразу одобряем
