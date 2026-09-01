@@ -26,7 +26,7 @@ const THEMES = {
 };
 
 let currentAccent = 'violet';
-let currentTheme  = 'dark';
+let currentTheme  = 'tl';
 
 // ── Init ──────────────────────────────────────────
 export async function initNavbar() {
