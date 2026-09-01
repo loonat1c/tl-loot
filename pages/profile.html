@@ -118,6 +118,7 @@
     .character-card.pending  { border-left: 3px solid var(--warning); }
     .character-card.approved { border-left: 3px solid var(--success); }
     .character-card.rejected { border-left: 3px solid var(--danger); opacity: 0.72; }
+    .character-card.edit-pending { border-left: 3px solid var(--warning); border-style: dashed; }
 
     .char-card-inner { padding: 1.25rem 1.5rem; }
 
@@ -183,6 +184,7 @@
     .char-status.pending  { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.35); }
     .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35);  }
     .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35);  }
+    .char-status.edit-pending { background: rgba(245,158,11,0.08); color: var(--warning); border-color: rgba(245,158,11,0.25); }
 
     .char-actions {
       display: flex;
@@ -257,7 +259,8 @@
 
     /* notes */
     .char-moderation-note,
-    .char-moderation-feedback {
+    .char-moderation-feedback,
+    .char-edit-note {
       margin-top: 0.75rem;
       padding: 0.65rem 0.85rem;
       background: var(--bg-card2);
@@ -268,6 +271,7 @@
 
     .char-moderation-note     { border-left: 3px solid var(--warning); }
     .char-moderation-feedback { border-left: 3px solid var(--danger);  }
+    .char-edit-note           { border-left: 3px solid var(--warning); border-style: dashed; }
 
     /* buttons */
     .btn-edit-char {
@@ -305,6 +309,7 @@
 
     .btn-delete:hover  { background: rgba(239,68,68,0.2); }
     .btn-delete:active { transform: scale(0.96); }
+    .btn-delete:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* empty state */
     .empty-state {
@@ -496,6 +501,7 @@
     </div>
 
     <input type="hidden" id="edit-char-id" />
+    <input type="hidden" id="edit-char-status" />
 
     <div class="form-group">
       <label>Имя персонажа *</label>
@@ -609,7 +615,6 @@
       characters = [];
     }
 
-    // Рендер всегда, даже если что-то упало
     renderProfile();
     renderCharacters();
     populateWeaponSelects();
@@ -671,13 +676,18 @@
 
     container.innerHTML = characters.map(char => {
       const status = char.status || 'pending';
+      const isEditPending = char.edit_pending === true;
+      const displayStatus = isEditPending ? 'edit-pending' : status;
+      
       const statusLabel = {
         pending:  '⏳ На модерации',
         approved: '✅ Одобрен',
-        rejected: '❌ Отклонён'
-      }[status] || '⏳ На модерации';
+        rejected: '❌ Отклонён',
+        'edit-pending': '✏️ Изменение на модерации'
+      }[displayStatus] || '⏳ На модерации';
 
-      const canEdit = status === 'pending' || status === 'rejected';
+      // ⭐ Можно редактировать только если статус не approved или edit_pending
+      const canEdit = status !== 'approved' || isEditPending;
 
       const firstWeapon = char.weapons?.[0];
       const icon = getWeaponIcon(firstWeapon);
@@ -708,26 +718,29 @@
       const feedbackHtml = char.moderation_feedback
         ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
 
+      const editNoteHtml = isEditPending && char.edit_note
+        ? `<div class="char-edit-note">✏️ Ожидает подтверждения изменений: ${char.edit_note}</div>` : '';
+
       const date = char.created_at
         ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
         : '—';
 
+      // ⭐ Кнопка удаления скрыта для всех (персонаж нельзя удалить)
       return `
-        <div class="character-card ${status}">
+        <div class="character-card ${displayStatus}">
           <div class="char-card-inner">
             <div class="char-top">
               <div class="char-left">
                 <div class="char-icon">${icon}</div>
                 <div>
                   <div class="char-name">${char.name}</div>
-                  <span class="char-status ${status}">
+                  <span class="char-status ${displayStatus}">
                     <span class="dot"></span>${statusLabel}
                   </span>
                 </div>
               </div>
               <div class="char-actions">
                 ${canEdit ? `<button class="btn-edit-char" data-id="${char.id}">✏️ Редактировать</button>` : ''}
-                <button class="btn-delete" data-id="${char.id}">🗑️ Удалить</button>
               </div>
             </div>
 
@@ -745,6 +758,7 @@
             ${lootHtml}
             ${noteHtml}
             ${feedbackHtml}
+            ${editNoteHtml}
           </div>
         </div>`;
     }).join('');
@@ -756,25 +770,7 @@
       });
     });
 
-    container.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', () => deleteCharacter(btn.dataset.id));
-    });
-  }
-
-  async function deleteCharacter(id) {
-    const char = characters.find(c => c.id === id);
-    if (!char) return;
-    const label = { pending: 'на модерации', approved: 'одобренного', rejected: 'отклонённого' }[char.status] || '';
-    if (!confirm(`Удалить персонажа «${char.name}» (${label})?`)) return;
-    try {
-      await deleteDoc(doc(db, 'characters', id));
-      characters = characters.filter(c => c.id !== id);
-      renderCharacters();
-      showToast('Персонаж удалён. Теперь можно создать нового!');
-    } catch (e) {
-      console.error('deleteCharacter:', e);
-      showToast('Ошибка удаления', 'error');
-    }
+    // ⭐ КНОПКА УДАЛЕНИЯ УБРАНА — персонажа нельзя удалить
   }
 
   // ── Weapon selects ─────────────────────────────────
@@ -938,12 +934,13 @@
   function openAddCharacter() {
     console.log('🔄 openAddCharacter вызван!');
     if (characters.length > 0) {
-      showToast('Сначала удалите текущего персонажа', 'error');
+      showToast('У вас уже есть персонаж. Вы можете отредактировать его.', 'error');
       return;
     }
     editingCharId = null;
     document.getElementById('modal-char-title').textContent = 'Добавить персонажа';
     document.getElementById('edit-char-id').value = '';
+    document.getElementById('edit-char-status').value = '';
     document.getElementById('f-char-name').value = '';
     document.getElementById('f-char-weapon1').value = '';
     document.getElementById('f-char-weapon2').value = '';
@@ -959,6 +956,7 @@
     editingCharId = char.id;
     document.getElementById('modal-char-title').textContent = 'Редактировать персонажа';
     document.getElementById('edit-char-id').value = char.id;
+    document.getElementById('edit-char-status').value = char.status || 'pending';
     document.getElementById('f-char-name').value = char.name || '';
     document.getElementById('f-char-weapon1').value = char.weapons?.[0] || '';
     document.getElementById('f-char-weapon2').value = char.weapons?.[1] || '';
@@ -997,13 +995,30 @@
       errorEl.style.display = 'block';
       return;
     }
-    if (!document.getElementById('edit-char-id').value && characters.length > 0) {
-      errorEl.textContent = 'У вас уже есть персонаж! Сначала удалите текущего.';
-      errorEl.style.display = 'block';
-      return;
-    }
 
-    const status = userIsModerator ? 'approved' : 'pending';
+    const id = document.getElementById('edit-char-id').value;
+    const currentStatus = document.getElementById('edit-char-status').value;
+
+    // ⭐ Если персонаж уже одобрен — отправляем на повторную модерацию
+    const isEdit = !!id;
+    let status = userIsModerator ? 'approved' : 'pending';
+    let editPending = false;
+    let editNote = null;
+
+    if (isEdit && currentStatus === 'approved' && !userIsModerator) {
+      // Одобренный персонаж редактируется — отправляем на модерацию
+      status = 'approved'; // сохраняем старый статус
+      editPending = true;
+      editNote = note || 'Изменение персонажа';
+    } else if (isEdit && currentStatus === 'approved' && userIsModerator) {
+      // Модератор редактирует — сразу одобряем
+      status = 'approved';
+      editPending = false;
+    } else if (isEdit) {
+      // Персонаж в pending/rejected — просто обновляем
+      status = userIsModerator ? 'approved' : 'pending';
+      editPending = false;
+    }
 
     const data = {
       name,
@@ -1012,6 +1027,8 @@
       user_id: user.uid,
       user_email: user.email,
       status,
+      edit_pending: editPending,
+      edit_note: editNote || null,
       moderation_note: note || null,
       moderation_feedback: null,
       moderated_by: userIsModerator ? user.uid : null,
@@ -1019,18 +1036,14 @@
       updated_at: new Date().toISOString()
     };
 
-    const id = document.getElementById('edit-char-id').value;
-
     try {
       if (id) {
-        const existing = characters.find(c => c.id === id);
-        if (existing?.status === 'approved' && !userIsModerator) {
-          errorEl.textContent = 'Нельзя редактировать одобренного персонажа';
-          errorEl.style.display = 'block';
-          return;
-        }
         await updateDoc(doc(db, 'characters', id), data);
-        showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён и отправлен на модерацию');
+        if (editPending) {
+          showToast('Изменения отправлены на модерацию!');
+        } else {
+          showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён!');
+        }
       } else {
         await addDoc(collection(db, 'characters'), {
           ...data,
