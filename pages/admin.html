@@ -173,10 +173,14 @@
       color: #fff;
       flex-shrink: 0;
     }
-    .user-card .user-email {
-      font-weight: 600;
-      font-size: 0.9rem;
+    .user-card .user-name {
+      font-weight: 700;
+      font-size: 0.95rem;
       color: var(--text);
+    }
+    .user-card .user-email {
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
     .user-card .user-meta {
       display: flex;
@@ -228,6 +232,16 @@
       display: flex;
       align-items: center;
       gap: 0.2rem;
+    }
+    .user-card .user-character {
+      font-size: 0.8rem;
+      color: var(--accent-soft);
+      background: var(--accent-glow);
+      padding: 0.1rem 0.6rem;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
     }
     .user-card .user-right {
       display: flex;
@@ -691,7 +705,7 @@
     ============================================ -->
     <div id="tab-users" class="tab-content active">
       <div class="search-bar">
-        <input type="text" id="user-search" placeholder="🔍 Поиск по email..." />
+        <input type="text" id="user-search" placeholder="🔍 Поиск по имени или email..." />
         <button class="btn btn-primary" id="btn-add-user">+ Добавить</button>
         <button class="info-btn" id="btn-info-toggle" title="Информация о ролях">ℹ️</button>
       </div>
@@ -824,6 +838,7 @@
     </div>
     
     <div id="role-user-info" class="current-role">
+      <span id="role-user-name">Имя пользователя</span>
       <span id="role-user-email">user@example.com</span>
       <span>Текущая: <strong id="role-current-name">Пользователь</strong></span>
     </div>
@@ -881,6 +896,10 @@
     </div>
     <div class="info-box" style="margin-bottom:1rem;">
       Создаётся учётная запись в Firebase Auth + документ в Firestore с ролью <strong>Пользователь</strong>.
+    </div>
+    <div class="form-group">
+      <label>Имя пользователя *</label>
+      <input type="text" id="new-user-name" placeholder="Имя в гильдии" />
     </div>
     <div class="form-group">
       <label>Email *</label>
@@ -1013,6 +1032,11 @@
     return allCharacters.filter(p => p.user_id === userId && (p.status === 'approved' || p.approved === true)).length;
   }
 
+  function getPlayerName(userId) {
+    const char = allCharacters.find(p => p.user_id === userId && (p.status === 'approved' || p.approved === true));
+    return char?.name || null;
+  }
+
   // ─── Загрузка пользователей ──────────────────────────
   async function loadUsers() {
     const container = document.getElementById("users-list");
@@ -1047,8 +1071,9 @@
     const search = document.getElementById("user-search")?.value.toLowerCase() || '';
 
     const filtered = users.filter(u => {
+      const username = (u.username || '').toLowerCase();
       const email = (u.email || u.id || '').toLowerCase();
-      return email.includes(search);
+      return username.includes(search) || email.includes(search);
     });
 
     if (!filtered.length) {
@@ -1072,16 +1097,20 @@
 
       const playerCount = getPlayerCount(u.id);
       const approvedCount = getApprovedPlayerCount(u.id);
+      const playerName = getPlayerName(u.id);
 
-      const avatarLetter = (u.email || u.id || 'U').charAt(0).toUpperCase();
+      const username = u.username || u.email?.split('@')[0] || u.id || 'Без имени';
+      const avatarLetter = username.charAt(0).toUpperCase();
 
       return `
         <div class="user-card" id="user-row-${u.id}">
           <div class="user-left">
             <div class="user-avatar">${avatarLetter}</div>
             <div>
-              <div class="user-email">${u.email || u.id}</div>
+              <div class="user-name">${username}</div>
               <div class="user-meta">
+                <span class="user-email">${u.email || u.id}</span>
+                ${playerName ? `<span class="user-character">🎮 ${playerName}</span>` : ''}
                 <span class="badge ${badgeClass}">${roleIcon} ${roleLabel}</span>
                 ${isSelf ? '<span class="user-tag">Вы</span>' : ''}
                 <span class="user-stats">
@@ -1120,6 +1149,8 @@
     const currentRole = user.role || 'user';
     selectedRole = currentRole;
     
+    const username = user.username || user.email?.split('@')[0] || user.id || 'Без имени';
+    document.getElementById('role-user-name').textContent = username;
     document.getElementById('role-user-email').textContent = user.email || user.id;
     document.getElementById('role-current-name').textContent = ROLE_LABELS[currentRole] || currentRole;
     document.getElementById('role-error').style.display = 'none';
@@ -1204,7 +1235,7 @@
   window.confirmDelete = async (uid) => {
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
-    if (!confirm(`Удалить пользователя "${user.email || user.id}"? Это действие нельзя отменить.`)) return;
+    if (!confirm(`Удалить пользователя "${user.username || user.email || user.id}"? Это действие нельзя отменить.`)) return;
     try {
       await deleteDoc(doc(db, "users", uid));
       showToast(`✅ Пользователь удалён`);
@@ -1217,6 +1248,7 @@
 
   // ─── Добавление пользователя ──────────────────────────
   document.getElementById("btn-add-user")?.addEventListener("click", () => {
+    document.getElementById("new-user-name").value = "";
     document.getElementById("new-user-email").value = "";
     document.getElementById("new-user-password").value = "";
     document.getElementById("user-error").style.display = "none";
@@ -1224,11 +1256,12 @@
   });
 
   document.getElementById("btn-create-user")?.addEventListener("click", async () => {
+    const username = document.getElementById("new-user-name").value.trim();
     const email = document.getElementById("new-user-email").value.trim();
     const password = document.getElementById("new-user-password").value;
     const errEl = document.getElementById("user-error");
 
-    if (!email || !password) {
+    if (!username || !email || !password) {
       errEl.textContent = "Заполни все поля";
       errEl.style.display = "block";
       return;
@@ -1245,6 +1278,7 @@
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, "users", cred.user.uid), {
+        username,
         email,
         role: "user",
         created_at: new Date().toISOString(),
