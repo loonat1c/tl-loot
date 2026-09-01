@@ -1076,6 +1076,9 @@
     }
   }
 
+  // ⭐ ДЕЛАЕМ ФУНКЦИЮ ДОСТУПНОЙ ГЛОБАЛЬНО
+  window.deleteCharacter = deleteCharacter;
+
   // ─── Загрузка пользователей ──────────────────────────
   async function loadUsers() {
     const container = document.getElementById("users-list");
@@ -1549,7 +1552,7 @@
           
           <!-- ⭐ Кнопка удаления персонажа для админа -->
           <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
-            <button class="btn btn-danger btn-sm" onclick="window.deleteCharacter('${char.id}')">
+            <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')">
               🗑️ Удалить персонажа
             </button>
           </div>
@@ -1571,9 +1574,6 @@
       }
       await moderateCharacter(id, 'rejected', feedback);
     };
-    
-    // ⭐ Делаем функцию удаления персонажа доступной глобально
-    window.deleteCharacter = deleteCharacter;
   }
 
   async function moderateCharacter(id, status, feedback) {
