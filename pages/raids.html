@@ -2004,7 +2004,7 @@
   }
 
   // ============================================================
-  // SELECT RAID С REAL-TIME ПОДПИСКОЙ
+  // ⭐ SELECT RAID С REAL-TIME ПОДПИСКОЙ (УБРАН ДВОЙНОЙ РЕНДЕР)
   // ============================================================
 
   async function selectRaid(raid) {
@@ -2033,7 +2033,8 @@
       await renderRaidDetail(updatedRaid);
     });
 
-    await renderRaidDetail(raid);
+    // ⭐ УБИРАЕМ ДВОЙНОЙ РЕНДЕР — onSnapshot уже вызовет renderRaidDetail
+    // await renderRaidDetail(raid);
   }
 
   // ============================================================
@@ -2533,9 +2534,19 @@
     updateRollUI();
     openModal("modal-roll");
 
+    // ⭐ ПОДПИСКА НА ИЗМЕНЕНИЯ — ПРОПУСКАЕМ ПЕРВЫЙ ВЫЗОВ
     const dropRef2 = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+    let isFirstSnapshot = true;
+    
     rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
       if (!snap.exists()) return;
+      
+      // ⭐ Пропускаем первый вызов (он стреляет сразу с текущим состоянием)
+      if (isFirstSnapshot) { 
+        isFirstSnapshot = false; 
+        return; 
+      }
+      
       const data = snap.data();
 
       if (data.participants?.length || !rollState.isFinished) {
@@ -2653,7 +2664,7 @@
     });
   }
 
-  // ⭐ renderAvailablePlayers — с защитой от дублей
+  // ⭐ renderAvailablePlayers — с защитой от дублей и дедупликацией
   let renderAvailableTimeout = null;
 
   function renderAvailablePlayers() {
@@ -2675,25 +2686,34 @@
       const isAdminOrLeader = canStartRoll();
       
       Promise.all(available.map(async (char) => {
-        const check = await canJoinCurrentQueue(char.id);
         const isMe = char.id === rollState.currentPlayerId;
 
         if (!isAdminOrLeader && !isMe) return null;
         if (!attendedPlayerIds.includes(char.id)) return null;
 
+        const check = await canJoinCurrentQueue(char.id);
         return { char, check, isMe };
       })).then(results => {
         const filtered = results.filter(r => r !== null);
-        count.textContent = filtered.length;
 
-        if (!filtered.length) {
+        // ⭐ ДЕДУПЛИКАЦИЯ по char.id
+        const seenIds = new Set();
+        const deduped = filtered.filter(({ char }) => {
+          if (seenIds.has(char.id)) return false;
+          seenIds.add(char.id);
+          return true;
+        });
+
+        count.textContent = deduped.length;
+
+        if (!deduped.length) {
           list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
           return;
         }
 
         const fragment = document.createDocumentFragment();
         
-        filtered.forEach(({ char, check, isMe }) => {
+        deduped.forEach(({ char, check, isMe }) => {
           const row = document.createElement('div');
           row.className = 'roll-available-row';
 
@@ -3128,4 +3148,3 @@
 </script>
 </body>
 </html>
-```
