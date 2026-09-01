@@ -695,6 +695,23 @@
       return;
     }
 
+    // ⭐ Маппинг слотов для отображения
+    const slotLabels = {
+      'weapon1': 'Оружие 1',
+      'weapon2': 'Оружие 2',
+      'head': 'Шлем',
+      'chest': 'Нагрудник',
+      'legs': 'Поножи',
+      'feet': 'Сапоги',
+      'hands': 'Перчатки',
+      'neck': 'Ожерелье',
+      'ring1': 'Кольцо 1',
+      'ring2': 'Кольцо 2',
+      'belt': 'Пояс',
+      'cloak': 'Плащ',
+      'bracelet': 'Браслет'
+    };
+
     container.innerHTML = characters.map(char => {
       const status = char.status || 'pending';
       const isEditPending = char.edit_pending === true;
@@ -707,9 +724,7 @@
         'edit-pending': '✏️ Изменение на модерации'
       }[displayStatus] || '⏳ На модерации';
 
-      // ⭐ Можно редактировать если статус не approved ИЛИ edit_pending
       const canEdit = status === 'pending' || status === 'rejected' || isEditPending;
-      // ⭐ Для approved показываем специальную кнопку "Внести изменения"
       const isApproved = status === 'approved' && !isEditPending;
 
       const firstWeapon = char.weapons?.[0];
@@ -729,7 +744,7 @@
           <div class="char-loot-items">
             ${lootEntries.map(([slot, itemId]) => {
               const item = allItems.find(i => i.id === itemId);
-              const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+              const slotLabel = slotLabels[slot] || SLOTS.find(s => s.id === slot)?.label || slot;
               return item ? `<span class="loot-tag">${slotLabel}: ${item.name}</span>` : '';
             }).filter(Boolean).join('')}
           </div>
@@ -748,7 +763,6 @@
         ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
         : '—';
 
-      // ⭐ Кнопка удаления скрыта для всех (персонаж нельзя удалить)
       return `
         <div class="character-card ${displayStatus}">
           <div class="char-card-inner">
@@ -795,15 +809,13 @@
       });
     });
 
-    // ⭐ Обработчики для кнопки "Внести изменения" (одобренные персонажи)
+    // Обработчики для кнопки "Внести изменения" (одобренные персонажи)
     container.querySelectorAll('.btn-edit-approved').forEach(btn => {
       btn.addEventListener('click', () => {
         const char = characters.find(c => c.id === btn.dataset.id);
         if (char) openEditApprovedCharacter(char);
       });
     });
-
-    // ⭐ КНОПКА УДАЛЕНИЯ УБРАНА — персонажа нельзя удалить
   }
 
   // ⭐ Открытие модалки для одобренного персонажа (Внести изменения)
@@ -948,29 +960,161 @@
       if (char?.desired_loot) Object.assign(currentValues, char.desired_loot);
     }
 
-    // ⭐ Добавляем слоты с поддержкой двух оружий и двух колец
+    // ⭐ Слоты с русскими названиями
     const lootSlots = [
       { id: 'weapon1', label: 'Оружие 1' },
       { id: 'weapon2', label: 'Оружие 2' },
-      ...SLOTS.filter(s => s.id !== 'weapon' && s.id !== 'ring').map(s => ({ id: s.id, label: s.label })),
+      { id: 'head', label: 'Шлем' },
+      { id: 'chest', label: 'Нагрудник' },
+      { id: 'legs', label: 'Поножи' },
+      { id: 'feet', label: 'Сапоги' },
+      { id: 'hands', label: 'Перчатки' },
+      { id: 'neck', label: 'Ожерелье' },
       { id: 'ring1', label: 'Кольцо 1' },
-      { id: 'ring2', label: 'Кольцо 2' }
+      { id: 'ring2', label: 'Кольцо 2' },
+      { id: 'belt', label: 'Пояс' },
+      { id: 'cloak', label: 'Плащ' },
+      { id: 'bracelet', label: 'Браслет' }
     ];
 
-    lootSlots.forEach(slot => {
-      // Для оружия используем все предметы со слотом weapon
-      let slotItems = [];
-      if (slot.id === 'weapon1' || slot.id === 'weapon2') {
-        slotItems = allItems.filter(i => i.slot === 'weapon');
-      } else if (slot.id === 'ring1' || slot.id === 'ring2') {
-        slotItems = allItems.filter(i => i.slot === 'ring');
-      } else {
-        slotItems = allItems.filter(i => i.slot === slot.id);
-      }
+    // ⭐ Функция для получения выбранных значений
+    const getSelectedValues = () => {
+      const selected = {};
+      document.querySelectorAll('.loot-slot').forEach(slot => {
+        const wrap = slot.querySelector('.loot-select-wrap');
+        if (wrap) {
+          const val = wrap.querySelector('.select-display')?.dataset.value;
+          if (val) {
+            selected[wrap.dataset.slot] = val;
+          }
+        }
+      });
+      return selected;
+    };
+
+    const buildSlots = () => {
+      const selectedValues = getSelectedValues();
       
-      container.appendChild(
-        createSearchableSelect(slot.id, slot.label, slotItems, currentValues[slot.id] || '')
-      );
+      lootSlots.forEach(slot => {
+        let slotItems = [];
+        if (slot.id === 'weapon1' || slot.id === 'weapon2') {
+          slotItems = allItems.filter(i => i.slot === 'weapon');
+        } else if (slot.id === 'ring1' || slot.id === 'ring2') {
+          slotItems = allItems.filter(i => i.slot === 'ring');
+        } else {
+          slotItems = allItems.filter(i => i.slot === slot.id);
+        }
+        
+        // ⭐ Для оружия и колец — исключаем уже выбранные предметы из других слотов
+        if (slot.id === 'weapon1' || slot.id === 'weapon2' || slot.id === 'ring1' || slot.id === 'ring2') {
+          const otherSlots = ['weapon1', 'weapon2', 'ring1', 'ring2'].filter(s => s !== slot.id);
+          const usedItems = otherSlots
+            .map(s => selectedValues[s])
+            .filter(v => v);
+          slotItems = slotItems.filter(item => !usedItems.includes(item.id));
+        }
+        
+        const currentValue = selectedValues[slot.id] || currentValues[slot.id] || '';
+        const newSelect = createSearchableSelect(slot.id, slot.label, slotItems, currentValue);
+        container.appendChild(newSelect);
+      });
+
+      // ⭐ Обновляем обработчики после пересоздания
+      setupLootHandlers();
+    };
+
+    buildSlots();
+  }
+
+  // ⭐ Обработчики для синхронизации слотов
+  function setupLootHandlers() {
+    document.querySelectorAll('.loot-select-wrap .select-display').forEach(display => {
+      const wrap = display.closest('.loot-select-wrap');
+      const slotId = wrap?.dataset.slot;
+      
+      // ⭐ Только для оружия и колец
+      if (!slotId || !['weapon1', 'weapon2', 'ring1', 'ring2'].includes(slotId)) return;
+      
+      // Убираем старые обработчики
+      const newDisplay = display.cloneNode(true);
+      display.parentNode.replaceChild(newDisplay, display);
+      
+      newDisplay.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = this.parentElement.querySelector('.dropdown')?.classList.contains('open');
+        
+        // При открытии дропдауна — ничего не делаем
+        if (isOpen) return;
+        
+        // При выборе — обновляем все слоты через небольшую задержку
+        setTimeout(() => {
+          // Сохраняем текущие значения
+          const tempValues = {};
+          document.querySelectorAll('.loot-slot').forEach(slot => {
+            const wrap = slot.querySelector('.loot-select-wrap');
+            if (wrap) {
+              const val = wrap.querySelector('.select-display')?.dataset.value;
+              if (val) {
+                tempValues[wrap.dataset.slot] = val;
+              }
+            }
+          });
+          
+          // Пересоздаём слоты
+          const container = document.getElementById('loot-selection');
+          if (!container) return;
+          container.innerHTML = '';
+          
+          const lootSlots = [
+            { id: 'weapon1', label: 'Оружие 1' },
+            { id: 'weapon2', label: 'Оружие 2' },
+            { id: 'head', label: 'Шлем' },
+            { id: 'chest', label: 'Нагрудник' },
+            { id: 'legs', label: 'Поножи' },
+            { id: 'feet', label: 'Сапоги' },
+            { id: 'hands', label: 'Перчатки' },
+            { id: 'neck', label: 'Ожерелье' },
+            { id: 'ring1', label: 'Кольцо 1' },
+            { id: 'ring2', label: 'Кольцо 2' },
+            { id: 'belt', label: 'Пояс' },
+            { id: 'cloak', label: 'Плащ' },
+            { id: 'bracelet', label: 'Браслет' }
+          ];
+          
+          // Сохраняем выбранные значения для восстановления
+          const restoreValues = {};
+          Object.keys(tempValues).forEach(key => {
+            restoreValues[key] = tempValues[key];
+          });
+          
+          lootSlots.forEach(slot => {
+            let slotItems = [];
+            if (slot.id === 'weapon1' || slot.id === 'weapon2') {
+              slotItems = allItems.filter(i => i.slot === 'weapon');
+            } else if (slot.id === 'ring1' || slot.id === 'ring2') {
+              slotItems = allItems.filter(i => i.slot === 'ring');
+            } else {
+              slotItems = allItems.filter(i => i.slot === slot.id);
+            }
+            
+            // Для оружия и колец — исключаем уже выбранные
+            if (slot.id === 'weapon1' || slot.id === 'weapon2' || slot.id === 'ring1' || slot.id === 'ring2') {
+              const otherSlots = ['weapon1', 'weapon2', 'ring1', 'ring2'].filter(s => s !== slot.id);
+              const usedItems = otherSlots
+                .map(s => restoreValues[s])
+                .filter(v => v);
+              slotItems = slotItems.filter(item => !usedItems.includes(item.id));
+            }
+            
+            const currentValue = restoreValues[slot.id] || '';
+            const newSelect = createSearchableSelect(slot.id, slot.label, slotItems, currentValue);
+            container.appendChild(newSelect);
+          });
+          
+          // Перепривязываем обработчики
+          setupLootHandlers();
+        }, 100);
+      });
     });
   }
 
@@ -1089,7 +1233,6 @@
 
     const selectedLoot = getSelectedLoot();
     
-    // ⭐ Преобразуем loot обратно в формат для БД (сохраняем weapon1, weapon2, ring1, ring2 как отдельные слоты)
     const desiredLoot = {};
     Object.entries(selectedLoot).forEach(([slot, itemId]) => {
       if (itemId) {
