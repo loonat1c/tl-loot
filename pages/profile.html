@@ -970,13 +970,13 @@
 
     console.log('📦 Заполняем слоты лута, предметов:', allItems.length);
 
-    // ⭐ Сохраняем текущие выбранные значения из DOM
+    // ⭐ Сохраняем текущие выбранные значения из DOM (только непустые)
     const currentSelected = {};
     document.querySelectorAll('.loot-slot').forEach(slot => {
       const wrap = slot.querySelector('.loot-select-wrap');
       if (wrap) {
         const val = wrap.querySelector('.select-display')?.dataset.value;
-        if (val) {
+        if (val) { // ⭐ ТОЛЬКО НЕПУСТЫЕ ЗНАЧЕНИЯ
           currentSelected[wrap.dataset.slot] = val;
         }
       }
@@ -991,8 +991,11 @@
       }
     }
 
-    // ⭐ Объединяем: сначала из БД, потом из DOM (DOM приоритетнее)
-    const allValues = { ...dbValues, ...currentSelected };
+    // ⭐ Объединяем: НЕ ДАЁМ ПУСТЫМ ЗНАЧЕНИЯМ ПЕРЕЗАПИСЫВАТЬ ДАННЫЕ ИЗ БД
+    const allValues = { ...dbValues };
+    Object.entries(currentSelected).forEach(([k, v]) => {
+      if (v) allValues[k] = v; // берём из DOM только непустые значения
+    });
 
     // ⭐ Слоты с русскими названиями
     const lootSlots = [
