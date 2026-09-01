@@ -687,6 +687,24 @@
     .text-muted { color: var(--text-muted); }
     .text-danger { color: var(--danger); }
 
+    .delete-char-btn {
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 0.7rem;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .delete-char-btn:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
     @media (max-width: 768px) {
       .user-card { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .user-card .user-right { justify-content: flex-start; }
@@ -1137,6 +1155,9 @@
       const badgeClass = ROLE_BADGE_CLASS[role] || 'user';
       const canEdit = !isSelf;
 
+      // Получаем персонажей пользователя
+      const userCharacters = allCharacters.filter(p => p.user_id === u.id && (p.status === 'approved' || p.approved === true));
+      
       const playerCount = getPlayerCount(u.id);
       const approvedCount = getApprovedPlayerCount(u.id);
       const playerName = getPlayerName(u.id);
@@ -1160,6 +1181,18 @@
                   <span>✅ ${approvedCount}</span>
                 </span>
               </div>
+              ${userCharacters.length > 0 ? `
+                <div style="margin-top:0.3rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                  ${userCharacters.map(char => `
+                    <span style="display:inline-flex;align-items:center;gap:0.3rem;background:var(--bg-card2);padding:0.1rem 0.5rem;border-radius:4px;font-size:0.7rem;border:1px solid var(--border);">
+                      🎮 ${char.name}
+                      <button class="delete-char-btn" onclick="deleteCharacter('${char.id}')" title="Удалить персонажа">
+                        ✕
+                      </button>
+                    </span>
+                  `).join('')}
+                </div>
+              ` : ''}
             </div>
           </div>
           <div class="user-right">
@@ -1469,10 +1502,17 @@
         </div>
       ` : '';
 
-      const weapons = char.weapons?.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return weapon?.label || w;
-      }).join(' + ') || '—';
+      // Исправляем отображение оружия на русский язык
+      let weaponsDisplay = '—';
+      if (char.weapons && char.weapons.length > 0) {
+        const weaponLabels = char.weapons.map((w, index) => {
+          const weapon = WEAPONS.find(wp => wp.id === w);
+          const label = weapon?.label || w;
+          // Используем "Оружие 1", "Оружие 2" вместо "weapon1", "weapon2"
+          return `Оружие ${index + 1}: ${label}`;
+        });
+        weaponsDisplay = weaponLabels.join(' + ');
+      }
 
       let lootItems = '';
       if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
@@ -1506,7 +1546,7 @@
           <div class="char-details">
             <div class="detail">
               <div class="label">Оружие</div>
-              <div class="value">${weapons}</div>
+              <div class="value">${weaponsDisplay}</div>
             </div>
             <div class="detail">
               <div class="label">Заявка создана</div>
