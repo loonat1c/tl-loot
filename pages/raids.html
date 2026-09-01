@@ -2665,83 +2665,82 @@
   }
 
   // ⭐ renderAvailablePlayers — с защитой от дублей и дедупликацией
-  let renderAvailableTimeout = null;
+ let renderAvailableTimeout = null;
 
-  function renderAvailablePlayers() {
-    if (renderAvailableTimeout) {
-      clearTimeout(renderAvailableTimeout);
-      renderAvailableTimeout = null;
-    }
+function renderAvailablePlayers() {
+  if (renderAvailableTimeout) {
+    clearTimeout(renderAvailableTimeout);
+    renderAvailableTimeout = null;
+  }
+  
+  renderAvailableTimeout = setTimeout(() => {
+    const list = document.getElementById("roll-available-list");
+    const count = document.getElementById("roll-available-count");
     
-    renderAvailableTimeout = setTimeout(() => {
-      const list = document.getElementById("roll-available-list");
-      const count = document.getElementById("roll-available-count");
+    list.innerHTML = '';
+
+    const inRoll = new Set(rollState.participants.map(p => p.playerId));
+    const approved = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
+    const available = approved.filter(c => !inRoll.has(c.id));
+
+    const isAdminOrLeader = canStartRoll();
+    
+    Promise.all(available.map(async (char) => {
+      const isMe = char.id === rollState.currentPlayerId;
+      if (!attendedPlayerIds.includes(char.id)) return null;
+      const check = await canJoinCurrentQueue(char.id);
+      return { char, check, isMe };
+    })).then(results => {
+      const filtered = results.filter(r => r !== null);
+      const seenIds = new Set();
+      const deduped = filtered.filter(({ char }) => {
+        if (seenIds.has(char.id)) return false;
+        seenIds.add(char.id);
+        return true;
+      });
+
+      count.textContent = deduped.length;
+
+      if (!deduped.length) {
+        list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
       
-      list.innerHTML = '';
+      deduped.forEach(({ char, check, isMe }) => {
+        const row = document.createElement('div');
+        row.className = 'roll-available-row';
 
-      const inRoll = new Set(rollState.participants.map(p => p.playerId));
-      const approved = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-      const available = approved.filter(c => !inRoll.has(c.id));
-
-      const isAdminOrLeader = canStartRoll();
-      
-      Promise.all(available.map(async (char) => {
-        const isMe = char.id === rollState.currentPlayerId;
-
-        if (!isAdminOrLeader && !isMe) return null;
-        if (!attendedPlayerIds.includes(char.id)) return null;
-
-        const check = await canJoinCurrentQueue(char.id);
-        return { char, check, isMe };
-      })).then(results => {
-        const filtered = results.filter(r => r !== null);
-
-        // ⭐ ДЕДУПЛИКАЦИЯ по char.id
-        const seenIds = new Set();
-        const deduped = filtered.filter(({ char }) => {
-          if (seenIds.has(char.id)) return false;
-          seenIds.add(char.id);
-          return true;
-        });
-
-        count.textContent = deduped.length;
-
-        if (!deduped.length) {
-          list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
-          return;
+        let actionHtml = '';
+        if (rollState.isFinished || rollState.isRolling) {
+          actionHtml = `<span class="roll-available-reason">${rollState.isFinished ? '🔒 Завершён' : '⏳'}</span>`;
+        } else if (!check.can) {
+          actionHtml = `<span class="roll-available-reason blocked">✗ ${check.reason}</span>`;
+        } else if (isMe) {
+          actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
+            Присоединиться
+          </button>`;
+        } else if (isAdminOrLeader) {
+          actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
+            + Добавить
+          </button>`;
+        } else {
+          actionHtml = `<span class="roll-available-reason can-join">✓ Доступен</span>`;
         }
 
-        const fragment = document.createDocumentFragment();
-        
-        deduped.forEach(({ char, check, isMe }) => {
-          const row = document.createElement('div');
-          row.className = 'roll-available-row';
-
-          let actionHtml = '';
-          if (rollState.isFinished || rollState.isRolling) {
-            actionHtml = `<span class="roll-available-reason">${rollState.isFinished ? '🔒 Завершён' : '⏳'}</span>`;
-          } else if (!check.can) {
-            actionHtml = `<span class="roll-available-reason blocked">✗ ${check.reason}</span>`;
-          } else if (isMe || isAdminOrLeader) {
-            actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
-              ${isMe ? 'Присоединиться' : '+ Добавить'}
-            </button>`;
-          } else {
-            actionHtml = `<span class="roll-available-reason can-join">✓ Доступен</span>`;
-          }
-
-          row.innerHTML = `
-            <span class="roll-available-name">${char.name}${isMe ? ' <span style="font-size:0.75rem;color:var(--text-muted)">(вы)</span>' : ''}</span>
-            ${actionHtml}
-          `;
-          fragment.appendChild(row);
-        });
-        
-        list.appendChild(fragment);
-        renderAvailableTimeout = null;
+        row.innerHTML = `
+          <span class="roll-available-name">${char.name}${isMe ? ' <span style="font-size:0.75rem;color:var(--text-muted)">(вы)</span>' : ''}</span>
+          ${actionHtml}
+        `;
+        fragment.appendChild(row);
       });
-    }, 50);
-  }
+      
+      list.appendChild(fragment);
+      renderAvailableTimeout = null;
+    });
+  }, 50);
+}
 
   function updateResultCard() {
     const card = document.getElementById("roll-result-card");
