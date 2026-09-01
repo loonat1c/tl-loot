@@ -292,6 +292,27 @@
     .btn-edit-char:hover { border-color: var(--accent); }
     .btn-edit-char:active { transform: scale(0.96); }
 
+    .btn-edit-approved {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 7px;
+      border: 1px solid var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent-glow);
+      color: var(--accent-soft);
+      transition: all 0.15s;
+    }
+
+    .btn-edit-approved:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-edit-approved:active { transform: scale(0.96); }
+
     .btn-delete {
       display: inline-flex;
       align-items: center;
@@ -512,13 +533,13 @@
       <label>Оружие *</label>
       <div class="weapon-slots">
         <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Основное</label>
+          <label style="font-size:0.75rem; color:var(--text-muted);">Оружие 1 *</label>
           <select id="f-char-weapon1">
             <option value="">— выбери —</option>
           </select>
         </div>
         <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Дополнительное</label>
+          <label style="font-size:0.75rem; color:var(--text-muted);">Оружие 2</label>
           <select id="f-char-weapon2">
             <option value="">— выбери —</option>
           </select>
@@ -686,8 +707,10 @@
         'edit-pending': '✏️ Изменение на модерации'
       }[displayStatus] || '⏳ На модерации';
 
-      // ⭐ Можно редактировать только если статус не approved или edit_pending
-      const canEdit = status !== 'approved' || isEditPending;
+      // ⭐ Можно редактировать если статус не approved ИЛИ edit_pending
+      const canEdit = status === 'pending' || status === 'rejected' || isEditPending;
+      // ⭐ Для approved показываем специальную кнопку "Внести изменения"
+      const isApproved = status === 'approved' && !isEditPending;
 
       const firstWeapon = char.weapons?.[0];
       const icon = getWeaponIcon(firstWeapon);
@@ -741,6 +764,7 @@
               </div>
               <div class="char-actions">
                 ${canEdit ? `<button class="btn-edit-char" data-id="${char.id}">✏️ Редактировать</button>` : ''}
+                ${isApproved ? `<button class="btn-edit-approved" data-id="${char.id}">📝 Внести изменения</button>` : ''}
               </div>
             </div>
 
@@ -763,6 +787,7 @@
         </div>`;
     }).join('');
 
+    // Обработчики для обычного редактирования
     container.querySelectorAll('.btn-edit-char').forEach(btn => {
       btn.addEventListener('click', () => {
         const char = characters.find(c => c.id === btn.dataset.id);
@@ -770,7 +795,31 @@
       });
     });
 
+    // ⭐ Обработчики для кнопки "Внести изменения" (одобренные персонажи)
+    container.querySelectorAll('.btn-edit-approved').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const char = characters.find(c => c.id === btn.dataset.id);
+        if (char) openEditApprovedCharacter(char);
+      });
+    });
+
     // ⭐ КНОПКА УДАЛЕНИЯ УБРАНА — персонажа нельзя удалить
+  }
+
+  // ⭐ Открытие модалки для одобренного персонажа (Внести изменения)
+  function openEditApprovedCharacter(char) {
+    editingCharId = char.id;
+    document.getElementById('modal-char-title').textContent = 'Внести изменения';
+    document.getElementById('edit-char-id').value = char.id;
+    document.getElementById('edit-char-status').value = char.status || 'approved';
+    document.getElementById('f-char-name').value = char.name || '';
+    document.getElementById('f-char-weapon1').value = char.weapons?.[0] || '';
+    document.getElementById('f-char-weapon2').value = char.weapons?.[1] || '';
+    document.getElementById('f-moderation-note').value = char.moderation_note || '';
+    document.getElementById('char-error').style.display = 'none';
+    populateLootSlots();
+    setupWeaponSync();
+    openModal();
   }
 
   // ── Weapon selects ─────────────────────────────────
@@ -899,8 +948,26 @@
       if (char?.desired_loot) Object.assign(currentValues, char.desired_loot);
     }
 
-    SLOTS.forEach(slot => {
-      const slotItems = allItems.filter(i => i.slot === slot.id);
+    // ⭐ Добавляем слоты с поддержкой двух оружий и двух колец
+    const lootSlots = [
+      { id: 'weapon1', label: 'Оружие 1' },
+      { id: 'weapon2', label: 'Оружие 2' },
+      ...SLOTS.filter(s => s.id !== 'weapon' && s.id !== 'ring').map(s => ({ id: s.id, label: s.label })),
+      { id: 'ring1', label: 'Кольцо 1' },
+      { id: 'ring2', label: 'Кольцо 2' }
+    ];
+
+    lootSlots.forEach(slot => {
+      // Для оружия используем все предметы со слотом weapon
+      let slotItems = [];
+      if (slot.id === 'weapon1' || slot.id === 'weapon2') {
+        slotItems = allItems.filter(i => i.slot === 'weapon');
+      } else if (slot.id === 'ring1' || slot.id === 'ring2') {
+        slotItems = allItems.filter(i => i.slot === 'ring');
+      } else {
+        slotItems = allItems.filter(i => i.slot === slot.id);
+      }
+      
       container.appendChild(
         createSearchableSelect(slot.id, slot.label, slotItems, currentValues[slot.id] || '')
       );
@@ -1020,10 +1087,20 @@
       editPending = false;
     }
 
+    const selectedLoot = getSelectedLoot();
+    
+    // ⭐ Преобразуем loot обратно в формат для БД (сохраняем weapon1, weapon2, ring1, ring2 как отдельные слоты)
+    const desiredLoot = {};
+    Object.entries(selectedLoot).forEach(([slot, itemId]) => {
+      if (itemId) {
+        desiredLoot[slot] = itemId;
+      }
+    });
+
     const data = {
       name,
       weapons: [weapon1, weapon2].filter(Boolean),
-      desired_loot: getSelectedLoot(),
+      desired_loot: desiredLoot,
       user_id: user.uid,
       user_email: user.email,
       status,
