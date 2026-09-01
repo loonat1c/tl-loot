@@ -291,6 +291,26 @@
       background: rgba(239, 68, 68, 0.1);
     }
 
+    .btn-icon-success {
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1rem;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon-success:hover {
+      color: var(--success);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
     /* ── Модалка смены роли ──────────────────────────────── */
     .role-modal .role-option {
       display: flex;
@@ -928,7 +948,7 @@
   import { getItems } from "../js/modules/items.js";
   import { SLOTS, WEAPONS } from "../js/constants.js";
   import {
-    collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, orderBy
+    collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, orderBy, where, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import {
     createUserWithEmailAndPassword
@@ -1035,6 +1055,25 @@
   function getPlayerName(userId) {
     const char = allCharacters.find(p => p.user_id === userId && (p.status === 'approved' || p.approved === true));
     return char?.name || null;
+  }
+
+  // ⭐ Удаление персонажа
+  async function deleteCharacter(charId) {
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return;
+    
+    if (!confirm(`Удалить персонажа "${char.name}" (${char.user_email || 'Неизвестно'})?`)) return;
+    
+    try {
+      await deleteDoc(doc(db, 'characters', charId));
+      showToast(`✅ Персонаж "${char.name}" удалён`);
+      await loadModerationData();
+      await loadCharactersForStats();
+      await loadUsers();
+    } catch (e) {
+      console.error('Ошибка удаления персонажа:', e);
+      showToast('❌ Ошибка удаления персонажа: ' + e.message, 'error');
+    }
   }
 
   // ─── Загрузка пользователей ──────────────────────────
@@ -1232,14 +1271,42 @@
     }
   });
 
+  // ⭐ УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (без удаления из Auth)
   window.confirmDelete = async (uid) => {
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
-    if (!confirm(`Удалить пользователя "${user.username || user.email || user.id}"? Это действие нельзя отменить.`)) return;
+    
+    if (uid === currentUser?.uid) {
+      showToast('❌ Нельзя удалить самого себя', 'error');
+      return;
+    }
+    
+    if (user.role === 'admin') {
+      showToast('❌ Нельзя удалить администратора', 'error');
+      return;
+    }
+    
+    const confirmMsg = `Удалить пользователя "${user.username || user.email || user.id}"?\n\nБудут удалены:\n- Документ пользователя\n- Все персонажи\n\nУчётная запись Firebase Auth останется.\n\nПользователь сможет зарегистрироваться заново.`;
+    
+    if (!confirm(confirmMsg)) return;
+    
     try {
+      // 1. Удаляем персонажей
+      const charsQuery = query(collection(db, 'characters'), where('user_id', '==', uid));
+      const charsSnap = await getDocs(charsQuery);
+      const batch = writeBatch(db);
+      charsSnap.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      
+      // 2. Удаляем документ пользователя
       await deleteDoc(doc(db, "users", uid));
-      showToast(`✅ Пользователь удалён`);
+      
+      showToast(`✅ Пользователь удалён (удалено ${charsSnap.size} персонажей)`);
       await loadUsers();
+      await loadModerationData();
+      await loadCharactersForStats();
     } catch (e) {
       console.error("Ошибка удаления пользователя:", e);
       showToast("❌ Ошибка удаления: " + e.message, "error");
@@ -1326,10 +1393,7 @@
   }
 
   function updateModerationStats() {
-    // ⭐ Считаем все заявки на модерацию: status === 'pending' ИЛИ previous_status === 'approved'
-    const pending = allCharacters.filter(c => 
-      c.status === 'pending' || c.previous_status === 'approved'
-    ).length;
+    const pending = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved').length;
     const approved = allCharacters.filter(c => c.status === 'approved' && !c.previous_status).length;
     const rejected = allCharacters.filter(c => c.status === 'rejected').length;
     const all = allCharacters.length;
@@ -1361,13 +1425,7 @@
     
     let filtered = allCharacters;
     if (currentFilter === 'pending') {
-      // ⭐ Показываем всех, кто требует модерации:
-      // 1. status === 'pending' (новые заявки)
-      // 2. previous_status === 'approved' (изменение одобренного персонажа)
-      filtered = allCharacters.filter(c => 
-        c.status === 'pending' || 
-        c.previous_status === 'approved'
-      );
+      filtered = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved');
     } else if (currentFilter === 'approved') {
       filtered = allCharacters.filter(c => c.status === 'approved' && !c.previous_status);
     } else if (currentFilter === 'rejected') {
@@ -1392,7 +1450,6 @@
     }
 
     container.innerHTML = filtered.map(char => {
-      // ⭐ Определяем реальный статус для отображения
       const isEditPending = char.previous_status === 'approved';
       const displayStatus = isEditPending ? 'pending' : char.status;
       
@@ -1402,7 +1459,6 @@
         'rejected': '❌ Отклонён'
       }[displayStatus] || '⏳ Ожидает модерации';
 
-      // ⭐ Если это изменение одобренного персонажа — показываем дополнительную информацию
       const editInfo = isEditPending ? `
         <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(245,158,11,0.1);border-radius:4px;font-size:0.8rem;color:var(--warning);">
           ✏️ Изменение одобренного персонажа
@@ -1490,6 +1546,13 @@
               </div>
             </div>
           ` : ''}
+          
+          <!-- ⭐ Кнопка удаления персонажа для админа -->
+          <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" onclick="window.deleteCharacter('${char.id}')">
+              🗑️ Удалить персонажа
+            </button>
+          </div>
         </div>
       `;
     }).join('');
@@ -1508,6 +1571,9 @@
       }
       await moderateCharacter(id, 'rejected', feedback);
     };
+    
+    // ⭐ Делаем функцию удаления персонажа доступной глобально
+    window.deleteCharacter = deleteCharacter;
   }
 
   async function moderateCharacter(id, status, feedback) {
@@ -1520,8 +1586,6 @@
         moderated_at: new Date().toISOString()
       };
       
-      // ⭐ Если персонаж был на модерации изменений (previous_status === 'approved')
-      // и мы его одобряем — сбрасываем previous_status
       const char = allCharacters.find(c => c.id === id);
       if (char?.previous_status === 'approved' && status === 'approved') {
         updates.previous_status = null;
