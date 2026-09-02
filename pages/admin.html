@@ -709,15 +709,6 @@
     .admin-only {
       display: none !important;
     }
-    body.admin-role .admin-only {
-      display: flex !important;
-    }
-    body.admin-role .admin-only-block {
-      display: block !important;
-    }
-    body.moderator-role .moderator-only {
-      display: block !important;
-    }
 
     @media (max-width: 768px) {
       .user-card { flex-direction: column; align-items: stretch; gap: 0.5rem; }
@@ -1038,18 +1029,14 @@
     // Настраиваем видимость в зависимости от роли
     if (role === "admin") {
       // Админ — видит всё
-      document.body.classList.add('admin-role');
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
       document.getElementById('tab-users-btn').style.display = '';
       document.getElementById('tab-settings-btn').style.display = '';
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
     } else {
       // Модератор или глава гильдии — видит только модерацию
-      document.body.classList.add('moderator-role');
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
       document.getElementById('tab-users-btn').style.display = 'none';
       document.getElementById('tab-settings-btn').style.display = 'none';
-      
-      // Скрываем админские блоки
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
       
       // Активируем вкладку модерации
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1070,10 +1057,8 @@
     btn.addEventListener("click", function() {
       // Проверяем доступ к вкладке
       const tabId = this.dataset.tab;
-      if (tabId === 'tab-users' || tabId === 'tab-settings') {
-        if (userRole !== 'admin') {
-          return; // Модераторы не могут переключаться на эти вкладки
-        }
+      if ((tabId === 'tab-users' || tabId === 'tab-settings') && userRole !== 'admin') {
+        return; // Модераторы не могут переключаться на эти вкладки
       }
       
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -1806,10 +1791,20 @@
 
   // ─── Настройки ─────────────────────────────────────────
   function loadSettings() {
+    // Загружаем правила с значениями по умолчанию
     getLootRules().then(rules => {
-      document.getElementById("s-reset-after").value = rules.reset_after_raids;
-      document.getElementById("s-max-skip").value = rules.max_skip_raids;
-      updateExample(rules);
+      // Используем значения по умолчанию, если rules невалидны
+      const resetAfter = (rules && typeof rules.reset_after_raids === 'number') ? rules.reset_after_raids : 6;
+      const maxSkip = (rules && typeof rules.max_skip_raids === 'number') ? rules.max_skip_raids : 2;
+      
+      document.getElementById("s-reset-after").value = resetAfter;
+      document.getElementById("s-max-skip").value = maxSkip;
+      updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+    }).catch(() => {
+      // Если ошибка загрузки, ставим значения по умолчанию
+      document.getElementById("s-reset-after").value = 6;
+      document.getElementById("s-max-skip").value = 2;
+      updateExample({ reset_after_raids: 6, max_skip_raids: 2 });
     });
   }
 
@@ -1822,25 +1817,33 @@
     const resetAfter = Number(document.getElementById("s-reset-after").value);
     const maxSkip = Number(document.getElementById("s-max-skip").value);
 
-    if (resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
+    // Валидация
+    if (isNaN(resetAfter) || isNaN(maxSkip) || resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
       alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
       return;
     }
 
     const btn = document.getElementById("btn-save-rules");
-    btn.disabled = true; btn.textContent = "Сохранение...";
+    btn.disabled = true; 
+    btn.textContent = "Сохранение...";
 
     try {
-      await saveLootRules({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      await saveLootRules({ 
+        reset_after_raids: resetAfter, 
+        max_skip_raids: maxSkip 
+      });
+      
       const msg = document.getElementById("saved-rules-msg");
       msg.classList.add("show");
       setTimeout(() => msg.classList.remove("show"), 2500);
       updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      showToast('✅ Настройки сохранены');
     } catch (e) {
       console.error("Ошибка сохранения настроек:", e);
       alert("Ошибка: " + e.message);
     } finally {
-      btn.disabled = false; btn.textContent = "Сохранить";
+      btn.disabled = false; 
+      btn.textContent = "Сохранить";
     }
   });
 
