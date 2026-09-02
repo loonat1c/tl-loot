@@ -69,12 +69,13 @@
     <form id="login-form" autocomplete="off">
 
       <div class="form-group">
-        <label for="login-email">Email *</label>
+        <label for="login-username">Логин *</label>
         <input
-          type="email"
-          id="login-email"
-          placeholder="your@email.com"
+          type="text"
+          id="login-username"
+          placeholder="Введите логин"
           required
+          autocomplete="username"
         />
       </div>
 
@@ -85,6 +86,7 @@
           id="login-password"
           placeholder="Введите пароль"
           required
+          autocomplete="current-password"
         />
       </div>
 
@@ -109,7 +111,7 @@
   import { 
     initAuth, 
     authReady, 
-    login,
+    loginWithUsername,
     currentUser 
   } from "../js/modules/auth.js";
 
@@ -126,12 +128,12 @@
   }
 
   const form = document.getElementById('login-form');
-  const emailInput = document.getElementById('login-email');
+  const usernameInput = document.getElementById('login-username');
   const passwordInput = document.getElementById('login-password');
   const errorDiv = document.getElementById('error-message');
   const btnLogin = document.getElementById('btn-login');
 
-  [emailInput, passwordInput].forEach(input => {
+  [usernameInput, passwordInput].forEach(input => {
     input.addEventListener('input', () => {
       errorDiv.style.display = 'none';
     });
@@ -142,10 +144,10 @@
 
     errorDiv.style.display = 'none';
 
-    const email = emailInput.value.trim();
+    const username = usernameInput.value.trim().toLowerCase();
     const password = passwordInput.value;
 
-    if (!email || !password) {
+    if (!username || !password) {
       errorDiv.textContent = 'Заполните все поля';
       errorDiv.style.display = 'block';
       return;
@@ -155,18 +157,18 @@
     btnLogin.textContent = 'Вход...';
 
     try {
-      const result = await login(email, password);
+      const result = await loginWithUsername(username, password);
       
       if (result.success) {
         const redirect = sessionStorage.getItem('redirect_after_login');
         sessionStorage.removeItem('redirect_after_login');
         window.location.href = redirect || "/index.html";
       } else {
-        errorDiv.textContent = result.error || 'Ошибка входа';
+        errorDiv.textContent = result.error || 'Неверный логин или пароль';
         errorDiv.style.display = 'block';
       }
     } catch (error) {
-      errorDiv.textContent = error.message || 'Произошла ошибка';
+      errorDiv.textContent = 'Неверный логин или пароль';
       errorDiv.style.display = 'block';
     } finally {
       btnLogin.disabled = false;
