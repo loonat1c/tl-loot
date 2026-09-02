@@ -27,6 +27,18 @@
     }
 
     // ──────────────────────────────────────────────
+    // Безопасное обновление элемента
+    // ──────────────────────────────────────────────
+    function setTextSafe(id, text) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = text;
+      } else {
+        console.warn(`Элемент с ID "${id}" не найден`);
+      }
+    }
+
+    // ──────────────────────────────────────────────
     // Загрузка данных
     // ──────────────────────────────────────────────
     try {
@@ -38,27 +50,30 @@
       const activeRaids = allRaids.filter(r => !r.deleted); // Только активные рейды
       const activeRaidIds = new Set(activeRaids.map(r => r.id));
 
+      console.log(`Найдено рейдов: ${allRaids.length}, активных: ${activeRaids.length}`);
+
       // 2. loot_history — только для активных рейдов
       const lootSnap = await getDocs(collection(db, 'loot_history'));
       const allLootDocs = lootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const lootDocs = allLootDocs.filter(d => activeRaidIds.has(d.raid_id)); // Только лут из активных рейдов
 
+      console.log(`Найдено лута: ${allLootDocs.length}, из активных рейдов: ${lootDocs.length}`);
+
       // Предметов выбито
-      document.getElementById('stat-items').textContent = fmt(lootDocs.length);
-      document.getElementById('stat-items-sub').textContent =
-        lootDocs.length === 1 ? '1 дроп записан' : `${lootDocs.length} дропов записано`;
+      setTextSafe('stat-items', fmt(lootDocs.length));
+      setTextSafe('stat-items-sub', 
+        lootDocs.length === 1 ? '1 дроп записан' : `${lootDocs.length} дропов записано`);
 
       // Уникальных победителей
       const winners = new Set(lootDocs.map(d => d.player_id).filter(Boolean));
-      document.getElementById('stat-winners').textContent = fmt(winners.size);
-      document.getElementById('stat-winners-sub').textContent =
-        `уникальных игроков с лутом`;
+      setTextSafe('stat-winners', fmt(winners.size));
+      setTextSafe('stat-winners-sub', 'уникальных игроков с лутом');
 
       // Люценты
       const totalLucent = lootDocs.reduce((s, d) => s + (Number(d.lucent_value_snapshot) || 0), 0);
-      document.getElementById('stat-lucent').textContent = fmt(totalLucent);
-      document.getElementById('stat-lucent-sub').textContent =
-        totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются';
+      setTextSafe('stat-lucent', fmt(totalLucent));
+      setTextSafe('stat-lucent-sub', 
+        totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются');
 
       // 3. Считаем траи только для активных рейдов
       let totalTries = 0;
@@ -73,15 +88,15 @@
         
         // Фильтруем tries по активным рейдам
         totalTries = triesDocs.filter(t => activeRaidIds.has(t.parentRaidId)).length;
+        console.log(`Найдено траев: ${triesDocs.length}, из активных рейдов: ${totalTries}`);
       } catch (e) {
         console.warn('CollectionGroup failed, using fallback:', e);
         // Fallback: суммируем drop_count только активных рейдов
         totalTries = activeRaids.reduce((s, r) => s + (Number(r.drop_count) || 0), 0);
       }
 
-      document.getElementById('stat-tries').textContent = fmt(totalTries);
-      document.getElementById('stat-tries-sub').textContent =
-        `за ${activeRaids.length} рейдов`;
+      setTextSafe('stat-tries', fmt(totalTries));
+      setTextSafe('stat-tries-sub', `за ${activeRaids.length} рейдов`);
 
       // 4. Последний активный рейд
       if (activeRaids.length > 0) {
@@ -91,82 +106,101 @@
         const lastLoot = lootDocs.filter(d => d.raid_id === last.id);
         const bossName = lastLoot[0]?.boss_name || last.boss_name || '—';
 
-        document.getElementById('last-raid-name').textContent =
-          bossName !== '—' ? `Рейд · ${bossName}` : 'Последний рейд';
+        const lastRaidNameEl = document.getElementById('last-raid-name');
+        if (lastRaidNameEl) {
+          lastRaidNameEl.textContent = bossName !== '—' ? `Рейд · ${bossName}` : 'Последний рейд';
+        }
 
         // Мета
         const meta = document.getElementById('last-raid-meta');
-        const statusColor = last.status === 'closed' ? 'var(--text-muted)' : 'var(--success)';
-        const statusLabel = last.status === 'closed' ? 'Завершён' : 'Активен';
-        meta.innerHTML = `
-          <span class="last-raid-meta-item" style="color:${statusColor}">
-            ● ${statusLabel}
-          </span>
-          <span class="last-raid-meta-item">
-            <span class="dot"></span>${fmtDate(last.date)}
-          </span>
-          <span class="last-raid-meta-item">
-            <span class="dot"></span>${last.drop_count || 0} дропов
-          </span>
-          ${last.attended_player_ids ? `<span class="last-raid-meta-item"><span class="dot"></span>${last.attended_player_ids.length} участников</span>` : ''}
-        `;
+        if (meta) {
+          const statusColor = last.status === 'closed' ? 'var(--text-muted)' : 'var(--success)';
+          const statusLabel = last.status === 'closed' ? 'Завершён' : 'Активен';
+          meta.innerHTML = `
+            <span class="last-raid-meta-item" style="color:${statusColor}">
+              ● ${statusLabel}
+            </span>
+            <span class="last-raid-meta-item">
+              <span class="dot"></span>${fmtDate(last.date)}
+            </span>
+            <span class="last-raid-meta-item">
+              <span class="dot"></span>${last.drop_count || 0} дропов
+            </span>
+            ${last.attended_player_ids ? `<span class="last-raid-meta-item"><span class="dot"></span>${last.attended_player_ids.length} участников</span>` : ''}
+          `;
+        }
 
         // Лут
         const lootContainer = document.getElementById('last-raid-loot');
+        if (lootContainer) {
+          if (lastLoot.length === 0) {
+            lootContainer.innerHTML = `
+              <div class="panel-empty">
+                <div class="empty-icon">🎁</div>
+                <div>Лут-лог пуст</div>
+              </div>`;
+          } else {
+            lootContainer.innerHTML = '';
+            lastLoot.forEach(item => {
+              const hasImage = item.item_image && item.item_image.length < 100_000; // не слишком большой base64
+              const lucentVal = Number(item.lucent_value_snapshot) || 0;
+              const slotLabel = item.item_slot || '';
 
-        if (lastLoot.length === 0) {
-          lootContainer.innerHTML = `
-            <div class="panel-empty">
-              <div class="empty-icon">🎁</div>
-              <div>Лут-лог пуст</div>
-            </div>`;
-        } else {
-          lootContainer.innerHTML = '';
-          lastLoot.forEach(item => {
-            const hasImage = item.item_image && item.item_image.length < 100_000; // не слишком большой base64
-            const lucentVal = Number(item.lucent_value_snapshot) || 0;
-            const slotLabel = item.item_slot || '';
-
-            const row = document.createElement('div');
-            row.className = 'loot-item-row';
-            row.innerHTML = `
-              ${hasImage
-                ? `<img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />`
-                : `<div class="loot-item-img-placeholder">⚔️</div>`}
-              <div class="loot-item-info">
-                <div class="loot-item-name">
-                  ${item.item_name || 'Предмет'}
-                  ${slotLabel ? `<span class="slot-badge">${slotLabel}</span>` : ''}
+              const row = document.createElement('div');
+              row.className = 'loot-item-row';
+              row.innerHTML = `
+                ${hasImage
+                  ? `<img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />`
+                  : `<div class="loot-item-img-placeholder">⚔️</div>`}
+                <div class="loot-item-info">
+                  <div class="loot-item-name">
+                    ${item.item_name || 'Предмет'}
+                    ${slotLabel ? `<span class="slot-badge">${slotLabel}</span>` : ''}
+                  </div>
+                  <div class="loot-item-winner">
+                    <span>→</span>
+                    <span class="winner-name">${item.player_nickname || '—'}</span>
+                    ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${item.roll_type}</span>` : ''}
+                  </div>
                 </div>
-                <div class="loot-item-winner">
-                  <span>→</span>
-                  <span class="winner-name">${item.player_nickname || '—'}</span>
-                  ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${item.roll_type}</span>` : ''}
+                <div class="loot-item-lucent ${lucentVal === 0 ? 'zero' : ''}">
+                  ${lucentVal > 0 ? `💎 ${fmt(lucentVal)}` : '—'}
                 </div>
-              </div>
-              <div class="loot-item-lucent ${lucentVal === 0 ? 'zero' : ''}">
-                ${lucentVal > 0 ? `💎 ${fmt(lucentVal)}` : '—'}
-              </div>
-            `;
-            lootContainer.appendChild(row);
-          });
+              `;
+              lootContainer.appendChild(row);
+            });
+          }
         }
       } else {
-        document.getElementById('last-raid-name').textContent = 'Нет активных рейдов';
-        document.getElementById('last-raid-body').innerHTML = `
-          <div class="panel-empty">
-            <div class="empty-icon">⚔️</div>
-            <div>Активные рейды не найдены</div>
-          </div>`;
+        const lastRaidNameEl = document.getElementById('last-raid-name');
+        if (lastRaidNameEl) {
+          lastRaidNameEl.textContent = 'Нет активных рейдов';
+        }
+        
+        const lastRaidBodyEl = document.getElementById('last-raid-body');
+        if (lastRaidBodyEl) {
+          lastRaidBodyEl.innerHTML = `
+            <div class="panel-empty">
+              <div class="empty-icon">⚔️</div>
+              <div>Активные рейды не найдены</div>
+            </div>`;
+        }
       }
 
     } catch (err) {
       console.error('❌ Ошибка загрузки статистики:', err);
-      ['stat-tries', 'stat-items', 'stat-winners', 'stat-lucent'].forEach(id => {
-        document.getElementById(id).textContent = '—';
+      
+      // Безопасная обработка ошибок
+      const statIds = ['stat-tries', 'stat-items', 'stat-winners', 'stat-lucent'];
+      statIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
       });
-      ['stat-tries-sub', 'stat-items-sub', 'stat-winners-sub', 'stat-lucent-sub'].forEach(id => {
-        document.getElementById(id).textContent = 'ошибка загрузки';
+      
+      const subIds = ['stat-tries-sub', 'stat-items-sub', 'stat-winners-sub', 'stat-lucent-sub'];
+      subIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'ошибка загрузки';
       });
     }
   </script>
