@@ -917,14 +917,23 @@
     const w1 = document.getElementById('f-char-weapon1');
     const w2 = document.getElementById('f-char-weapon2');
     if (!w1 || !w2) return;
+
     const sync = () => {
+      // Prevent same weapon in both selects
       Array.from(w2.options).forEach(o => { o.disabled = !!(o.value && o.value === w1.value); });
       if (w2.value && w2.value === w1.value) w2.value = '';
+      // Rebuild loot grid with preserved values — weapon type filter depends on w1/w2
+      buildLootSlots({});
     };
-    w1.removeEventListener('change', sync);
-    w1.addEventListener('change', sync);
-    w2.removeEventListener('change', sync);
-    w2.addEventListener('change', sync);
+
+    // Remove old listeners by replacing elements (safe here — these are <select>, not searchable)
+    const w1New = w1.cloneNode(true);
+    const w2New = w2.cloneNode(true);
+    w1.parentNode.replaceChild(w1New, w1);
+    w2.parentNode.replaceChild(w2New, w2);
+
+    w1New.addEventListener('change', sync);
+    w2New.addEventListener('change', sync);
     sync();
   }
 
@@ -1054,9 +1063,14 @@
   }
 
   // ── Build loot UI ─────────────────────────────────
-  // Called once when opening the modal. Reads initial values from editingCharId.
-  function buildLootSlots(initialValues = {}) {
+  // currentValues: what's currently selected in the loot grid (preserved across rebuilds)
+  function buildLootSlots(initialValues = {}, currentValues = null) {
     const container = document.getElementById('loot-selection');
+
+    // Preserve currently selected values across rebuilds (weapon select change triggers rebuild)
+    const preserved = currentValues ?? getSelectedLoot();
+    const values = Object.keys(preserved).length ? preserved : initialValues;
+
     container.innerHTML = '';
 
     if (!allItems || !allItems.length) {
@@ -1064,21 +1078,41 @@
       return;
     }
 
+    // Weapon types the character currently uses → used to filter weapon loot slots
+    const charWeapon1 = document.getElementById('f-char-weapon1')?.value || '';
+    const charWeapon2 = document.getElementById('f-char-weapon2')?.value || '';
+    const allowedWeaponTypes = [charWeapon1, charWeapon2].filter(Boolean);
+
     LOOT_SLOTS.forEach(slotDef => {
-      // Get items for this base slot
       let slotItems = allItems.filter(i => i.slot === slotDef.baseSlot);
 
-      // For paired slots (weapon1/weapon2, ring1/ring2) exclude the item chosen in the partner slot
-      // We read partner's current value directly after all slots are built, so we skip exclusion here
-      // and just show all items for the base slot. User can pick duplicate — moderate UX tradeoff.
+      // ── Weapon slots: only show items matching the character's weapon types
+      if (slotDef.baseSlot === 'weapon') {
+        if (allowedWeaponTypes.length) {
+          slotItems = slotItems.filter(i => allowedWeaponTypes.includes(i.weapon_type));
+        }
+        // Exclude item already chosen in the paired slot
+        const pairedSlotId = PAIRED_SLOTS[slotDef.id];
+        if (pairedSlotId) {
+          const pairedVal = values[pairedSlotId] || '';
+          if (pairedVal) slotItems = slotItems.filter(i => i.id !== pairedVal);
+        }
+      }
 
-      const el = createSearchableSelect(
-        slotDef.id,
-        slotDef.label,
-        slotItems,
-        initialValues[slotDef.id] || ''
-      );
+      // ── Ring slots: exclude item already chosen in the paired ring slot
+      if (slotDef.baseSlot === 'ring') {
+        const pairedSlotId = PAIRED_SLOTS[slotDef.id];
+        if (pairedSlotId) {
+          const pairedVal = values[pairedSlotId] || '';
+          if (pairedVal) slotItems = slotItems.filter(i => i.id !== pairedVal);
+        }
+      }
 
+      const selectedVal = values[slotDef.id] || '';
+      // If previously selected item is no longer in the filtered list, clear it
+      const validSelected = slotItems.find(i => i.id === selectedVal) ? selectedVal : '';
+
+      const el = createSearchableSelect(slotDef.id, slotDef.label, slotItems, validSelected);
       container.appendChild(el);
     });
   }
@@ -1110,17 +1144,22 @@
     document.getElementById('modal-char-title').textContent    = title;
     document.getElementById('modal-char-subtitle').textContent = subtitle;
     document.getElementById('modal-char-icon').textContent     = icon;
-    document.getElementById('edit-char-id').value             = char?.id    || '';
+    document.getElementById('edit-char-id').value             = char?.id     || '';
     document.getElementById('edit-char-status').value         = char?.status || '';
     document.getElementById('f-char-name').value              = char?.name   || '';
-    document.getElementById('f-char-weapon1').value           = char?.weapons?.[0] || '';
-    document.getElementById('f-char-weapon2').value           = char?.weapons?.[1] || '';
     document.getElementById('f-moderation-note').value        = char?.moderation_note || '';
     document.getElementById('char-error').style.display       = 'none';
 
-    const initialLoot = char?.desired_loot || {};
-    buildLootSlots(initialLoot);
+    // setupWeaponSync replaces <select> nodes via cloneNode, so call it BEFORE setting values
     setupWeaponSync();
+
+    // Now set weapon values on the fresh nodes
+    document.getElementById('f-char-weapon1').value = char?.weapons?.[0] || '';
+    document.getElementById('f-char-weapon2').value = char?.weapons?.[1] || '';
+
+    // Build loot grid with char's saved loot as initial values
+    const initialLoot = char?.desired_loot || {};
+    buildLootSlots(initialLoot, initialLoot);
   }
 
   function openAddCharacter() {
