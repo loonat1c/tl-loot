@@ -6,6 +6,9 @@
   <title>Профиль — TL Loot</title>
 
   <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Font Awesome для иконок -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <style>
     /* ── SLOT MAP: constants.js → profile loot slots ── */
@@ -56,19 +59,55 @@
       z-index: 1;
     }
 
-    .profile-info { position: relative; z-index: 1; }
+    .profile-info { position: relative; z-index: 1; flex: 1; }
+
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
 
     .profile-info h2 {
       font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 0.25rem;
+      margin: 0;
       color: var(--text);
     }
 
-    .profile-info .email {
+    .btn-edit-profile {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-edit-profile:hover {
+      background: var(--accent-glow);
+      color: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .profile-info .username {
       color: var(--text-muted);
       font-size: 0.83rem;
       margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .profile-info .username i {
+      font-size: 0.75rem;
+      opacity: 0.7;
     }
 
     .profile-role {
@@ -84,6 +123,61 @@
       background: var(--accent-glow);
       color: var(--accent-soft);
       border: 1px solid var(--accent);
+    }
+
+    /* ── Edit profile modal ──────────────────────────── */
+    .edit-profile-form {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 1rem;
+      background: var(--bg-card2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .edit-profile-form.active {
+      display: block;
+    }
+
+    .edit-profile-form .form-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .edit-profile-form label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .edit-profile-form input {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.9rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+
+    .edit-profile-form input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.85rem;
     }
 
     /* ── Section header ───────────────────────────────── */
@@ -582,6 +676,7 @@
     /* ── Responsive ───────────────────────────────────── */
     @media (max-width: 640px) {
       .profile-header { flex-direction: column; text-align: center; }
+      .profile-name-row { justify-content: center; }
       .weapon-grid { grid-template-columns: 1fr; }
       .loot-grid   { grid-template-columns: 1fr; }
       .char-info-grid  { grid-template-columns: 1fr; }
@@ -600,9 +695,29 @@
   <div class="profile-header" id="profile-header">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
-      <h2 id="profile-name">Загрузка...</h2>
-      <div class="email" id="profile-email">—</div>
+      <div class="profile-name-row">
+        <h2 id="profile-name">Загрузка...</h2>
+        <button class="btn-edit-profile" id="btn-edit-profile" title="Изменить имя">
+          <i class="fas fa-pen"></i>
+        </button>
+      </div>
+      <div class="username" id="profile-username">
+        <i class="fas fa-at"></i>
+        <span id="username-text">—</span>
+      </div>
       <span class="profile-role" id="profile-role">guest</span>
+      
+      <!-- Форма редактирования -->
+      <div class="edit-profile-form" id="edit-profile-form">
+        <div class="form-group">
+          <label for="edit-display-name">Имя пользователя</label>
+          <input type="text" id="edit-display-name" placeholder="Введите имя" maxlength="50" />
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-save-profile">Сохранить</button>
+          <button class="btn btn-ghost" id="btn-cancel-edit">Отмена</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -698,7 +813,7 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { getUser, getRole, isModerator, isAdmin } from "../js/modules/auth.js";
+  import { getUser, getRole, isModerator, isAdmin, getUserData, updateUserProfile } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
   import { WEAPONS } from "../js/constants.js";
@@ -722,6 +837,7 @@
   let allBosses  = [];
   let characters = [];
   let editingCharId = null;
+  let userProfileData = null;
 
   const userId          = user.uid;
   const userIsModerator = isModerator() || isAdmin();
@@ -757,6 +873,7 @@
     try { allItems  = await getItems();   } catch(e) { allItems  = []; }
     try { allBosses = await getBosses();  } catch(e) { allBosses = []; }
     try { await loadCharacters();         } catch(e) { characters = []; }
+    try { userProfileData = await getUserData(userId); } catch(e) { userProfileData = null; }
 
     renderProfile();
     renderCharacters();
@@ -772,12 +889,63 @@
 
   // ── Profile ───────────────────────────────────────
   function renderProfile() {
-    const name = user.displayName || user.email?.split('@')[0] || 'Пользователь';
-    document.getElementById('profile-name').textContent  = name;
-    document.getElementById('profile-email').textContent = user.email || '—';
-    document.getElementById('profile-role').textContent  = userRole || 'guest';
-    document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
+    const displayName = userProfileData?.displayName || userProfileData?.username || user.email?.split('@')[0] || 'Пользователь';
+    const username = userProfileData?.username || user.email?.split('@')[0] || 'user';
+    
+    document.getElementById('profile-name').textContent = displayName;
+    document.getElementById('username-text').textContent = username;
+    document.getElementById('profile-role').textContent = userRole || 'guest';
+    document.getElementById('profile-avatar').textContent = displayName.charAt(0).toUpperCase();
   }
+
+  // ── Edit Profile ──────────────────────────────────
+  const btnEditProfile = document.getElementById('btn-edit-profile');
+  const editProfileForm = document.getElementById('edit-profile-form');
+  const editDisplayName = document.getElementById('edit-display-name');
+  const btnSaveProfile = document.getElementById('btn-save-profile');
+  const btnCancelEdit = document.getElementById('btn-cancel-edit');
+
+  btnEditProfile.addEventListener('click', () => {
+    const currentName = document.getElementById('profile-name').textContent;
+    editDisplayName.value = currentName;
+    editProfileForm.classList.toggle('active');
+    if (editProfileForm.classList.contains('active')) {
+      editDisplayName.focus();
+    }
+  });
+
+  btnCancelEdit.addEventListener('click', () => {
+    editProfileForm.classList.remove('active');
+  });
+
+  btnSaveProfile.addEventListener('click', async () => {
+    const newName = editDisplayName.value.trim();
+    if (!newName) {
+      showToast('Введите имя пользователя', 'error');
+      return;
+    }
+
+    btnSaveProfile.disabled = true;
+    btnSaveProfile.textContent = 'Сохранение...';
+
+    try {
+      const result = await updateUserProfile({ displayName: newName });
+      
+      if (result.success) {
+        userProfileData = await getUserData(userId);
+        renderProfile();
+        editProfileForm.classList.remove('active');
+        showToast('Имя обновлено!');
+      } else {
+        showToast(result.error || 'Ошибка обновления', 'error');
+      }
+    } catch (error) {
+      showToast('Ошибка: ' + error.message, 'error');
+    } finally {
+      btnSaveProfile.disabled = false;
+      btnSaveProfile.textContent = 'Сохранить';
+    }
+  });
 
   // ── Helpers ───────────────────────────────────────
   function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
