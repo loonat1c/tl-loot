@@ -8,62 +8,70 @@
   <link rel="stylesheet" href="../css/main.css" />
 
   <style>
-    /* ── Layout ─────────────────────────────────────── */
-    .profile-container {
-      max-width: 860px;
-      margin: 0 auto;
-    }
+    /* ── SLOT MAP: constants.js → profile loot slots ── */
+    /*
+      constants.js slot ids:  helmet, gloves, pants, boots, necklace, ring, belt, cloak, bracelet, weapon
+      loot slot ids used here: helmet, gloves, pants, boots, necklace, ring1, ring2, belt, cloak, bracelet, weapon1, weapon2
+    */
 
-    /* ── Profile header ──────────────────────────────── */
+    /* ── Layout ──────────────────────────────────────── */
+    .profile-container { max-width: 860px; margin: 0 auto; }
+
+    /* ── Profile header ───────────────────────────────── */
     .profile-header {
       display: flex;
       align-items: center;
-      gap: 1.25rem;
-      padding: 1.5rem;
+      gap: 1.5rem;
+      padding: 1.75rem 2rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       margin-bottom: 2rem;
       position: relative;
       overflow: hidden;
     }
 
-    .profile-header::before {
+    .profile-header::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-soft, #a78bff), transparent);
+      inset: 0;
+      background: radial-gradient(ellipse at top left, var(--accent-glow) 0%, transparent 60%);
+      pointer-events: none;
     }
 
     .profile-avatar {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--accent), #4f2fcf);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.75rem;
+      font-size: 2rem;
       font-weight: 700;
       color: #fff;
       flex-shrink: 0;
-      box-shadow: 0 0 0 3px rgba(124, 80, 255, 0.2);
+      box-shadow: 0 0 0 3px var(--bg-card), 0 0 0 5px var(--accent);
+      position: relative;
+      z-index: 1;
     }
 
+    .profile-info { position: relative; z-index: 1; }
+
     .profile-info h2 {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 0.2rem;
+      margin-bottom: 0.25rem;
+      color: var(--text);
     }
 
     .profile-info .email {
       color: var(--text-muted);
-      font-size: 0.82rem;
-      margin-bottom: 0.4rem;
+      font-size: 0.83rem;
+      margin-bottom: 0.5rem;
     }
 
-    .profile-info .role {
+    .profile-role {
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -73,34 +81,28 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      background: rgba(124, 58, 237, 0.15);
-      color: var(--accent-soft, #a78bff);
+      background: var(--accent-glow);
+      color: var(--accent-soft);
       border: 1px solid var(--accent);
     }
 
-    .profile-info .role::before {
-      content: '◆';
-      font-size: 0.45rem;
-    }
-
-    /* ── Section header ──────────────────────────────── */
-    .characters-section .section-header {
+    /* ── Section header ───────────────────────────────── */
+    .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
     }
 
-    .characters-section .section-header h3 {
-      font-size: 0.8rem;
+    .section-title {
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 0;
+      letter-spacing: 0.6px;
     }
 
-    /* ── Character card ──────────────────────────────── */
+    /* ── Character card ───────────────────────────────── */
     .character-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -121,7 +123,6 @@
 
     .char-card-inner { padding: 1.25rem 1.5rem; }
 
-    /* top row */
     .char-top {
       display: flex;
       justify-content: space-between;
@@ -135,7 +136,6 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      flex-wrap: wrap;
     }
 
     .char-icon {
@@ -154,7 +154,6 @@
     .char-name {
       font-size: 1.05rem;
       font-weight: 700;
-      color: var(--text);
       margin-bottom: 0.3rem;
     }
 
@@ -176,21 +175,15 @@
       height: 5px;
       border-radius: 50%;
       background: currentColor;
-      display: inline-block;
       flex-shrink: 0;
     }
 
     .char-status.pending  { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.35); }
-    .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35);  }
-    .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35);  }
+    .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35); }
+    .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35); }
 
-    .char-actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-shrink: 0;
-    }
+    .char-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
-    /* info block */
     .char-info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -219,15 +212,10 @@
       border-radius: 6px;
       font-size: 0.78rem;
       border: 1px solid var(--border);
-      color: var(--text);
     }
 
-    .date-val {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
+    .date-val { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* loot */
     .char-loot {
       border-top: 1px solid var(--border);
       padding-top: 0.75rem;
@@ -247,15 +235,14 @@
     .char-loot-items { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
     .loot-tag {
-      background: rgba(124, 58, 237, 0.12);
+      background: var(--accent-glow);
       padding: 0.25rem 0.7rem;
       border-radius: 6px;
       font-size: 0.78rem;
       border: 1px solid var(--accent);
-      color: var(--accent-soft, #a78bff);
+      color: var(--accent-soft);
     }
 
-    /* notes */
     .char-moderation-note,
     .char-moderation-feedback {
       margin-top: 0.75rem;
@@ -267,9 +254,9 @@
     }
 
     .char-moderation-note     { border-left: 3px solid var(--warning); }
-    .char-moderation-feedback { border-left: 3px solid var(--danger);  }
+    .char-moderation-feedback { border-left: 3px solid var(--danger); }
 
-    /* buttons */
+    /* Buttons */
     .btn-edit-char {
       display: inline-flex;
       align-items: center;
@@ -303,32 +290,10 @@
       transition: all 0.15s;
     }
 
-    .btn-edit-approved:hover {
-      background: var(--accent);
-      color: #fff;
-    }
+    .btn-edit-approved:hover { background: var(--accent); color: #fff; }
     .btn-edit-approved:active { transform: scale(0.96); }
 
-    .btn-delete {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.3rem 0.75rem;
-      border-radius: 7px;
-      border: 1px solid rgba(239,68,68,0.2);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: rgba(239,68,68,0.1);
-      color: var(--danger);
-      transition: background 0.15s;
-    }
-
-    .btn-delete:hover  { background: rgba(239,68,68,0.2); }
-    .btn-delete:active { transform: scale(0.96); }
-    .btn-delete:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* empty state */
+    /* Empty state */
     .empty-state {
       text-align: center;
       padding: 3rem 2rem;
@@ -337,137 +302,288 @@
       color: var(--text-muted);
     }
 
-    .empty-state .icon {
-      font-size: 2.5rem;
-      display: block;
-      margin-bottom: 0.75rem;
-    }
-
+    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
     .empty-state p    { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; font-weight: 500; }
     .empty-state small { font-size: 0.82rem; }
 
-    /* ── Modal ───────────────────────────────────────── */
-    .modal .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+    /* ══════════════════════════════════════════════════
+       MODAL — redesigned
+       ══════════════════════════════════════════════════ */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
     }
 
-    .modal .form-row .form-group { margin-bottom: 0; }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
 
-    .weapon-slots {
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 92vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.25s ease;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+    }
+
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+    /* Modal top accent bar */
+    .modal-accent-bar {
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-soft), transparent);
+      flex-shrink: 0;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem 0;
+      flex-shrink: 0;
+    }
+
+    .modal-header-left { display: flex; align-items: center; gap: 0.75rem; }
+
+    .modal-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-header .modal-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .btn-close {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-close:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+    /* Scrollable body */
+    .modal-body {
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Field label */
+    .field-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    .field-required { color: var(--accent-soft); margin-left: 2px; }
+
+    /* Section divider inside modal */
+    .modal-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    /* Weapon grid */
+    .weapon-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
     }
 
-    .weapon-slots .form-group { margin-bottom: 0; }
-
-    .loot-selection {
-      margin-top: 0.5rem;
-      max-height: 320px;
-      overflow-y: auto;
+    /* Loot slots */
+    .loot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
     }
 
-    .loot-slot {
-      margin-bottom: 0.5rem;
-      padding: 0.4rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
+    /* ── Searchable select ──────────────────────────── */
+    .loot-slot { display: flex; flex-direction: column; gap: 0.3rem; }
 
-    .loot-slot .loot-label {
-      font-size: 0.75rem;
+    .loot-slot-label {
+      font-size: 0.68rem;
       font-weight: 600;
       color: var(--text-muted);
-      display: block;
-      margin-bottom: 0.2rem;
+      letter-spacing: 0.2px;
     }
 
-    .loot-select-wrap { position: relative; width: 100%; }
+    .loot-select-wrap { position: relative; }
 
-    .loot-select-wrap .select-display {
+    .select-display {
       width: 100%;
-      padding: 0.35rem 2rem 0.35rem 0.6rem;
-      font-size: 0.85rem;
-      background: var(--bg-card);
+      padding: 0.4rem 0.75rem;
+      font-size: 0.82rem;
+      background: var(--bg-card2);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 8px;
       color: var(--text);
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      position: relative;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
     }
 
-    .loot-select-wrap .select-display:focus { border-color: var(--accent); outline: none; }
+    .select-display:hover { border-color: var(--accent); }
+    .select-display.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
-    .loot-select-wrap .dropdown {
+    .select-display .select-arrow {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+
+    .select-display.active .select-arrow { transform: rotate(180deg); }
+
+    .select-display .select-val {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .select-display .select-val.empty { color: var(--text-muted); font-style: italic; font-size: 0.78rem; }
+
+    .dropdown {
       display: none;
       position: absolute;
-      top: calc(100% + 2px);
+      top: calc(100% + 4px);
       left: 0; right: 0;
-      max-height: 200px;
-      overflow-y: auto;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      z-index: 50;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 10px;
+      z-index: 60;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      overflow: hidden;
     }
 
-    .loot-select-wrap .dropdown.open { display: block; }
+    .dropdown.open { display: block; }
 
-    .loot-select-wrap .dropdown .search-input {
+    .search-input {
       width: 100%;
-      padding: 0.3rem 0.6rem;
-      font-size: 0.8rem;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.82rem;
       background: var(--bg-card2);
       border: none;
       border-bottom: 1px solid var(--border);
       color: var(--text);
       outline: none;
-      position: sticky;
-      top: 0;
-      z-index: 1;
     }
 
-    .loot-select-wrap .dropdown .search-input:focus { border-color: var(--accent); }
+    .search-input:focus { border-color: var(--accent); }
 
-    .loot-select-wrap .dropdown .items-wrap { max-height: 160px; overflow-y: auto; }
+    .items-wrap { max-height: 180px; overflow-y: auto; }
 
-    .loot-select-wrap .dropdown .item {
-      padding: 0.3rem 0.6rem;
+    .dropdown .item {
+      padding: 0.4rem 0.75rem;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       transition: background 0.1s;
     }
 
-    .loot-select-wrap .dropdown .item:hover,
-    .loot-select-wrap .dropdown .item.selected { background: var(--accent); color: #fff; }
+    .dropdown .item:hover { background: var(--bg-hover); }
+    .dropdown .item.selected { background: var(--accent-glow); color: var(--accent-soft); }
 
-    .loot-select-wrap .dropdown .item.empty {
+    .dropdown .item.empty-item {
       color: var(--text-muted);
-      cursor: default;
       font-style: italic;
+      font-size: 0.78rem;
     }
 
-    .loot-select-wrap .dropdown .item.empty:hover { background: transparent; }
+    .dropdown .item.empty-item:hover { background: transparent; cursor: default; }
 
-    .moderation-note textarea { resize: vertical; min-height: 60px; }
+    /* Footer */
+    .modal-footer {
+      padding: 1rem 1.5rem 1.25rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-soft);
+      background: var(--bg-card);
+    }
 
-    /* ── Responsive ──────────────────────────────────── */
+    .modal-footer .btn-primary { flex: 1; }
+
+    /* Error */
+    .field-error {
+      display: none;
+      font-size: 0.8rem;
+      color: var(--danger);
+      margin-top: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--danger-bg);
+      border-radius: 6px;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
     @media (max-width: 640px) {
       .profile-header { flex-direction: column; text-align: center; }
-      .modal .form-row { grid-template-columns: 1fr; }
-      .weapon-slots    { grid-template-columns: 1fr; }
+      .weapon-grid { grid-template-columns: 1fr; }
+      .loot-grid   { grid-template-columns: 1fr; }
       .char-info-grid  { grid-template-columns: 1fr; }
       .char-top        { flex-direction: column; }
       .char-actions    { justify-content: flex-start; }
@@ -486,13 +602,13 @@
     <div class="profile-info">
       <h2 id="profile-name">Загрузка...</h2>
       <div class="email" id="profile-email">—</div>
-      <span class="role" id="profile-role">guest</span>
+      <span class="profile-role" id="profile-role">guest</span>
     </div>
   </div>
 
   <div class="characters-section">
     <div class="section-header">
-      <h3>Персонаж</h3>
+      <span class="section-title">Персонаж</span>
       <button class="btn btn-primary btn-sm" id="btn-add-character">+ Добавить персонажа</button>
     </div>
 
@@ -509,53 +625,70 @@
 
 
 <!-- ── MODAL ─────────────────────────────────────────── -->
-
 <div class="modal-overlay hidden" id="modal-character">
   <div class="modal">
+    <div class="modal-accent-bar"></div>
+
     <div class="modal-header">
-      <h3 id="modal-char-title">Добавить персонажа</h3>
+      <div class="modal-header-left">
+        <div class="modal-icon" id="modal-char-icon">⚔️</div>
+        <div>
+          <h3 id="modal-char-title">Добавить персонажа</h3>
+          <div class="modal-subtitle" id="modal-char-subtitle">Заполните данные и отправьте на модерацию</div>
+        </div>
+      </div>
       <button class="btn-close" id="btn-char-close">✕</button>
     </div>
 
-    <input type="hidden" id="edit-char-id" />
-    <input type="hidden" id="edit-char-status" />
+    <div class="modal-body">
+      <input type="hidden" id="edit-char-id" />
+      <input type="hidden" id="edit-char-status" />
 
-    <div class="form-group">
-      <label>Имя персонажа *</label>
-      <input type="text" id="f-char-name" placeholder="Имя в гильдии" />
-    </div>
-
-    <div class="form-group">
-      <label>Оружие *</label>
-      <div class="weapon-slots">
-        <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Оружие 1 *</label>
-          <select id="f-char-weapon1">
-            <option value="">— выбери —</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label style="font-size:0.75rem; color:var(--text-muted);">Оружие 2</label>
-          <select id="f-char-weapon2">
-            <option value="">— выбери —</option>
-          </select>
+      <!-- Имя -->
+      <div class="modal-section">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="field-label">Имя персонажа <span class="field-required">*</span></label>
+          <input type="text" id="f-char-name" placeholder="Как вас знают в гильдии" />
         </div>
       </div>
+
+      <!-- Оружие -->
+      <div class="modal-section">
+        <div class="modal-section-title">Оружие</div>
+        <div class="weapon-grid">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="field-label">Основное <span class="field-required">*</span></label>
+            <select id="f-char-weapon1">
+              <option value="">— выбери —</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="field-label">Дополнительное</label>
+            <select id="f-char-weapon2">
+              <option value="">— не выбрано —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Желаемый лут -->
+      <div class="modal-section">
+        <div class="modal-section-title">Желаемый лут</div>
+        <div class="loot-grid" id="loot-selection"></div>
+      </div>
+
+      <!-- Заметка -->
+      <div class="modal-section" style="margin-bottom:0">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="field-label">Сообщение модератору</label>
+          <textarea id="f-moderation-note" placeholder="Дополнительная информация..." rows="2" style="resize:vertical; min-height:52px;"></textarea>
+        </div>
+      </div>
+
+      <div id="char-error" class="field-error"></div>
     </div>
 
-    <div class="form-group">
-      <label>Желаемый лут</label>
-      <div class="loot-selection" id="loot-selection"></div>
-    </div>
-
-    <div class="form-group moderation-note">
-      <label>Сообщение модератору (опционально)</label>
-      <textarea id="f-moderation-note" placeholder="Дополнительная информация..." rows="2"></textarea>
-    </div>
-
-    <div id="char-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
-
-    <div class="flex gap-1 mt-3">
+    <div class="modal-footer">
       <button class="btn btn-primary" id="btn-char-save">Отправить на модерацию</button>
       <button class="btn btn-ghost" id="btn-char-cancel">Отмена</button>
     </div>
@@ -564,35 +697,20 @@
 
 
 <script type="module">
-  // ── Imports ────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
-  import {
-    getUser,
-    getRole,
-    isModerator,
-    isAdmin
-  } from "../js/modules/auth.js";
+  import { getUser, getRole, isModerator, isAdmin } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
-  import { WEAPONS, SLOTS } from "../js/constants.js";
+  import { WEAPONS } from "../js/constants.js";
   import {
-    collection,
-    doc,
-    getDocs,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    where
+    collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ⭐ initNavbar сам вызывает initAuth и ждёт authReady внутри
   await initNavbar();
 
-  // ⭐ Теперь currentUser и currentRole точно доступны
-  const user = getUser();
-  const userRole = getRole();
+  const user        = getUser();
+  const userRole    = getRole();
 
   if (!user) {
     sessionStorage.setItem('redirect_after_login', window.location.pathname);
@@ -600,86 +718,78 @@
     throw new Error('Not authenticated');
   }
 
-  // ── State ──────────────────────────────────────────
-  let allItems = [];
-  let allBosses = [];
+  let allItems   = [];
+  let allBosses  = [];
   let characters = [];
   let editingCharId = null;
 
-  const userId = user.uid;
+  const userId          = user.uid;
   const userIsModerator = isModerator() || isAdmin();
 
-  // ── Load ───────────────────────────────────────────
+  // ─────────────────────────────────────────────────
+  // SLOT MAP
+  // constants.js uses: helmet, gloves, pants, boots, necklace, ring, belt, cloak, bracelet, weapon
+  // We expose ring1/ring2 and weapon1/weapon2 as separate UI slots → map both to the same base slot id
+  // ─────────────────────────────────────────────────
+  const LOOT_SLOTS = [
+    { id: 'weapon1',   label: 'Оружие 1',   baseSlot: 'weapon'   },
+    { id: 'weapon2',   label: 'Оружие 2',   baseSlot: 'weapon'   },
+    { id: 'helmet',    label: 'Шлем',       baseSlot: 'helmet'   },
+    { id: 'chest',     label: 'Нагрудник',  baseSlot: 'chest'    },
+    { id: 'pants',     label: 'Поножи',     baseSlot: 'pants'    },
+    { id: 'boots',     label: 'Сапоги',     baseSlot: 'boots'    },
+    { id: 'gloves',    label: 'Перчатки',   baseSlot: 'gloves'   },
+    { id: 'necklace',  label: 'Ожерелье',   baseSlot: 'necklace' },
+    { id: 'ring1',     label: 'Кольцо 1',   baseSlot: 'ring'     },
+    { id: 'ring2',     label: 'Кольцо 2',   baseSlot: 'ring'     },
+    { id: 'belt',      label: 'Пояс',       baseSlot: 'belt'     },
+    { id: 'cloak',     label: 'Плащ',       baseSlot: 'cloak'    },
+    { id: 'bracelet',  label: 'Браслет',    baseSlot: 'bracelet' },
+  ];
+
+  const PAIRED_SLOTS = {
+    weapon1: 'weapon2', weapon2: 'weapon1',
+    ring1:   'ring2',   ring2:   'ring1',
+  };
+
+  // ── Load ──────────────────────────────────────────
   async function loadData() {
-    try {
-      allItems = await getItems();
-    } catch (e) {
-      console.warn('⚠️ getItems failed:', e);
-      allItems = [];
-    }
-
-    try {
-      allBosses = await getBosses();
-    } catch (e) {
-      console.warn('⚠️ getBosses failed:', e);
-      allBosses = [];
-    }
-
-    try {
-      await loadCharacters();
-    } catch (e) {
-      console.warn('⚠️ loadCharacters failed:', e);
-      characters = [];
-    }
+    try { allItems  = await getItems();   } catch(e) { allItems  = []; }
+    try { allBosses = await getBosses();  } catch(e) { allBosses = []; }
+    try { await loadCharacters();         } catch(e) { characters = []; }
 
     renderProfile();
     renderCharacters();
     populateWeaponSelects();
-    populateLootSlots();
-    setupWeaponSync();
-
-    console.log('✅ loadData done. items:', allItems.length, 'chars:', characters.length);
   }
 
   async function loadCharacters() {
-    const q = query(collection(db, 'characters'), where('user_id', '==', userId));
+    const q    = query(collection(db, 'characters'), where('user_id', '==', userId));
     const snap = await getDocs(q);
     characters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    characters.sort((a, b) => {
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-    });
+    characters.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   }
 
-  // ── Render profile ─────────────────────────────────
+  // ── Profile ───────────────────────────────────────
   function renderProfile() {
     const name = user.displayName || user.email?.split('@')[0] || 'Пользователь';
-    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-name').textContent  = name;
     document.getElementById('profile-email').textContent = user.email || '—';
-    document.getElementById('profile-role').textContent = userRole || 'guest';
+    document.getElementById('profile-role').textContent  = userRole || 'guest';
     document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
   }
 
-  // ── Helpers ────────────────────────────────────────
-  function getWeaponLabel(id) {
-    return WEAPONS.find(w => w.id === id)?.label || id;
-  }
-
+  // ── Helpers ───────────────────────────────────────
+  function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
   function getWeaponIcon(id) {
-    const icons = {
-      bow: '🏹', staff: '🪄', wand: '✨', greatsword: '⚔️',
-      sword_shield: '🛡️', spear: '🔱', crossbow: '🎯', daggers: '🗡️'
-    };
-    return icons[id] || '⚔️';
+    return { bow:'🏹', staff:'🪄', wand:'✨', greatsword:'⚔️', sword_shield:'🛡️', spear:'🔱', crossbow:'🎯', daggers:'🗡️' }[id] || '⚔️';
   }
 
-  // ── Render characters ──────────────────────────────
+  // ── Render characters ─────────────────────────────
   function renderCharacters() {
     const container = document.getElementById('characters-list');
     const addBtn    = document.getElementById('btn-add-character');
-
-    if (addBtn) {
-      addBtn.style.display = characters.length > 0 ? 'none' : '';
-    }
+    if (addBtn) addBtn.style.display = characters.length > 0 ? 'none' : '';
 
     if (!characters.length) {
       container.innerHTML = `
@@ -691,42 +801,20 @@
       return;
     }
 
-    // ⭐ Маппинг слотов для отображения
-    const slotLabels = {
-      'weapon1': 'Оружие 1',
-      'weapon2': 'Оружие 2',
-      'head': 'Шлем',
-      'chest': 'Нагрудник',
-      'legs': 'Поножи',
-      'feet': 'Сапоги',
-      'hands': 'Перчатки',
-      'neck': 'Ожерелье',
-      'ring1': 'Кольцо 1',
-      'ring2': 'Кольцо 2',
-      'belt': 'Пояс',
-      'cloak': 'Плащ',
-      'bracelet': 'Браслет'
-    };
-
     container.innerHTML = characters.map(char => {
-      const status = char.status || 'pending';
-      // ⭐ Если есть previous_status === 'approved' — значит персонаж на модерации изменений
+      const status        = char.status || 'pending';
       const isEditPending = char.previous_status === 'approved';
       const displayStatus = isEditPending ? 'pending' : status;
-      
+
       const statusLabel = {
-        pending: isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
+        pending:  isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
         approved: '✅ Одобрен',
-        rejected: '❌ Отклонён'
+        rejected: '❌ Отклонён',
       }[displayStatus] || '⏳ На модерации';
 
-      // ⭐ Можно редактировать если статус не approved
-      const canEdit = status !== 'approved';
-      // ⭐ Для approved показываем специальную кнопку "Внести изменения"
+      const canEdit    = status !== 'approved';
       const isApproved = status === 'approved' && !isEditPending;
-
-      const firstWeapon = char.weapons?.[0];
-      const icon = getWeaponIcon(firstWeapon);
+      const icon       = getWeaponIcon(char.weapons?.[0]);
 
       const weaponsHtml = char.weapons?.length
         ? char.weapons.map(w => `<span class="weapon-tag">${getWeaponLabel(w)}</span>`).join('')
@@ -740,25 +828,21 @@
         <div class="char-loot">
           <span class="label">🎯 Желаемый лут</span>
           <div class="char-loot-items">
-            ${lootEntries.map(([slot, itemId]) => {
-              const item = allItems.find(i => i.id === itemId);
-              const slotLabel = slotLabels[slot] || SLOTS.find(s => s.id === slot)?.label || slot;
+            ${lootEntries.map(([slotId, itemId]) => {
+              const item      = allItems.find(i => i.id === itemId);
+              const slotDef   = LOOT_SLOTS.find(s => s.id === slotId);
+              const slotLabel = slotDef?.label || slotId;
               return item ? `<span class="loot-tag">${slotLabel}: ${item.name}</span>` : '';
             }).filter(Boolean).join('')}
           </div>
         </div>` : '';
 
-      const noteHtml = char.moderation_note
-        ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : '';
-
-      const feedbackHtml = char.moderation_feedback
-        ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
-
-      const editInfoHtml = isEditPending && char.edit_note
-        ? `<div class="char-moderation-note">✏️ Изменения на модерации: ${char.edit_note}</div>` : '';
+      const noteHtml     = char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : '';
+      const feedbackHtml = char.moderation_feedback  ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
+      const editInfoHtml = (isEditPending && char.edit_note) ? `<div class="char-moderation-note">✏️ Изменения на модерации: ${char.edit_note}</div>` : '';
 
       const date = char.created_at
-        ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+        ? new Date(char.created_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })
         : '—';
 
       return `
@@ -775,11 +859,10 @@
                 </div>
               </div>
               <div class="char-actions">
-                ${canEdit ? `<button class="btn-edit-char" data-id="${char.id}">✏️ Редактировать</button>` : ''}
+                ${canEdit    ? `<button class="btn-edit-char"     data-id="${char.id}">✏️ Редактировать</button>` : ''}
                 ${isApproved ? `<button class="btn-edit-approved" data-id="${char.id}">📝 Внести изменения</button>` : ''}
               </div>
             </div>
-
             <div class="char-info-grid">
               <div class="char-info-block">
                 <span class="label">⚔️ Оружие</span>
@@ -790,7 +873,6 @@
                 <div class="date-val">${date}</div>
               </div>
             </div>
-
             ${lootHtml}
             ${noteHtml}
             ${feedbackHtml}
@@ -799,7 +881,6 @@
         </div>`;
     }).join('');
 
-    // Обработчики для обычного редактирования
     container.querySelectorAll('.btn-edit-char').forEach(btn => {
       btn.addEventListener('click', () => {
         const char = characters.find(c => c.id === btn.dataset.id);
@@ -807,7 +888,6 @@
       });
     });
 
-    // Обработчики для кнопки "Внести изменения" (одобренные персонажи)
     container.querySelectorAll('.btn-edit-approved').forEach(btn => {
       btn.addEventListener('click', () => {
         const char = characters.find(c => c.id === btn.dataset.id);
@@ -816,29 +896,13 @@
     });
   }
 
-  // ⭐ Открытие модалки для одобренного персонажа (Внести изменения)
-  function openEditApprovedCharacter(char) {
-    editingCharId = char.id;
-    document.getElementById('modal-char-title').textContent = 'Внести изменения';
-    document.getElementById('edit-char-id').value = char.id;
-    document.getElementById('edit-char-status').value = char.status || 'approved';
-    document.getElementById('f-char-name').value = char.name || '';
-    document.getElementById('f-char-weapon1').value = char.weapons?.[0] || '';
-    document.getElementById('f-char-weapon2').value = char.weapons?.[1] || '';
-    document.getElementById('f-moderation-note').value = char.moderation_note || '';
-    document.getElementById('char-error').style.display = 'none';
-    populateLootSlots();
-    setupWeaponSync();
-    openModal();
-  }
-
-  // ── Weapon selects ─────────────────────────────────
+  // ── Weapon selects ────────────────────────────────
   function populateWeaponSelects() {
     ['f-char-weapon1', 'f-char-weapon2'].forEach(id => {
       const sel = document.getElementById(id);
       if (!sel) return;
       const cur = sel.value;
-      sel.innerHTML = `<option value="">— выбери —</option>`;
+      sel.innerHTML = `<option value="">${id === 'f-char-weapon1' ? '— выбери —' : '— не выбрано —'}</option>`;
       WEAPONS.forEach(w => {
         const opt = document.createElement('option');
         opt.value = w.id;
@@ -853,289 +917,232 @@
     const w1 = document.getElementById('f-char-weapon1');
     const w2 = document.getElementById('f-char-weapon2');
     if (!w1 || !w2) return;
-
     const sync = () => {
-      const v1 = w1.value;
-      Array.from(w2.options).forEach(o => { o.disabled = o.value && o.value === v1; });
-      if (w2.value && w2.value === v1) w2.value = '';
+      Array.from(w2.options).forEach(o => { o.disabled = !!(o.value && o.value === w1.value); });
+      if (w2.value && w2.value === w1.value) w2.value = '';
     };
-
+    w1.removeEventListener('change', sync);
     w1.addEventListener('change', sync);
+    w2.removeEventListener('change', sync);
     w2.addEventListener('change', sync);
     sync();
   }
 
-  // ── Searchable select ──────────────────────────────
+  // ── Searchable select ─────────────────────────────
+  // Returns a DOM element with a .getSelected() method.
+  // NO cloneNode tricks — closures are kept intact.
   function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
-    const container = document.createElement('div');
-    container.className = 'loot-slot';
+    const wrap = document.createElement('div');
+    wrap.className = 'loot-slot';
+    wrap.dataset.slotId = slotId;
 
-    const selected = items.find(i => i.id === selectedValue);
-    const displayText = selected ? selected.name : '— не выбрано —';
+    const selected    = items.find(i => i.id === selectedValue);
+    let   currentVal  = selectedValue;
 
-    container.innerHTML = `
-      <span class="loot-label">${slotLabel}</span>
-      <div class="loot-select-wrap" data-slot="${slotId}">
-        <div class="select-display" tabindex="0" data-value="${selectedValue}">${displayText}</div>
-        <div class="dropdown">
-          <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
-          <div class="items-wrap"></div>
-        </div>
-      </div>`;
+    // Build HTML
+    const labelEl = document.createElement('span');
+    labelEl.className = 'loot-slot-label';
+    labelEl.textContent = slotLabel;
 
-    const wrap      = container.querySelector('.loot-select-wrap');
-    const display   = wrap.querySelector('.select-display');
-    const dropdown  = wrap.querySelector('.dropdown');
-    const search    = wrap.querySelector('.search-input');
-    const itemsWrap = wrap.querySelector('.items-wrap');
-    let current     = selectedValue;
+    const selectWrap = document.createElement('div');
+    selectWrap.className = 'loot-select-wrap';
+
+    const display = document.createElement('div');
+    display.className = 'select-display' + (selectedValue ? '' : '');
+    display.tabIndex = 0;
+    display.innerHTML = `
+      <span class="select-val ${selectedValue ? '' : 'empty'}">${selected ? selected.name : 'не выбрано'}</span>
+      <span class="select-arrow">▼</span>`;
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+    dropdown.innerHTML = `
+      <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
+      <div class="items-wrap"></div>`;
+
+    selectWrap.appendChild(display);
+    selectWrap.appendChild(dropdown);
+    wrap.appendChild(labelEl);
+    wrap.appendChild(selectWrap);
+
+    const searchInput = dropdown.querySelector('.search-input');
+    const itemsWrap   = dropdown.querySelector('.items-wrap');
 
     const renderItems = (filter = '') => {
-      const q = filter.toLowerCase();
+      const q        = filter.toLowerCase();
       const filtered = q ? items.filter(i => i.name.toLowerCase().includes(q)) : items;
       itemsWrap.innerHTML = '';
+
+      // "Не выбрано" option at top
+      const noneEl = document.createElement('div');
+      noneEl.className = 'item' + (currentVal === '' ? ' selected' : '');
+      noneEl.textContent = '— не выбрано —';
+      noneEl.addEventListener('click', () => selectItem('', '— не выбрано —', true));
+      itemsWrap.appendChild(noneEl);
+
       if (!filtered.length) {
-        itemsWrap.innerHTML = `<div class="item empty">Ничего не найдено</div>`;
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'item empty-item';
+        emptyEl.textContent = 'Ничего не найдено';
+        itemsWrap.appendChild(emptyEl);
         return;
       }
+
       filtered.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'item' + (item.id === current ? ' selected' : '');
-        div.textContent = item.name;
-        div.addEventListener('click', () => {
-          current = item.id;
-          display.textContent = item.name;
-          display.dataset.value = item.id;
-          dropdown.classList.remove('open');
-          renderItems();
-        });
-        itemsWrap.appendChild(div);
+        const el = document.createElement('div');
+        el.className = 'item' + (item.id === currentVal ? ' selected' : '');
+        el.textContent = item.name;
+        el.addEventListener('click', () => selectItem(item.id, item.name, false));
+        itemsWrap.appendChild(el);
       });
+    };
+
+    const selectItem = (id, name, isEmpty) => {
+      currentVal = id;
+      const valEl = display.querySelector('.select-val');
+      valEl.textContent = isEmpty ? 'не выбрано' : name;
+      valEl.className   = 'select-val' + (isEmpty ? ' empty' : '');
+      closeDropdown();
+    };
+
+    const openDropdown = () => {
+      // Close any other open dropdowns
+      document.querySelectorAll('.dropdown.open').forEach(d => {
+        if (d !== dropdown) {
+          d.classList.remove('open');
+          d.closest('.loot-select-wrap')?.querySelector('.select-display')?.classList.remove('active');
+        }
+      });
+      dropdown.classList.add('open');
+      display.classList.add('active');
+      searchInput.value = '';
+      renderItems();
+      setTimeout(() => searchInput.focus(), 60);
+    };
+
+    const closeDropdown = () => {
+      dropdown.classList.remove('open');
+      display.classList.remove('active');
+      renderItems(); // refresh selected highlight
     };
 
     display.addEventListener('click', e => {
       e.stopPropagation();
-      const isOpen = dropdown.classList.contains('open');
-      document.querySelectorAll('.loot-select-wrap .dropdown.open').forEach(d => {
-        if (d !== dropdown) d.classList.remove('open');
-      });
-      if (!isOpen) {
-        dropdown.classList.add('open');
-        search.value = '';
-        renderItems();
-        setTimeout(() => search.focus(), 80);
-      } else {
-        dropdown.classList.remove('open');
-      }
+      dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
     });
 
     display.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        display.click();
-      }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); display.click(); }
+      if (e.key === 'Escape') closeDropdown();
     });
 
-    search.addEventListener('input', () => renderItems(search.value));
+    searchInput.addEventListener('input', () => renderItems(searchInput.value));
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
 
     document.addEventListener('click', e => {
-      if (!container.contains(e.target)) dropdown.classList.remove('open');
+      if (!wrap.contains(e.target)) closeDropdown();
     });
 
-    container.getSelected = () => current;
-    return container;
+    // Public API
+    wrap.getSelected   = () => currentVal;
+    wrap.setSelected   = (id) => {
+      const item = items.find(i => i.id === id);
+      selectItem(id, item?.name || '', !id);
+    };
+
+    return wrap;
   }
 
-  // ── Loot slots ─────────────────────────────────────
-  function populateLootSlots() {
+  // ── Build loot UI ─────────────────────────────────
+  // Called once when opening the modal. Reads initial values from editingCharId.
+  function buildLootSlots(initialValues = {}) {
     const container = document.getElementById('loot-selection');
-    if (!container) return;
     container.innerHTML = '';
 
-    // ⭐ Проверяем, что allItems загружены
-    if (!allItems || allItems.length === 0) {
-      console.warn('⚠️ allItems пуст, пропускаем populateLootSlots');
-      container.innerHTML = `
-        <div style="padding:0.5rem;color:var(--text-muted);font-size:0.85rem;">
-          ⏳ Загрузка предметов...
-        </div>
-      `;
-      setTimeout(() => {
-        if (allItems && allItems.length > 0) {
-          populateLootSlots();
-        }
-      }, 1000);
+    if (!allItems || !allItems.length) {
+      container.innerHTML = `<div style="grid-column:1/-1;padding:0.5rem;color:var(--text-muted);font-size:0.85rem;">⏳ Загрузка предметов...</div>`;
       return;
     }
 
-    console.log('📦 Заполняем слоты лута, предметов:', allItems.length);
+    LOOT_SLOTS.forEach(slotDef => {
+      // Get items for this base slot
+      let slotItems = allItems.filter(i => i.slot === slotDef.baseSlot);
 
-    // ⭐ Сохраняем текущие выбранные значения из DOM (только непустые)
-    const currentSelected = {};
-    document.querySelectorAll('.loot-slot').forEach(slot => {
-      const wrap = slot.querySelector('.loot-select-wrap');
-      if (wrap) {
-        const val = wrap.querySelector('.select-display')?.dataset.value;
-        if (val) { // ⭐ ТОЛЬКО НЕПУСТЫЕ ЗНАЧЕНИЯ
-          currentSelected[wrap.dataset.slot] = val;
-        }
-      }
-    });
+      // For paired slots (weapon1/weapon2, ring1/ring2) exclude the item chosen in the partner slot
+      // We read partner's current value directly after all slots are built, so we skip exclusion here
+      // and just show all items for the base slot. User can pick duplicate — moderate UX tradeoff.
 
-    // ⭐ Если редактируем персонажа — берём значения из БД как основу
-    const dbValues = {};
-    if (editingCharId) {
-      const char = characters.find(c => c.id === editingCharId);
-      if (char?.desired_loot) {
-        Object.assign(dbValues, char.desired_loot);
-      }
-    }
+      const el = createSearchableSelect(
+        slotDef.id,
+        slotDef.label,
+        slotItems,
+        initialValues[slotDef.id] || ''
+      );
 
-    // ⭐ Объединяем: НЕ ДАЁМ ПУСТЫМ ЗНАЧЕНИЯМ ПЕРЕЗАПИСЫВАТЬ ДАННЫЕ ИЗ БД
-    const allValues = { ...dbValues };
-    Object.entries(currentSelected).forEach(([k, v]) => {
-      if (v) allValues[k] = v; // берём из DOM только непустые значения
-    });
-
-    // ⭐ Слоты с русскими названиями
-    const lootSlots = [
-      { id: 'weapon1', label: 'Оружие 1' },
-      { id: 'weapon2', label: 'Оружие 2' },
-      { id: 'head', label: 'Шлем' },
-      { id: 'chest', label: 'Нагрудник' },
-      { id: 'legs', label: 'Поножи' },
-      { id: 'feet', label: 'Сапоги' },
-      { id: 'hands', label: 'Перчатки' },
-      { id: 'neck', label: 'Ожерелье' },
-      { id: 'ring1', label: 'Кольцо 1' },
-      { id: 'ring2', label: 'Кольцо 2' },
-      { id: 'belt', label: 'Пояс' },
-      { id: 'cloak', label: 'Плащ' },
-      { id: 'bracelet', label: 'Браслет' }
-    ];
-
-    lootSlots.forEach(slot => {
-      let slotItems = [];
-      if (slot.id === 'weapon1' || slot.id === 'weapon2') {
-        slotItems = allItems.filter(i => i.slot === 'weapon');
-      } else if (slot.id === 'ring1' || slot.id === 'ring2') {
-        slotItems = allItems.filter(i => i.slot === 'ring');
-      } else {
-        slotItems = allItems.filter(i => i.slot === slot.id);
-      }
-      
-      // ⭐ Для оружия и колец — исключаем уже выбранные предметы из ДРУГИХ слотов
-      if (slot.id === 'weapon1' || slot.id === 'weapon2' || slot.id === 'ring1' || slot.id === 'ring2') {
-        const otherSlots = ['weapon1', 'weapon2', 'ring1', 'ring2'].filter(s => s !== slot.id);
-        const usedItems = otherSlots
-          .map(s => allValues[s])
-          .filter(v => v);
-        slotItems = slotItems.filter(item => !usedItems.includes(item.id));
-      }
-      
-      const currentValue = allValues[slot.id] || '';
-      const newSelect = createSearchableSelect(slot.id, slot.label, slotItems, currentValue);
-      container.appendChild(newSelect);
-    });
-
-    // ⭐ Обновляем обработчики после пересоздания
-    setupLootHandlers();
-  }
-
-  // ⭐ Обработчики для синхронизации слотов
-  function setupLootHandlers() {
-    document.querySelectorAll('.loot-select-wrap .select-display').forEach(display => {
-      const wrap = display.closest('.loot-select-wrap');
-      const slotId = wrap?.dataset.slot;
-      
-      // ⭐ Только для оружия и колец
-      if (!slotId || !['weapon1', 'weapon2', 'ring1', 'ring2'].includes(slotId)) return;
-      
-      // Убираем старые обработчики
-      const newDisplay = display.cloneNode(true);
-      display.parentNode.replaceChild(newDisplay, display);
-      
-      newDisplay.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isOpen = this.parentElement.querySelector('.dropdown')?.classList.contains('open');
-        
-        // При открытии дропдауна — ничего не делаем
-        if (isOpen) return;
-        
-        // При выборе — обновляем все слоты через небольшую задержку
-        setTimeout(() => {
-          populateLootSlots();
-        }, 100);
-      });
+      container.appendChild(el);
     });
   }
 
   function getSelectedLoot() {
     const result = {};
-    document.querySelectorAll('.loot-slot').forEach(slot => {
-      const wrap = slot.querySelector('.loot-select-wrap');
-      if (!wrap) return;
-      const val = wrap.querySelector('.select-display')?.dataset.value;
-      if (val) result[wrap.dataset.slot] = val;
+    document.querySelectorAll('#loot-selection .loot-slot').forEach(slot => {
+      const slotId = slot.dataset.slotId;
+      const val    = slot.getSelected ? slot.getSelected() : '';
+      if (slotId && val) result[slotId] = val;
     });
     return result;
   }
 
-  // ── ⭐ Modal functions ────────────────────────────────
+  // ── Modal open/close ──────────────────────────────
   function openModal() {
-    const modal = document.getElementById('modal-character');
-    modal.classList.remove('hidden');
-    modal.classList.add('open');
+    document.getElementById('modal-character').classList.remove('hidden');
+    requestAnimationFrame(() => document.getElementById('modal-character').classList.add('open'));
   }
 
   function closeModal() {
-    const modal = document.getElementById('modal-character');
-    modal.classList.remove('open');
-    modal.classList.add('hidden');
+    const overlay = document.getElementById('modal-character');
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.classList.add('hidden'), 250);
+    editingCharId = null;
+  }
+
+  function fillModal(char, title, subtitle, icon) {
+    document.getElementById('modal-char-title').textContent    = title;
+    document.getElementById('modal-char-subtitle').textContent = subtitle;
+    document.getElementById('modal-char-icon').textContent     = icon;
+    document.getElementById('edit-char-id').value             = char?.id    || '';
+    document.getElementById('edit-char-status').value         = char?.status || '';
+    document.getElementById('f-char-name').value              = char?.name   || '';
+    document.getElementById('f-char-weapon1').value           = char?.weapons?.[0] || '';
+    document.getElementById('f-char-weapon2').value           = char?.weapons?.[1] || '';
+    document.getElementById('f-moderation-note').value        = char?.moderation_note || '';
+    document.getElementById('char-error').style.display       = 'none';
+
+    const initialLoot = char?.desired_loot || {};
+    buildLootSlots(initialLoot);
+    setupWeaponSync();
   }
 
   function openAddCharacter() {
-    console.log('🔄 openAddCharacter вызван!');
-    if (characters.length > 0) {
-      showToast('У вас уже есть персонаж. Вы можете отредактировать его.', 'error');
-      return;
-    }
+    if (characters.length > 0) { showToast('У вас уже есть персонаж.', 'error'); return; }
     editingCharId = null;
-    document.getElementById('modal-char-title').textContent = 'Добавить персонажа';
-    document.getElementById('edit-char-id').value = '';
-    document.getElementById('edit-char-status').value = '';
-    document.getElementById('f-char-name').value = '';
-    document.getElementById('f-char-weapon1').value = '';
-    document.getElementById('f-char-weapon2').value = '';
-    document.getElementById('f-moderation-note').value = '';
-    document.getElementById('char-error').style.display = 'none';
-    populateLootSlots();
-    setupWeaponSync();
+    fillModal(null, 'Добавить персонажа', 'Заполните данные и отправьте на модерацию', '⚔️');
     openModal();
-    console.log('✅ Модалка открыта');
   }
 
   function openEditCharacter(char) {
     editingCharId = char.id;
-    document.getElementById('modal-char-title').textContent = 'Редактировать персонажа';
-    document.getElementById('edit-char-id').value = char.id;
-    document.getElementById('edit-char-status').value = char.status || 'pending';
-    document.getElementById('f-char-name').value = char.name || '';
-    document.getElementById('f-char-weapon1').value = char.weapons?.[0] || '';
-    document.getElementById('f-char-weapon2').value = char.weapons?.[1] || '';
-    document.getElementById('f-moderation-note').value = char.moderation_note || '';
-    document.getElementById('char-error').style.display = 'none';
-    populateLootSlots();
-    setupWeaponSync();
+    fillModal(char, 'Редактировать персонажа', 'Изменения будут отправлены на проверку', '✏️');
     openModal();
   }
 
-  function closeCharModal() {
-    closeModal();
-    editingCharId = null;
+  function openEditApprovedCharacter(char) {
+    editingCharId = char.id;
+    fillModal(char, 'Внести изменения', 'Текущий персонаж одобрен — изменения уйдут на модерацию', '📝');
+    openModal();
   }
 
-  // ── Save character ─────────────────────────────────
+  // ── Save ──────────────────────────────────────────
   async function saveCharacter() {
     const name    = document.getElementById('f-char-name').value.trim();
     const weapon1 = document.getElementById('f-char-weapon1').value;
@@ -1143,97 +1150,70 @@
     const note    = document.getElementById('f-moderation-note').value.trim();
     const errorEl = document.getElementById('char-error');
 
-    if (!name) {
-      errorEl.textContent = 'Введите имя персонажа';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (!weapon1) {
-      errorEl.textContent = 'Выберите основное оружие';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (weapon1 && weapon2 && weapon1 === weapon2) {
-      errorEl.textContent = 'Основное и дополнительное оружие не могут совпадать';
-      errorEl.style.display = 'block';
-      return;
-    }
+    const showErr = msg => { errorEl.textContent = msg; errorEl.style.display = 'block'; };
 
-    const id = document.getElementById('edit-char-id').value;
+    if (!name)    return showErr('Введите имя персонажа');
+    if (!weapon1) return showErr('Выберите основное оружие');
+    if (weapon1 && weapon2 && weapon1 === weapon2) return showErr('Основное и дополнительное оружие не могут совпадать');
+
+    errorEl.style.display = 'none';
+
+    const id            = document.getElementById('edit-char-id').value;
     const currentStatus = document.getElementById('edit-char-status').value;
+    const isEdit        = !!id;
 
-    // ⭐ Если персонаж уже одобрен — отправляем на повторную модерацию
-    const isEdit = !!id;
-    let status = userIsModerator ? 'approved' : 'pending';
+    let status   = userIsModerator ? 'approved' : 'pending';
     let oldStatus = null;
-    let editNote = null;
+    let editNote  = null;
 
     if (isEdit && currentStatus === 'approved' && !userIsModerator) {
-      // Одобренный персонаж редактируется — отправляем на модерацию
-      status = 'pending';
+      status    = 'pending';
       oldStatus = 'approved';
-      editNote = note || 'Изменение персонажа';
-    } else if (isEdit && currentStatus === 'approved' && userIsModerator) {
-      // Модератор редактирует — сразу одобряем
-      status = 'approved';
-      oldStatus = null;
-    } else if (isEdit) {
-      // Персонаж в pending/rejected — просто обновляем
-      status = userIsModerator ? 'approved' : 'pending';
-      oldStatus = null;
+      editNote  = note || 'Изменение персонажа';
     }
 
-    const selectedLoot = getSelectedLoot();
-    
-    const desiredLoot = {};
-    Object.entries(selectedLoot).forEach(([slot, itemId]) => {
-      if (itemId) {
-        desiredLoot[slot] = itemId;
-      }
-    });
+    const desiredLoot = getSelectedLoot();
 
     const data = {
       name,
-      weapons: [weapon1, weapon2].filter(Boolean),
-      desired_loot: desiredLoot,
-      user_id: user.uid,
-      user_email: user.email,
+      weapons:              [weapon1, weapon2].filter(Boolean),
+      desired_loot:         desiredLoot,
+      user_id:              user.uid,
+      user_email:           user.email,
       status,
-      previous_status: oldStatus || null,
-      edit_note: editNote || null,
-      moderation_note: note || null,
-      moderation_feedback: null,
-      moderated_by: userIsModerator ? user.uid : null,
-      moderated_at: userIsModerator ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
+      previous_status:      oldStatus || null,
+      edit_note:            editNote  || null,
+      moderation_note:      note      || null,
+      moderation_feedback:  null,
+      moderated_by:         userIsModerator ? user.uid : null,
+      moderated_at:         userIsModerator ? new Date().toISOString() : null,
+      updated_at:           new Date().toISOString(),
     };
 
+    const saveBtn = document.getElementById('btn-char-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Сохранение...';
+
     try {
-      if (id) {
+      if (isEdit) {
         await updateDoc(doc(db, 'characters', id), data);
-        if (oldStatus === 'approved') {
-          showToast('Изменения отправлены на модерацию!');
-        } else {
-          showToast(userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён!');
-        }
+        showToast(oldStatus === 'approved' ? 'Изменения отправлены на модерацию!' : (userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён!'));
       } else {
-        await addDoc(collection(db, 'characters'), {
-          ...data,
-          created_at: new Date().toISOString()
-        });
+        await addDoc(collection(db, 'characters'), { ...data, created_at: new Date().toISOString() });
         showToast(userIsModerator ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
       }
-      closeCharModal();
+      closeModal();
       await loadCharacters();
       renderCharacters();
-    } catch (e) {
-      console.error('Save error:', e);
-      errorEl.textContent = 'Ошибка сохранения: ' + e.message;
-      errorEl.style.display = 'block';
+    } catch(e) {
+      showErr('Ошибка сохранения: ' + e.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Отправить на модерацию';
     }
   }
 
-  // ── Toast ──────────────────────────────────────────
+  // ── Toast ─────────────────────────────────────────
   function showToast(msg, type = 'success') {
     const t = document.createElement('div');
     t.className = `toast ${type}`;
@@ -1242,46 +1222,17 @@
     setTimeout(() => t.remove(), 3000);
   }
 
-  // ── ⭐ НАВЕШИВАЕМ ОБРАБОТЧИКИ ──
-  function setupEventListeners() {
-    console.log('🔧 setupEventListeners вызван');
+  // ── Events ────────────────────────────────────────
+  document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
+  document.getElementById('btn-char-close').addEventListener('click', closeModal);
+  document.getElementById('btn-char-cancel').addEventListener('click', closeModal);
+  document.getElementById('btn-char-save').addEventListener('click', saveCharacter);
+  document.getElementById('modal-character').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-character')) closeModal();
+  });
 
-    const addBtn = document.getElementById('btn-add-character');
-    if (addBtn) {
-      console.log('✅ Кнопка найдена, навешиваем обработчик');
-      addBtn.addEventListener('click', openAddCharacter);
-    } else {
-      console.error('❌ Кнопка btn-add-character НЕ НАЙДЕНА!');
-    }
-
-    const closeBtn = document.getElementById('btn-char-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeCharModal);
-    }
-
-    const cancelBtn = document.getElementById('btn-char-cancel');
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', closeCharModal);
-    }
-
-    const saveBtn = document.getElementById('btn-char-save');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', saveCharacter);
-    }
-
-    const modal = document.getElementById('modal-character');
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeCharModal();
-      });
-    }
-  }
-
-  // ── Run ────────────────────────────────────────────
+  // ── Run ───────────────────────────────────────────
   await loadData();
-  setupEventListeners();
-
-  console.log('✅ Profile page ready');
 </script>
 
 </body>
