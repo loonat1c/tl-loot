@@ -1566,9 +1566,15 @@
     }
 
     // Проверка желаемого лута
+    // desired_loot хранит ключи weapon1/weapon2, ring1/ring2, остальные 1:1
     const desired = char.desired_loot || {};
-    const wantedItemId = desired[itemSlot];
-    if (!wantedItemId || wantedItemId !== itemId) {
+    const slotKeys = itemSlot === 'weapon'
+      ? ['weapon1', 'weapon2']
+      : itemSlot === 'ring'
+        ? ['ring1', 'ring2']
+        : [itemSlot];
+    const wantedInSlot = slotKeys.some(k => desired[k] === itemId);
+    if (!wantedInSlot) {
       const slotLabel = getSlotLabel(itemSlot);
       return { can: false, reason: `Предмет не в желаемом луте (слот «${slotLabel}»)` };
     }
