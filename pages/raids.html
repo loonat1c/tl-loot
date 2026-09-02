@@ -859,6 +859,13 @@
     .dialog-roll-actions .btn-success:hover {
       background: #16a34a;
     }
+
+    .property-error {
+      color: var(--danger, #ef4444);
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -922,9 +929,8 @@
     <div id="item-search-results" class="item-search-results"></div>
 
     <div class="section-title">Особенность предмета</div>
-    <div id="property-select-grid" class="property-select-grid">
-      <button class="property-btn selected" data-prop="">Без особенности</button>
-    </div>
+    <div id="property-select-grid" class="property-select-grid"></div>
+    <div id="property-error" class="property-error">⚠️ Выберите особенность предмета</div>
 
     <div class="section-title">Цена в Lucent (текущая)</div>
     <input type="number" id="drop-lucent" placeholder="0" min="0" />
@@ -2070,8 +2076,6 @@
   // МОДАЛКИ
   // ============================================================
 
-  // Убираем функцию openEditRaid — она больше не нужна
-
   const createRaidBtn = document.getElementById("btn-create-raid");
   if (createRaidBtn) {
     createRaidBtn.addEventListener("click", async () => {
@@ -2283,6 +2287,7 @@
     document.getElementById("item-search").value       = "";
     document.getElementById("drop-lucent").value       = "";
     document.getElementById("drop-error").style.display = "none";
+    document.getElementById("property-error").style.display = "none";
 
     renderDropItems("");
     renderProperties();
@@ -2326,27 +2331,41 @@
       setItemImage(row.querySelector("img"), item.image);
       row.addEventListener("click", () => { 
         selectedItem = item; 
+        selectedProperty = null;
         renderDropItems(document.getElementById("item-search").value);
         renderProperties();
+        document.getElementById("property-error").style.display = "none";
       });
       container.appendChild(row);
     });
   }
 
+  // ⭐ Функция renderProperties — без выбора по умолчанию
   function renderProperties() {
     const container = document.getElementById("property-select-grid");
-    container.innerHTML = `<button class="property-btn selected" data-prop="">Без особенности</button>`;
+    container.innerHTML = '';
     
-    if (!selectedItem || !selectedItem.properties?.length) return;
+    if (!selectedItem || !selectedItem.properties?.length) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = 'color:var(--text-muted);font-size:0.82rem;padding:0.25rem 0';
+      emptyMsg.textContent = 'У этого предмета нет особенностей';
+      container.appendChild(emptyMsg);
+      return;
+    }
+    
+    // ⭐ НЕ выбираем особенность по умолчанию
+    selectedProperty = null;
     
     selectedItem.properties.forEach(prop => {
       const btn = document.createElement("button");
-      btn.className = `property-btn${selectedProperty === prop ? " selected" : ""}`;
+      btn.className = "property-btn";
       btn.dataset.prop = prop;
       btn.textContent = prop;
       btn.addEventListener("click", () => {
         selectedProperty = prop;
-        document.querySelectorAll(".property-btn").forEach(b => b.classList.toggle("selected", b.dataset.prop === prop));
+        document.querySelectorAll(".property-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        document.getElementById("property-error").style.display = "none";
       });
       container.appendChild(btn);
     });
@@ -2357,10 +2376,17 @@
     itemSearch.addEventListener("input", e => renderDropItems(e.target.value));
   }
 
+  // ⭐ saveDropBtn с проверкой на выбор особенности
   const saveDropBtn = document.getElementById("btn-save-drop");
   if (saveDropBtn) {
     saveDropBtn.addEventListener("click", async () => {
       if (!selectedItem)   return showDropError("Выбери предмет");
+      
+      // ⭐ Проверяем, выбрана ли особенность (если у предмета есть свойства)
+      if (selectedItem.properties?.length && !selectedProperty) {
+        document.getElementById("property-error").style.display = "block";
+        return;
+      }
 
       const boss   = allBosses.find(b => b.id === currentDropBossId);
       const lucent = Number(document.getElementById("drop-lucent").value) || 0;
@@ -2877,7 +2903,6 @@
       const canStart = rollState.participants.filter(p => !p.isBlocked).length >= 2 && canAct && canStartRoll();
       startBtn.disabled = !canStart;
       
-      // ⭐ Если ролл завершён — скрываем кнопку "Запустить ролл"
       if (rollState.isFinished) {
         startBtn.style.display = 'none';
       } else {
@@ -2893,7 +2918,6 @@
     }
     
     if (rerollBtn) {
-      // ⭐ Кнопка реролла показывается вместо "Ролл завершён"
       const showReroll = rollState.isFinished && rollState.winner && canStartRoll();
       rerollBtn.style.display = showReroll ? 'flex' : 'none';
     }
