@@ -918,23 +918,22 @@
     const w2 = document.getElementById('f-char-weapon2');
     if (!w1 || !w2) return;
 
+    // Remove previous listeners before re-adding to avoid duplicates
+    if (w1._syncHandler) w1.removeEventListener('change', w1._syncHandler);
+    if (w2._syncHandler) w2.removeEventListener('change', w2._syncHandler);
+
     const sync = () => {
-      // Prevent same weapon in both selects
       Array.from(w2.options).forEach(o => { o.disabled = !!(o.value && o.value === w1.value); });
       if (w2.value && w2.value === w1.value) w2.value = '';
-      // Rebuild loot grid with preserved values — weapon type filter depends on w1/w2
-      buildLootSlots({});
+      // Rebuild loot grid preserving current selections, with updated weapon-type filter
+      const preserved = getSelectedLoot();
+      buildLootSlots(preserved, preserved);
     };
 
-    // Remove old listeners by replacing elements (safe here — these are <select>, not searchable)
-    const w1New = w1.cloneNode(true);
-    const w2New = w2.cloneNode(true);
-    w1.parentNode.replaceChild(w1New, w1);
-    w2.parentNode.replaceChild(w2New, w2);
-
-    w1New.addEventListener('change', sync);
-    w2New.addEventListener('change', sync);
-    sync();
+    w1._syncHandler = sync;
+    w2._syncHandler = sync;
+    w1.addEventListener('change', sync);
+    w2.addEventListener('change', sync);
   }
 
   // ── Searchable select ─────────────────────────────
@@ -1150,14 +1149,14 @@
     document.getElementById('f-moderation-note').value        = char?.moderation_note || '';
     document.getElementById('char-error').style.display       = 'none';
 
-    // setupWeaponSync replaces <select> nodes via cloneNode, so call it BEFORE setting values
-    setupWeaponSync();
-
-    // Now set weapon values on the fresh nodes
+    // 1. Set weapon values FIRST — buildLootSlots reads them for weapon_type filtering
     document.getElementById('f-char-weapon1').value = char?.weapons?.[0] || '';
     document.getElementById('f-char-weapon2').value = char?.weapons?.[1] || '';
 
-    // Build loot grid with char's saved loot as initial values
+    // 2. Setup sync listeners (no cloneNode — values stay intact)
+    setupWeaponSync();
+
+    // 3. Build loot grid — now weapon selects already have correct values
     const initialLoot = char?.desired_loot || {};
     buildLootSlots(initialLoot, initialLoot);
   }
