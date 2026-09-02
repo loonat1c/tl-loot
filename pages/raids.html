@@ -1190,7 +1190,6 @@
   // ============================================================
 
   let dialogResolve = null;
-  let dialogActionsContainer = null;
 
   function openDialog(title, message, confirmText = 'Подтвердить', cancelText = 'Отмена', customActions = null) {
     return new Promise((resolve) => {
@@ -1200,16 +1199,12 @@
       document.getElementById('dialog-title').textContent = title;
       document.getElementById('dialog-message').textContent = message;
       
-      // Сохраняем оригинальные кнопки
       const confirmBtn = document.getElementById('dialog-confirm');
       const cancelBtn = document.getElementById('dialog-cancel');
       
       if (customActions) {
-        // Прячем стандартные кнопки
         confirmBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
-        
-        // Добавляем кастомные действия
         actionsContainer.innerHTML = customActions;
       } else {
         confirmBtn.style.display = '';
@@ -1238,7 +1233,6 @@
     }
   }
 
-  // Навешиваем обработчики на стандартные кнопки
   document.getElementById('dialog-confirm')?.addEventListener('click', () => {
     const modal = document.getElementById('modal-dialog');
     modal.classList.remove('open');
@@ -1272,8 +1266,8 @@
   let tryAttendanceCache = {};
   let lockSettings = { raids_to_unlock: 999, max_misses: 0 };
   
-  // ⭐ Флаг, что ролл был запущен и есть результаты (для предупреждения при закрытии)
-  let rollHasResults = false;
+  // ⭐ Флаг, что ролл был запущен и есть не зафиксированные результаты
+  let rollHasUnfinishedResults = false;
 
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
@@ -1295,6 +1289,7 @@
     currentPlayerId: null,
     queue: 'main',
     rollResults: null,
+    hasPendingWinner: false, // ⭐ есть незафиксированный победитель
   };
 
   // ============================================================
@@ -1375,7 +1370,6 @@
     return WEAPONS.find(w => w.id === id)?.label || id;
   }
 
-  // ⭐ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РУССКОГО НАЗВАНИЯ ТИПА ОРУЖИЯ
   function getWeaponTypeLabel(weaponType) {
     const typeMap = {
       'staff': 'Посох',
@@ -1390,7 +1384,6 @@
     return typeMap[weaponType] || weaponType;
   }
 
-  // ⭐ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РУССКОГО НАЗВАНИЯ СЛОТА
   function getSlotLabel(slotId) {
     const slotMap = {
       'weapon': 'Оружие',
@@ -1408,7 +1401,6 @@
     return slotMap[slotId] || slotId;
   }
 
-  // ⭐ ЗАГРУЗКА НАСТРОЕК БЛОКИРОВОК
   async function loadLockSettings() {
     try {
       const settingsRef = doc(db, 'settings', 'locks');
@@ -1422,7 +1414,6 @@
     }
   }
 
-  // ⭐ ПОЛУЧЕНИЕ ПОБЕД ИГРОКА В ИСТОРИИ (ГЛОБАЛЬНО) — ТОЛЬКО НЕ УДАЛЁННЫЕ
   async function getPlayerWins(playerId) {
     try {
       const historyRef = collection(db, 'loot_history');
@@ -1439,7 +1430,6 @@
     }
   }
 
-  // ⭐ ПОЛУЧЕНИЕ ПОБЕД ИГРОКА В ТЕКУЩЕМ РЕЙДЕ
   async function getPlayerWinsInCurrentRaid(playerId) {
     if (!activeRaid) return [];
     try {
@@ -1458,14 +1448,12 @@
     }
   }
 
-  // ⭐ ПРОВЕРКА ГЛОБАЛЬНОЙ БЛОКИРОВКИ СЛОТА (ДЛЯ ОСНОВНОЙ ОЧЕРЕДИ)
   async function isSlotLocked(playerId, itemSlot, itemId) {
     const wins = await getPlayerWins(playerId);
     const char = allCharacters.find(c => c.id === playerId);
     
     if (!char) return { locked: false, reason: '' };
     
-    // ---- ОРУЖИЕ ----
     if (itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === itemId);
       if (!item) return { locked: false, reason: '' };
@@ -1475,7 +1463,6 @@
       
       const weaponTypeLabel = getWeaponTypeLabel(weaponType);
       
-      // Проверяем, выигрывал ли уже это конкретное оружие (по item_id)
       const exactWeaponWins = wins.filter(w => w.item_id === itemId);
       if (exactWeaponWins.length > 0) {
         return { 
@@ -1484,7 +1471,6 @@
         };
       }
       
-      // Проверяем, выигрывал ли уже оружие этого типа (например, любой посох)
       const weaponTypeWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         return winItem?.slot === 'weapon' && 
@@ -1498,11 +1484,8 @@
         };
       }
       
-      // Проверяем, сколько всего оружий из спека уже выиграно
       const charWeapons = char.weapons || [];
-      const charWeaponLabels = charWeapons.map(w => getWeaponTypeLabel(w));
       
-      // Собираем все победы на оружие из спека
       const weaponWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         if (!winItem || winItem.slot !== 'weapon') return false;
@@ -1510,7 +1493,6 @@
         return charWeapons.includes(wType);
       });
       
-      // Уникальные типы оружий, которые уже выиграны
       const wonWeaponTypes = new Set();
       weaponWins.forEach(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
@@ -1518,7 +1500,6 @@
         if (wType) wonWeaponTypes.add(wType);
       });
       
-      // Если выиграл 2 разных типа оружия из спека — больше не может участвовать в основной очереди на оружие
       if (wonWeaponTypes.size >= 2) {
         const wonLabels = Array.from(wonWeaponTypes).map(t => getWeaponTypeLabel(t));
         return { 
@@ -1528,12 +1509,10 @@
       }
     }
     
-    // ---- КОЛЬЦО ----
     if (itemSlot === 'ring') {
       const item = allItems.find(i => i.id === itemId);
       if (!item) return { locked: false, reason: '' };
       
-      // Проверяем, выигрывал ли уже это конкретное кольцо (по item_id)
       const exactRingWins = wins.filter(w => w.item_id === itemId);
       if (exactRingWins.length > 0) {
         return { 
@@ -1542,13 +1521,11 @@
         };
       }
       
-      // Проверяем, сколько всего колец уже выиграно
       const ringWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         return winItem?.slot === 'ring';
       });
       
-      // Если уже выиграл 2 кольца — больше не может участвовать в основной очереди на кольца
       if (ringWins.length >= 2) {
         return { 
           locked: true, 
@@ -1557,13 +1534,11 @@
       }
     }
     
-    // ---- ДРУГИЕ СЛОТЫ (не оружие и не кольцо) ----
     const slotWins = wins.filter(w => {
       const winItem = allItems.find(i => i.id === w.item_id);
       return winItem?.slot === itemSlot;
     });
     
-    // Проверяем, выигрывал ли уже этот конкретный предмет
     const exactSlotWins = slotWins.filter(w => w.item_id === itemId);
     if (exactSlotWins.length > 0) {
       const item = allItems.find(i => i.id === itemId);
@@ -1574,7 +1549,6 @@
       };
     }
     
-    // Для остальных слотов: если уже выиграл предмет в этом слоте — блокировка
     if (slotWins.length > 0) {
       const slotLabel = getSlotLabel(itemSlot);
       return { 
@@ -1586,13 +1560,11 @@
     return { locked: false, reason: '' };
   }
 
-  // ⭐ ПРОВЕРКА ПОБЕДЫ КОНКРЕТНОГО ПРЕДМЕТА В ТЕКУЩЕМ РЕЙДЕ
   async function hasWonItemInCurrentRaid(playerId, itemId) {
     const winsInRaid = await getPlayerWinsInCurrentRaid(playerId);
     return winsInRaid.some(w => w.item_id === itemId);
   }
 
-  // ⭐ ОБНОВЛЁННАЯ canJoinMainQueue
   async function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
@@ -1606,20 +1578,16 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    // Проверка победы этого предмета в текущем рейде
     if (await hasWonItemInCurrentRaid(charId, itemId)) {
       const item = allItems.find(i => i.id === itemId);
       return { can: false, reason: `Уже выиграл «${item?.name || 'этот предмет'}» в текущем рейде` };
     }
 
-    // Проверка глобальной блокировки слота
     const slotLock = await isSlotLocked(charId, itemSlot, itemId);
     if (slotLock.locked) {
       return { can: false, reason: slotLock.reason };
     }
 
-    // Проверка желаемого лута
-    // desired_loot хранит ключи weapon1/weapon2, ring1/ring2, остальные 1:1
     const desired = char.desired_loot || {};
     const slotKeys = itemSlot === 'weapon'
       ? ['weapon1', 'weapon2']
@@ -1632,7 +1600,6 @@
       return { can: false, reason: `Предмет не в желаемом луте (слот «${slotLabel}»)` };
     }
 
-    // Проверка совместимости оружия
     if (itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === itemId);
       if (item?.weapon_type) {
@@ -1647,14 +1614,12 @@
     return { can: true };
   }
 
-  // ⭐ ОБНОВЛЁННАЯ canJoinOpenQueue
   async function canJoinOpenQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
-    // Проверяем, выигрывал ли уже в этом рейде
     const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
@@ -1665,7 +1630,6 @@
     return { can: true };
   }
 
-  // ⭐ ОБНОВЛЁННАЯ canJoinCurrentQueue
   async function canJoinCurrentQueue(charId) {
     return rollState.queue === 'main'
       ? await canJoinMainQueue(charId)
@@ -2063,7 +2027,7 @@
   }
 
   // ============================================================
-  // ⭐ SELECT RAID С REAL-TIME ПОДПИСКОЙ
+  // SELECT RAID С REAL-TIME ПОДПИСКОЙ
   // ============================================================
 
   async function selectRaid(raid) {
@@ -2263,7 +2227,6 @@
     openModal("modal-attendance");
   };
 
-  // КНОПКА "ВЫБРАТЬ ВСЕХ"
   document.getElementById("btn-attendance-all")?.addEventListener("click", () => {
     document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
       el.classList.add("present");
@@ -2271,7 +2234,6 @@
     });
   });
 
-  // КНОПКА "СКОПИРОВАТЬ С ПРОШЛОГО ТРАЯ"
   document.getElementById("btn-attendance-copy")?.addEventListener("click", () => {
     const previousAttended = window._previousTryAttendance || [];
     if (previousAttended.length === 0) {
@@ -2450,46 +2412,11 @@
   }
   window.confirmDeleteDrop = confirmDeleteDrop;
 
-  // ── ФУНКЦИЯ ПРОВЕРКИ ПОБЕДИТЕЛЯ ─────────────────────
-  async function checkDropWinner(raidId, tryId, dropId) {
-    try {
-      const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
-      const dropSnap = await getDoc(dropRef);
-      if (dropSnap.exists()) {
-        const data = dropSnap.data();
-        if (data.winner_player_id && data.winner_nickname) {
-          rollState.isFinished = true;
-          rollState.winner = {
-            playerId: data.winner_player_id,
-            nickname: data.winner_nickname
-          };
-          if (data.roll_results) {
-            rollState.rollResults = data.roll_results;
-            rollState.participants = data.roll_results.map(r => ({
-              playerId: r.playerId,
-              nickname: r.nickname,
-              roll: r.roll,
-              isBlocked: false
-            }));
-          }
-          return true;
-        }
-      }
-      return false;
-    } catch (e) {
-      console.error('Ошибка проверки победителя:', e);
-      return false;
-    }
-  }
-
   // ============================================================
   // ЛОГИКА РОЛЛА
   // ============================================================
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
-    // ⭐ Обнуляем флаг результатов при открытии
-    rollHasResults = false;
-    
     // Проверяем участие в этом трае
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
@@ -2511,12 +2438,18 @@
       return;
     }
     
-    // Используем участников этого трая для ролла
     attendedPlayerIds = tryAttendedIds;
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
-    // ⭐ СБРАСЫВАЕМ СОСТОЯНИЕ ПРИ ОТКРЫТИИ — ОБНУЛЯЕМ ВСЁ
+    // ⭐ Сохраняем старые данные, если они есть (участники, результаты)
+    const oldParticipants = rollState.participants || [];
+    const oldRollResults = rollState.rollResults || null;
+    const oldWinner = rollState.winner || null;
+    const oldIsFinished = rollState.isFinished || false;
+    const oldHasPending = rollState.hasPendingWinner || false;
+
+    // ⭐ Сбрасываем состояние, но сохраняем участников если они были
     rollState = {
       dropId: dropId,
       raidId: raidId,
@@ -2525,28 +2458,18 @@
       itemDetail: `${slotLabel}${property ? ` · ✦ ${property}` : ''}`,
       itemSlot: itemSlotRaw || null,
       itemId: null,
-      participants: [],
+      participants: oldParticipants.length > 0 ? oldParticipants : [],
       isRolling: false,
-      isFinished: false,
-      winner: null,
+      isFinished: oldIsFinished,
+      winner: oldWinner,
       currentUserId: currentUser?.uid || null,
       currentPlayerId: rollState.currentPlayerId || null,
       queue: 'main',
-      rollResults: null,
+      rollResults: oldRollResults,
+      hasPendingWinner: oldHasPending,
     };
 
-    // ⭐ СБРАСЫВАЕМ ФЛАГ В Firestore (если были старые данные)
-    try {
-      const dropRefReset = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
-      await firestoreUpdate(dropRefReset, {
-        rolling: false,
-        pending_winner: null,
-        roll_results: null
-      });
-    } catch(e) {
-      console.warn('⚠️ Не удалось сбросить флаги в Firestore:', e);
-    }
-
+    // ⭐ Загружаем данные из Firestore для обновления
     try {
       const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
       const dropSnap = await getDoc(dropRef);
@@ -2558,9 +2481,36 @@
           rollState.itemSlot = data.item_slot;
         }
 
-        // ⭐ НЕ загружаем старых участников и результаты — только чистый лист
-        // if (data.participants?.length) { ... }
-        // if (data.winner_player_id && data.winner_nickname) { ... }
+        // ⭐ Загружаем участников из Firestore если они есть (приоритет выше)
+        if (data.participants?.length) {
+          rollState.participants = data.participants.map(p => ({
+            playerId: p.playerId, nickname: p.nickname,
+            roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
+          }));
+        }
+        
+        // ⭐ Проверяем, есть ли незафиксированный победитель
+        if (data.pending_winner && !data.winner_player_id) {
+          rollState.hasPendingWinner = true;
+          rollState.winner = data.pending_winner;
+          rollState.rollResults = data.roll_results || null;
+          rollState.isFinished = true;
+          rollHasUnfinishedResults = true;
+        }
+        
+        // ⭐ Если есть зафиксированный победитель
+        if (data.winner_player_id && data.winner_nickname) {
+          rollState.isFinished = true;
+          rollState.hasPendingWinner = false;
+          rollHasUnfinishedResults = false;
+          rollState.winner = { 
+            playerId: data.winner_player_id, 
+            nickname: data.winner_nickname,
+            roll: (data.roll_results || []).find(r => r.playerId === data.winner_player_id)?.roll 
+          };
+          rollState.rollResults = data.roll_results || null;
+          rollState.queue = data.roll_type || 'main';
+        }
       }
     } catch(e) { console.error('openRollModal drop fetch:', e); }
 
@@ -2616,6 +2566,8 @@
       if (data.winner_player_id && data.winner_nickname && !rollState.isFinished) {
         rollState.isFinished = true;
         rollState.isRolling  = false;
+        rollState.hasPendingWinner = false;
+        rollHasUnfinishedResults = false;
         rollState.winner = {
           playerId: data.winner_player_id,
           nickname: data.winner_nickname,
@@ -2623,7 +2575,6 @@
         };
         rollState.rollResults = data.roll_results || null;
         rollState.queue = data.roll_type || rollState.queue;
-        rollHasResults = true;
         updateRollUI();
         return;
       }
@@ -2633,8 +2584,9 @@
         rollState.rollResults = data.roll_results || null;
         if (data.pending_winner) {
           rollState.winner = data.pending_winner;
+          rollState.hasPendingWinner = true;
+          rollHasUnfinishedResults = true;
         }
-        rollHasResults = true;
         startLocalRollAnimation();
         return;
       }
@@ -2647,7 +2599,7 @@
   function startLocalRollAnimation() {
     if (rollState.isRolling) return;
     rollState.isRolling = true;
-    rollHasResults = true;
+    rollHasUnfinishedResults = true;
     updateRollUI();
 
     const ticks = 12;
@@ -2693,14 +2645,15 @@
   function finishRoll() {
     rollState.isRolling  = false;
     rollState.isFinished = true;
-    rollHasResults = true;
+    rollState.hasPendingWinner = true;
+    rollHasUnfinishedResults = true;
     updateRollUI();
     if (rollState.winner) {
       showToast(`🏆 ${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
     }
   }
 
-  // ⭐ updateRollUI — с защитой от множественных вызовов
+  // ⭐ updateRollUI
   let updateUITimeout = null;
 
   function updateRollUI() {
@@ -2790,7 +2743,6 @@
     });
   }
 
-  // ⭐ renderAvailablePlayers
   let renderAvailableVersion = 0;
   let renderAvailableTimeout = null;
 
@@ -2935,7 +2887,7 @@
     }
 
     if (confirmBtn) {
-      const showConfirm = rollState.isFinished && rollState.winner && canStartRoll();
+      const showConfirm = rollState.isFinished && rollState.winner && canStartRoll() && rollState.hasPendingWinner;
       confirmBtn.style.display = showConfirm ? 'flex' : 'none';
     }
 
@@ -3031,7 +2983,7 @@
     });
   });
 
-  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-start-roll
+  // ⭐ ОБРАБОТЧИК btn-start-roll
   document.getElementById("btn-start-roll").addEventListener("click", async () => {
     const active = rollState.participants.filter(p => !p.isBlocked);
     if (active.length < 2) { showToast("Нужно минимум 2 участника", "error"); return; }
@@ -3057,7 +3009,7 @@
     });
   });
 
-  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-confirm-roll
+  // ⭐ ОБРАБОТЧИК btn-confirm-roll
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
     if (!rollState.winner || !canStartRoll()) return;
     const btn = document.getElementById("btn-confirm-roll");
@@ -3084,6 +3036,9 @@
         pending_winner: null
       });
 
+      rollState.hasPendingWinner = false;
+      rollHasUnfinishedResults = false;
+
       showToast(`✅ ${rollState.winner.nickname} получает предмет!`);
       btn.style.display = 'none';
 
@@ -3095,14 +3050,17 @@
     finally { btn.disabled = false; btn.textContent = '✅ Зафиксировать победителя'; }
   });
 
-  // ⭐ НОВАЯ closeRollModal — с предупреждением и кнопкой "Зафиксировать"
+  // ⭐ closeRollModal — с предупреждением о незафиксированных результатах
   function closeRollModal() {
-    // Если есть результаты ролла, но они не зафиксированы
-    if (rollHasResults && !rollState.isFinished) {
-      // Создаём кастомные кнопки для диалога
+    // ⭐ Проверяем: есть ли незафиксированные результаты?
+    const hasUnfinished = rollHasUnfinishedResults || rollState.hasPendingWinner;
+    
+    if (hasUnfinished && !rollState.isFinished) {
       const customActions = `
-        <button class="btn btn-danger" onclick="closeRollModalForce()">Закрыть без фиксации</button>
-        <button class="btn btn-success" onclick="closeRollModalAndConfirm()">✅ Зафиксировать результаты</button>
+        <div class="dialog-roll-actions">
+          <button class="btn btn-danger" onclick="closeRollModalForce()">Закрыть без фиксации</button>
+          <button class="btn btn-success" onclick="closeRollModalAndConfirm()">✅ Зафиксировать результаты</button>
+        </div>
       `;
       
       openDialog(
@@ -3111,12 +3069,7 @@
         '',
         '',
         customActions
-      ).then(result => {
-        // Если диалог закрыт через крестик или оверлей
-        if (result === false) {
-          // Ничего не делаем, остаёмся в модалке
-        }
-      });
+      );
       return;
     }
     
@@ -3135,24 +3088,17 @@
   }
   window.closeRollModal = closeRollModal;
 
-  // ⭐ Принудительное закрытие модалки ролла
   function closeRollModalForce() {
     closeModal("modal-roll");
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     rollState.isRolling = false;
-    rollHasResults = false;
-    
-    // Закрываем диалог, если он открыт
+    rollHasUnfinishedResults = false;
     closeDialog();
   }
   window.closeRollModalForce = closeRollModalForce;
 
-  // ⭐ Закрытие модалки с фиксацией результатов
   function closeRollModalAndConfirm() {
-    // Закрываем диалог
     closeDialog();
-    
-    // Кликаем по кнопке "Зафиксировать"
     const confirmBtn = document.getElementById("btn-confirm-roll");
     if (confirmBtn && confirmBtn.style.display !== 'none') {
       confirmBtn.click();
