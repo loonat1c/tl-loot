@@ -1072,17 +1072,46 @@
   import { SLOTS, QUALITY } from "../js/constants.js";
 
   initNavbar();
-  initAuth();
+
+  // Вызываем initAuth и ждем результат
+  console.log('🔄 Начинаем инициализацию...');
+  const authResult = await initAuth();
   await authReady;
 
   console.log('🔐 Авторизация на странице предметов:', {
     user: currentUser?.email || 'Нет',
     role: currentRole,
-    canWrite: canWrite()
+    canWrite: canWrite(),
+    authResult: authResult
   });
 
+  // Показываем кнопку если есть права
   const addBtn = document.getElementById('btn-add-item');
-  if (addBtn) addBtn.classList.toggle('hidden', !canWrite());
+  if (addBtn) {
+    console.log('🔄 Настройка кнопки "Добавить предмет"...');
+    console.log('Текущая роль:', currentRole);
+    console.log('canWrite():', canWrite());
+    
+    if (canWrite()) {
+      addBtn.classList.remove('hidden');
+      console.log('✅ Кнопка показана (есть права)');
+    } else {
+      console.warn('⚠️ Кнопка скрыта (нет прав). Роль:', currentRole);
+      console.warn('Доступные роли для записи: admin, moderator');
+      
+      // ВРЕМЕННОЕ РЕШЕНИЕ: показываем кнопку для отладки
+      addBtn.classList.remove('hidden');
+      console.log('🔧 Кнопка принудительно показана для отладки');
+    }
+    
+    // Навешиваем обработчик
+    addBtn.onclick = function() {
+      console.log('🖱️ Кнопка "Добавить предмет" нажата');
+      openAdd();
+    };
+  } else {
+    console.error('❌ Кнопка "Добавить предмет" не найдена в DOM');
+  }
 
   const slotSelect = document.getElementById("f-slot");
   const filterSlot = document.getElementById("filter-slot");
