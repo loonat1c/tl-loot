@@ -705,6 +705,20 @@
       color: #fff;
     }
 
+    /* Скрываем элементы для модераторов */
+    .admin-only {
+      display: none !important;
+    }
+    body.admin-role .admin-only {
+      display: flex !important;
+    }
+    body.admin-role .admin-only-block {
+      display: block !important;
+    }
+    body.moderator-role .moderator-only {
+      display: block !important;
+    }
+
     @media (max-width: 768px) {
       .user-card { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .user-card .user-right { justify-content: flex-start; }
@@ -727,21 +741,21 @@
 
   <div id="access-denied" style="text-align:center;padding:3rem;color:var(--text-muted)">
     <div style="font-size:2rem">🔒</div>
-    <div class="mt-1">Доступ только для администраторов</div>
+    <div class="mt-1">Доступ только для администраторов и модераторов</div>
   </div>
 
   <div id="admin-content" class="hidden">
     <!-- Вкладки -->
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-users">👥 Пользователи</button>
-      <button class="tab-btn" data-tab="tab-moderation">🔍 Модерация <span class="badge" id="pending-badge">0</span></button>
-      <button class="tab-btn" data-tab="tab-settings">⚙️ Настройки</button>
+    <div class="tabs" id="tabs-container">
+      <button class="tab-btn active" data-tab="tab-users" id="tab-users-btn">👥 Пользователи</button>
+      <button class="tab-btn" data-tab="tab-moderation" id="tab-moderation-btn">🔍 Модерация <span class="badge" id="pending-badge">0</span></button>
+      <button class="tab-btn" data-tab="tab-settings" id="tab-settings-btn">⚙️ Настройки</button>
     </div>
 
     <!-- ============================================
-         ВКЛАДКА: ПОЛЬЗОВАТЕЛИ
+         ВКЛАДКА: ПОЛЬЗОВАТЕЛИ (только для админов)
     ============================================ -->
-    <div id="tab-users" class="tab-content active">
+    <div id="tab-users" class="tab-content active admin-only">
       <div class="search-bar">
         <input type="text" id="user-search" placeholder="🔍 Поиск по имени или email..." />
         <button class="btn btn-primary" id="btn-add-user">+ Добавить</button>
@@ -777,7 +791,7 @@
     </div>
 
     <!-- ============================================
-         ВКЛАДКА: МОДЕРАЦИЯ ПЕРСОНАЖЕЙ
+         ВКЛАДКА: МОДЕРАЦИЯ ПЕРСОНАЖЕЙ (для всех)
     ============================================ -->
     <div id="tab-moderation" class="tab-content">
       <div class="moderation-stats" id="moderation-stats">
@@ -805,9 +819,9 @@
     </div>
 
     <!-- ============================================
-         ВКЛАДКА: НАСТРОЙКИ
+         ВКЛАДКА: НАСТРОЙКИ (только для админов)
     ============================================ -->
-    <div id="tab-settings" class="tab-content">
+    <div id="tab-settings" class="tab-content admin-only">
       <div class="settings-wrap">
         <div class="info-box">
           <strong>🔒 Блокировки слотов</strong> — после победы в основном ролле игрок блокируется в этом слоте.
@@ -867,7 +881,7 @@
   </div>
 </main>
 
-<!-- Модалка смены роли -->
+<!-- Модалка смены роли (только для админов) -->
 <div class="modal-overlay" id="modal-role">
   <div class="modal role-modal">
     <div class="modal-header">
@@ -925,7 +939,7 @@
   </div>
 </div>
 
-<!-- Модалка: новый пользователь -->
+<!-- Модалка: новый пользователь (только для админов) -->
 <div class="modal-overlay" id="modal-user">
   <div class="modal">
     <div class="modal-header">
@@ -982,6 +996,7 @@
   let selectedUserId = null;
   let selectedRole = null;
   let currentFilter = 'pending';
+  let userRole = 'guest';
 
   const ROLE_LABELS = {
     'admin': 'Администратор',
@@ -1008,8 +1023,10 @@
   authReady.then(async (authData) => {
     const user = authData?.user || null;
     const role = authData?.role || "guest";
+    userRole = role;
     
-    if (!user || role !== "admin") {
+    // Проверяем доступ
+    if (!user || (role !== "admin" && role !== "moderator" && role !== "guild_leader")) {
       document.getElementById("access-denied").classList.remove("hidden");
       document.getElementById("admin-content").classList.add("hidden");
       return;
@@ -1017,6 +1034,29 @@
 
     document.getElementById("access-denied").classList.add("hidden");
     document.getElementById("admin-content").classList.remove("hidden");
+
+    // Настраиваем видимость в зависимости от роли
+    if (role === "admin") {
+      // Админ — видит всё
+      document.body.classList.add('admin-role');
+      document.getElementById('tab-users-btn').style.display = '';
+      document.getElementById('tab-settings-btn').style.display = '';
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+    } else {
+      // Модератор или глава гильдии — видит только модерацию
+      document.body.classList.add('moderator-role');
+      document.getElementById('tab-users-btn').style.display = 'none';
+      document.getElementById('tab-settings-btn').style.display = 'none';
+      
+      // Скрываем админские блоки
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+      
+      // Активируем вкладку модерации
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-moderation-btn').classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-moderation').classList.add('active');
+    }
 
     await loadCharactersForStats();
     await loadUsers();
@@ -1028,13 +1068,20 @@
   // ─── Вкладки ──────────────────────────────────────────
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", function() {
+      // Проверяем доступ к вкладке
+      const tabId = this.dataset.tab;
+      if (tabId === 'tab-users' || tabId === 'tab-settings') {
+        if (userRole !== 'admin') {
+          return; // Модераторы не могут переключаться на эти вкладки
+        }
+      }
+      
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       this.classList.add("active");
       
       document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
       
-      const targetId = this.dataset.tab;
-      const targetEl = document.getElementById(targetId);
+      const targetEl = document.getElementById(tabId);
       if (targetEl) {
         targetEl.classList.add("active");
       }
@@ -1075,8 +1122,14 @@
     return char?.name || null;
   }
 
-  // ⭐ Удаление персонажа
+  // ⭐ Удаление персонажа (только для админов)
   async function deleteCharacter(charId) {
+    // Проверка: только админ может удалять
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может удалять персонажей', 'error');
+      return;
+    }
+    
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return;
     
@@ -1147,15 +1200,16 @@
       return;
     }
 
+    const isAdminUser = userRole === 'admin';
+
     container.innerHTML = filtered.map(u => {
       const role = u.role || 'user';
       const isSelf = u.id === currentUser?.uid;
       const roleLabel = ROLE_LABELS[role] || role;
       const roleIcon = ROLE_ICONS[role] || '👤';
       const badgeClass = ROLE_BADGE_CLASS[role] || 'user';
-      const canEdit = !isSelf;
+      const canEdit = !isSelf && isAdminUser;
 
-      // Получаем персонажей пользователя
       const userCharacters = allCharacters.filter(p => p.user_id === u.id && (p.status === 'approved' || p.approved === true));
       
       const playerCount = getPlayerCount(u.id);
@@ -1181,7 +1235,7 @@
                   <span>✅ ${approvedCount}</span>
                 </span>
               </div>
-              ${userCharacters.length > 0 ? `
+              ${isAdminUser && userCharacters.length > 0 ? `
                 <div style="margin-top:0.3rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
                   ${userCharacters.map(char => `
                     <span style="display:inline-flex;align-items:center;gap:0.3rem;background:var(--bg-card2);padding:0.1rem 0.5rem;border-radius:4px;font-size:0.7rem;border:1px solid var(--border);">
@@ -1217,6 +1271,11 @@
 
   // ─── Модалка смены роли ──────────────────────────────
   window.openRoleModal = (uid) => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может менять роли', 'error');
+      return;
+    }
+    
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
     
@@ -1268,6 +1327,11 @@
   };
 
   document.getElementById('btn-save-role').addEventListener('click', async () => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может менять роли', 'error');
+      return;
+    }
+    
     if (!selectedUserId || !selectedRole) {
       document.getElementById('role-error').textContent = 'Выберите роль';
       document.getElementById('role-error').style.display = 'block';
@@ -1307,8 +1371,13 @@
     }
   });
 
-  // ⭐ УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (без удаления из Auth)
+  // ⭐ УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (только для админов)
   window.confirmDelete = async (uid) => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может удалять пользователей', 'error');
+      return;
+    }
+    
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
     
@@ -1327,7 +1396,6 @@
     if (!confirm(confirmMsg)) return;
     
     try {
-      // 1. Удаляем персонажей
       const charsQuery = query(collection(db, 'characters'), where('user_id', '==', uid));
       const charsSnap = await getDocs(charsQuery);
       const batch = writeBatch(db);
@@ -1336,7 +1404,6 @@
       });
       await batch.commit();
       
-      // 2. Удаляем документ пользователя
       await deleteDoc(doc(db, "users", uid));
       
       showToast(`✅ Пользователь удалён (удалено ${charsSnap.size} персонажей)`);
@@ -1351,6 +1418,11 @@
 
   // ─── Добавление пользователя ──────────────────────────
   document.getElementById("btn-add-user")?.addEventListener("click", () => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может добавлять пользователей', 'error');
+      return;
+    }
+    
     document.getElementById("new-user-name").value = "";
     document.getElementById("new-user-email").value = "";
     document.getElementById("new-user-password").value = "";
@@ -1359,6 +1431,11 @@
   });
 
   document.getElementById("btn-create-user")?.addEventListener("click", async () => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может создавать пользователей', 'error');
+      return;
+    }
+    
     const username = document.getElementById("new-user-name").value.trim();
     const email = document.getElementById("new-user-email").value.trim();
     const password = document.getElementById("new-user-password").value;
@@ -1458,6 +1535,7 @@
 
   function renderModeration() {
     const container = document.getElementById('moderation-list');
+    const isAdminUser = userRole === 'admin';
     
     let filtered = allCharacters;
     if (currentFilter === 'pending') {
@@ -1502,13 +1580,11 @@
         </div>
       ` : '';
 
-      // Исправляем отображение оружия на русский язык
       let weaponsDisplay = '—';
       if (char.weapons && char.weapons.length > 0) {
         const weaponLabels = char.weapons.map((w, index) => {
           const weapon = WEAPONS.find(wp => wp.id === w);
           const label = weapon?.label || w;
-          // Используем "Оружие 1", "Оружие 2" вместо "weapon1", "weapon2"
           return `Оружие ${index + 1}: ${label}`;
         });
         weaponsDisplay = weaponLabels.join(' + ');
@@ -1590,12 +1666,14 @@
             </div>
           ` : ''}
           
-          <!-- ⭐ Кнопка удаления персонажа для админа -->
-          <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
-            <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')">
-              🗑️ Удалить персонажа
-            </button>
-          </div>
+          <!-- ⭐ Кнопка удаления персонажа (только для админов) -->
+          ${isAdminUser ? `
+            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+              <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')">
+                🗑️ Удалить персонажа
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -1709,6 +1787,11 @@
   }
 
   window.removeLock = async (playerId, slot) => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может снимать блокировки', 'error');
+      return;
+    }
+    
     const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
     if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
     try {
@@ -1731,6 +1814,11 @@
   }
 
   document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
+    if (userRole !== 'admin') {
+      showToast('❌ Только администратор может изменять настройки', 'error');
+      return;
+    }
+    
     const resetAfter = Number(document.getElementById("s-reset-after").value);
     const maxSkip = Number(document.getElementById("s-max-skip").value);
 
