@@ -2555,18 +2555,18 @@
       
       const data = snap.data();
 
-      if (data.participants?.length || !rollState.isFinished) {
-        rollState.participants = (data.participants || []).map(p => ({
-          playerId: p.playerId,
-          nickname: p.nickname,
-          roll: p.roll || null,
-          isBlocked: p.isBlocked || false,
-          userId: p.userId || null
+      // Синхронизируем участников
+      if (data.participants?.length) {
+        rollState.participants = data.participants.map(p => ({
+          playerId: p.playerId, nickname: p.nickname,
+          roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
         }));
       }
 
+      // Победитель зафиксирован (btn-confirm-roll)
       if (data.winner_player_id && data.winner_nickname && !rollState.isFinished) {
         rollState.isFinished = true;
+        rollState.isRolling  = false;
         rollState.winner = {
           playerId: data.winner_player_id,
           nickname: data.winner_nickname,
@@ -2574,11 +2574,82 @@
         };
         rollState.rollResults = data.roll_results || null;
         rollState.queue = data.roll_type || rollState.queue;
+        updateRollUI();
+        return;
+      }
+
+      // Кто-то запустил ролл — у нас ещё не идёт анимация
+      if (data.rolling === true && !rollState.isRolling && !rollState.isFinished) {
+        // Берём финальные результаты из Firestore
+        rollState.rollResults = data.roll_results || null;
+        if (data.pending_winner) {
+          rollState.winner = data.pending_winner;
+        }
+        // Запускаем локальную анимацию — она покажет рандомные цифры, потом подставит финал
+        startLocalRollAnimation();
+        return;
       }
 
       updateRollUI();
     });
   };
+
+  // ⭐ ФУНКЦИЯ АНИМАЦИИ РОЛЛА
+  function startLocalRollAnimation() {
+    if (rollState.isRolling) return; // уже идёт
+    rollState.isRolling = true;
+    updateRollUI();
+
+    const ticks = 12;
+    let tick = 0;
+    const interval = setInterval(() => {
+      tick++;
+      // Показываем рандомные цифры локально — просто для анимации
+      rollState.participants.forEach(p => {
+        if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
+      });
+      renderRollParticipantsAnimating();
+
+      if (tick >= ticks) {
+        clearInterval(interval);
+        // Подставляем финальные броски из Firestore
+        if (rollState.rollResults) {
+          rollState.participants = rollState.participants.map(p => {
+            const final = rollState.rollResults.find(r => r.playerId === p.playerId);
+            return { ...p, roll: final?.roll ?? p.roll };
+          });
+        }
+        finishRoll();
+      }
+    }, 250);
+  }
+
+  // ⭐ РЕНДЕР АНИМАЦИОННЫХ ЦИФР
+  function renderRollParticipantsAnimating() {
+    const list = document.getElementById("roll-players-list");
+    list.innerHTML = '';
+    rollState.participants.filter(p => !p.isBlocked).forEach(p => {
+      const isMe = p.playerId === rollState.currentPlayerId;
+      const row  = document.createElement('div');
+      row.className = 'roll-player-row joined-row';
+      row.innerHTML = `
+        <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
+        <span class="roll-player-status">В ролле</span>
+        <span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  // ⭐ ФИНИШ РОЛЛА — ТОЛЬКО ПОКАЗЫВАЕТ РЕЗУЛЬТАТ
+  function finishRoll() {
+    rollState.isRolling  = false;
+    rollState.isFinished = true;
+    updateRollUI();
+    if (rollState.winner) {
+      showToast(`🏆 ${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
+    }
+  }
 
   // ⭐ updateRollUI — с защитой от множественных вызовов
   let updateUITimeout = null;
@@ -2913,47 +2984,36 @@
     });
   });
 
+  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-start-roll
   document.getElementById("btn-start-roll").addEventListener("click", async () => {
     const active = rollState.participants.filter(p => !p.isBlocked);
     if (active.length < 2) { showToast("Нужно минимум 2 участника", "error"); return; }
     if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
 
-    rollState.isRolling = true;
-    updateRollUI();
+    // Считаем финальные броски сразу
+    const finalRolls = rollState.participants.map(p => ({
+      ...p,
+      roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1
+    }));
+    const active2   = finalRolls.filter(p => !p.isBlocked);
+    const maxRoll   = Math.max(...active2.map(p => p.roll));
+    const winner    = active2.find(p => p.roll === maxRoll);
 
-    const ticks = 12;
-    let tick = 0;
-    const interval = setInterval(() => {
-      tick++;
-      rollState.participants.forEach(p => {
-        if (!p.isBlocked) p.roll = Math.floor(Math.random() * 100) + 1;
-      });
-      renderRollParticipants();
-      if (tick >= ticks) {
-        clearInterval(interval);
-        finishRoll();
-      }
-    }, 250);
+    // Пишем в Firestore: rolling=true + финальные результаты (все увидят через onSnapshot)
+    const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+    await firestoreUpdate(dropRef, {
+      rolling: true,
+      roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
+      pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
+      participants: finalRolls.map(p => ({
+        playerId: p.playerId, nickname: p.nickname,
+        roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
+      }))
+    });
+    // onSnapshot сам подхватит rolling:true и запустит анимацию у всех включая инициатора
   });
 
-  function finishRoll() {
-    const active  = rollState.participants.filter(p => !p.isBlocked);
-    const maxRoll = Math.max(...active.map(p => p.roll));
-    const winner  = active.find(p => p.roll === maxRoll);
-
-    rollState.isRolling  = false;
-    rollState.isFinished = true;
-    rollState.winner     = winner;
-    rollState.rollResults = rollState.participants.map(p => ({
-      playerId: p.playerId,
-      nickname: p.nickname,
-      roll: p.roll
-    }));
-
-    updateRollUI();
-    showToast(`🏆 ${winner.nickname} выиграл с ${winner.roll}!`);
-  }
-
+  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-confirm-roll
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
     if (!rollState.winner || !canStartRoll()) return;
     const btn = document.getElementById("btn-confirm-roll");
@@ -2975,7 +3035,9 @@
           roll: p.roll, 
           isBlocked: p.isBlocked || false,
           userId: p.userId || null
-        }))
+        })),
+        rolling: false, // сбрасываем флаг
+        pending_winner: null // очищаем
       });
 
       showToast(`✅ ${rollState.winner.nickname} получает предмет!`);
