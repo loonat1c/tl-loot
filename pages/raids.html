@@ -513,7 +513,7 @@
       min-height: 70px;
       max-height: 250px;
       overflow-y: auto;
-      margin: 0 1rem 0.5rem;
+      margin: 0.5rem 1rem 0.5rem;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: var(--bg-card2);
@@ -708,7 +708,7 @@
       flex-wrap: wrap;
     }
 
-    .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm {
+    .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm, .btn-roll-reroll {
       display: flex;
       align-items: center;
       gap: 0.45rem;
@@ -765,7 +765,17 @@
       color: #000;
     }
 
-    .btn-roll-join:disabled, .btn-roll-leave:disabled {
+    .btn-roll-reroll {
+      background: #f59e0b22;
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+    .btn-roll-reroll:hover:not(:disabled) {
+      background: #f59e0b;
+      color: #000;
+    }
+
+    .btn-roll-join:disabled, .btn-roll-leave:disabled, .btn-roll-reroll:disabled {
       opacity: 0.35;
       cursor: not-allowed;
     }
@@ -993,6 +1003,9 @@
         </button>
         <button class="btn-roll-confirm" id="btn-confirm-roll" style="display:none;">
           <i class="ti ti-check" aria-hidden="true"></i> Зафиксировать
+        </button>
+        <button class="btn-roll-reroll" id="btn-reroll-roll" style="display:none;">
+          Реролл
         </button>
       </div>
     </div>
@@ -1228,6 +1241,9 @@
   let tryAttendanceCache = {};
   let lockSettings = { raids_to_unlock: 999, max_misses: 0 };
 
+  // ⭐ Флаг, что ролл был запущен и есть результаты
+  let rollHasResults = false;
+
   // ============================================================
   // СОСТОЯНИЕ РОЛЛА
   // ============================================================
@@ -1248,6 +1264,7 @@
     currentPlayerId: null,
     queue: 'main',
     rollResults: null,
+    hasPendingWinner: false,
   };
 
   // ============================================================
@@ -1428,7 +1445,7 @@
       
       const weaponTypeLabel = getWeaponTypeLabel(weaponType);
       
-      // Проверяем, выигрывал ли уже это конкретное оружие (по item_id)
+      // ⭐ Проверяем, выигрывал ли уже это конкретное оружие (по item_id)
       const exactWeaponWins = wins.filter(w => w.item_id === itemId);
       if (exactWeaponWins.length > 0) {
         return { 
@@ -1437,7 +1454,7 @@
         };
       }
       
-      // Проверяем, выигрывал ли уже оружие этого типа (например, любой посох)
+      // ⭐ Проверяем, выигрывал ли уже оружие этого типа (например, любой посох)
       const weaponTypeWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         return winItem?.slot === 'weapon' && 
@@ -1451,9 +1468,8 @@
         };
       }
       
-      // Проверяем, сколько всего оружий из спека уже выиграно
+      // ⭐ Проверяем, сколько всего оружий из спека уже выиграно (лимит 2)
       const charWeapons = char.weapons || [];
-      const charWeaponLabels = charWeapons.map(w => getWeaponTypeLabel(w));
       
       // Собираем все победы на оружие из спека
       const weaponWins = wins.filter(w => {
@@ -1486,7 +1502,7 @@
       const item = allItems.find(i => i.id === itemId);
       if (!item) return { locked: false, reason: '' };
       
-      // Проверяем, выигрывал ли уже это конкретное кольцо (по item_id)
+      // ⭐ Проверяем, выигрывал ли уже это конкретное кольцо (по item_id)
       const exactRingWins = wins.filter(w => w.item_id === itemId);
       if (exactRingWins.length > 0) {
         return { 
@@ -1495,13 +1511,12 @@
         };
       }
       
-      // Проверяем, сколько всего колец уже выиграно
+      // ⭐ Проверяем, сколько всего колец уже выиграно (лимит 2)
       const ringWins = wins.filter(w => {
         const winItem = allItems.find(i => i.id === w.item_id);
         return winItem?.slot === 'ring';
       });
       
-      // Если уже выиграл 2 кольца — больше не может участвовать в основной очереди на кольца
       if (ringWins.length >= 2) {
         return { 
           locked: true, 
@@ -1511,6 +1526,7 @@
     }
     
     // ---- ДРУГИЕ СЛОТЫ (не оружие и не кольцо) ----
+    // ⭐ Проверяем, выигрывал ли уже предмет в этом слоте в другом рейде
     const slotWins = wins.filter(w => {
       const winItem = allItems.find(i => i.id === w.item_id);
       return winItem?.slot === itemSlot;
@@ -1527,7 +1543,7 @@
       };
     }
     
-    // Для остальных слотов: если уже выиграл предмет в этом слоте — блокировка
+    // ⭐ Для остальных слотов: если уже выиграл предмет в этом слоте — блокировка
     if (slotWins.length > 0) {
       const slotLabel = getSlotLabel(itemSlot);
       return { 
@@ -1559,20 +1575,20 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    // Проверка победы этого предмета в текущем рейде
+    // ⭐ 1. Проверка победы этого предмета в текущем рейде
     if (await hasWonItemInCurrentRaid(charId, itemId)) {
       const item = allItems.find(i => i.id === itemId);
       return { can: false, reason: `Уже выиграл «${item?.name || 'этот предмет'}» в текущем рейде` };
     }
 
-    // Проверка глобальной блокировки слота
+    // ⭐ 2. Проверка глобальной блокировки слота (из других рейдов)
+    //    Если выиграл этот слот в другом рейде — больше не может роллить на этот слот
     const slotLock = await isSlotLocked(charId, itemSlot, itemId);
     if (slotLock.locked) {
       return { can: false, reason: slotLock.reason };
     }
 
-    // Проверка желаемого лута
-    // desired_loot хранит ключи weapon1/weapon2, ring1/ring2, остальные 1:1
+    // ⭐ 3. Проверка желаемого лута
     const desired = char.desired_loot || {};
     const slotKeys = itemSlot === 'weapon'
       ? ['weapon1', 'weapon2']
@@ -1585,7 +1601,7 @@
       return { can: false, reason: `Предмет не в желаемом луте (слот «${slotLabel}»)` };
     }
 
-    // Проверка совместимости оружия
+    // ⭐ 4. Проверка совместимости оружия
     if (itemSlot === 'weapon') {
       const item = allItems.find(i => i.id === itemId);
       if (item?.weapon_type) {
@@ -1607,7 +1623,7 @@
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
-    // Проверяем, выигрывал ли уже в этом рейде
+    // ⭐ В дополнительной очереди: проверяем, выигрывал ли уже в этом рейде
     const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
@@ -1873,7 +1889,6 @@
               `}
             ` : ""}
             ${admin && !raid.deleted ? `
-              <button class="btn btn-ghost btn-sm" id="btn-edit-raid">✏️</button>
               <button class="btn btn-danger btn-sm" id="btn-delete-raid">🗑️</button>
             ` : ""}
             ${admin && raid.deleted ? `
@@ -1905,9 +1920,6 @@
     
     const btnReopenRaid = document.getElementById("btn-reopen-raid");
     if (btnReopenRaid) btnReopenRaid.addEventListener("click", reopenRaid);
-    
-    const btnEditRaid = document.getElementById("btn-edit-raid");
-    if (btnEditRaid) btnEditRaid.addEventListener("click", () => openEditRaid(raid));
     
     const btnDeleteRaid = document.getElementById("btn-delete-raid");
     if (btnDeleteRaid) btnDeleteRaid.addEventListener("click", confirmDeleteRaid);
@@ -2049,15 +2061,6 @@
   // ============================================================
   // МОДАЛКИ
   // ============================================================
-
-  function openEditRaid(raid) {
-    editingRaidId = raid.id;
-    document.getElementById("modal-raid-title").textContent = "Редактировать рейд";
-    document.getElementById("raid-date").value  = raid.date;
-    document.getElementById("raid-notes").value = raid.notes || "";
-    document.getElementById("raid-error").style.display = "none";
-    openModal("modal-raid");
-  }
 
   const createRaidBtn = document.getElementById("btn-create-raid");
   if (createRaidBtn) {
@@ -2430,6 +2433,9 @@
   // ============================================================
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
+    // ⭐ Сбрасываем флаг результатов при открытии
+    rollHasResults = false;
+    
     // Проверяем участие в этом трае
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
@@ -2456,6 +2462,13 @@
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
+    // Сохраняем старых участников если они были
+    const oldParticipants = rollState.participants || [];
+    const oldRollResults = rollState.rollResults || null;
+    const oldWinner = rollState.winner || null;
+    const oldIsFinished = rollState.isFinished || false;
+    const oldHasPending = rollState.hasPendingWinner || false;
+
     rollState = {
       dropId: dropId,
       raidId: raidId,
@@ -2464,14 +2477,15 @@
       itemDetail: `${slotLabel}${property ? ` · ✦ ${property}` : ''}`,
       itemSlot: itemSlotRaw || null,
       itemId: null,
-      participants: [],
+      participants: oldParticipants.length > 0 ? oldParticipants : [],
       isRolling: false,
-      isFinished: false,
-      winner: null,
+      isFinished: oldIsFinished,
+      winner: oldWinner,
       currentUserId: currentUser?.uid || null,
       currentPlayerId: rollState.currentPlayerId || null,
       queue: 'main',
-      rollResults: null,
+      rollResults: oldRollResults,
+      hasPendingWinner: oldHasPending,
     };
 
     try {
@@ -2485,17 +2499,28 @@
           rollState.itemSlot = data.item_slot;
         }
 
+        // Загружаем участников из Firestore если они есть
         if (data.participants?.length) {
           rollState.participants = data.participants.map(p => ({
-            playerId: p.playerId,
-            nickname: p.nickname,
-            roll: p.roll || null,
-            isBlocked: p.isBlocked || false,
-            userId: p.userId || null
+            playerId: p.playerId, nickname: p.nickname,
+            roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
           }));
         }
+        
+        // Проверяем, есть ли незафиксированный победитель
+        if (data.pending_winner && !data.winner_player_id) {
+          rollState.hasPendingWinner = true;
+          rollState.winner = data.pending_winner;
+          rollState.rollResults = data.roll_results || null;
+          rollState.isFinished = true;
+          rollHasResults = true;
+        }
+        
+        // Если есть зафиксированный победитель
         if (data.winner_player_id && data.winner_nickname) {
           rollState.isFinished = true;
+          rollState.hasPendingWinner = false;
+          rollHasResults = false;
           rollState.winner = { 
             playerId: data.winner_player_id, 
             nickname: data.winner_nickname,
@@ -2533,14 +2558,13 @@
     updateRollUI();
     openModal("modal-roll");
 
-    // ⭐ ПОДПИСКА НА ИЗМЕНЕНИЯ — ПРОПУСКАЕМ ПЕРВЫЙ ВЫЗОВ
+    // ⭐ ПОДПИСКА НА ИЗМЕНЕНИЯ
     const dropRef2 = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
     let isFirstSnapshot = true;
     
     rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
       if (!snap.exists()) return;
       
-      // ⭐ Пропускаем первый вызов (он стреляет сразу с текущим состоянием)
       if (isFirstSnapshot) { 
         isFirstSnapshot = false; 
         return; 
@@ -2560,6 +2584,8 @@
       if (data.winner_player_id && data.winner_nickname && !rollState.isFinished) {
         rollState.isFinished = true;
         rollState.isRolling  = false;
+        rollState.hasPendingWinner = false;
+        rollHasResults = false;
         rollState.winner = {
           playerId: data.winner_player_id,
           nickname: data.winner_nickname,
@@ -2573,13 +2599,25 @@
 
       // Кто-то запустил ролл — у нас ещё не идёт анимация
       if (data.rolling === true && !rollState.isRolling && !rollState.isFinished) {
-        // Берём финальные результаты из Firestore
         rollState.rollResults = data.roll_results || null;
         if (data.pending_winner) {
           rollState.winner = data.pending_winner;
+          rollState.hasPendingWinner = true;
+          rollHasResults = true;
         }
-        // Запускаем локальную анимацию — она покажет рандомные цифры, потом подставит финал
         startLocalRollAnimation();
+        return;
+      }
+      
+      // Если есть pending_winner но rolling уже false (анимация завершена)
+      if (data.pending_winner && !data.rolling && !data.winner_player_id && !rollState.isFinished) {
+        rollState.winner = data.pending_winner;
+        rollState.rollResults = data.roll_results || null;
+        rollState.hasPendingWinner = true;
+        rollHasResults = true;
+        rollState.isFinished = true;
+        rollState.isRolling = false;
+        updateRollUI();
         return;
       }
 
@@ -2589,15 +2627,15 @@
 
   // ⭐ ФУНКЦИЯ АНИМАЦИИ РОЛЛА
   function startLocalRollAnimation() {
-    if (rollState.isRolling) return; // уже идёт
+    if (rollState.isRolling) return;
     rollState.isRolling = true;
+    rollHasResults = true;
     updateRollUI();
 
     const ticks = 12;
     let tick = 0;
     const interval = setInterval(() => {
       tick++;
-      // Показываем рандомные цифры локально — просто для анимации
       rollState.participants.forEach(p => {
         if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
       });
@@ -2605,7 +2643,6 @@
 
       if (tick >= ticks) {
         clearInterval(interval);
-        // Подставляем финальные броски из Firestore
         if (rollState.rollResults) {
           rollState.participants = rollState.participants.map(p => {
             const final = rollState.rollResults.find(r => r.playerId === p.playerId);
@@ -2638,6 +2675,8 @@
   function finishRoll() {
     rollState.isRolling  = false;
     rollState.isFinished = true;
+    rollState.hasPendingWinner = true;
+    rollHasResults = true;
     updateRollUI();
     if (rollState.winner) {
       showToast(`🏆 ${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
@@ -2734,7 +2773,7 @@
     });
   }
 
-  // ⭐ renderAvailablePlayers — с защитой от дублей и дедупликацией
+  // ⭐ renderAvailablePlayers
   let renderAvailableVersion = 0;
   let renderAvailableTimeout = null;
 
@@ -2752,7 +2791,6 @@
       const count = document.getElementById("roll-available-count");
       
       if (currentVersion !== renderAvailableVersion) {
-        console.log('⏳ Пропускаем устаревший рендер');
         renderAvailableTimeout = null;
         return;
       }
@@ -2772,7 +2810,6 @@
         return { char, check, isMe };
       })).then(results => {
         if (currentVersion !== renderAvailableVersion) {
-          console.log('⏳ Пропускаем устаревший рендер (после Promise.all)');
           renderAvailableTimeout = null;
           return;
         }
@@ -2864,6 +2901,7 @@
     const leaveBtn   = document.getElementById("btn-leave-roll");
     const startBtn   = document.getElementById("btn-start-roll");
     const confirmBtn = document.getElementById("btn-confirm-roll");
+    const rerollBtn  = document.getElementById("btn-reroll-roll");
 
     if (joinBtn)  joinBtn.disabled  = isParticipant || !canAct;
     if (leaveBtn) leaveBtn.disabled = !isParticipant || !canAct;
@@ -2871,18 +2909,27 @@
     if (startBtn) {
       const canStart = rollState.participants.filter(p => !p.isBlocked).length >= 2 && canAct && canStartRoll();
       startBtn.disabled = !canStart;
+      
+      // ⭐ Если ролл завершён — скрываем кнопку "Запустить ролл"
       if (rollState.isFinished) {
-        startBtn.textContent = '✅ Ролл завершён';
-        startBtn.style.cssText = 'background:rgba(34,197,94,0.15);border-color:#22c55e;color:#22c55e;';
+        startBtn.style.display = 'none';
       } else {
+        startBtn.style.display = 'flex';
         startBtn.textContent = '🎲 Запустить ролл';
         startBtn.style.cssText = '';
       }
     }
 
     if (confirmBtn) {
-      const showConfirm = rollState.isFinished && rollState.winner && canStartRoll();
+      const showConfirm = rollState.isFinished && rollState.winner && canStartRoll() && rollState.hasPendingWinner;
       confirmBtn.style.display = showConfirm ? 'flex' : 'none';
+    }
+    
+    if (rerollBtn) {
+      // ⭐ Кнопка реролла показывается вместо "Ролл завершён"
+      const showReroll = rollState.isFinished && rollState.winner && canStartRoll();
+      rerollBtn.style.display = showReroll ? 'flex' : 'none';
+      rerollBtn.textContent = 'Реролл';
     }
 
     document.querySelectorAll('.roll-queue-tab').forEach(b => {
@@ -2977,13 +3024,12 @@
     });
   });
 
-  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-start-roll
+  // ⭐ btn-start-roll
   document.getElementById("btn-start-roll").addEventListener("click", async () => {
     const active = rollState.participants.filter(p => !p.isBlocked);
     if (active.length < 2) { showToast("Нужно минимум 2 участника", "error"); return; }
     if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
 
-    // Считаем финальные броски сразу
     const finalRolls = rollState.participants.map(p => ({
       ...p,
       roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1
@@ -2992,7 +3038,6 @@
     const maxRoll   = Math.max(...active2.map(p => p.roll));
     const winner    = active2.find(p => p.roll === maxRoll);
 
-    // Пишем в Firestore: rolling=true + финальные результаты (все увидят через onSnapshot)
     const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
     await firestoreUpdate(dropRef, {
       rolling: true,
@@ -3003,10 +3048,9 @@
         roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
       }))
     });
-    // onSnapshot сам подхватит rolling:true и запустит анимацию у всех включая инициатора
   });
 
-  // ⭐ НОВЫЙ ОБРАБОТЧИК btn-confirm-roll
+  // ⭐ btn-confirm-roll
   document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
     if (!rollState.winner || !canStartRoll()) return;
     const btn = document.getElementById("btn-confirm-roll");
@@ -3029,9 +3073,12 @@
           isBlocked: p.isBlocked || false,
           userId: p.userId || null
         })),
-        rolling: false, // сбрасываем флаг
-        pending_winner: null // очищаем
+        rolling: false,
+        pending_winner: null
       });
+
+      rollState.hasPendingWinner = false;
+      rollHasResults = false;
 
       showToast(`✅ ${rollState.winner.nickname} получает предмет!`);
       btn.style.display = 'none';
@@ -3044,42 +3091,122 @@
     finally { btn.disabled = false; btn.textContent = '✅ Зафиксировать победителя'; }
   });
 
-  // ⭐ ИСПРАВЛЕННАЯ closeRollModal — с красивым диалогом
-  function closeRollModal() {
-    const hasUnfinishedRoll = !rollState.isFinished && rollState.participants.some(p => p.roll !== null);
-    const hasParticipants   = !rollState.isFinished && rollState.participants.filter(p => !p.isBlocked).length > 0;
-
-    if (hasUnfinishedRoll) {
-      openDialog('⚠️ Ролл не завершён', 'Ролл уже запущен, но победитель не зафиксирован.\n\nВы уверены, что хотите выйти?', 'Выйти', 'Остаться')
-        .then(confirmed => {
-          if (confirmed) {
-            closeModal("modal-roll");
-            if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-            rollState.isRolling = false;
-          }
-        });
+  // ⭐ btn-reroll-roll
+  document.getElementById("btn-reroll-roll")?.addEventListener("click", async () => {
+    if (!rollState.winner || !canStartRoll()) {
+      showToast('Только администратор или Глава гильдии может сделать реролл', 'error');
       return;
-    } else if (hasParticipants) {
+    }
+    
+    const confirmed = await openDialog(
+      '🔄 Реролл',
+      `Вы уверены, что хотите сделать реролл?\n\nТекущий победитель: ${rollState.winner.nickname} с броском ${rollState.winner.roll}\n\nРезультаты текущего ролла будут удалены, и все участники смогут роллить заново.`,
+      'Да, сделать реролл',
+      'Отмена'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      
+      await firestoreUpdate(dropRef, {
+        rolling: false,
+        pending_winner: null,
+        roll_results: null,
+        participants: rollState.participants.map(p => ({
+          playerId: p.playerId,
+          nickname: p.nickname,
+          roll: null,
+          isBlocked: p.isBlocked || false,
+          userId: p.userId || null
+        }))
+      });
+      
+      rollState.isFinished = false;
+      rollState.isRolling = false;
+      rollState.winner = null;
+      rollState.rollResults = null;
+      rollState.hasPendingWinner = false;
+      rollHasResults = false;
+      
+      rollState.participants = rollState.participants.map(p => ({
+        ...p,
+        roll: null
+      }));
+      
+      updateRollUI();
+      showToast('🔄 Реролл выполнен! Запустите ролл заново.');
+      
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === rollState.raidId);
+      if (activeRaid) selectRaid(activeRaid);
+      
+    } catch(e) {
+      showToast('Ошибка реролла: ' + e.message, 'error');
+      console.error('rerollDrop error:', e);
+    }
+  });
+
+  // ⭐ closeRollModal
+  function closeRollModal() {
+    const hasUnfinished = rollHasResults || rollState.hasPendingWinner || 
+                          (rollState.isFinished && rollState.winner && !rollState.rollResults);
+    
+    if (hasUnfinished) {
+      const customActions = `
+        <div class="dialog-roll-actions">
+          <button class="btn btn-danger" onclick="closeRollModalForce()">Закрыть без фиксации</button>
+          <button class="btn btn-success" onclick="closeRollModalAndConfirm()">✅ Зафиксировать результаты</button>
+        </div>
+      `;
+      
+      openDialog(
+        '⚠️ Ролл завершён, но не зафиксирован',
+        'Результаты ролла уже есть, но они не зафиксированы!\n\nЕсли вы закроете окно, результаты будут потеряны и придётся роллить заново.',
+        '',
+        '',
+        customActions
+      );
+      return;
+    }
+    
+    if (!rollState.isFinished && rollState.participants.filter(p => !p.isBlocked).length > 0) {
       openDialog('⚠️ Есть участники', 'В ролле есть участники, но ролл ещё не запущен.\n\nВы уверены, что хотите выйти?', 'Выйти', 'Остаться')
         .then(confirmed => {
           if (confirmed) {
-            closeModal("modal-roll");
-            if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-            rollState.isRolling = false;
+            closeRollModalForce();
           }
         });
       return;
     }
 
-    closeModal("modal-roll");
-    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-    rollState.isRolling = false;
+    closeRollModalForce();
   }
   window.closeRollModal = closeRollModal;
 
+  function closeRollModalForce() {
+    closeModal("modal-roll");
+    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
+    rollState.isRolling = false;
+    rollHasResults = false;
+    closeDialog();
+  }
+  window.closeRollModalForce = closeRollModalForce;
+
+  function closeRollModalAndConfirm() {
+    closeDialog();
+    const confirmBtn = document.getElementById("btn-confirm-roll");
+    if (confirmBtn && confirmBtn.style.display !== 'none') {
+      confirmBtn.click();
+    } else {
+      showToast('❌ Сначала зафиксируйте победителя', 'error');
+    }
+  }
+  window.closeRollModalAndConfirm = closeRollModalAndConfirm;
+
   // ── Закрыть рейд ──────────────────────────────────
   async function openCloseRaidModal() {
-    // Проверяем, есть ли участие во всех траях
     const tries = await getRaidTries(activeRaid.id);
     let allHaveAttendance = true;
     let missingTry = null;
@@ -3115,7 +3242,6 @@
       const btn = document.getElementById("btn-confirm-close");
       btn.disabled = true; btn.textContent = "Закрываем...";
       try {
-        // Собираем всех участников из всех траев
         const tries = await getRaidTries(activeRaid.id);
         const allAttended = new Set();
         for (const t of tries) {
@@ -3155,7 +3281,6 @@
         getItems()
       ]);
       
-      // ⭐ Загружаем настройки блокировок
       await loadLockSettings();
       console.log('🔒 Настройки блокировок:', lockSettings);
       
