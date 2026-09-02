@@ -87,15 +87,19 @@
 
     <form id="register-form" autocomplete="off">
 
-      <!-- Email -->
+      <!-- Логин -->
       <div class="form-group">
-        <label for="reg-email">Email *</label>
+        <label for="reg-username">Логин *</label>
         <input
-          type="email"
-          id="reg-email"
-          placeholder="your@email.com"
+          type="text"
+          id="reg-username"
+          placeholder="Придумайте логин"
           required
+          autocomplete="username"
         />
+        <div class="hint-text">
+          💡 Только латинские буквы, цифры и _ (от 3 до 20 символов)
+        </div>
       </div>
 
       <!-- Пароль -->
@@ -107,6 +111,7 @@
           placeholder="Минимум 6 символов"
           minlength="6"
           required
+          autocomplete="new-password"
         />
         <div class="password-hint">
           Пароль должен содержать минимум 6 символов
@@ -121,19 +126,20 @@
           id="reg-password-confirm"
           placeholder="Повторите пароль"
           required
+          autocomplete="new-password"
         />
       </div>
 
       <!-- Имя пользователя (опционально) -->
       <div class="form-group">
-        <label for="reg-username">Имя пользователя</label>
+        <label for="reg-displayname">Имя пользователя</label>
         <input
           type="text"
-          id="reg-username"
+          id="reg-displayname"
           placeholder="Как к вам обращаться (опционально)"
         />
         <div class="hint-text">
-          💡 Если не заполнить — будет использоваться имя из email
+          💡 Если не заполнить — будет использоваться логин
         </div>
       </div>
 
@@ -161,7 +167,7 @@
   import { 
     initAuth, 
     authReady, 
-    register,
+    registerWithUsername,
     currentUser 
   } from "../js/modules/auth.js";
 
@@ -176,16 +182,16 @@
   }
 
   const form = document.getElementById('register-form');
-  const emailInput = document.getElementById('reg-email');
+  const usernameInput = document.getElementById('reg-username');
   const passwordInput = document.getElementById('reg-password');
   const passwordConfirmInput = document.getElementById('reg-password-confirm');
-  const usernameInput = document.getElementById('reg-username');
+  const displayNameInput = document.getElementById('reg-displayname');
   const errorDiv = document.getElementById('error-message');
   const successDiv = document.getElementById('success-message');
   const btnRegister = document.getElementById('btn-register');
 
   // Скрываем сообщения при вводе
-  [emailInput, passwordInput, passwordConfirmInput, usernameInput].forEach(input => {
+  [usernameInput, passwordInput, passwordConfirmInput, displayNameInput].forEach(input => {
     input.addEventListener('input', () => {
       errorDiv.style.display = 'none';
       successDiv.style.display = 'none';
@@ -198,15 +204,20 @@
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
 
-    const email = emailInput.value.trim();
+    const username = usernameInput.value.trim().toLowerCase();
     const password = passwordInput.value;
     const passwordConfirm = passwordConfirmInput.value;
-    // Если имя не заполнено — будет null, в auth.js возьмётся из email
-    const username = usernameInput.value.trim() || null;
+    const displayName = displayNameInput.value.trim() || null;
 
-    // Валидация
-    if (!email) {
-      errorDiv.textContent = 'Введите email';
+    // Валидация логина
+    if (!username) {
+      errorDiv.textContent = 'Введите логин';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      errorDiv.textContent = 'Логин: 3-20 символов, только латиница, цифры и _';
       errorDiv.style.display = 'block';
       return;
     }
@@ -234,7 +245,7 @@
     btnRegister.textContent = 'Регистрация...';
 
     try {
-      const result = await register(email, password, username);
+      const result = await registerWithUsername(username, password, displayName);
       
       if (result.success) {
         successDiv.textContent = '✅ Регистрация успешна! Перенаправление...';
