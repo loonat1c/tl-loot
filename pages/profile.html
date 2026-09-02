@@ -1086,25 +1086,8 @@
       let slotItems = allItems.filter(i => i.slot === slotDef.baseSlot);
 
       // ── Weapon slots: only show items matching the character's weapon types
-      if (slotDef.baseSlot === 'weapon') {
-        if (allowedWeaponTypes.length) {
-          slotItems = slotItems.filter(i => allowedWeaponTypes.includes(i.weapon_type));
-        }
-        // Exclude item already chosen in the paired slot
-        const pairedSlotId = PAIRED_SLOTS[slotDef.id];
-        if (pairedSlotId) {
-          const pairedVal = values[pairedSlotId] || '';
-          if (pairedVal) slotItems = slotItems.filter(i => i.id !== pairedVal);
-        }
-      }
-
-      // ── Ring slots: exclude item already chosen in the paired ring slot
-      if (slotDef.baseSlot === 'ring') {
-        const pairedSlotId = PAIRED_SLOTS[slotDef.id];
-        if (pairedSlotId) {
-          const pairedVal = values[pairedSlotId] || '';
-          if (pairedVal) slotItems = slotItems.filter(i => i.id !== pairedVal);
-        }
+      if (slotDef.baseSlot === 'weapon' && allowedWeaponTypes.length) {
+        slotItems = slotItems.filter(i => allowedWeaponTypes.includes(i.weapon_type));
       }
 
       const selectedVal = values[slotDef.id] || '';
@@ -1193,6 +1176,12 @@
     if (!name)    return showErr('Введите имя персонажа');
     if (!weapon1) return showErr('Выберите основное оружие');
     if (weapon1 && weapon2 && weapon1 === weapon2) return showErr('Основное и дополнительное оружие не могут совпадать');
+
+    const lootCheck = getSelectedLoot();
+    if (lootCheck.weapon1 && lootCheck.weapon1 === lootCheck.weapon2)
+      return showErr('Оружие 1 и Оружие 2 в желаемом луте не могут быть одинаковыми');
+    if (lootCheck.ring1 && lootCheck.ring1 === lootCheck.ring2)
+      return showErr('Кольцо 1 и Кольцо 2 в желаемом луте не могут быть одинаковыми');
 
     errorEl.style.display = 'none';
 
