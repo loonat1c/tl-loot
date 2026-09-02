@@ -19,6 +19,10 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
@@ -171,10 +175,11 @@ async function fetchRole(uid) {
 
     // Если документа нет — создаём его с ролью "user"
     try {
+      const userData = await getUserData(uid);
       await setDoc(doc(db, "users", uid), {
         email: currentUser?.email || "",
         role: "user",
-        username: currentUser?.email?.split('@')[0] || "User",
+        username: userData?.username || currentUser?.email?.split('@')[0] || "User",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
@@ -192,6 +197,23 @@ async function fetchRole(uid) {
 }
 
 // ====================================================
+// Получение данных пользователя
+// ====================================================
+
+export async function getUserData(uid) {
+  try {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      return userDoc.data();
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    return null;
+  }
+}
+
+// ====================================================
 // Публичное получение роли
 // ====================================================
 
@@ -200,7 +222,121 @@ export async function getUserRole(uid) {
 }
 
 // ====================================================
-// РЕГИСТРАЦИЯ
+// РЕГИСТРАЦИЯ ПО ЛОГИНУ
+// ====================================================
+
+export async function registerWithUsername(username, password, displayName = null) {
+  console.log("📝 Регистрация с логином:", username);
+
+  try {
+    // Нормализуем логин
+    const normalizedUsername = username.toLowerCase().trim();
+    
+    // Проверяем, не занят ли логин
+    const usernameExists = await checkUsernameExists(normalizedUsername);
+    if (usernameExists) {
+      return { 
+        success: false, 
+        error: 'Этот логин уже занят' 
+      };
+    }
+
+    // Создаём виртуальный email
+    const email = `${normalizedUsername}@tlloot.app`;
+    
+    // Создаём пользователя в Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const newUser = userCredential.user;
+    console.log("✅ Пользователь создан:", newUser.uid);
+
+    // Создаём документ в Firestore
+    await setDoc(doc(db, "users", newUser.uid), {
+      email: email,
+      role: "user",
+      username: normalizedUsername,
+      displayName: displayName || normalizedUsername,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    console.log("📄 Документ пользователя создан");
+
+    return {
+      success: true,
+      user: newUser,
+      message: "Регистрация успешна!"
+    };
+
+  } catch (error) {
+    console.error("❌ Ошибка регистрации:", error);
+
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
+}
+
+// ====================================================
+// ВХОД ПО ЛОГИНУ
+// ====================================================
+
+export async function loginWithUsername(username, password) {
+  console.log("🔑 Попытка входа с логином:", username);
+
+  try {
+    // Нормализуем логин
+    const normalizedUsername = username.toLowerCase().trim();
+    
+    // Создаём виртуальный email
+    const email = `${normalizedUsername}@tlloot.app`;
+    
+    await setPersistence(auth, browserLocalPersistence);
+
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    console.log("✅ Вход выполнен:", cred.user.email);
+
+    return {
+      success: true,
+      user: cred.user
+    };
+  } catch (error) {
+    console.error("❌ Ошибка входа:", error);
+    return {
+      success: false,
+      error: 'Неверный логин или пароль'
+    };
+  }
+}
+
+// ====================================================
+// Проверка существования логина
+// ====================================================
+
+async function checkUsernameExists(username) {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', username));
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Ошибка проверки логина:', error);
+    return false;
+  }
+}
+
+// ====================================================
+// РЕГИСТРАЦИЯ (старая, для обратной совместимости)
 // ====================================================
 
 export async function register(email, password, username = null) {
@@ -231,14 +367,6 @@ export async function register(email, password, username = null) {
 
     console.log("📄 Документ пользователя создан");
 
-    // 3. (Опционально) Отправляем письмо для подтверждения email
-    try {
-      await sendEmailVerification(newUser);
-      console.log("✉️ Письмо подтверждения отправлено");
-    } catch (verifyError) {
-      console.warn("⚠️ Не удалось отправить письмо подтверждения:", verifyError);
-    }
-
     return {
       success: true,
       user: newUser,
@@ -256,7 +384,7 @@ export async function register(email, password, username = null) {
 }
 
 // ====================================================
-// Login
+// Login (старый, для обратной совместимости)
 // ====================================================
 
 export async function login(email, password) {
@@ -325,19 +453,19 @@ export function isModerator() {
 
 function getAuthErrorMessage(code) {
   const messages = {
-    'auth/email-already-in-use': 'Этот email уже зарегистрирован',
-    'auth/invalid-email': 'Некорректный email адрес',
+    'auth/email-already-in-use': 'Этот логин уже зарегистрирован',
+    'auth/invalid-email': 'Некорректный логин',
     'auth/weak-password': 'Пароль должен содержать минимум 6 символов',
-    'auth/user-not-found': 'Пользователь с таким email не найден',
+    'auth/user-not-found': 'Пользователь с таким логином не найден',
     'auth/wrong-password': 'Неверный пароль',
     'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
-    'auth/operation-not-allowed': 'Вход с email/паролем отключён',
+    'auth/operation-not-allowed': 'Вход отключён',
     'auth/user-disabled': 'Аккаунт заблокирован',
     'auth/network-request-failed': 'Ошибка сети. Проверьте подключение',
     'auth/requires-recent-login': 'Требуется повторный вход',
     'auth/credential-already-in-use': 'Аккаунт уже используется',
-    'auth/email-already-exists': 'Этот email уже зарегистрирован',
-    'auth/invalid-credential': 'Неверный email или пароль'
+    'auth/email-already-exists': 'Этот логин уже зарегистрирован',
+    'auth/invalid-credential': 'Неверный логин или пароль'
   };
   return messages[code] || `Ошибка: ${code}`;
 }
@@ -363,9 +491,15 @@ export function updateNavUI() {
   }
 
   if (userLabel) {
-    userLabel.textContent = currentUser
-      ? `${currentUser.email} (${currentRole})`
-      : "Гость";
+    if (currentUser) {
+      // Пытаемся получить username из Firestore
+      getUserData(currentUser.uid).then(userData => {
+        const username = userData?.username || currentUser.email?.split('@')[0] || 'User';
+        userLabel.textContent = `${username} (${currentRole})`;
+      });
+    } else {
+      userLabel.textContent = "Гость";
+    }
   }
 
   document.querySelectorAll("[data-role='admin']").forEach((el) => {
@@ -393,7 +527,7 @@ export async function updateUserProfile(data) {
     const userRef = doc(db, 'users', currentUser.uid);
     await updateDoc(userRef, {
       ...data,
-      updatedAt: new Date().toISOString()
+      updated_at: new Date().toISOString()
     });
 
     console.log('✅ Профиль обновлён в Firestore');
