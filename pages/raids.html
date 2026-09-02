@@ -513,7 +513,7 @@
       min-height: 70px;
       max-height: 250px;
       overflow-y: auto;
-      margin: 0 1rem 0.5rem;
+      margin: 0.5rem 1rem 0.5rem;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: var(--bg-card2);
@@ -708,7 +708,7 @@
       flex-wrap: wrap;
     }
 
-    .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm, .btn-roll-reroll {
+    .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm, .btn-roll-reroll, .btn-roll-delete {
       display: flex;
       align-items: center;
       gap: 0.45rem;
@@ -766,16 +766,26 @@
     }
 
     .btn-roll-reroll {
+      background: #f59e0b22;
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+    .btn-roll-reroll:hover:not(:disabled) {
+      background: #f59e0b;
+      color: #000;
+    }
+
+    .btn-roll-delete {
       background: rgba(239, 68, 68, 0.12);
       border-color: #ef4444;
       color: #ef4444;
     }
-    .btn-roll-reroll:hover:not(:disabled) {
+    .btn-roll-delete:hover:not(:disabled) {
       background: #ef4444;
       color: #fff;
     }
 
-    .btn-roll-join:disabled, .btn-roll-leave:disabled, .btn-roll-reroll:disabled {
+    .btn-roll-join:disabled, .btn-roll-leave:disabled, .btn-roll-reroll:disabled, .btn-roll-delete:disabled {
       opacity: 0.35;
       cursor: not-allowed;
     }
@@ -830,34 +840,6 @@
       display: block;
       content: '';
       margin: 0.25rem 0;
-    }
-
-    /* ── Кнопки в диалоге ролла ── */
-    .dialog-roll-actions {
-      display: flex;
-      gap: 0.75rem;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-    .dialog-roll-actions .btn {
-      font-size: 0.9rem;
-      padding: 0.5rem 1.2rem;
-    }
-    .dialog-roll-actions .btn-danger {
-      background: var(--danger, #ef4444);
-      color: #fff;
-      border: none;
-    }
-    .dialog-roll-actions .btn-danger:hover {
-      background: #dc2626;
-    }
-    .dialog-roll-actions .btn-success {
-      background: #22c55e;
-      color: #fff;
-      border: none;
-    }
-    .dialog-roll-actions .btn-success:hover {
-      background: #16a34a;
     }
 
     .property-error {
@@ -1033,7 +1015,10 @@
           <i class="ti ti-check" aria-hidden="true"></i> Зафиксировать
         </button>
         <button class="btn-roll-reroll" id="btn-reroll-roll" style="display:none;">
-          <i class="ti ti-reload" aria-hidden="true"></i> 🔄 Реролл
+          Реролл
+        </button>
+        <button class="btn-roll-delete" id="btn-delete-roll" style="display:none;">
+          🗑️ Удалить ролл
         </button>
       </div>
     </div>
@@ -2895,6 +2880,7 @@
     const startBtn   = document.getElementById("btn-start-roll");
     const confirmBtn = document.getElementById("btn-confirm-roll");
     const rerollBtn  = document.getElementById("btn-reroll-roll");
+    const deleteBtn  = document.getElementById("btn-delete-roll");
 
     if (joinBtn)  joinBtn.disabled  = isParticipant || !canAct;
     if (leaveBtn) leaveBtn.disabled = !isParticipant || !canAct;
@@ -2920,6 +2906,14 @@
     if (rerollBtn) {
       const showReroll = rollState.isFinished && rollState.winner && canStartRoll();
       rerollBtn.style.display = showReroll ? 'flex' : 'none';
+      rerollBtn.textContent = 'Реролл';
+    }
+
+    if (deleteBtn) {
+      // Показываем кнопку удаления, если есть участники или результаты ролла
+      const hasContent = rollState.participants.length > 0 || rollState.isFinished || rollState.isRolling;
+      const showDelete = hasContent && canStartRoll();
+      deleteBtn.style.display = showDelete ? 'flex' : 'none';
     }
 
     document.querySelectorAll('.roll-queue-tab').forEach(b => {
@@ -3135,6 +3129,49 @@
     } catch(e) {
       showToast('Ошибка реролла: ' + e.message, 'error');
       console.error('rerollDrop error:', e);
+    }
+  });
+
+  // ⭐ btn-delete-roll — удаление ролла
+  document.getElementById("btn-delete-roll")?.addEventListener("click", async () => {
+    if (!canStartRoll()) {
+      showToast('Только администратор или Глава гильдии может удалить ролл', 'error');
+      return;
+    }
+    
+    const confirmed = await openDialog(
+      '🗑️ Удалить ролл',
+      'Вы уверены, что хотите удалить ролл?\n\nВсе участники и результаты будут удалены. Вы сможете начать ролл заново.',
+      'Да, удалить',
+      'Отмена'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
+      
+      await firestoreUpdate(dropRef, {
+        rolling: false,
+        pending_winner: null,
+        roll_results: null,
+        participants: []
+      });
+      
+      rollState.isFinished = false;
+      rollState.isRolling = false;
+      rollState.winner = null;
+      rollState.rollResults = null;
+      rollState.hasPendingWinner = false;
+      rollHasUnfinishedResults = false;
+      rollState.participants = [];
+      
+      updateRollUI();
+      showToast('🗑️ Ролл удалён');
+      
+    } catch(e) {
+      showToast('Ошибка удаления ролла: ' + e.message, 'error');
+      console.error('deleteRoll error:', e);
     }
   });
 
