@@ -3,116 +3,537 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TL Loot — Гильдейский трекер</title>
+  <title>DVScorp — Гильдейский трекер</title>
   <link rel="stylesheet" href="css/main.css" />
 
   <style>
-    /* Дополнительные стили для главной страницы */
-    .hero {
-      text-align: center;
-      padding: 3rem 0 2rem;
+    /* ══════════════════════════════════════════════
+       HERO / ПРИВЕТСТВИЕ
+    ══════════════════════════════════════════════ */
+    .home-hero {
+      position: relative;
+      padding: 2.5rem 0 2rem;
+      overflow: hidden;
     }
 
-    .hero h1 {
-      font-size: 2.5rem;
+    .home-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 300px;
+      background: radial-gradient(ellipse at center,
+        rgba(124,58,237,0.18) 0%,
+        rgba(168,85,247,0.07) 45%,
+        transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px; height: 2px;
+      background: var(--accent-soft);
+      border-radius: 2px;
+    }
+
+    .hero-title {
+      font-size: 2.8rem;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+      line-height: 1.1;
+      background: linear-gradient(135deg, #e2e8f0 0%, var(--accent-soft) 60%, var(--accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 0.5rem;
     }
 
     .hero-sub {
       color: var(--text-muted);
-      font-size: 1.1rem;
-      margin-top: 0.5rem;
-      margin-bottom: 2.5rem;
+      font-size: 0.95rem;
+      max-width: 480px;
     }
 
-    .quick-links {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .card-link {
+    .hero-badge-row {
       display: flex;
-      flex-direction: column;
-      align-items: center;
       gap: 0.5rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem 1rem;
-      text-decoration: none;
-      color: var(--text);
-      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
-    }
-
-    .card-link:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 20px var(--accent-glow);
-      transform: translateY(-2px);
-    }
-
-    .card-link .icon {
-      font-size: 2rem;
-    }
-
-    .card-link strong {
-      font-size: 1rem;
-    }
-
-    .card-link small {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-align: center;
-    }
-
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 2.5rem auto;
-      max-width: 600px;
-    }
-
-    .stats-row {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      flex-wrap: wrap;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
-    .stat-item {
-      text-align: center;
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      border: 1px solid;
     }
 
-    .stat-item .number {
-      font-size: 1.5rem;
-      font-weight: 700;
+    .hero-tag.purple {
+      background: rgba(124,58,237,0.12);
+      border-color: rgba(124,58,237,0.35);
       color: var(--accent-soft);
     }
 
-    .stat-item .label {
-      font-size: 0.8rem;
+    .hero-tag.green {
+      background: rgba(34,197,94,0.1);
+      border-color: rgba(34,197,94,0.3);
+      color: var(--success);
+    }
+
+    .hero-tag.amber {
+      background: rgba(245,158,11,0.1);
+      border-color: rgba(245,158,11,0.3);
+      color: var(--warning);
+    }
+
+    .hero-crest {
+      position: relative;
+      width: 90px; height: 90px;
+      flex-shrink: 0;
+    }
+
+    .hero-crest-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(124,58,237,0.4);
+      animation: rotate-ring 8s linear infinite;
+    }
+
+    .hero-crest-ring::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 6px;
+      background: var(--accent-soft);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-soft);
+    }
+
+    @keyframes rotate-ring {
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-crest-inner {
+      position: absolute;
+      inset: 8px;
+      background: var(--bg-card2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    /* ══════════════════════════════════════════════
+       ОСНОВНОЙ LAYOUT
+    ══════════════════════════════════════════════ */
+    .home-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      align-items: start;
+      margin-top: 1.5rem;
+    }
+
+    /* ══════════════════════════════════════════════
+       СЕКЦИЯ СТАТИСТИКИ
+    ══════════════════════════════════════════════ */
+    .stats-section {}
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+    }
+
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--accent), var(--accent-soft)); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #16a34a, var(--success)); }
+    .stat-card.amber::before  { background: linear-gradient(90deg, #d97706, var(--warning)); }
+    .stat-card.blue::before   { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+
+    .stat-card:hover {
+      border-color: rgba(124,58,237,0.3);
+      box-shadow: 0 4px 20px rgba(124,58,237,0.08);
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+
+    .stat-card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .stat-card-icon {
+      font-size: 1.1rem;
+      opacity: 0.7;
+    }
+
+    .stat-card-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-family: 'HeaderFont', var(--font);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-card.purple .stat-card-value { color: var(--accent-soft); }
+    .stat-card.green  .stat-card-value { color: var(--success); }
+    .stat-card.amber  .stat-card-value { color: var(--warning); }
+    .stat-card.blue   .stat-card-value { color: #60a5fa; }
+
+    .stat-card-sub {
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    @media (max-width: 768px) {
-      .hero h1 {
-        font-size: 1.8rem;
-      }
+    .stat-loading {
+      display: inline-block;
+      width: 60px;
+      height: 28px;
+      background: linear-gradient(90deg, var(--bg-card2) 25%, var(--bg-hover) 50%, var(--bg-card2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
 
-      .quick-links {
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ══════════════════════════════════════════════
+       ПОСЛЕДНИЙ РЕЙД — ПАНЕЛЬ
+    ══════════════════════════════════════════════ */
+    .last-raid-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: sticky;
+      top: 76px;
+    }
+
+    .last-raid-header {
+      padding: 1rem 1.2rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card2);
+    }
+
+    .last-raid-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .last-raid-title .live-dot {
+      width: 6px; height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .last-raid-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'HeaderFont', var(--font);
+    }
+
+    .last-raid-meta {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .last-raid-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .last-raid-meta-item .dot {
+      width: 3px; height: 3px;
+      background: var(--text-muted);
+      border-radius: 50%;
+    }
+
+    .last-raid-body {
+      padding: 0.85rem 1.2rem;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+
+    .last-raid-body::-webkit-scrollbar { width: 4px; }
+    .last-raid-body::-webkit-scrollbar-track { background: transparent; }
+    .last-raid-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .loot-sublabel {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      margin-top: 0.2rem;
+    }
+
+    .loot-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(42,48,71,0.6);
+    }
+
+    .loot-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .loot-item-img {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .loot-item-img-placeholder {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .loot-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .loot-item-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loot-item-winner {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.1rem;
+    }
+
+    .loot-item-winner .winner-name {
+      color: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    .loot-item-lucent {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--warning);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .loot-item-lucent.zero {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .slot-badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--bg-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      vertical-align: middle;
+      margin-left: 0.2rem;
+    }
+
+    .panel-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .panel-empty .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.4;
+    }
+
+    /* ══════════════════════════════════════════════
+       БЫСТРЫЕ ССЫЛКИ
+    ══════════════════════════════════════════════ */
+    .quick-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .quick-nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.9rem 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-align: center;
+      transition: all 0.18s ease;
+    }
+
+    .quick-nav-link:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--bg-card2);
+      box-shadow: 0 0 14px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .quick-nav-link .nav-icon {
+      font-size: 1.3rem;
+    }
+
+    /* ══════════════════════════════════════════════
+       АДАПТИВНОСТЬ
+    ══════════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .home-layout {
         grid-template-columns: 1fr;
       }
 
-      .stats-row {
-        gap: 1rem;
+      .last-raid-panel {
+        position: static;
+        order: -1;
       }
+
+      .last-raid-body {
+        max-height: 320px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2rem; }
+      .hero-grid  { grid-template-columns: 1fr; }
+      .hero-crest { display: none; }
+      .stat-grid  { grid-template-columns: repeat(2, 1fr); }
+      .quick-nav  { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      .stat-card-value { font-size: 1.7rem; }
     }
   </style>
 </head>
@@ -122,83 +543,310 @@
   <!-- ═══════════════ НАВБАР ═══════════════ -->
   <nav class="navbar" id="main-nav"></nav>
 
-  <!-- ═══════════════ ГЛАВНАЯ ═══════════════ -->
+  <!-- ═══════════════ MAIN ═══════════════ -->
   <main class="container">
-    <section class="hero">
-      <h1>🗡️ Трекер лута гильдии</h1>
-      <p class="hero-sub">Throne &amp; Liberty — справедливое распределение через прозрачные логи</p>
 
-      <div class="quick-links">
-        <a href="pages/raids.html" class="card-link">
-          <span class="icon">🗡️</span>
-          <strong>Рейды</strong>
-          <small>История и новый рейд</small>
-        </a>
-        <a href="pages/players.html" class="card-link">
-          <span class="icon">👥</span>
-          <strong>Игроки</strong>
-          <small>Профили и блокировки</small>
-        </a>
-        <a href="pages/search.html" class="card-link">
-          <span class="icon">🔍</span>
-          <strong>Поиск</strong>
-          <small>Игрок, босс, шмотка</small>
-        </a>
-        <a href="pages/stats.html" class="card-link">
-          <span class="icon">📊</span>
-          <strong>Статистика</strong>
-          <small>Лут в люцентах</small>
-        </a>
+    <!-- HERO -->
+    <section class="home-hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-eyebrow">Throne &amp; Liberty</div>
+          <h1 class="hero-title">DVScorp</h1>
+          <p class="hero-sub">Гильдейский трекер лута — прозрачное распределение, честная статистика</p>
+
+          <div class="hero-badge-row">
+            <span class="hero-tag purple">⚔️ Рейды</span>
+            <span class="hero-tag green">🏆 Лут-логи</span>
+            <span class="hero-tag amber">💰 Люценты</span>
+          </div>
+        </div>
+
+        <div class="hero-crest">
+          <div class="hero-crest-ring"></div>
+          <div class="hero-crest-inner">⚔️</div>
+        </div>
       </div>
     </section>
 
-    <hr class="divider" />
+    <!-- ОСНОВНОЙ GRID: СТАТИСТИКА + ПАНЕЛЬ РЕЙДА -->
+    <div class="home-layout">
 
-    <!-- Статистика -->
-    <div class="stats-row" id="stats-row">
-      <div class="stat-item">
-        <div class="number" id="stat-items">0</div>
-        <div class="label">Всего предметов</div>
+      <!-- ЛЕВАЯ ЧАСТЬ: СТАТИСТИКА -->
+      <div class="stats-section">
+        <div class="section-label">Общая статистика гильдии</div>
+
+        <div class="stat-grid">
+          <!-- Траев боссов -->
+          <div class="stat-card purple">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Траев боссов</span>
+              <span class="stat-card-icon">💀</span>
+            </div>
+            <div class="stat-card-value" id="stat-tries">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-tries-sub">загрузка...</div>
+          </div>
+
+          <!-- Предметов выбито -->
+          <div class="stat-card green">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Предметов выбито</span>
+              <span class="stat-card-icon">🎁</span>
+            </div>
+            <div class="stat-card-value" id="stat-items">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-items-sub">загрузка...</div>
+          </div>
+
+          <!-- Победителей лута -->
+          <div class="stat-card amber">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Победителей лута</span>
+              <span class="stat-card-icon">👑</span>
+            </div>
+            <div class="stat-card-value" id="stat-winners">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-winners-sub">загрузка...</div>
+          </div>
+
+          <!-- Люцентов -->
+          <div class="stat-card blue">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Всего люцентов</span>
+              <span class="stat-card-icon">💎</span>
+            </div>
+            <div class="stat-card-value" id="stat-lucent">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-lucent-sub">загрузка...</div>
+          </div>
+        </div>
+
+        <!-- БЫСТРАЯ НАВИГАЦИЯ -->
+        <div class="section-label" style="margin-top: 1.75rem;">Навигация</div>
+        <div class="quick-nav">
+          <a href="pages/raids.html" class="quick-nav-link">
+            <span class="nav-icon">🗡️</span>
+            <span>Рейды</span>
+          </a>
+          <a href="pages/players.html" class="quick-nav-link">
+            <span class="nav-icon">👥</span>
+            <span>Игроки</span>
+          </a>
+          <a href="pages/search.html" class="quick-nav-link">
+            <span class="nav-icon">🔍</span>
+            <span>Поиск</span>
+          </a>
+          <a href="pages/stats.html" class="quick-nav-link">
+            <span class="nav-icon">📊</span>
+            <span>Статистика</span>
+          </a>
+        </div>
       </div>
-      <div class="stat-item">
-        <div class="number" id="stat-players">0</div>
-        <div class="label">Игроков</div>
+
+      <!-- ПРАВАЯ ЧАСТЬ: ПОСЛЕДНИЙ РЕЙД -->
+      <div class="last-raid-panel">
+        <div class="last-raid-header">
+          <div class="last-raid-title">
+            <span class="live-dot"></span>
+            Последний рейд
+          </div>
+          <div class="last-raid-name" id="last-raid-name">
+            <span class="stat-loading" style="width:140px;height:18px;"></span>
+          </div>
+          <div class="last-raid-meta" id="last-raid-meta"></div>
+        </div>
+
+        <div class="last-raid-body" id="last-raid-body">
+          <div class="loot-sublabel">Лут и победители</div>
+          <div id="last-raid-loot">
+            <!-- скелетоны -->
+            <div class="loot-item-row">
+              <div class="loot-item-img-placeholder" style="background:var(--bg-hover);"></div>
+              <div class="loot-item-info">
+                <div class="stat-loading" style="width:110px;height:12px;margin-bottom:5px;"></div>
+                <div class="stat-loading" style="width:70px;height:10px;"></div>
+              </div>
+            </div>
+            <div class="loot-item-row">
+              <div class="loot-item-img-placeholder" style="background:var(--bg-hover);"></div>
+              <div class="loot-item-info">
+                <div class="stat-loading" style="width:90px;height:12px;margin-bottom:5px;"></div>
+                <div class="stat-loading" style="width:55px;height:10px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat-item">
-        <div class="number" id="stat-bosses">0</div>
-        <div class="label">Боссов</div>
-      </div>
-    </div>
+
+    </div><!-- /home-layout -->
   </main>
 
   <script type="module">
     import { initNavbar } from "./js/modules/navbar.js";
-    import { initAuth, authReady, currentUser, currentRole } from "./js/modules/auth.js";
-    import { getItems } from "./js/modules/items.js";
+    import { initAuth, authReady } from "./js/modules/auth.js";
+    import { db } from "./js/firebase.js";
+    import {
+      collection, getDocs, query, orderBy, limit,
+      where, collectionGroup
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Инициализация
     initNavbar();
     initAuth();
-
-    // Ждём авторизацию и загружаем статистику
     await authReady;
 
-    try {
-      const items = await getItems();
-      const bosses = new Set(items.map(i => i.boss_name).filter(Boolean));
-      
-      document.getElementById('stat-items').textContent = items.length;
-      document.getElementById('stat-bosses').textContent = bosses.size;
-      
-      // Показываем примерное количество игроков
-      // В реальном проекте нужно загружать из отдельной коллекции
-      document.getElementById('stat-players').textContent = '0';
-    } catch (error) {
-      console.error('Ошибка загрузки статистики:', error);
+    // ──────────────────────────────────────────────
+    // Форматирование чисел
+    // ──────────────────────────────────────────────
+    function fmt(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return String(n);
     }
 
-    console.log('🔐 Текущий пользователь:', currentUser?.email || 'Гость');
-    console.log('🔐 Роль:', currentRole);
+    function fmtDate(str) {
+      if (!str) return '—';
+      const d = new Date(str);
+      return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // ──────────────────────────────────────────────
+    // Загрузка данных
+    // ──────────────────────────────────────────────
+    try {
+      // 1. loot_history — всё
+      const lootSnap = await getDocs(collection(db, 'loot_history'));
+      const lootDocs = lootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Предметов выбито
+      document.getElementById('stat-items').textContent = fmt(lootDocs.length);
+      document.getElementById('stat-items-sub').textContent =
+        lootDocs.length === 1 ? '1 дроп записан' : `${lootDocs.length} дропов записано`;
+
+      // Уникальных победителей
+      const winners = new Set(lootDocs.map(d => d.player_id).filter(Boolean));
+      document.getElementById('stat-winners').textContent = fmt(winners.size);
+      document.getElementById('stat-winners-sub').textContent =
+        `уникальных игроков с лутом`;
+
+      // Люценты
+      const totalLucent = lootDocs.reduce((s, d) => s + (Number(d.lucent_value_snapshot) || 0), 0);
+      document.getElementById('stat-lucent').textContent = fmt(totalLucent);
+      document.getElementById('stat-lucent-sub').textContent =
+        totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются';
+
+      // 2. Рейды — траи из подколлекций
+      const raidsSnap = await getDocs(
+        query(collection(db, 'raids'), orderBy('date', 'desc'))
+      );
+      const raids = raidsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Считаем суммарные траи: drop_count есть на рейде,
+      // но траи — это подколлекция tries. Берём сумму drop_count как fallback,
+      // и параллельно грузим tries через collectionGroup
+      let totalTries = 0;
+      try {
+        const triesSnap = await getDocs(collectionGroup(db, 'tries'));
+        totalTries = triesSnap.size;
+      } catch (e) {
+        // Fallback: суммируем drop_count рейдов
+        totalTries = raids.reduce((s, r) => s + (Number(r.drop_count) || 0), 0);
+      }
+
+      document.getElementById('stat-tries').textContent = fmt(totalTries);
+      document.getElementById('stat-tries-sub').textContent =
+        `за ${raids.filter(r => !r.deleted).length} рейдов`;
+
+      // 3. Последний рейд
+      const activeRaids = raids.filter(r => !r.deleted);
+      if (activeRaids.length > 0) {
+        const last = activeRaids[0];
+
+        // Название: берём босса из первого loot_history с этим raid_id
+        const lastLoot = lootDocs.filter(d => d.raid_id === last.id);
+        const bossName = lastLoot[0]?.boss_name || '—';
+
+        document.getElementById('last-raid-name').textContent =
+          bossName !== '—' ? `Рейд · ${bossName}` : 'Последний рейд';
+
+        // Мета
+        const meta = document.getElementById('last-raid-meta');
+        const statusColor = last.status === 'closed' ? 'var(--text-muted)' : 'var(--success)';
+        const statusLabel = last.status === 'closed' ? 'Завершён' : 'Активен';
+        meta.innerHTML = `
+          <span class="last-raid-meta-item" style="color:${statusColor}">
+            ● ${statusLabel}
+          </span>
+          <span class="last-raid-meta-item">
+            <span class="dot"></span>${fmtDate(last.date)}
+          </span>
+          <span class="last-raid-meta-item">
+            <span class="dot"></span>${last.drop_count || 0} дропов
+          </span>
+          ${last.attended_player_ids ? `<span class="last-raid-meta-item"><span class="dot"></span>${last.attended_player_ids.length} участников</span>` : ''}
+        `;
+
+        // Лут
+        const lootContainer = document.getElementById('last-raid-loot');
+
+        if (lastLoot.length === 0) {
+          lootContainer.innerHTML = `
+            <div class="panel-empty">
+              <div class="empty-icon">🎁</div>
+              <div>Лут-лог пуст</div>
+            </div>`;
+        } else {
+          lootContainer.innerHTML = '';
+          lastLoot.forEach(item => {
+            const hasImage = item.item_image && item.item_image.length < 100_000; // не слишком большой base64
+            const lucentVal = Number(item.lucent_value_snapshot) || 0;
+            const slotLabel = item.item_slot || '';
+
+            const row = document.createElement('div');
+            row.className = 'loot-item-row';
+            row.innerHTML = `
+              ${hasImage
+                ? `<img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />`
+                : `<div class="loot-item-img-placeholder">⚔️</div>`}
+              <div class="loot-item-info">
+                <div class="loot-item-name">
+                  ${item.item_name || 'Предмет'}
+                  ${slotLabel ? `<span class="slot-badge">${slotLabel}</span>` : ''}
+                </div>
+                <div class="loot-item-winner">
+                  <span>→</span>
+                  <span class="winner-name">${item.player_nickname || '—'}</span>
+                  ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${item.roll_type}</span>` : ''}
+                </div>
+              </div>
+              <div class="loot-item-lucent ${lucentVal === 0 ? 'zero' : ''}">
+                ${lucentVal > 0 ? `💎 ${fmt(lucentVal)}` : '—'}
+              </div>
+            `;
+            lootContainer.appendChild(row);
+          });
+        }
+      } else {
+        document.getElementById('last-raid-name').textContent = 'Нет рейдов';
+        document.getElementById('last-raid-body').innerHTML = `
+          <div class="panel-empty">
+            <div class="empty-icon">⚔️</div>
+            <div>Рейды ещё не добавлены</div>
+          </div>`;
+      }
+
+    } catch (err) {
+      console.error('❌ Ошибка загрузки статистики:', err);
+      ['stat-tries', 'stat-items', 'stat-winners', 'stat-lucent'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+      });
+      ['stat-tries-sub', 'stat-items-sub', 'stat-winners-sub', 'stat-lucent-sub'].forEach(id => {
+        document.getElementById(id).textContent = 'ошибка загрузки';
+      });
+    }
   </script>
 </body>
 </html>
