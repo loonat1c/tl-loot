@@ -1159,15 +1159,21 @@
       document.getElementById('upload-hint').style.display = 'none';
     }
     modal.classList.remove('hidden');
+    modal.classList.add('open');
   };
 
-  function openAdd() {
-    resetForm();
-    modalTitle.textContent = 'Добавить предмет';
-    modal.classList.remove('hidden');
-  }
+function openAdd() {
+  resetForm();
+  modalTitle.textContent = 'Добавить предмет';
+  modal.classList.remove('hidden');
+  modal.classList.add('open');
+}
 
-  function closeModal() { modal.classList.add('hidden'); resetForm(); }
+function closeModal() {
+  modal.classList.add('hidden');
+  modal.classList.remove('open');
+  resetForm();
+}
 
   document.getElementById('btn-modal-close').onclick = closeModal;
   document.getElementById('btn-cancel').onclick      = closeModal;
