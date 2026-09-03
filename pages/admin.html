@@ -6,362 +6,898 @@
   <title>Администрирование — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
-    .admin-container {
-      max-width: 1200px;
-      margin: 0 auto;
+    /* ═══════════════════════════════════════════════
+       ADMIN PAGE — Throne & Liberty Dark Fantasy
+       ═══════════════════════════════════════════════ */
+
+    :root {
+      --gold:        #c9aa71;
+      --gold-bright: #e2c98a;
+      --gold-dim:    #8a6f3e;
+      --gold-glow:   rgba(201,170,113,0.15);
+      --gold-glow2:  rgba(201,170,113,0.08);
+      --cyan:        #00c8ff;
+      --cyan-glow:   rgba(0,200,255,0.12);
+      --bg-deep:     #060a14;
+      --bg-panel:    #0b1120;
+      --bg-card:     #0f1828;
+      --bg-card2:    #141f30;
+      --bg-hover:    #192438;
+      --border-gold: rgba(201,170,113,0.25);
+      --border-dim:  rgba(201,170,113,0.10);
+      --border-base: rgba(255,255,255,0.06);
+      --text-main:   #dde5f0;
+      --text-muted:  #7a8aa8;
+      --text-faint:  #3d4f6a;
+      --danger:      #e05555;
+      --danger-bg:   rgba(224,85,85,0.12);
+      --success:     #4db87a;
+      --success-bg:  rgba(77,184,122,0.12);
+      --warning:     #e8a838;
+      --warning-bg:  rgba(232,168,56,0.12);
+      --radius:      8px;
+      --radius-lg:   12px;
     }
 
-    /* ── Вкладки ─────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Заголовок страницы ─────────────────────── */
+    .admin-header {
+      padding: 2rem 0 1.5rem;
+      border-bottom: 1px solid var(--border-gold);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-header .title-block .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--gold-dim);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+    }
+
+    .admin-header .title-block h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gold-bright);
+      text-shadow: 0 0 32px rgba(201,170,113,0.3);
+      letter-spacing: 0.02em;
+    }
+
+    .admin-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    /* ── Вкладки ─────────────────────────────────── */
     .tabs {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-bottom: 2rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 0.35rem;
     }
+
     .tab-btn {
+      flex: 1;
       background: none;
       border: none;
-      padding: 0.5rem 1.25rem;
-      font-size: 0.9rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
       border-radius: var(--radius);
-      transition: background 0.2s, color 0.2s;
-      position: relative;
-    }
-    .tab-btn:hover { background: var(--bg-hover); color: var(--text); }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-    .tab-btn .badge {
-      background: var(--danger);
-      color: #fff;
-      border-radius: 50%;
-      padding: 0.05rem 0.45rem;
-      font-size: 0.65rem;
-      margin-left: 0.3rem;
-    }
-    .tab-content { display: none !important; }
-    .tab-content.active { display: block !important; }
-
-    /* ── Поиск ─────────────────────────────────────────────── */
-    .search-bar {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .search-bar input {
-      flex: 1;
-      min-width: 200px;
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text);
-      font-size: 0.9rem;
-    }
-    .search-bar input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    .search-bar .info-btn {
-      padding: 0.5rem 0.8rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.15s;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .search-bar .info-btn:hover {
-      border-color: var(--accent);
-      background: var(--accent-glow);
-      color: var(--accent-soft);
+      gap: 0.5rem;
+      white-space: nowrap;
+      position: relative;
     }
 
-    /* ── Информационная панель ───────────────────────────── */
-    .info-panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0.75rem 1.25rem;
-      margin-bottom: 1.5rem;
-      display: none;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.8;
-      animation: slideDown 0.3s ease;
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: var(--bg-hover);
     }
-    .info-panel.open {
-      display: block;
+
+    .tab-btn.active {
+      background: var(--gold-glow);
+      color: var(--gold-bright);
+      border: 1px solid var(--border-gold);
+      box-shadow: 0 0 20px var(--gold-glow);
     }
-    .info-panel .role-desc {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.15rem 0;
-    }
-    .info-panel .role-desc .role-icon {
-      font-size: 1.1rem;
-      width: 28px;
+
+    .tab-btn .tab-badge {
+      background: var(--danger);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.05rem 0.45rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      min-width: 18px;
       text-align: center;
     }
-    .info-panel .role-desc .role-name {
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Поиск и тулбар ──────────────────────────── */
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-field {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .search-field .search-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-faint);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    .search-field input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.4rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-field input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+    }
+
+    .search-field input::placeholder { color: var(--text-faint); }
+
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.25rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: #0a0e18;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .btn-gold:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 0 20px rgba(201,170,113,0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1rem;
+      background: none;
+      border: 1px solid var(--border-gold);
+      color: var(--gold-dim);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
       font-weight: 600;
-      color: var(--text);
-      min-width: 100px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .info-panel .role-desc .role-text {
+
+    .btn-ghost-gold:hover {
+      border-color: var(--gold);
+      color: var(--gold-bright);
+      background: var(--gold-glow2);
+    }
+
+    /* ── Информационная панель о ролях ───────────── */
+    .roles-legend {
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      animation: fadeSlide 0.25s ease;
+    }
+
+    .roles-legend.open { display: grid; }
+
+    .roles-legend .role-item {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+    }
+
+    .roles-legend .role-item .ri {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .roles-legend .role-item strong {
+      color: var(--text-main);
+      display: block;
+      font-size: 0.8rem;
+    }
+
+    .roles-legend .role-item span {
       color: var(--text-muted);
+      font-size: 0.75rem;
     }
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Карточки пользователей ───────────────────────────── */
+    /* ── Карточки пользователей ──────────────────── */
     .users-grid {
       display: grid;
-      gap: 0.6rem;
+      gap: 0.75rem;
     }
 
     .user-card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0.75rem 1.25rem;
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      transition: all 0.2s;
-      gap: 1rem;
-      flex-wrap: wrap;
+      gap: 1.25rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
     }
+
+    .user-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--border-dim);
+      transition: background 0.2s;
+    }
+
     .user-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 20px var(--accent-glow);
+      border-color: var(--border-gold);
+      box-shadow: 0 4px 24px var(--gold-glow2);
     }
-    .user-card .user-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      flex: 1;
-      min-width: 200px;
+
+    .user-card:hover::before {
+      background: var(--gold);
     }
-    .user-card .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
+
+    .user-card.role-admin::before    { background: #8b5cf6; }
+    .user-card.role-guild_leader::before { background: var(--gold); }
+    .user-card.role-moderator::before { background: #4db87a; }
+    .user-card.role-user::before     { background: var(--border-base); }
+
+    /* Аватар */
+    .user-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--gold-dim), #4a3415);
+      border: 1px solid var(--border-gold);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1rem;
-      color: #fff;
+      font-size: 1.1rem;
+      color: var(--gold-bright);
       flex-shrink: 0;
+      letter-spacing: 0;
     }
-    .user-card .user-name {
+
+    /* Основная информация */
+    .user-identity {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-email-line {
+      font-size: 1rem;
       font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--text);
-    }
-    .user-card .user-email {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-    .user-card .user-meta {
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      margin-top: 2px;
+      line-height: 1.3;
     }
-    .user-card .user-meta .badge {
-      font-size: 0.65rem;
-      padding: 0.15rem 0.6rem;
-      border-radius: 10px;
-      font-weight: 600;
-    }
-    .badge.admin {
-      background: rgba(139, 92, 246, 0.2);
-      color: #8b5cf6;
-      border: 1px solid #8b5cf6;
-    }
-    .badge.guild_leader {
-      background: rgba(245, 158, 11, 0.2);
-      color: #f59e0b;
-      border: 1px solid #f59e0b;
-    }
-    .badge.moderator {
-      background: rgba(52, 211, 153, 0.2);
-      color: #34d399;
-      border: 1px solid #34d399;
-    }
-    .badge.user {
-      background: rgba(99, 102, 241, 0.2);
-      color: #818cf8;
-      border: 1px solid #818cf8;
-    }
-    .user-card .user-tag {
-      font-size: 0.65rem;
-      color: var(--accent-soft);
-      background: var(--accent-glow);
-      padding: 0.05rem 0.5rem;
-      border-radius: 10px;
-    }
-    .user-card .user-stats {
-      display: flex;
-      gap: 0.75rem;
-      font-size: 0.7rem;
+
+    .user-email-line .username-hint {
+      font-weight: 400;
+      font-size: 0.82rem;
       color: var(--text-muted);
     }
-    .user-card .user-stats span {
+
+    .user-character-line {
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .char-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: var(--gold-glow2);
+      border: 1px solid var(--border-dim);
+      border-radius: 6px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.75rem;
+      color: var(--gold-bright);
+    }
+
+    .char-pill .char-delete {
+      background: none;
+      border: none;
+      color: var(--text-faint);
+      cursor: pointer;
+      padding: 0 0.1rem;
+      font-size: 0.7rem;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .char-pill .char-delete:hover { color: var(--danger); }
+
+    .no-char {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+    }
+
+    /* Роль / бейджи */
+    .user-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.35rem;
+    }
+
+    .role-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+
+    .role-badge.admin       { background: rgba(139,92,246,0.18); color: #a78bfa; border: 1px solid rgba(139,92,246,0.35); }
+    .role-badge.guild_leader { background: rgba(201,170,113,0.15); color: var(--gold-bright); border: 1px solid var(--border-gold); }
+    .role-badge.moderator   { background: rgba(77,184,122,0.15); color: #4db87a; border: 1px solid rgba(77,184,122,0.3); }
+    .role-badge.user        { background: var(--bg-card2); color: var(--text-muted); border: 1px solid var(--border-base); }
+
+    .self-tag {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      background: var(--cyan-glow);
+      color: var(--cyan);
+      border: 1px solid rgba(0,200,255,0.25);
+    }
+
+    .user-stat {
+      font-size: 0.72rem;
+      color: var(--text-faint);
       display: flex;
       align-items: center;
       gap: 0.2rem;
     }
-    .user-card .user-character {
-      font-size: 0.8rem;
-      color: var(--accent-soft);
-      background: var(--accent-glow);
-      padding: 0.1rem 0.6rem;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .user-card .user-right {
+
+    /* Кнопки действий */
+    .user-actions {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.35rem;
       flex-shrink: 0;
     }
 
-    .role-change-btn {
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .action-btn {
       width: 34px;
       height: 34px;
-    }
-    .role-change-btn:hover {
-      border-color: var(--accent);
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-    }
-
-    .btn-icon {
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      border: none;
-      background: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 1rem;
-      width: 34px;
-      height: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-icon:hover {
-      color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .btn-icon-success {
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      border: none;
-      background: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 1rem;
-      width: 34px;
-      height: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-icon-success:hover {
-      color: var(--success);
-      background: rgba(34, 197, 94, 0.1);
-    }
-
-    /* ── Модалка смены роли ──────────────────────────────── */
-    .role-modal .role-option {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 1rem;
       border-radius: var(--radius);
+      border: 1px solid var(--border-base);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold-bright);
+      background: var(--gold-glow2);
+    }
+
+    .action-btn.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* ── Секция модерации ──────────────────────── */
+    .mod-filter-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      border: 1px solid var(--border-base);
+      background: var(--bg-panel);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
-      border: 2px solid transparent;
-      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
-    .role-modal .role-option:hover {
-      background: var(--bg-card2);
-      border-color: var(--border);
+
+    .filter-chip:hover {
+      border-color: var(--border-gold);
+      color: var(--text-main);
     }
-    .role-modal .role-option.selected {
-      background: var(--accent-glow);
-      border-color: var(--accent);
+
+    .filter-chip.active {
+      background: var(--gold-glow);
+      border-color: var(--gold);
+      color: var(--gold-bright);
     }
-    .role-modal .role-option .role-icon {
-      font-size: 1.4rem;
-      width: 36px;
-      text-align: center;
+
+    .filter-chip .chip-count {
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.08);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
     }
-    .role-modal .role-option .role-info {
+
+    /* Карточка персонажа */
+    .mod-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+    }
+
+    .mod-card:hover { border-color: var(--border-gold); }
+
+    .mod-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+
+    .mod-char-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .mod-user-email {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .status-pill.pending  { background: rgba(232,168,56,0.12); color: var(--warning); border: 1px solid rgba(232,168,56,0.3); }
+    .status-pill.approved { background: rgba(77,184,122,0.12); color: var(--success); border: 1px solid rgba(77,184,122,0.3); }
+    .status-pill.rejected { background: rgba(224,85,85,0.12);  color: var(--danger);  border: 1px solid rgba(224,85,85,0.3); }
+
+    .mod-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem 1.5rem;
+      padding: 0.85rem 0;
+      border-top: 1px solid var(--border-base);
+      border-bottom: 1px solid var(--border-base);
+      margin-bottom: 0.85rem;
+    }
+
+    .mod-detail {
+      font-size: 0.82rem;
+    }
+
+    .mod-detail .d-label {
+      font-size: 0.68rem;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.2rem;
+    }
+
+    .mod-detail .d-value {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .loot-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .loot-tag {
+      background: rgba(201,170,113,0.08);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+    }
+
+    .edit-pending-note {
+      padding: 0.6rem 0.9rem;
+      background: rgba(232,168,56,0.07);
+      border-left: 2px solid var(--warning);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.8rem;
+      color: var(--warning);
+      margin-bottom: 0.75rem;
+    }
+
+    .mod-note {
+      padding: 0.5rem 0.9rem;
+      background: var(--bg-panel);
+      border-left: 2px solid var(--gold-dim);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .mod-feedback {
+      padding: 0.5rem 0.9rem;
+      background: var(--danger-bg);
+      border-left: 2px solid var(--danger);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.8rem;
+      color: var(--danger);
+      margin-bottom: 0.5rem;
+    }
+
+    .mod-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .mod-actions textarea {
       flex: 1;
+      min-width: 220px;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-base);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 0.82rem;
+      resize: vertical;
+      min-height: 40px;
+      transition: border-color 0.15s;
     }
-    .role-modal .role-option .role-name {
+
+    .mod-actions textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .mod-actions textarea::placeholder { color: var(--text-faint); }
+
+    .btn-approve {
+      padding: 0.45rem 1.1rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(77,184,122,0.4);
+      background: var(--success-bg);
+      color: var(--success);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-approve:hover {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+
+    .btn-reject {
+      padding: 0.45rem 1.1rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(224,85,85,0.4);
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-reject:hover {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
+    }
+
+    .btn-delete-char {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-base);
+      background: none;
+      color: var(--text-faint);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      margin-top: 0.5rem;
+    }
+
+    .btn-delete-char:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* ── Настройки ───────────────────────────────── */
+    .settings-layout {
+      display: grid;
+      gap: 1.25rem;
+      max-width: 680px;
+    }
+
+    .settings-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .settings-panel-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .settings-panel-header h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gold-bright);
+    }
+
+    .settings-panel-body {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .settings-panel-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-base);
+    }
+
+    .setting-row:last-of-type { border-bottom: none; }
+
+    .setting-label {
+      font-size: 0.88rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      color: var(--text-main);
     }
-    .role-modal .role-option .role-desc {
+
+    .setting-hint {
       font-size: 0.75rem;
       color: var(--text-muted);
-    }
-    .role-modal .role-option .role-check {
-      font-size: 1.1rem;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-    .role-modal .role-option .role-check.visible {
-      opacity: 1;
-      color: var(--success);
+      margin-top: 0.15rem;
     }
 
-    /* ── Модалки ──────────────────────────────────────────── */
+    .setting-input {
+      width: 70px;
+      padding: 0.4rem 0.6rem;
+      text-align: center;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      color: var(--gold-bright);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+    }
+
+    .settings-save-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+
+    .saved-msg {
+      font-size: 0.8rem;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-msg.show { opacity: 1; }
+
+    /* Блокировки */
+    .lock-select-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .lock-select-wrap select {
+      width: 100%;
+      padding: 0.55rem 0.9rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 0.88rem;
+    }
+
+    .lock-select-wrap select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .lock-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.9rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-base);
+      background: var(--bg-panel);
+      margin-bottom: 0.4rem;
+      gap: 0.75rem;
+      transition: border-color 0.15s;
+    }
+
+    .lock-row:hover { border-color: var(--border-gold); }
+
+    .lock-row .lock-info { flex: 1; min-width: 0; }
+    .lock-row .lock-name { font-size: 0.85rem; font-weight: 600; }
+    .lock-row .lock-detail { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+    .btn-unlock {
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(224,85,85,0.4);
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-unlock:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Пример */
+    .example-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.9;
+    }
+
+    .example-box strong { color: var(--text-main); }
+
+    /* ── Инфо-блок (warning style) ──────────────── */
+    .info-box {
+      background: var(--gold-glow2);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      padding: 0.7rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+    }
+
+    .info-box strong { color: var(--gold-bright); }
+
+    /* ── Модальные окна ──────────────────────────── */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
       z-index: 200;
       display: flex;
       align-items: center;
@@ -369,355 +905,235 @@
       padding: 1rem;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
+      transition: opacity 0.25s, visibility 0.25s;
     }
-    .modal-overlay.open {
-      opacity: 1;
-      visibility: visible;
-    }
+
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+
     .modal {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
       width: 100%;
       max-width: 480px;
       max-height: 90vh;
       overflow-y: auto;
-      transform: scale(0.95);
-      transition: transform 0.3s;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.25s ease;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 40px var(--gold-glow2);
     }
-    .modal-overlay.open .modal {
-      transform: scale(1);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-    .modal-header h3 {
+
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+    .modal-title {
       font-size: 1.1rem;
-      margin: 0;
+      font-weight: 700;
+      color: var(--gold-bright);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
+
     .btn-close {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       cursor: pointer;
       padding: 0.25rem;
       border-radius: 4px;
-      transition: background 0.15s;
-    }
-    .btn-close:hover {
-      background: var(--bg-card2);
-      color: var(--text);
-    }
-    .modal .current-role {
-      padding: 0.5rem 0.75rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      transition: color 0.15s;
     }
 
-    /* ── Модерация персонажей ───────────────────────────── */
-    .moderation-stats {
+    .btn-close:hover { color: var(--text-main); }
+
+    /* Выбор роли */
+    .role-option {
       display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-    .moderation-stats .stat {
-      background: var(--bg-card);
-      padding: 0.3rem 0.8rem;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.7rem 1rem;
       border-radius: var(--radius);
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .moderation-stats .stat:hover {
-      border-color: var(--accent);
-      background: var(--bg-card2);
-    }
-    .moderation-stats .stat.active-stat {
-      border-color: var(--accent);
-      background: rgba(124,58,237,0.15);
-    }
-    .moderation-stats .stat .count {
-      font-weight: 700;
-      color: var(--accent-soft);
+      transition: all 0.15s;
+      border: 1px solid var(--border-base);
+      margin-bottom: 0.4rem;
     }
 
-    .moderation-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
+    .role-option:hover {
+      border-color: var(--border-gold);
+      background: var(--gold-glow2);
+    }
+
+    .role-option.selected {
+      border-color: var(--gold);
+      background: var(--gold-glow);
+    }
+
+    .role-option .ro-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .role-option .ro-name { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+    .role-option .ro-desc { font-size: 0.75rem; color: var(--text-muted); }
+    .role-option .ro-check { margin-left: auto; color: var(--success); opacity: 0; transition: opacity 0.15s; }
+    .role-option.selected .ro-check { opacity: 1; }
+
+    /* Форма */
+    .form-group {
       margin-bottom: 1rem;
-      transition: border-color 0.15s;
-    }
-    .moderation-card:hover { border-color: var(--accent); }
-    .moderation-card .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .moderation-card .char-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-    .moderation-card .user-info {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    .moderation-card .char-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem 1.5rem;
-      margin: 0.75rem 0;
-    }
-    .moderation-card .char-details .detail {
-      font-size: 0.85rem;
-    }
-    .moderation-card .char-details .detail .label {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-    }
-    .moderation-card .char-details .detail .value {
-      font-weight: 500;
-    }
-    .moderation-card .loot-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: 0.25rem;
-    }
-    .moderation-card .loot-list .loot-tag {
-      background: rgba(124, 58, 237, 0.15);
-      padding: 0.15rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      border: 1px solid var(--accent);
-      color: var(--accent-soft);
-    }
-    .moderation-card .moderation-note {
-      padding: 0.5rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      border-left: 2px solid var(--warning);
-      margin: 0.5rem 0;
-    }
-    .moderation-card .moderation-feedback {
-      padding: 0.5rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      border-left: 2px solid var(--danger);
-      margin: 0.5rem 0;
-    }
-    .moderation-card .feedback-input {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--border);
-    }
-    .moderation-card .feedback-input textarea {
-      resize: vertical;
-      min-height: 50px;
-      font-size: 0.85rem;
-    }
-    .moderation-card .action-buttons {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-      flex-wrap: wrap;
     }
 
-    .status-badge {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-    .status-badge.pending {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--warning);
-      border: 1px solid var(--warning);
-    }
-    .status-badge.approved {
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
-    .status-badge.rejected {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid var(--danger);
-    }
-
-    /* ── Настройки ────────────────────────────────────────── */
-    .settings-wrap { max-width: 620px; }
-    .settings-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-    .settings-card h3 {
-      font-size: 1rem;
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
       margin-bottom: 0.35rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .settings-card .card-desc {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 1.25rem;
-      line-height: 1.5;
-    }
-    .setting-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 1rem;
-      align-items: center;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .setting-row:last-of-type { border-bottom: none; }
-    .setting-label { font-size: 0.9rem; font-weight: 600; }
-    .setting-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-    .setting-input { width: 80px; text-align: center; }
 
-    .save-bar {
+    .form-group input {
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 0.9rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+    }
+
+    .form-group input::placeholder { color: var(--text-faint); }
+
+    .modal-actions {
       display: flex;
-      align-items: center;
-      gap: 1rem;
+      gap: 0.6rem;
       margin-top: 1.25rem;
     }
-    .saved-msg {
-      font-size: 0.82rem;
-      color: var(--success);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .saved-msg.show { opacity: 1; }
 
-    /* ── Блокировки ────────────────────────────────────────── */
-    .lock-manage-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.4rem 0.75rem;
+    .btn-cancel {
+      flex: 1;
+      padding: 0.6rem;
+      background: none;
+      border: 1px solid var(--border-base);
       border-radius: var(--radius);
-      border: 1px solid var(--border);
-      margin-bottom: 0.4rem;
-      font-size: 0.82rem;
-      gap: 0.5rem;
-      background: var(--bg-card2);
-    }
-    .lock-manage-row:hover {
-      border-color: var(--accent);
-    }
-    .lock-manage-info { flex: 1; min-width: 0; }
-    .lock-manage-name { font-weight: 600; }
-    .lock-manage-detail { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
-
-    .player-select {
-      margin-bottom: 0.75rem;
-    }
-    .player-select select {
-      width: 100%;
-      padding: 0.4rem 0.6rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text);
+      color: var(--text-muted);
       font-size: 0.85rem;
-    }
-    .player-select select:focus {
-      outline: none;
-      border-color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
     }
 
-    .info-box {
-      background: rgba(124,58,237,0.08);
-      border: 1px solid var(--accent);
+    .btn-cancel:hover {
+      border-color: var(--border-gold);
+      color: var(--text-main);
+    }
+
+    .current-user-row {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dim);
       border-radius: var(--radius);
-      padding: 0.6rem 1rem;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 1rem;
       font-size: 0.82rem;
       color: var(--text-muted);
-      margin-bottom: 1rem;
-      line-height: 1.6;
-    }
-    .info-box strong {
-      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
     }
 
+    .current-user-row .cu-email { font-weight: 700; color: var(--text-main); }
+
+    /* Текст ошибки */
+    .err-msg {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* ── Пустые состояния ────────────────────────── */
     .empty-state {
       text-align: center;
-      padding: 2.5rem 2rem;
+      padding: 3rem 2rem;
       color: var(--text-muted);
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
+      border: 1px dashed var(--border-base);
+      border-radius: var(--radius-lg);
     }
-    .empty-state .icon {
+
+    .empty-state .empty-icon {
       font-size: 2.5rem;
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
     }
 
-    .flex { display: flex; }
-    .gap-1 { gap: 0.5rem; }
-    .mt-1 { margin-top: 0.5rem; }
-    .mt-3 { margin-top: 1.5rem; }
+    .empty-state p { font-size: 0.9rem; }
+    .empty-state small { font-size: 0.75rem; color: var(--text-faint); }
+
+    /* ── Доступ запрещён ─────────────────────────── */
+    .access-denied {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .access-denied .lock-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 1rem;
+      opacity: 0.4;
+    }
+
+    /* ── Утилиты ─────────────────────────────────── */
     .hidden { display: none !important; }
-    .text-muted { color: var(--text-muted); }
-    .text-danger { color: var(--danger); }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
 
-    .delete-char-btn {
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid var(--danger);
-      background: rgba(239, 68, 68, 0.1);
+    /* ── Тосты ───────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 0.8rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      z-index: 9999;
+      animation: slideIn 0.2s ease;
+      max-width: 320px;
+      border: 1px solid;
+    }
+
+    .toast.success {
+      background: var(--success-bg);
+      border-color: rgba(77,184,122,0.4);
+      color: var(--success);
+    }
+
+    .toast.error {
+      background: var(--danger-bg);
+      border-color: rgba(224,85,85,0.4);
       color: var(--danger);
-      cursor: pointer;
-      font-size: 0.7rem;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .delete-char-btn:hover {
-      background: var(--danger);
-      color: #fff;
     }
 
-    /* Скрываем элементы для модераторов */
-    .admin-only {
-      display: none !important;
+    @keyframes slideIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
     }
 
+    /* ── Responsive ──────────────────────────────── */
     @media (max-width: 768px) {
-      .user-card { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-      .user-card .user-right { justify-content: flex-start; }
-      .role-modal .role-option { padding: 0.4rem 0.6rem; }
-      .modal { margin: 0.5rem; }
-      .settings-card { padding: 1rem; }
-      .moderation-card .char-details { grid-template-columns: 1fr; }
-      .moderation-card .card-header { flex-direction: column; }
+      .admin-container { padding: 0 1rem 2rem; }
+      .tabs { flex-wrap: wrap; }
+      .tab-btn { flex: unset; font-size: 0.8rem; padding: 0.5rem 0.8rem; }
+      .user-card { flex-wrap: wrap; gap: 0.75rem; }
+      .mod-details { grid-template-columns: 1fr 1fr; }
+      .modal { padding: 1.25rem; }
     }
   </style>
 </head>
@@ -725,243 +1141,292 @@
 
 <nav class="navbar" id="main-nav"></nav>
 
-<main class="container admin-container">
-  <div class="page-header">
-    <h2>⚙️ Администрирование</h2>
+<main class="admin-container">
+
+  <!-- Заголовок -->
+  <div class="admin-header">
+    <div class="title-block">
+      <div class="eyebrow">Управление гильдией</div>
+      <h2>⚙ Панель администратора</h2>
+    </div>
   </div>
 
-  <div id="access-denied" style="text-align:center;padding:3rem;color:var(--text-muted)">
-    <div style="font-size:2rem">🔒</div>
-    <div class="mt-1">Доступ только для администраторов и модераторов</div>
+  <!-- Доступ закрыт -->
+  <div id="access-denied" class="access-denied hidden">
+    <span class="lock-icon">🔒</span>
+    <p>Доступ только для администраторов, модераторов и глав гильдии</p>
   </div>
 
+  <!-- Основной контент -->
   <div id="admin-content" class="hidden">
+
     <!-- Вкладки -->
     <div class="tabs" id="tabs-container">
-      <button class="tab-btn active" data-tab="tab-users" id="tab-users-btn">👥 Пользователи</button>
-      <button class="tab-btn" data-tab="tab-moderation" id="tab-moderation-btn">🔍 Модерация <span class="badge" id="pending-badge">0</span></button>
-      <button class="tab-btn" data-tab="tab-settings" id="tab-settings-btn">⚙️ Настройки</button>
+      <button class="tab-btn active" data-tab="tab-users" id="tab-users-btn">
+        👥 Пользователи
+      </button>
+      <button class="tab-btn" data-tab="tab-moderation" id="tab-moderation-btn">
+        🔍 Модерация
+        <span class="tab-badge" id="pending-badge" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-settings" id="tab-settings-btn">
+        ⚙ Настройки
+      </button>
     </div>
 
-    <!-- ============================================
-         ВКЛАДКА: ПОЛЬЗОВАТЕЛИ (только для админов)
-    ============================================ -->
-    <div id="tab-users" class="tab-content active admin-only">
-      <div class="search-bar">
-        <input type="text" id="user-search" placeholder="🔍 Поиск по имени или email..." />
-        <button class="btn btn-primary" id="btn-add-user">+ Добавить</button>
-        <button class="info-btn" id="btn-info-toggle" title="Информация о ролях">ℹ️</button>
+    <!-- ══════════════════════════════════════════
+         ВКЛАДКА: ПОЛЬЗОВАТЕЛИ (только admin)
+    ══════════════════════════════════════════ -->
+    <div id="tab-users" class="tab-content active">
+
+      <div class="toolbar">
+        <div class="search-field">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="user-search" placeholder="Поиск по email или имени..." />
+        </div>
+        <button class="btn-gold" id="btn-add-user">＋ Добавить игрока</button>
+        <button class="btn-ghost-gold" id="btn-info-toggle">ℹ Роли</button>
       </div>
 
-      <div class="info-panel" id="info-panel">
-        <div class="role-desc">
-          <span class="role-icon">⚡</span>
-          <span class="role-name">Администратор</span>
-          <span class="role-text">— полный доступ ко всему</span>
+      <!-- Легенда ролей -->
+      <div class="roles-legend" id="roles-legend">
+        <div class="role-item">
+          <span class="ri">⚡</span>
+          <div>
+            <strong>Администратор</strong>
+            <span>Полный доступ ко всему</span>
+          </div>
         </div>
-        <div class="role-desc">
-          <span class="role-icon">👑</span>
-          <span class="role-name">Глава гильдии</span>
-          <span class="role-text">— запуск роллов, управление посещаемостью</span>
+        <div class="role-item">
+          <span class="ri">👑</span>
+          <div>
+            <strong>Глава гильдии</strong>
+            <span>Роллы и посещаемость</span>
+          </div>
         </div>
-        <div class="role-desc">
-          <span class="role-icon">🛡️</span>
-          <span class="role-name">Модератор</span>
-          <span class="role-text">— модерация персонажей</span>
+        <div class="role-item">
+          <span class="ri">🛡</span>
+          <div>
+            <strong>Модератор</strong>
+            <span>Модерация персонажей</span>
+          </div>
         </div>
-        <div class="role-desc">
-          <span class="role-icon">👤</span>
-          <span class="role-name">Пользователь</span>
-          <span class="role-text">— базовый доступ</span>
+        <div class="role-item">
+          <span class="ri">👤</span>
+          <div>
+            <strong>Пользователь</strong>
+            <span>Базовый доступ</span>
+          </div>
         </div>
       </div>
 
-      <div id="users-list">
-        <div class="text-muted" style="text-align:center;padding:2rem;">Загрузка...</div>
-      </div>
-    </div>
-
-    <!-- ============================================
-         ВКЛАДКА: МОДЕРАЦИЯ ПЕРСОНАЖЕЙ (для всех)
-    ============================================ -->
-    <div id="tab-moderation" class="tab-content">
-      <div class="moderation-stats" id="moderation-stats">
-        <span class="stat active-stat" data-filter="pending">
-          ⏳ Ожидают: <span class="count" id="stat-pending">0</span>
-        </span>
-        <span class="stat" data-filter="approved">
-          ✅ Одобрено: <span class="count" id="stat-approved">0</span>
-        </span>
-        <span class="stat" data-filter="rejected">
-          ❌ Отклонено: <span class="count" id="stat-rejected">0</span>
-        </span>
-        <span class="stat" data-filter="all">
-          📋 Все: <span class="count" id="stat-all">0</span>
-        </span>
-      </div>
-
-      <div id="moderation-list">
+      <div id="users-list" class="users-grid">
         <div class="empty-state">
-          <span class="icon">🎯</span>
-          <p>Нет персонажей с таким статусом</p>
-          <small>Попробуйте выбрать другой фильтр</small>
+          <span class="empty-icon">⏳</span>
+          <p>Загрузка...</p>
         </div>
       </div>
     </div>
 
-    <!-- ============================================
-         ВКЛАДКА: НАСТРОЙКИ (только для админов)
-    ============================================ -->
-    <div id="tab-settings" class="tab-content admin-only">
-      <div class="settings-wrap">
+    <!-- ══════════════════════════════════════════
+         ВКЛАДКА: МОДЕРАЦИЯ (admin + mod + gl)
+    ══════════════════════════════════════════ -->
+    <div id="tab-moderation" class="tab-content">
+
+      <div class="mod-filter-row" id="mod-filters">
+        <button class="filter-chip active" data-filter="pending">
+          ⏳ Ожидают <span class="chip-count" id="stat-pending">0</span>
+        </button>
+        <button class="filter-chip" data-filter="approved">
+          ✅ Одобрено <span class="chip-count" id="stat-approved">0</span>
+        </button>
+        <button class="filter-chip" data-filter="rejected">
+          ❌ Отклонено <span class="chip-count" id="stat-rejected">0</span>
+        </button>
+        <button class="filter-chip" data-filter="all">
+          📋 Все <span class="chip-count" id="stat-all">0</span>
+        </button>
+      </div>
+
+      <div id="moderation-list"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ВКЛАДКА: НАСТРОЙКИ (только admin)
+    ══════════════════════════════════════════ -->
+    <div id="tab-settings" class="tab-content">
+      <div class="settings-layout">
+
         <div class="info-box">
-          <strong>🔒 Блокировки слотов</strong> — после победы в основном ролле игрок блокируется в этом слоте.
-          Блокировка снимается когда игрок посетит нужное количество рейдов.
+          <strong>🔒 Как работают блокировки</strong> — победитель основного ролла блокируется в слоте.
+          Разблокировка происходит после нужного количества посещённых рейдов.
         </div>
 
-        <div class="settings-card">
-          <h3>⚙️ Правила блокировок</h3>
-          <div class="card-desc">
-            Настройки влияют на систему мягкого сброса блокировок.
+        <!-- Правила -->
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <span>⚙</span>
+            <h3>Правила блокировок</h3>
           </div>
+          <div class="settings-panel-body">
+            <p class="settings-panel-desc">Настройки системы мягкого сброса блокировок слотов после роллов.</p>
 
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Рейдов до сброса</div>
-              <div class="setting-hint">Сколько рейдов должно пройти чтобы слот разблокировался</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Рейдов до сброса</div>
+                <div class="setting-hint">Сколько рейдов нужно пройти для разблокировки слота</div>
+              </div>
+              <input type="number" class="setting-input" id="s-reset-after" min="1" max="20" value="6" />
             </div>
-            <input type="number" class="setting-input" id="s-reset-after" min="1" max="20" value="6" />
-          </div>
 
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Максимум пропусков</div>
-              <div class="setting-hint">Сколько рейдов можно пропустить — иначе счётчик замораживается</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Максимум пропусков</div>
+                <div class="setting-hint">Пропустишь больше — счётчик замораживается</div>
+              </div>
+              <input type="number" class="setting-input" id="s-max-skip" min="0" max="10" value="2" />
             </div>
-            <input type="number" class="setting-input" id="s-max-skip" min="0" max="10" value="2" />
-          </div>
 
-          <div class="save-bar">
-            <button class="btn btn-primary" id="btn-save-rules">Сохранить</button>
-            <span class="saved-msg" id="saved-rules-msg">✅ Сохранено</span>
+            <div class="settings-save-row">
+              <button class="btn-gold" id="btn-save-rules">Сохранить</button>
+              <span class="saved-msg" id="saved-rules-msg">✅ Сохранено</span>
+            </div>
           </div>
         </div>
 
-        <div class="settings-card">
-          <h3>🔓 Управление блокировками</h3>
-          <div class="card-desc">
-            Здесь можно вручную снять блокировку с игрока если это необходимо по решению гильдии.
+        <!-- Управление блокировками -->
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <span>🔓</span>
+            <h3>Снять блокировку вручную</h3>
           </div>
-
-          <div class="player-select">
-            <select id="lock-player-select">
-              <option value="">— выбери игрока —</option>
-            </select>
-          </div>
-          <div id="lock-list">
-            <div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Выбери игрока</div>
+          <div class="settings-panel-body">
+            <p class="settings-panel-desc">Ручное снятие блокировки по решению гильдии.</p>
+            <div class="lock-select-wrap">
+              <select id="lock-player-select">
+                <option value="">— выберите персонажа —</option>
+              </select>
+            </div>
+            <div id="lock-list">
+              <p style="font-size:0.82rem;color:var(--text-faint)">Выберите персонажа выше</p>
+            </div>
           </div>
         </div>
 
-        <div class="settings-card">
-          <h3>📖 Как это работает</h3>
-          <div id="example-text" style="font-size:0.85rem;line-height:1.8;color:var(--text-muted)"></div>
+        <!-- Пример -->
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <span>📖</span>
+            <h3>Как это работает</h3>
+          </div>
+          <div class="settings-panel-body">
+            <div class="example-box" id="example-text"></div>
+          </div>
         </div>
+
       </div>
     </div>
-  </div>
+
+  </div><!-- /admin-content -->
 </main>
 
-<!-- Модалка смены роли (только для админов) -->
+<!-- ══════════════════════════════════════════════
+     МОДАЛКА: Смена роли
+══════════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-role">
-  <div class="modal role-modal">
-    <div class="modal-header">
-      <h3>👤 Смена роли</h3>
+  <div class="modal">
+    <div class="modal-title">
+      👤 Смена роли
       <button class="btn-close" onclick="closeRoleModal()">✕</button>
     </div>
-    
-    <div id="role-user-info" class="current-role">
-      <span id="role-user-name">Имя пользователя</span>
-      <span id="role-user-email">user@example.com</span>
-      <span>Текущая: <strong id="role-current-name">Пользователь</strong></span>
+
+    <div class="current-user-row" id="role-user-row">
+      <span class="cu-email" id="role-user-email">—</span>
+      <span id="role-user-name" style="font-size:0.8rem;color:var(--text-muted)">—</span>
+      <span style="font-size:0.75rem;color:var(--text-faint)">Текущая роль: <strong id="role-current-name" style="color:var(--gold-bright)">—</strong></span>
     </div>
 
     <div id="role-options">
       <div class="role-option" data-role="user" onclick="selectRole('user')">
-        <span class="role-icon">👤</span>
-        <div class="role-info">
-          <div class="role-name">Пользователь</div>
-          <div class="role-desc">Базовый доступ к системе</div>
+        <span class="ro-icon">👤</span>
+        <div>
+          <div class="ro-name">Пользователь</div>
+          <div class="ro-desc">Базовый доступ к системе</div>
         </div>
-        <span class="role-check" id="check-user">✅</span>
+        <span class="ro-check">✅</span>
       </div>
       <div class="role-option" data-role="moderator" onclick="selectRole('moderator')">
-        <span class="role-icon">🛡️</span>
-        <div class="role-info">
-          <div class="role-name">Модератор</div>
-          <div class="role-desc">Может модерировать персонажей</div>
+        <span class="ro-icon">🛡</span>
+        <div>
+          <div class="ro-name">Модератор</div>
+          <div class="ro-desc">Модерирует персонажей</div>
         </div>
-        <span class="role-check" id="check-moderator">✅</span>
+        <span class="ro-check">✅</span>
       </div>
       <div class="role-option" data-role="guild_leader" onclick="selectRole('guild_leader')">
-        <span class="role-icon">👑</span>
-        <div class="role-info">
-          <div class="role-name">Глава гильдии</div>
-          <div class="role-desc">Запускает роллы, управляет посещаемостью</div>
+        <span class="ro-icon">👑</span>
+        <div>
+          <div class="ro-name">Глава гильдии</div>
+          <div class="ro-desc">Роллы и посещаемость</div>
         </div>
-        <span class="role-check" id="check-guild_leader">✅</span>
+        <span class="ro-check">✅</span>
       </div>
       <div class="role-option" data-role="admin" onclick="selectRole('admin')">
-        <span class="role-icon">⚡</span>
-        <div class="role-info">
-          <div class="role-name">Администратор</div>
-          <div class="role-desc">Полный доступ к системе</div>
+        <span class="ro-icon">⚡</span>
+        <div>
+          <div class="ro-name">Администратор</div>
+          <div class="ro-desc">Полный доступ</div>
         </div>
-        <span class="role-check" id="check-admin">✅</span>
+        <span class="ro-check">✅</span>
       </div>
     </div>
 
-    <div id="role-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-role">Сохранить</button>
-      <button class="btn btn-ghost" onclick="closeRoleModal()">Отмена</button>
+    <div class="err-msg" id="role-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-gold" id="btn-save-role" style="flex:1">Сохранить</button>
+      <button class="btn-cancel" onclick="closeRoleModal()">Отмена</button>
     </div>
   </div>
 </div>
 
-<!-- Модалка: новый пользователь (только для админов) -->
+<!-- ══════════════════════════════════════════════
+     МОДАЛКА: Новый пользователь
+══════════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-user">
   <div class="modal">
-    <div class="modal-header">
-      <h3>➕ Добавить пользователя</h3>
+    <div class="modal-title">
+      ＋ Добавить пользователя
       <button class="btn-close" onclick="closeModal('modal-user')">✕</button>
     </div>
+
     <div class="info-box" style="margin-bottom:1rem;">
-      Создаётся учётная запись в Firebase Auth + документ в Firestore с ролью <strong>Пользователь</strong>.
+      Создаётся учётная запись Firebase Auth + профиль с ролью <strong>Пользователь</strong>.
     </div>
+
     <div class="form-group">
-      <label>Имя пользователя *</label>
+      <label>Имя пользователя</label>
       <input type="text" id="new-user-name" placeholder="Имя в гильдии" />
     </div>
     <div class="form-group">
-      <label>Email *</label>
+      <label>Email</label>
       <input type="email" id="new-user-email" placeholder="user@guild.com" />
     </div>
     <div class="form-group">
-      <label>Пароль *</label>
-      <input type="password" id="new-user-password" placeholder="минимум 6 символов" />
+      <label>Пароль</label>
+      <input type="password" id="new-user-password" placeholder="Минимум 6 символов" />
     </div>
-    <div id="user-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-create-user">Создать</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-user')">Отмена</button>
+
+    <div class="err-msg" id="user-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-gold" id="btn-create-user" style="flex:1">Создать</button>
+      <button class="btn-cancel" onclick="closeModal('modal-user')">Отмена</button>
     </div>
   </div>
 </div>
 
 <script type="module">
-  // ─── Импорты ──────────────────────────────────────────
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, currentUser, currentRole, isAdmin } from "../js/modules/auth.js";
   import { db, auth } from "../js/firebase.js";
@@ -971,16 +1436,16 @@
   import { getItems } from "../js/modules/items.js";
   import { SLOTS, WEAPONS } from "../js/constants.js";
   import {
-    collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, orderBy, where, writeBatch
+    collection, getDocs, doc, setDoc, deleteDoc, updateDoc,
+    query, orderBy, where, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import {
     createUserWithEmailAndPassword
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  
-  // ─── Инициализация ──────────────────────────────────
+
   initNavbar();
   initAuth();
-  
+
   let allUsers = [];
   let allCharacters = [];
   let allItems = [];
@@ -990,59 +1455,39 @@
   let userRole = 'guest';
 
   const ROLE_LABELS = {
-    'admin': 'Администратор',
-    'guild_leader': 'Глава гильдии',
-    'moderator': 'Модератор',
-    'user': 'Пользователь'
+    admin: 'Администратор',
+    guild_leader: 'Глава гильдии',
+    moderator: 'Модератор',
+    user: 'Пользователь'
   };
 
   const ROLE_ICONS = {
-    'admin': '⚡',
-    'guild_leader': '👑',
-    'moderator': '🛡️',
-    'user': '👤'
+    admin: '⚡',
+    guild_leader: '👑',
+    moderator: '🛡',
+    user: '👤'
   };
 
-  const ROLE_BADGE_CLASS = {
-    'admin': 'admin',
-    'guild_leader': 'guild_leader',
-    'moderator': 'moderator',
-    'user': 'user'
-  };
-
-  // ─── Авторизация ──────────────────────────────────────
+  // ── Авторизация ──────────────────────────────────
   authReady.then(async (authData) => {
     const user = authData?.user || null;
-    const role = authData?.role || "guest";
+    const role = authData?.role || 'guest';
     userRole = role;
-    
-    // Проверяем доступ
-    if (!user || (role !== "admin" && role !== "moderator" && role !== "guild_leader")) {
-      document.getElementById("access-denied").classList.remove("hidden");
-      document.getElementById("admin-content").classList.add("hidden");
+
+    const allowed = ['admin', 'moderator', 'guild_leader'];
+    if (!user || !allowed.includes(role)) {
+      document.getElementById('access-denied').classList.remove('hidden');
       return;
     }
 
-    document.getElementById("access-denied").classList.add("hidden");
-    document.getElementById("admin-content").classList.remove("hidden");
+    document.getElementById('admin-content').classList.remove('hidden');
 
-    // Настраиваем видимость в зависимости от роли
-    if (role === "admin") {
-      // Админ — видит всё
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      document.getElementById('tab-users-btn').style.display = '';
-      document.getElementById('tab-settings-btn').style.display = '';
-    } else {
-      // Модератор или глава гильдии — видит только модерацию
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-      document.getElementById('tab-users-btn').style.display = 'none';
-      document.getElementById('tab-settings-btn').style.display = 'none';
-      
-      // Активируем вкладку модерации
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-moderation-btn').classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.getElementById('tab-moderation').classList.add('active');
+    // Видимость вкладок: только admin видит Пользователей и Настройки
+    if (role !== 'admin') {
+      document.getElementById('tab-users-btn').classList.add('hidden');
+      document.getElementById('tab-settings-btn').classList.add('hidden');
+      // Активируем модерацию по умолчанию
+      switchTab('tab-moderation');
     }
 
     await loadCharactersForStats();
@@ -1052,257 +1497,173 @@
     populatePlayerSelect();
   });
 
-  // ─── Вкладки ──────────────────────────────────────────
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", function() {
-      // Проверяем доступ к вкладке
+  // ── Переключение вкладок ─────────────────────────
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
+    const content = document.getElementById(tabId);
+    if (content) content.classList.add('active');
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
       const tabId = this.dataset.tab;
-      if ((tabId === 'tab-users' || tabId === 'tab-settings') && userRole !== 'admin') {
-        return; // Модераторы не могут переключаться на эти вкладки
-      }
-      
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      this.classList.add("active");
-      
-      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
-      
-      const targetEl = document.getElementById(tabId);
-      if (targetEl) {
-        targetEl.classList.add("active");
-      }
+      // Блокируем недоступные для не-админов вкладки
+      if ((tabId === 'tab-users' || tabId === 'tab-settings') && userRole !== 'admin') return;
+      switchTab(tabId);
     });
   });
 
-  // ─── Информационная панель ───────────────────────────
+  // ── Легенда ролей ─────────────────────────────────
   document.getElementById('btn-info-toggle')?.addEventListener('click', () => {
-    document.getElementById('info-panel').classList.toggle('open');
+    document.getElementById('roles-legend').classList.toggle('open');
   });
 
-  // ─── Загрузка персонажей для статистики ──────────────
+  // ── Загрузка персонажей (для счётчиков) ──────────
   async function loadCharactersForStats() {
     try {
-      const charsRef = collection(db, 'characters');
-      const querySnapshot = await getDocs(charsRef);
-      allCharacters = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      console.log('📋 Загружено персонажей для статистики:', allCharacters.length);
+      const snap = await getDocs(collection(db, 'characters'));
+      allCharacters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (e) {
       console.error('Ошибка загрузки персонажей:', e);
       allCharacters = [];
     }
   }
 
-  function getPlayerCount(userId) {
-    return allCharacters.filter(p => p.user_id === userId).length;
+  function getCharsByUser(uid) {
+    return allCharacters.filter(c => c.user_id === uid && (c.status === 'approved' || c.approved === true));
   }
 
-  function getApprovedPlayerCount(userId) {
-    return allCharacters.filter(p => p.user_id === userId && (p.status === 'approved' || p.approved === true)).length;
+  function getApprovedCharName(uid) {
+    const c = allCharacters.find(c => c.user_id === uid && (c.status === 'approved' || c.approved === true));
+    return c?.name || null;
   }
 
-  function getPlayerName(userId) {
-    const char = allCharacters.find(p => p.user_id === userId && (p.status === 'approved' || p.approved === true));
-    return char?.name || null;
-  }
-
-  // ⭐ Удаление персонажа (только для админов)
+  // ── Удаление персонажа ────────────────────────────
   async function deleteCharacter(charId) {
-    // Проверка: только админ может удалять
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может удалять персонажей', 'error');
-      return;
-    }
-    
+    if (userRole !== 'admin') { showToast('Только администратор может удалять персонажей', 'error'); return; }
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return;
-    
-    if (!confirm(`Удалить персонажа "${char.name}" (${char.user_email || 'Неизвестно'})?`)) return;
-    
+    if (!confirm(`Удалить персонажа «${char.name}»?`)) return;
     try {
       await deleteDoc(doc(db, 'characters', charId));
-      showToast(`✅ Персонаж "${char.name}" удалён`);
-      await loadModerationData();
+      showToast(`Персонаж «${char.name}» удалён`);
       await loadCharactersForStats();
+      await loadModerationData();
       await loadUsers();
     } catch (e) {
-      console.error('Ошибка удаления персонажа:', e);
-      showToast('❌ Ошибка удаления персонажа: ' + e.message, 'error');
+      showToast('Ошибка: ' + e.message, 'error');
     }
   }
-
-  // ⭐ ДЕЛАЕМ ФУНКЦИЮ ДОСТУПНОЙ ГЛОБАЛЬНО
   window.deleteCharacter = deleteCharacter;
 
-  // ─── Загрузка пользователей ──────────────────────────
+  // ── Загрузка пользователей ────────────────────────
   async function loadUsers() {
-    const container = document.getElementById("users-list");
+    if (userRole !== 'admin') return;
+    const container = document.getElementById('users-list');
     try {
-      const snap = await getDocs(collection(db, "users"));
+      const snap = await getDocs(collection(db, 'users'));
       allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      const rolePriority = { admin: 0, guild_leader: 1, moderator: 2, user: 3 };
-      allUsers.sort((a, b) => (rolePriority[a.role] || 3) - (rolePriority[b.role] || 3));
-
-      if (!allUsers.length) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <span class="icon">👤</span>
-            <p>Нет пользователей</p>
-            <small>Добавьте первого пользователя</small>
-          </div>
-        `;
-        return;
-      }
-
+      const order = { admin: 0, guild_leader: 1, moderator: 2, user: 3 };
+      allUsers.sort((a, b) => (order[a.role] ?? 3) - (order[b.role] ?? 3));
       renderUsers(allUsers);
-
     } catch (e) {
-      console.error("Ошибка загрузки пользователей:", e);
-      container.innerHTML = `<div class="text-danger" style="text-align:center;padding:2rem;">Ошибка загрузки</div>`;
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">❌</span><p>Ошибка загрузки</p></div>`;
     }
   }
 
   function renderUsers(users) {
-    const container = document.getElementById("users-list");
-    const search = document.getElementById("user-search")?.value.toLowerCase() || '';
-
-    const filtered = users.filter(u => {
-      const username = (u.username || '').toLowerCase();
-      const email = (u.email || u.id || '').toLowerCase();
-      return username.includes(search) || email.includes(search);
-    });
+    const container = document.getElementById('users-list');
+    const q = (document.getElementById('user-search')?.value || '').toLowerCase();
+    const filtered = users.filter(u =>
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.username || '').toLowerCase().includes(q)
+    );
 
     if (!filtered.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <span class="icon">🔍</span>
-          <p>Пользователи не найдены</p>
-          <small>Попробуйте изменить поиск</small>
-        </div>
-      `;
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">🔍</span><p>Ничего не найдено</p></div>`;
       return;
     }
-
-    const isAdminUser = userRole === 'admin';
 
     container.innerHTML = filtered.map(u => {
       const role = u.role || 'user';
       const isSelf = u.id === currentUser?.uid;
-      const roleLabel = ROLE_LABELS[role] || role;
-      const roleIcon = ROLE_ICONS[role] || '👤';
-      const badgeClass = ROLE_BADGE_CLASS[role] || 'user';
-      const canEdit = !isSelf && isAdminUser;
-
-      const userCharacters = allCharacters.filter(p => p.user_id === u.id && (p.status === 'approved' || p.approved === true));
-      
-      const playerCount = getPlayerCount(u.id);
-      const approvedCount = getApprovedPlayerCount(u.id);
-      const playerName = getPlayerName(u.id);
-
-      const username = u.username || u.email?.split('@')[0] || u.id || 'Без имени';
-      const avatarLetter = username.charAt(0).toUpperCase();
+      const email = u.email || u.id;
+      const username = u.username || email.split('@')[0];
+      const avatarLetter = email.charAt(0).toUpperCase();
+      const chars = getCharsByUser(u.id);
+      const totalChars = allCharacters.filter(c => c.user_id === u.id).length;
+      const approvedCount = chars.length;
+      const canEdit = !isSelf && userRole === 'admin';
 
       return `
-        <div class="user-card" id="user-row-${u.id}">
-          <div class="user-left">
-            <div class="user-avatar">${avatarLetter}</div>
-            <div>
-              <div class="user-name">${username}</div>
-              <div class="user-meta">
-                <span class="user-email">${u.email || u.id}</span>
-                ${playerName ? `<span class="user-character">🎮 ${playerName}</span>` : ''}
-                <span class="badge ${badgeClass}">${roleIcon} ${roleLabel}</span>
-                ${isSelf ? '<span class="user-tag">Вы</span>' : ''}
-                <span class="user-stats">
-                  <span>👤 ${playerCount}</span>
-                  <span>✅ ${approvedCount}</span>
-                </span>
-              </div>
-              ${isAdminUser && userCharacters.length > 0 ? `
-                <div style="margin-top:0.3rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
-                  ${userCharacters.map(char => `
-                    <span style="display:inline-flex;align-items:center;gap:0.3rem;background:var(--bg-card2);padding:0.1rem 0.5rem;border-radius:4px;font-size:0.7rem;border:1px solid var(--border);">
-                      🎮 ${char.name}
-                      <button class="delete-char-btn" onclick="deleteCharacter('${char.id}')" title="Удалить персонажа">
-                        ✕
-                      </button>
+        <div class="user-card role-${role}" id="user-row-${u.id}">
+          <div class="user-avatar">${avatarLetter}</div>
+          <div class="user-identity">
+            <div class="user-email-line">
+              ${email}
+              ${username && username !== email.split('@')[0]
+                ? `<span class="username-hint">(${username})</span>`
+                : `<span class="username-hint">(${username})</span>`
+              }
+              ${isSelf ? `<span class="self-tag">Вы</span>` : ''}
+            </div>
+            <div class="user-character-line">
+              ${chars.length > 0
+                ? chars.map(c => `
+                    <span class="char-pill">
+                      🎮 ${c.name}
+                      ${canEdit ? `<button class="char-delete" onclick="deleteCharacter('${c.id}')" title="Удалить">✕</button>` : ''}
                     </span>
-                  `).join('')}
-                </div>
-              ` : ''}
+                  `).join('')
+                : `<span class="no-char">Нет персонажа</span>`
+              }
+            </div>
+            <div class="user-meta-row">
+              <span class="role-badge ${role}">${ROLE_ICONS[role]} ${ROLE_LABELS[role] || role}</span>
+              <span class="user-stat">👤 ${totalChars} персонажей</span>
+              <span class="user-stat">✅ ${approvedCount} одобрено</span>
             </div>
           </div>
-          <div class="user-right">
-            ${canEdit ? `
-              <button class="role-change-btn" onclick="openRoleModal('${u.id}')" title="Сменить роль">
-                👤
-              </button>
-              <button class="btn-icon" onclick="confirmDelete('${u.id}')" title="Удалить пользователя">
-                🗑️
-              </button>
-            ` : ''}
-          </div>
+          ${canEdit ? `
+            <div class="user-actions">
+              <button class="action-btn" onclick="openRoleModal('${u.id}')" title="Сменить роль">👤</button>
+              <button class="action-btn danger" onclick="confirmDelete('${u.id}')" title="Удалить">🗑</button>
+            </div>
+          ` : ''}
         </div>
       `;
-    }).join("");
+    }).join('');
   }
 
-  // ─── Поиск ─────────────────────────────────────────────
-  document.getElementById('user-search')?.addEventListener('input', () => {
-    renderUsers(allUsers);
-  });
+  document.getElementById('user-search')?.addEventListener('input', () => renderUsers(allUsers));
 
-  // ─── Модалка смены роли ──────────────────────────────
+  // ── Модалка роли ──────────────────────────────────
   window.openRoleModal = (uid) => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может менять роли', 'error');
-      return;
-    }
-    
+    if (userRole !== 'admin') return;
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
-    
     selectedUserId = uid;
-    const currentRole = user.role || 'user';
-    selectedRole = currentRole;
-    
-    const username = user.username || user.email?.split('@')[0] || user.id || 'Без имени';
-    document.getElementById('role-user-name').textContent = username;
-    document.getElementById('role-user-email').textContent = user.email || user.id;
-    document.getElementById('role-current-name').textContent = ROLE_LABELS[currentRole] || currentRole;
+    selectedRole = user.role || 'user';
+    const email = user.email || user.id;
+    const uname = user.username || email.split('@')[0];
+    document.getElementById('role-user-email').textContent = email;
+    document.getElementById('role-user-name').textContent = uname;
+    document.getElementById('role-current-name').textContent = ROLE_LABELS[selectedRole] || selectedRole;
     document.getElementById('role-error').style.display = 'none';
-    
     document.querySelectorAll('.role-option').forEach(el => {
       el.classList.remove('selected');
-      const check = el.querySelector('.role-check');
-      if (check) check.classList.remove('visible');
     });
-    
-    const currentOption = document.querySelector(`.role-option[data-role="${currentRole}"]`);
-    if (currentOption) {
-      currentOption.classList.add('selected');
-      const check = currentOption.querySelector('.role-check');
-      if (check) check.classList.add('visible');
-    }
-    
+    document.querySelector(`.role-option[data-role="${selectedRole}"]`)?.classList.add('selected');
     document.getElementById('modal-role').classList.add('open');
   };
 
   window.selectRole = (role) => {
     selectedRole = role;
-    document.querySelectorAll('.role-option').forEach(el => {
-      el.classList.remove('selected');
-      const check = el.querySelector('.role-check');
-      if (check) check.classList.remove('visible');
-    });
-    const selected = document.querySelector(`.role-option[data-role="${role}"]`);
-    if (selected) {
-      selected.classList.add('selected');
-      const check = selected.querySelector('.role-check');
-      if (check) check.classList.add('visible');
-    }
+    document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`.role-option[data-role="${role}"]`)?.classList.add('selected');
   };
 
   window.closeRoleModal = () => {
@@ -1312,207 +1673,111 @@
   };
 
   document.getElementById('btn-save-role').addEventListener('click', async () => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может менять роли', 'error');
-      return;
-    }
-    
-    if (!selectedUserId || !selectedRole) {
-      document.getElementById('role-error').textContent = 'Выберите роль';
-      document.getElementById('role-error').style.display = 'block';
-      return;
-    }
-    
+    if (!selectedUserId || !selectedRole) return;
     const user = allUsers.find(u => u.id === selectedUserId);
-    if (!user) return;
-    
-    if (user.role === selectedRole) {
+    if (!user || user.role === selectedRole) {
       document.getElementById('role-error').textContent = 'Роль уже установлена';
       document.getElementById('role-error').style.display = 'block';
       return;
     }
-    
     const btn = document.getElementById('btn-save-role');
-    btn.disabled = true;
-    btn.textContent = 'Сохранение...';
-    
+    btn.disabled = true; btn.textContent = '...';
     try {
-      await updateDoc(doc(db, 'users', selectedUserId), {
-        role: selectedRole,
-        updated_at: new Date().toISOString()
-      });
-      
-      showToast(`✅ Роль изменена на "${ROLE_LABELS[selectedRole]}"`);
+      await updateDoc(doc(db, 'users', selectedUserId), { role: selectedRole, updated_at: new Date().toISOString() });
+      showToast(`Роль изменена: ${ROLE_LABELS[selectedRole]}`);
       closeRoleModal();
       await loadUsers();
-      
     } catch (e) {
-      console.error('Ошибка обновления роли:', e);
-      document.getElementById('role-error').textContent = 'Ошибка: ' + e.message;
+      document.getElementById('role-error').textContent = e.message;
       document.getElementById('role-error').style.display = 'block';
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Сохранить';
+      btn.disabled = false; btn.textContent = 'Сохранить';
     }
   });
 
-  // ⭐ УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (только для админов)
+  // ── Удаление пользователя ─────────────────────────
   window.confirmDelete = async (uid) => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может удалять пользователей', 'error');
-      return;
-    }
-    
+    if (userRole !== 'admin') return;
     const user = allUsers.find(u => u.id === uid);
-    if (!user) return;
-    
-    if (uid === currentUser?.uid) {
-      showToast('❌ Нельзя удалить самого себя', 'error');
-      return;
-    }
-    
-    if (user.role === 'admin') {
-      showToast('❌ Нельзя удалить администратора', 'error');
-      return;
-    }
-    
-    const confirmMsg = `Удалить пользователя "${user.username || user.email || user.id}"?\n\nБудут удалены:\n- Документ пользователя\n- Все персонажи\n\nУчётная запись Firebase Auth останется.\n\nПользователь сможет зарегистрироваться заново.`;
-    
-    if (!confirm(confirmMsg)) return;
-    
+    if (!user || uid === currentUser?.uid) { showToast('Нельзя удалить себя', 'error'); return; }
+    if (user.role === 'admin') { showToast('Нельзя удалить администратора', 'error'); return; }
+    if (!confirm(`Удалить «${user.username || user.email}»? Персонажи тоже будут удалены.`)) return;
     try {
-      const charsQuery = query(collection(db, 'characters'), where('user_id', '==', uid));
-      const charsSnap = await getDocs(charsQuery);
+      const charsQ = query(collection(db, 'characters'), where('user_id', '==', uid));
+      const charsSnap = await getDocs(charsQ);
       const batch = writeBatch(db);
-      charsSnap.forEach(doc => {
-        batch.delete(doc.ref);
-      });
+      charsSnap.forEach(d => batch.delete(d.ref));
       await batch.commit();
-      
-      await deleteDoc(doc(db, "users", uid));
-      
-      showToast(`✅ Пользователь удалён (удалено ${charsSnap.size} персонажей)`);
+      await deleteDoc(doc(db, 'users', uid));
+      showToast(`Пользователь удалён (${charsSnap.size} персонажей)`);
       await loadUsers();
       await loadModerationData();
       await loadCharactersForStats();
     } catch (e) {
-      console.error("Ошибка удаления пользователя:", e);
-      showToast("❌ Ошибка удаления: " + e.message, "error");
+      showToast('Ошибка: ' + e.message, 'error');
     }
   };
 
-  // ─── Добавление пользователя ──────────────────────────
-  document.getElementById("btn-add-user")?.addEventListener("click", () => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может добавлять пользователей', 'error');
-      return;
-    }
-    
-    document.getElementById("new-user-name").value = "";
-    document.getElementById("new-user-email").value = "";
-    document.getElementById("new-user-password").value = "";
-    document.getElementById("user-error").style.display = "none";
-    document.getElementById("modal-user").classList.add("open");
+  // ── Добавление пользователя ───────────────────────
+  document.getElementById('btn-add-user')?.addEventListener('click', () => {
+    if (userRole !== 'admin') return;
+    ['new-user-name','new-user-email','new-user-password'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('user-error').style.display = 'none';
+    document.getElementById('modal-user').classList.add('open');
   });
 
-  document.getElementById("btn-create-user")?.addEventListener("click", async () => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может создавать пользователей', 'error');
-      return;
-    }
-    
-    const username = document.getElementById("new-user-name").value.trim();
-    const email = document.getElementById("new-user-email").value.trim();
-    const password = document.getElementById("new-user-password").value;
-    const errEl = document.getElementById("user-error");
-
-    if (!username || !email || !password) {
-      errEl.textContent = "Заполни все поля";
-      errEl.style.display = "block";
-      return;
-    }
-    if (password.length < 6) {
-      errEl.textContent = "Пароль минимум 6 символов";
-      errEl.style.display = "block";
-      return;
-    }
-
-    const btn = document.getElementById("btn-create-user");
-    btn.disabled = true; btn.textContent = "Создание...";
-
+  document.getElementById('btn-create-user')?.addEventListener('click', async () => {
+    const name  = document.getElementById('new-user-name').value.trim();
+    const email = document.getElementById('new-user-email').value.trim();
+    const pass  = document.getElementById('new-user-password').value;
+    const errEl = document.getElementById('user-error');
+    if (!name || !email || !pass) { errEl.textContent = 'Заполните все поля'; errEl.style.display = 'block'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Пароль минимум 6 символов'; errEl.style.display = 'block'; return; }
+    const btn = document.getElementById('btn-create-user');
+    btn.disabled = true; btn.textContent = '...';
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "users", cred.user.uid), {
-        username,
-        email,
-        role: "user",
-        created_at: new Date().toISOString(),
-      });
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db, 'users', cred.user.uid), { username: name, email, role: 'user', created_at: new Date().toISOString() });
       closeModal('modal-user');
-      showToast("✅ Пользователь создан");
+      showToast('Пользователь создан');
       await loadUsers();
     } catch (e) {
       let msg = e.message;
-      if (e.code === "auth/email-already-in-use") msg = "Этот email уже используется";
-      if (e.code === "auth/invalid-email") msg = "Некорректный email";
-      errEl.textContent = msg;
-      errEl.style.display = "block";
+      if (e.code === 'auth/email-already-in-use') msg = 'Email уже используется';
+      if (e.code === 'auth/invalid-email') msg = 'Некорректный email';
+      errEl.textContent = msg; errEl.style.display = 'block';
     } finally {
-      btn.disabled = false; btn.textContent = "Создать";
+      btn.disabled = false; btn.textContent = 'Создать';
     }
   });
 
-  // ─── МОДЕРАЦИЯ ПЕРСОНАЖЕЙ ────────────────────────────
-  
+  // ── Модерация ─────────────────────────────────────
   async function loadModerationData() {
     try {
       allItems = await getItems();
-      await loadCharacters();
+      const snap = await getDocs(query(collection(db, 'characters'), orderBy('created_at', 'desc')));
+      allCharacters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       updateModerationStats();
       renderModeration();
-    } catch (error) {
-      console.error('Ошибка загрузки данных для модерации:', error);
-    }
-  }
-
-  async function loadCharacters() {
-    try {
-      const charsRef = collection(db, 'characters');
-      const q = query(charsRef, orderBy('created_at', 'desc'));
-      const querySnapshot = await getDocs(q);
-      allCharacters = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Ошибка загрузки персонажей:', error);
-      allCharacters = [];
-    }
+    } catch (e) { console.error('Ошибка модерации:', e); }
   }
 
   function updateModerationStats() {
-    const pending = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved').length;
+    const pending  = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved').length;
     const approved = allCharacters.filter(c => c.status === 'approved' && !c.previous_status).length;
     const rejected = allCharacters.filter(c => c.status === 'rejected').length;
-    const all = allCharacters.length;
-
-    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-pending').textContent  = pending;
     document.getElementById('stat-approved').textContent = approved;
     document.getElementById('stat-rejected').textContent = rejected;
-    document.getElementById('stat-all').textContent = all;
-
+    document.getElementById('stat-all').textContent      = allCharacters.length;
     const badge = document.getElementById('pending-badge');
-    if (badge) {
-      badge.textContent = pending;
-      badge.style.display = pending > 0 ? 'inline' : 'none';
-    }
+    if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
   }
 
-  // ─── Фильтр по статусам ──────────────────────────────
-  document.querySelectorAll('.moderation-stats .stat').forEach(stat => {
-    stat.addEventListener('click', function() {
-      document.querySelectorAll('.moderation-stats .stat').forEach(s => s.classList.remove('active-stat'));
-      this.classList.add('active-stat');
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
       currentFilter = this.dataset.filter;
       renderModeration();
     });
@@ -1520,380 +1785,257 @@
 
   function renderModeration() {
     const container = document.getElementById('moderation-list');
-    const isAdminUser = userRole === 'admin';
-    
     let filtered = allCharacters;
-    if (currentFilter === 'pending') {
-      filtered = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved');
-    } else if (currentFilter === 'approved') {
-      filtered = allCharacters.filter(c => c.status === 'approved' && !c.previous_status);
-    } else if (currentFilter === 'rejected') {
-      filtered = allCharacters.filter(c => c.status === 'rejected');
-    }
+    if (currentFilter === 'pending')  filtered = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved');
+    if (currentFilter === 'approved') filtered = allCharacters.filter(c => c.status === 'approved' && !c.previous_status);
+    if (currentFilter === 'rejected') filtered = allCharacters.filter(c => c.status === 'rejected');
 
     if (!filtered.length) {
-      const statusLabels = {
-        'pending': 'ожидающих модерации',
-        'approved': 'одобренных',
-        'rejected': 'отклонённых',
-        'all': 'персонажей'
-      };
-      container.innerHTML = `
-        <div class="empty-state">
-          <span class="icon">🎯</span>
-          <p>Нет ${statusLabels[currentFilter] || 'персонажей'}</p>
-          <small>Попробуйте выбрать другой фильтр</small>
-        </div>
-      `;
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">🎯</span><p>Нет персонажей</p><small>Попробуйте другой фильтр</small></div>`;
       return;
     }
 
     container.innerHTML = filtered.map(char => {
       const isEditPending = char.previous_status === 'approved';
-      const displayStatus = isEditPending ? 'pending' : char.status;
-      
+      const status = isEditPending ? 'pending' : char.status;
       const statusLabel = {
-        'pending': isEditPending ? '✏️ Изменение на модерации' : '⏳ Ожидает модерации',
-        'approved': '✅ Одобрен',
-        'rejected': '❌ Отклонён'
-      }[displayStatus] || '⏳ Ожидает модерации';
+        pending:  isEditPending ? '✏ Изменение' : '⏳ Ожидает',
+        approved: '✅ Одобрен',
+        rejected: '❌ Отклонён'
+      }[status] || '⏳';
 
-      const editInfo = isEditPending ? `
-        <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(245,158,11,0.1);border-radius:4px;font-size:0.8rem;color:var(--warning);">
-          ✏️ Изменение одобренного персонажа
-          ${char.edit_note ? `<br>💬 ${char.edit_note}` : ''}
-        </div>
-      ` : '';
-
-      let weaponsDisplay = '—';
-      if (char.weapons && char.weapons.length > 0) {
-        const weaponLabels = char.weapons.map((w, index) => {
-          const weapon = WEAPONS.find(wp => wp.id === w);
-          const label = weapon?.label || w;
-          return `Оружие ${index + 1}: ${label}`;
-        });
-        weaponsDisplay = weaponLabels.join(' + ');
+      let weaponsText = '—';
+      if (char.weapons?.length) {
+        weaponsText = char.weapons.map((w, i) => {
+          const wObj = WEAPONS.find(x => x.id === w);
+          return `${i + 1}: ${wObj?.label || w}`;
+        }).join(' / ');
       }
 
-      let lootItems = '';
-      if (char.desired_loot && Object.keys(char.desired_loot).length > 0) {
-        lootItems = Object.entries(char.desired_loot)
-          .filter(([_, itemId]) => itemId)
+      let lootHtml = '';
+      if (char.desired_loot && Object.keys(char.desired_loot).length) {
+        const tags = Object.entries(char.desired_loot)
+          .filter(([_, id]) => id)
           .map(([slot, itemId]) => {
             const item = allItems.find(i => i.id === itemId);
             const slotObj = SLOTS.find(s => s.id === slot);
-            const slotLabel = slotObj?.label || slot;
-            return item ? `
-              <span class="loot-tag">${slotLabel}: ${item.name}</span>
-            ` : '';
+            return item ? `<span class="loot-tag">${slotObj?.label || slot}: ${item.name}</span>` : '';
           }).join('');
+        if (tags) lootHtml = `<div class="mod-detail"><div class="d-label">Желаемый лут</div><div class="loot-tags">${tags}</div></div>`;
       }
 
       const isPending = char.status === 'pending' || char.previous_status === 'approved';
 
       return `
-        <div class="moderation-card" id="char-${char.id}">
-          <div class="card-header">
+        <div class="mod-card" id="char-${char.id}">
+          <div class="mod-card-top">
             <div>
-              <span class="char-name">${char.name}</span>
-              <span class="status-badge ${displayStatus}">${statusLabel}</span>
-            </div>
-            <div class="user-info">
-              👤 ${char.user_email || 'Неизвестно'}
-            </div>
-          </div>
-          ${editInfo}
-
-          <div class="char-details">
-            <div class="detail">
-              <div class="label">Оружие</div>
-              <div class="value">${weaponsDisplay}</div>
-            </div>
-            <div class="detail">
-              <div class="label">Заявка создана</div>
-              <div class="value">${char.created_at ? new Date(char.created_at).toLocaleDateString() : '—'}</div>
+              <div class="mod-char-name">
+                ${char.name}
+                <span class="status-pill ${status}">${statusLabel}</span>
+              </div>
+              <div class="mod-user-email">👤 ${char.user_email || 'Неизвестно'}</div>
             </div>
           </div>
 
-          ${lootItems ? `
-            <div style="margin-top:0.5rem;">
-              <div style="font-size:0.8rem; color: var(--text-muted); margin-bottom:0.25rem;">🎯 Желаемый лут:</div>
-              <div class="loot-list">${lootItems}</div>
-            </div>
-          ` : ''}
+          ${isEditPending ? `<div class="edit-pending-note">✏ Изменение одобренного персонажа${char.edit_note ? ` — ${char.edit_note}` : ''}</div>` : ''}
 
-          ${char.moderation_note ? `
-            <div class="moderation-note">
-              💬 ${char.moderation_note}
+          <div class="mod-details">
+            <div class="mod-detail">
+              <div class="d-label">Оружие</div>
+              <div class="d-value">${weaponsText}</div>
             </div>
-          ` : ''}
+            <div class="mod-detail">
+              <div class="d-label">Дата заявки</div>
+              <div class="d-value">${char.created_at ? new Date(char.created_at).toLocaleDateString('ru-RU') : '—'}</div>
+            </div>
+            ${lootHtml}
+          </div>
 
-          ${char.moderation_feedback ? `
-            <div class="moderation-feedback">
-              📝 Ответ модератора: ${char.moderation_feedback}
-            </div>
-          ` : ''}
+          ${char.moderation_note ? `<div class="mod-note">💬 ${char.moderation_note}</div>` : ''}
+          ${char.moderation_feedback ? `<div class="mod-feedback">📝 Ответ: ${char.moderation_feedback}</div>` : ''}
 
           ${isPending ? `
-            <div class="feedback-input">
-              <div class="form-group" style="margin-bottom:0.5rem;">
-                <label style="font-size:0.8rem;">Комментарий модератора</label>
-                <textarea id="feedback-${char.id}" placeholder="Причина одобрения/отклонения..." rows="2"></textarea>
-              </div>
-              <div class="action-buttons">
-                <button class="btn btn-success btn-sm" onclick="approveCharacter('${char.id}')">
-                  ✅ Одобрить
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="rejectCharacter('${char.id}')">
-                  ❌ Отклонить
-                </button>
+            <div class="mod-actions">
+              <textarea id="feedback-${char.id}" placeholder="Комментарий (необязательно)..."></textarea>
+              <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                <button class="btn-approve" onclick="approveCharacter('${char.id}')">✅ Одобрить</button>
+                <button class="btn-reject" onclick="rejectCharacter('${char.id}')">❌ Отклонить</button>
               </div>
             </div>
           ` : ''}
-          
-          <!-- ⭐ Кнопка удаления персонажа (только для админов) -->
-          ${isAdminUser ? `
-            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
-              <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')">
-                🗑️ Удалить персонажа
-              </button>
-            </div>
+
+          ${userRole === 'admin' ? `
+            <button class="btn-delete-char" onclick="deleteCharacter('${char.id}')">🗑 Удалить персонажа</button>
           ` : ''}
         </div>
       `;
     }).join('');
 
     window.approveCharacter = async (id) => {
-      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
-      await moderateCharacter(id, 'approved', feedback);
+      const fb = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      await moderateCharacter(id, 'approved', fb);
     };
 
     window.rejectCharacter = async (id) => {
-      const feedback = document.getElementById(`feedback-${id}`)?.value.trim() || null;
-      if (!feedback) {
-        if (!confirm('Вы не указали причину отклонения. Продолжить?')) {
-          return;
-        }
-      }
-      await moderateCharacter(id, 'rejected', feedback);
+      const fb = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      if (!fb && !confirm('Не указана причина отклонения. Продолжить?')) return;
+      await moderateCharacter(id, 'rejected', fb);
     };
   }
 
   async function moderateCharacter(id, status, feedback) {
     try {
-      const charRef = doc(db, 'characters', id);
       const updates = {
-        status: status,
+        status,
         moderation_feedback: feedback || null,
         moderated_by: currentUser?.uid || 'unknown',
         moderated_at: new Date().toISOString()
       };
-      
       const char = allCharacters.find(c => c.id === id);
       if (char?.previous_status === 'approved' && status === 'approved') {
         updates.previous_status = null;
         updates.edit_note = null;
       }
-      
-      await updateDoc(charRef, updates);
-
-      showToast(
-        status === 'approved' 
-          ? '✅ Персонаж одобрен!' 
-          : '❌ Персонаж отклонён',
-        status === 'approved' ? 'success' : 'error'
-      );
-
+      await updateDoc(doc(db, 'characters', id), updates);
+      showToast(status === 'approved' ? 'Персонаж одобрен' : 'Персонаж отклонён', status === 'approved' ? 'success' : 'error');
       await loadModerationData();
-
-    } catch (error) {
-      console.error('Ошибка модерации:', error);
-      showToast('Ошибка: ' + error.message, 'error');
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
     }
   }
 
-  // ─── Блокировки ──────────────────────────────────────
+  // ── Блокировки ────────────────────────────────────
   function populatePlayerSelect() {
-    const sel = document.getElementById("lock-player-select");
+    const sel = document.getElementById('lock-player-select');
     if (!sel) return;
-    sel.innerHTML = `<option value="">— выбери игрока —</option>`;
+    sel.innerHTML = `<option value="">— выберите персонажа —</option>`;
     allCharacters.forEach(p => {
       sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
     });
   }
 
-  document.getElementById("lock-player-select")?.addEventListener("change", async (e) => {
+  document.getElementById('lock-player-select')?.addEventListener('change', async (e) => {
     const id = e.target.value;
     if (!id) {
-      document.getElementById("lock-list").innerHTML =
-        `<div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Выбери игрока</div>`;
+      document.getElementById('lock-list').innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Выберите персонажа выше</p>`;
       return;
     }
     await renderLocks(id);
   });
 
   async function renderLocks(playerId) {
-    const container = document.getElementById("lock-list");
-    container.innerHTML = `<div class="text-muted" style="font-size:0.82rem;padding:0.5rem 0;">Загрузка...</div>`;
-
+    const container = document.getElementById('lock-list');
+    container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Загрузка...</p>`;
     try {
       const locks = await getPlayerLocks(playerId);
       const entries = Object.entries(locks);
-
-      if (!entries.length) {
-        container.innerHTML = `<div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">Блокировок нет</div>`;
-        return;
-      }
-
+      if (!entries.length) { container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Блокировок нет</p>`; return; }
       container.innerHTML = entries.map(([slot, lock]) => {
         const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
         const frozen = lock.raids_skipped > 2;
         return `
-          <div class="lock-manage-row">
-            <div class="lock-manage-info">
-              <div class="lock-manage-name">
-                <span class="badge badge-${frozen ? "frozen" : "locked"}">${slotLabel}</span>
-              </div>
-              <div class="lock-manage-detail">
-                ${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов
-                ${frozen ? " · ⚠️ заморожено" : ""}
-              </div>
+          <div class="lock-row">
+            <div class="lock-info">
+              <div class="lock-name">${slotLabel} ${frozen ? '⚠ заморожено' : ''}</div>
+              <div class="lock-detail">${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов</div>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="window.removeLock('${playerId}', '${slot}')">
-              Снять
-            </button>
+            <button class="btn-unlock" onclick="window.removeLock('${playerId}','${slot}')">Снять</button>
           </div>
         `;
-      }).join("");
+      }).join('');
     } catch (e) {
-      console.error("Ошибка рендеринга блокировок:", e);
-      container.innerHTML = `<div class="text-danger" style="font-size:0.85rem;padding:0.5rem 0;">Ошибка загрузки блокировок</div>`;
+      container.innerHTML = `<p style="font-size:0.82rem;color:var(--danger)">Ошибка загрузки</p>`;
     }
   }
 
   window.removeLock = async (playerId, slot) => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может снимать блокировки', 'error');
-      return;
-    }
-    
+    if (userRole !== 'admin') { showToast('Только администратор может снимать блокировки', 'error'); return; }
     const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
-    if (!confirm(`Снять блокировку слота «${slotLabel}»?`)) return;
+    if (!confirm(`Снять блокировку «${slotLabel}»?`)) return;
     try {
       await removeSlotLock(playerId, slot);
-      showToast("✅ Блокировка снята");
+      showToast('Блокировка снята');
       await renderLocks(playerId);
     } catch (e) {
-      console.error("Ошибка снятия блокировки:", e);
-      showToast("❌ Ошибка снятия блокировки", "error");
+      showToast('Ошибка: ' + e.message, 'error');
     }
   };
 
-  // ─── Настройки ─────────────────────────────────────────
+  // ── Настройки ─────────────────────────────────────
   function loadSettings() {
-    // Загружаем правила с значениями по умолчанию
     getLootRules().then(rules => {
-      // Используем значения по умолчанию, если rules невалидны
-      const resetAfter = (rules && typeof rules.reset_after_raids === 'number') ? rules.reset_after_raids : 6;
-      const maxSkip = (rules && typeof rules.max_skip_raids === 'number') ? rules.max_skip_raids : 2;
-      
-      document.getElementById("s-reset-after").value = resetAfter;
-      document.getElementById("s-max-skip").value = maxSkip;
-      updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
+      const n = rules?.reset_after_raids ?? 6;
+      const m = rules?.max_skip_raids ?? 2;
+      document.getElementById('s-reset-after').value = n;
+      document.getElementById('s-max-skip').value = m;
+      updateExample(n, m);
     }).catch(() => {
-      // Если ошибка загрузки, ставим значения по умолчанию
-      document.getElementById("s-reset-after").value = 6;
-      document.getElementById("s-max-skip").value = 2;
-      updateExample({ reset_after_raids: 6, max_skip_raids: 2 });
+      document.getElementById('s-reset-after').value = 6;
+      document.getElementById('s-max-skip').value = 2;
+      updateExample(6, 2);
     });
   }
 
-  document.getElementById("btn-save-rules")?.addEventListener("click", async () => {
-    if (userRole !== 'admin') {
-      showToast('❌ Только администратор может изменять настройки', 'error');
+  document.getElementById('btn-save-rules')?.addEventListener('click', async () => {
+    if (userRole !== 'admin') { showToast('Только администратор может изменять настройки', 'error'); return; }
+    const n = Number(document.getElementById('s-reset-after').value);
+    const m = Number(document.getElementById('s-max-skip').value);
+    if (isNaN(n) || isNaN(m) || n < 1 || m < 0 || m >= n) {
+      alert('Некорректные значения. Пропусков должно быть меньше рейдов до сброса.');
       return;
     }
-    
-    const resetAfter = Number(document.getElementById("s-reset-after").value);
-    const maxSkip = Number(document.getElementById("s-max-skip").value);
-
-    // Валидация
-    if (isNaN(resetAfter) || isNaN(maxSkip) || resetAfter < 1 || maxSkip < 0 || maxSkip >= resetAfter) {
-      alert("Некорректные значения. Пропусков должно быть меньше чем рейдов до сброса.");
-      return;
-    }
-
-    const btn = document.getElementById("btn-save-rules");
-    btn.disabled = true; 
-    btn.textContent = "Сохранение...";
-
+    const btn = document.getElementById('btn-save-rules');
+    btn.disabled = true; btn.textContent = '...';
     try {
-      await saveLootRules({ 
-        reset_after_raids: resetAfter, 
-        max_skip_raids: maxSkip 
-      });
-      
-      const msg = document.getElementById("saved-rules-msg");
-      msg.classList.add("show");
-      setTimeout(() => msg.classList.remove("show"), 2500);
-      updateExample({ reset_after_raids: resetAfter, max_skip_raids: maxSkip });
-      showToast('✅ Настройки сохранены');
+      await saveLootRules({ reset_after_raids: n, max_skip_raids: m });
+      const msg = document.getElementById('saved-rules-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2500);
+      updateExample(n, m);
+      showToast('Настройки сохранены');
     } catch (e) {
-      console.error("Ошибка сохранения настроек:", e);
-      alert("Ошибка: " + e.message);
+      alert('Ошибка: ' + e.message);
     } finally {
-      btn.disabled = false; 
-      btn.textContent = "Сохранить";
+      btn.disabled = false; btn.textContent = 'Сохранить';
     }
   });
 
-  ["s-reset-after", "s-max-skip"].forEach(id => {
-    document.getElementById(id)?.addEventListener("input", () => {
-      const n = Number(document.getElementById("s-reset-after")?.value || 6);
-      const m = Number(document.getElementById("s-max-skip")?.value || 2);
-      updateExample({ reset_after_raids: n, max_skip_raids: m });
+  ['s-reset-after','s-max-skip'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      updateExample(
+        Number(document.getElementById('s-reset-after').value || 6),
+        Number(document.getElementById('s-max-skip').value || 2)
+      );
     });
   });
 
-  function updateExample(rules) {
-    const n = rules?.reset_after_raids || Number(document.getElementById("s-reset-after")?.value || 6);
-    const m = rules?.max_skip_raids || Number(document.getElementById("s-max-skip")?.value || 2);
-    const el = document.getElementById("example-text");
+  function updateExample(n, m) {
+    const el = document.getElementById('example-text');
     if (!el) return;
     el.innerHTML = `
       Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
-      Чтобы снова участвовать в основном ролле на перчатки, нужно:<br>
-      — посетить рейды так, чтобы прошло <strong>${n} рейдов</strong> с момента выигрыша<br>
-      — при этом пропустить не более <strong>${m} из ${n}</strong> рейдов<br><br>
-      Если игрок пропустит <strong>${m + 1} или больше</strong> рейдов подряд —
-      счётчик заморозится и не будет двигаться пока он не вернётся.<br><br>
-      <span style="color:var(--success)">✅ Разблокируется:</span> посетил ${n - m} из ${n} рейдов<br>
-      <span style="color:var(--warning)">⚠️ Заморожен:</span> пропустил более ${m} рейдов<br>
+      Чтобы снова участвовать, нужно пройти <strong>${n} рейдов</strong>, пропустив не более <strong>${m}</strong>.<br><br>
+      Если пропустить <strong>${m + 1}+</strong> рейдов подряд — счётчик замораживается до возвращения.<br><br>
+      <span style="color:var(--success)">✅ Разблокировка:</span> посетил ${n - m} из ${n} рейдов<br>
+      <span style="color:var(--warning)">⚠ Заморожен:</span> пропустил более ${m} рейдов<br>
       <span style="color:var(--danger)">🔒 Заблокирован:</span> только что выиграл
     `;
   }
 
-  // ─── Утилиты ──────────────────────────────────────────
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-  }
-  window.closeModal = closeModal;
+  // ── Утилиты ───────────────────────────────────────
+  window.closeModal = (id) => document.getElementById(id)?.classList.remove('open');
 
-  function showToast(msg, type = "success") {
-    const t = document.createElement("div");
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
     t.className = `toast ${type}`;
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
   }
 
-  // ─── Закрытие модалок по клику вне ───────────────────
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.classList.remove('open');
-      }
-    });
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
 </script>
 </body>
