@@ -9,7 +9,7 @@
 
   <style>
     /* ══════════════════════════════════════════════════
-       ПЕРЕМЕННЫЕ СТРАНИЦЫ
+       ПЕРЕМЕННЫЕ
     ══════════════════════════════════════════════════ */
     :root {
       --gold:        #c9aa71;
@@ -18,47 +18,88 @@
       --gold-glow:   rgba(201,170,113,0.18);
       --gold-border: rgba(201,170,113,0.28);
       --epic:        #a855f7;
-      --epic-glow:   rgba(168,85,247,0.22);
       --epic2:       #8b5cf6;
     }
 
     /* ══════════════════════════════════════════════════
-       ФИЛЬТРЫ
+       ЗАГОЛОВОК СТРАНИЦЫ
+    ══════════════════════════════════════════════════ */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+      font-size: 2rem;
+      letter-spacing: 0.01em;
+    }
+
+    /* ══════════════════════════════════════════════════
+       ФИЛЬТРЫ — минималистичные, без рамки-блока
     ══════════════════════════════════════════════════ */
     .filter-bar {
       display: flex;
-      gap: 0.6rem;
-      margin-bottom: 1.5rem;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
       align-items: center;
-      padding: 0.75rem 1rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
     }
 
-    .filter-bar input {
-      max-width: 200px;
-      background: var(--bg-card2);
-      border-color: var(--border);
-      font-size: 0.85rem;
-      height: 34px;
-      padding: 0 0.75rem;
+    .filter-search-wrap {
+      position: relative;
+      flex: 0 0 220px;
+    }
+
+    .filter-search-wrap svg {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      stroke: var(--text-muted);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+
+    .filter-search-wrap input {
+      padding-left: 2.1rem;
+      height: 38px;
+      font-size: 0.875rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .filter-search-wrap input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px var(--gold-glow);
     }
 
     .filter-bar select {
+      height: 38px;
+      font-size: 0.875rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0 2rem 0 0.75rem;
+      color: var(--text-muted);
       width: auto;
-      background: var(--bg-card2);
-      border-color: var(--border);
-      font-size: 0.85rem;
-      height: 34px;
-      padding: 0 0.5rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7591' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .filter-bar input:focus,
     .filter-bar select:focus {
       border-color: var(--gold);
       box-shadow: 0 0 0 2px var(--gold-glow);
+      color: var(--text);
     }
 
     /* ══════════════════════════════════════════════════
@@ -66,8 +107,8 @@
     ══════════════════════════════════════════════════ */
     .items-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
     }
 
     /* ══════════════════════════════════════════════════
@@ -78,14 +119,14 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.9rem 1rem;
+      padding: 1.1rem 1.1rem 1rem;
       display: flex;
-      gap: 0.9rem;
-      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.85rem;
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-      min-height: 100px;
       overflow: visible;
+      min-height: 160px;
     }
 
     .item-card::before {
@@ -96,38 +137,45 @@
       opacity: 0;
       transition: opacity 0.2s;
       pointer-events: none;
-      background: linear-gradient(135deg, var(--gold-glow) 0%, transparent 60%);
+      background: linear-gradient(135deg, var(--gold-glow) 0%, transparent 55%);
     }
 
     .item-card:hover {
       border-color: var(--gold-border);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--gold-border);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--gold-border);
       z-index: 10;
     }
 
     .item-card:hover::before { opacity: 1; }
 
-    /* Полосы качества слева */
     .item-card.quality-epic {
       border-left: 3px solid var(--epic);
-      box-shadow: inset 4px 0 12px rgba(168,85,247,0.12);
+      box-shadow: inset 4px 0 14px rgba(168,85,247,0.1);
     }
 
     .item-card.quality-epic_ii {
       border-left: 3px solid var(--epic2);
-      box-shadow: inset 4px 0 12px rgba(139,92,246,0.15);
+      box-shadow: inset 4px 0 14px rgba(139,92,246,0.12);
     }
 
     .item-card.quality-epic:hover,
     .item-card.quality-epic_ii:hover {
-      box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--gold-border), inset 4px 0 16px rgba(168,85,247,0.2);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--gold-border),
+                  inset 4px 0 18px rgba(168,85,247,0.18);
     }
 
-    /* ── Картинка предмета ── */
+    /* ── Верхний ряд: картинка + инфо + кнопки ── */
+    .item-card-top {
+      display: flex;
+      gap: 0.9rem;
+      align-items: flex-start;
+    }
+
+    /* ── Картинка ── */
     .item-img-wrap {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 8px;
       overflow: hidden;
       flex-shrink: 0;
@@ -152,39 +200,35 @@
       display: block;
     }
 
-    /* Скрываем обёртку если нет картинки */
     .item-img-wrap:has(img:not([src])),
     .item-img-wrap:has(img[src=""]),
-    .item-img-wrap:has(img[src="#"]) {
-      display: none;
-    }
+    .item-img-wrap:has(img[src="#"]) { display: none; }
 
-    /* Заглушка без картинки */
     .item-img-placeholder {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 8px;
       background: var(--bg-card2);
       border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       flex-shrink: 0;
     }
 
-    /* ── Текст карточки ── */
+    /* ── Текст ── */
     .item-info {
       flex: 1;
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.3rem;
+      gap: 0.4rem;
     }
 
     .item-name {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 1rem;
       color: var(--text);
       line-height: 1.3;
       font-family: 'HeaderFont', var(--font);
@@ -204,27 +248,26 @@
     }
 
     .slot-badge {
-      font-size: 0.62rem;
+      font-size: 0.7rem;
       color: var(--gold);
       background: rgba(201,170,113,0.1);
-      padding: 0.1rem 0.5rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 4px;
       border: 1px solid var(--gold-border);
       font-weight: 600;
-      letter-spacing: 0.02em;
     }
 
     .weapon-type-badge {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
       background: var(--bg-card2);
-      padding: 0.1rem 0.4rem;
+      padding: 0.15rem 0.45rem;
       border-radius: 4px;
       border: 1px solid var(--border);
     }
 
     .boss-tag {
-      font-size: 0.62rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
       display: flex;
       align-items: center;
@@ -232,40 +275,43 @@
     }
 
     .boss-icon-small {
-      width: 14px;
-      height: 14px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       object-fit: cover;
       background: var(--bg-card2);
     }
 
+    /* ── Описание внизу карточки ── */
     .item-desc {
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       display: -webkit-box;
-      -webkit-line-clamp: 1;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      opacity: 0.7;
       font-style: italic;
+      line-height: 1.5;
+      opacity: 0.75;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
     }
 
     /* ── Кнопки редактирования ── */
     .item-actions {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
       flex-shrink: 0;
     }
 
     .item-actions .btn {
       padding: 0.2rem 0.45rem;
-      font-size: 0.7rem;
-      line-height: 1.4;
+      font-size: 0.72rem;
     }
 
     /* ══════════════════════════════════════════════════
-       ПОЛНАЯ КАРТОЧКА (тултип при наведении)
+       ТУЛТИП (полная карточка)
     ══════════════════════════════════════════════════ */
     .full-card {
       display: none;
@@ -286,7 +332,6 @@
       pointer-events: none;
     }
 
-    /* Декоративный угол */
     .full-card::before {
       content: '';
       position: absolute;
@@ -296,289 +341,125 @@
       border-radius: var(--radius) var(--radius) 0 0;
     }
 
-    .item-card:nth-child(3n) .full-card {
-      left: auto;
-      right: calc(100% + 14px);
-    }
-
+    .item-card:nth-child(3n) .full-card { left: auto; right: calc(100% + 14px); }
     .item-card:hover .full-card { display: block; }
 
     .full-card::-webkit-scrollbar { width: 4px; }
     .full-card::-webkit-scrollbar-track { background: var(--bg-card2); border-radius: 4px; }
     .full-card::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
 
-    /* ── Шапка полной карточки ── */
-    .fc-header {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 0.75rem;
-      align-items: flex-start;
-    }
+    .fc-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: flex-start; }
 
     .fc-img {
-      width: 72px;
-      height: 72px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: var(--bg-card2);
-      flex-shrink: 0;
-      border: 1px solid var(--gold-border);
+      width: 72px; height: 72px; border-radius: 8px;
+      object-fit: cover; background: var(--bg-card2);
+      flex-shrink: 0; border: 1px solid var(--gold-border);
     }
 
     .fc-title { flex: 1; min-width: 0; }
 
     .fc-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--gold-soft);
-      font-family: 'HeaderFont', var(--font);
-      line-height: 1.3;
+      font-size: 1.1rem; font-weight: 700; color: var(--gold-soft);
+      font-family: 'HeaderFont', var(--font); line-height: 1.3;
       text-shadow: 0 0 16px rgba(201,170,113,0.3);
     }
 
-    .fc-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.35rem 0.5rem;
-      margin-top: 5px;
-    }
-
-    .fc-quality {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
+    .fc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin-top: 5px; }
+    .fc-quality { font-size: 0.7rem; color: var(--text-muted); }
     .fc-quality.epic-label { color: #c4b5fd; }
 
     .fc-level {
-      font-size: 0.68rem;
-      color: var(--gold-dim);
-      background: rgba(201,170,113,0.08);
-      padding: 0.1rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid var(--gold-border);
+      font-size: 0.68rem; color: var(--gold-dim);
+      background: rgba(201,170,113,0.08); padding: 0.1rem 0.5rem;
+      border-radius: 4px; border: 1px solid var(--gold-border);
     }
 
-    /* ── Урон/Защита ── */
     .fc-damage {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--gold-soft);
-      padding: 0.45rem 0.6rem;
-      background: rgba(201,170,113,0.07);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--gold-border);
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 1rem; font-weight: 700; color: var(--gold-soft);
+      padding: 0.45rem 0.6rem; background: rgba(201,170,113,0.07);
+      border-radius: var(--radius-sm); border: 1px solid var(--gold-border);
+      margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
     }
 
-    .damage-label {
-      font-weight: 400;
-      color: var(--text-muted);
-      font-size: 0.78rem;
-    }
+    .damage-label { font-weight: 400; color: var(--text-muted); font-size: 0.78rem; }
 
-    /* ── Характеристики ── */
     .fc-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.2rem 1rem;
-      margin: 0.5rem 0;
-      padding: 0.5rem 0.6rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.2rem 1rem; margin: 0.5rem 0;
+      padding: 0.5rem 0.6rem; background: var(--bg-card2);
+      border-radius: var(--radius-sm); border: 1px solid var(--border);
     }
 
-    .stat {
-      font-size: 0.8rem;
-      display: flex;
-      justify-content: space-between;
-      gap: 0.4rem;
-    }
-
+    .stat { font-size: 0.8rem; display: flex; justify-content: space-between; gap: 0.4rem; }
     .stat-label { color: var(--text-muted); }
     .stat-value { color: var(--gold-soft); font-weight: 600; }
 
-    /* ── Сетовый бонус ── */
     .fc-set-bonus {
-      margin: 0.5rem 0;
-      padding: 0.55rem 0.75rem;
-      background: rgba(201,170,113,0.06);
-      border-radius: var(--radius-sm);
+      margin: 0.5rem 0; padding: 0.55rem 0.75rem;
+      background: rgba(201,170,113,0.06); border-radius: var(--radius-sm);
       border: 1px solid var(--gold-border);
     }
 
-    .set-name {
-      font-weight: 700;
-      color: var(--gold);
-      font-size: 0.88rem;
-      font-family: 'HeaderFont', var(--font);
-    }
-
+    .set-name { font-weight: 700; color: var(--gold); font-size: 0.88rem; font-family: 'HeaderFont', var(--font); }
     .set-pieces { display: flex; flex-direction: column; gap: 0.2rem; margin-top: 0.3rem; }
+    .set-piece { font-size: 0.78rem; color: var(--text-muted); }
+    .pieces-label { color: var(--gold-dim); font-weight: 600; margin-right: 0.3rem; }
 
-    .set-piece {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    .pieces-label {
-      color: var(--gold-dim);
-      font-weight: 600;
-      margin-right: 0.3rem;
-    }
-
-    /* ── Эффект ── */
     .fc-effect {
-      display: flex;
-      gap: 0.75rem;
-      margin: 0.6rem 0;
-      padding: 0.65rem 0.75rem;
-      background: rgba(168,85,247,0.07);
-      border-radius: var(--radius-sm);
+      display: flex; gap: 0.75rem; margin: 0.6rem 0; padding: 0.65rem 0.75rem;
+      background: rgba(168,85,247,0.07); border-radius: var(--radius-sm);
       border: 1px solid rgba(168,85,247,0.25);
     }
 
-    .effect-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 4px;
-      object-fit: cover;
-      background: var(--bg-card2);
-      flex-shrink: 0;
-    }
-
+    .effect-icon { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); flex-shrink: 0; }
     .effect-info { flex: 1; font-size: 0.8rem; }
     .effect-name { font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
     .effect-desc { color: var(--text-muted); }
 
-    /* ── Свойства ── */
-    .fc-properties {
-      margin-top: 0.65rem;
-      padding-top: 0.65rem;
-      border-top: 1px solid var(--border);
-    }
+    .fc-properties { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--border); }
+    .prop-label { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .prop-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
+    .prop-tag { background: var(--bg-card2); padding: 0.12rem 0.5rem; border-radius: 4px; font-size: 0.68rem; border: 1px solid var(--border); color: var(--text-muted); }
 
-    .prop-label {
-      font-size: 0.62rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
+    .fc-flavor { margin-top: 0.65rem; padding-top: 0.65rem; font-size: 0.75rem; color: var(--text-muted); font-style: italic; border-top: 1px solid var(--border); line-height: 1.5; }
 
-    .prop-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: 0.25rem;
-    }
-
-    .prop-tag {
-      background: var(--bg-card2);
-      padding: 0.12rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.68rem;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-    }
-
-    /* ── Флейвор / Описание ── */
-    .fc-flavor {
-      margin-top: 0.65rem;
-      padding-top: 0.65rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-style: italic;
-      border-top: 1px solid var(--border);
-      line-height: 1.5;
-    }
-
-    /* ── Босс ── */
-    .fc-boss {
-      margin-top: 0.65rem;
-      padding-top: 0.65rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .fc-boss .boss-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card2);
-      border: 1px solid var(--gold-border);
-      flex-shrink: 0;
-    }
-
+    .fc-boss { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+    .fc-boss .boss-icon { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; background: var(--bg-card2); border: 1px solid var(--gold-border); flex-shrink: 0; }
     .fc-boss .boss-name { color: var(--gold-dim); font-weight: 500; }
 
     /* ══════════════════════════════════════════════════
-       МОБИЛЬНЫЙ ТУЛТИП
+       АДАПТИВ ТУЛТИПА
     ══════════════════════════════════════════════════ */
     @media (max-width: 992px) {
       .item-card .full-card {
-        position: fixed;
-        left: 50%;
-        right: auto;
-        top: 50%;
+        position: fixed; left: 50%; right: auto; top: 50%;
         transform: translate(-50%, -50%);
-        width: 440px;
-        max-width: 92vw;
-        max-height: 80vh;
+        width: 440px; max-width: 92vw; max-height: 80vh;
       }
     }
 
-    /* ══════════════════════════════════════════════════
-       ПЛАНШЕТЫ
-    ══════════════════════════════════════════════════ */
     @media (max-width: 768px) {
-      .items-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .item-card:nth-child(2n) .full-card {
-        left: auto;
-        right: calc(100% + 12px);
-      }
-
-      .item-card:nth-child(3n) .full-card {
-        left: calc(100% + 12px);
-        right: auto;
-      }
-
+      .items-grid { grid-template-columns: repeat(2, 1fr); }
+      .item-card:nth-child(2n) .full-card { left: auto; right: calc(100% + 12px); }
+      .item-card:nth-child(3n) .full-card { left: calc(100% + 12px); right: auto; }
       .fc-stats { grid-template-columns: 1fr; }
+      .filter-search-wrap { flex: 1 1 100%; }
     }
 
     @media (max-width: 480px) {
       .items-grid { grid-template-columns: 1fr; }
-      .item-card .full-card {
-        left: calc(100% + 12px);
-        right: auto;
-      }
+      .item-card .full-card { left: calc(100% + 12px); right: auto; }
     }
 
     /* ══════════════════════════════════════════════════
-       МОДАЛЬНОЕ ОКНО
+       МОДАЛКА
     ══════════════════════════════════════════════════ */
     .modal-overlay {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,0.75);
       backdrop-filter: blur(6px);
       z-index: 200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       padding: 1rem;
     }
 
@@ -587,293 +468,87 @@
       border: 1px solid var(--gold-border);
       border-radius: var(--radius);
       padding: 1.5rem;
-      width: 100%;
-      max-width: 680px;
-      max-height: 90vh;
-      overflow-y: auto;
-      position: relative;
+      width: 100%; max-width: 680px; max-height: 90vh;
+      overflow-y: auto; position: relative;
     }
 
     .modal::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
       border-radius: var(--radius) var(--radius) 0 0;
     }
 
     .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
     }
 
-    .modal-header h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--gold-soft);
-      font-family: 'HeaderFont', var(--font);
-    }
+    .modal-header h3 { font-size: 1.15rem; font-weight: 700; color: var(--gold-soft); font-family: 'HeaderFont', var(--font); }
 
-    .btn-close {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.25rem;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0.25rem;
-      border-radius: 4px;
-      transition: background 0.15s, color 0.15s;
-    }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; line-height: 1; padding: 0.25rem; border-radius: 4px; transition: background 0.15s, color 0.15s; }
+    .btn-close:hover { background: var(--bg-card2); color: var(--text); }
 
-    .btn-close:hover {
-      background: var(--bg-card2);
-      color: var(--text);
-    }
+    .form-section { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+    .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-    /* ── Секции формы ── */
-    .form-section {
-      margin-bottom: 1.25rem;
-      padding-bottom: 1.25rem;
-      border-bottom: 1px solid var(--border);
-    }
+    .section-title { font-size: 0.72rem; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; }
 
-    .form-section:last-of-type {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .section-title {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--gold-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 0.75rem;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     .form-row .form-group { margin-bottom: 0; }
 
-    /* ── Загрузка картинки ── */
-    .image-upload-area {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.75rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      background: var(--bg-card2);
-    }
-
-    .image-upload-area:hover {
-      border-color: var(--gold-border);
-      background: rgba(201,170,113,0.04);
-    }
-
-    .image-preview {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 6px;
-      margin: 0 auto 0.3rem;
-      display: block;
-    }
-
-    .upload-hint {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
+    .image-upload-area { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; background: var(--bg-card2); }
+    .image-upload-area:hover { border-color: var(--gold-border); background: rgba(201,170,113,0.04); }
+    .image-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin: 0 auto 0.3rem; display: block; }
+    .upload-hint { font-size: 0.7rem; color: var(--text-muted); }
     .image-upload-area.small { padding: 0.4rem; }
     .image-upload-area.small .image-preview { width: 48px; height: 48px; }
     .image-upload-area.small .upload-hint { font-size: 0.6rem; }
 
-    /* ── Динамические поля ── */
     .dynamic-fields { margin-top: 0.25rem; }
 
-    .field-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 0.3rem;
-      background: var(--bg-card2);
-      padding: 0.3rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      transition: border-color 0.15s;
-    }
-
+    .field-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.3rem; background: var(--bg-card2); padding: 0.3rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); transition: border-color 0.15s; }
     .field-row:hover { border-color: var(--gold-border); }
 
-    .field-row input {
-      padding: 0.3rem 0.5rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text);
-      font-size: 0.85rem;
-      transition: border-color 0.15s;
-    }
-
-    .field-row input:focus {
-      outline: none;
-      border-color: var(--gold-border);
-    }
+    .field-row input { padding: 0.3rem 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 0.85rem; transition: border-color 0.15s; }
+    .field-row input:focus { outline: none; border-color: var(--gold-border); }
 
     .field-label-input { flex: 2; }
     .field-value-input { flex: 1; }
 
-    .btn-remove-field {
-      background: none;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-      font-size: 0.9rem;
-      padding: 0.1rem 0.3rem;
-      line-height: 1;
-      border-radius: 4px;
-      transition: background 0.15s;
-      flex-shrink: 0;
-    }
-
+    .btn-remove-field { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.9rem; padding: 0.1rem 0.3rem; line-height: 1; border-radius: 4px; transition: background 0.15s; flex-shrink: 0; }
     .btn-remove-field:hover { background: rgba(239,68,68,0.15); }
 
     .field-single .field-label-input { flex: 1; }
     .field-single .field-value-input { display: none; }
 
-    .btn-add-field {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.75rem;
-      margin-top: 0.3rem;
-      background: var(--bg-card2);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-      height: 30px;
-    }
-
-    .btn-add-field:hover {
-      border-color: var(--gold-border);
-      color: var(--gold);
-    }
-
+    .btn-add-field { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; padding: 0.25rem 0.75rem; margin-top: 0.3rem; background: var(--bg-card2); color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: border-color 0.15s, color 0.15s; height: 30px; }
+    .btn-add-field:hover { border-color: var(--gold-border); color: var(--gold); }
     .btn-add-field .icon { font-size: 0.9rem; line-height: 1; }
 
-    /* ── Кнопки формы ── */
-    .form-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-
+    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
     .form-actions .btn { min-width: 120px; }
 
     .modal .form-group textarea { min-height: 80px; resize: vertical; }
 
-    /* ── Урон в форме ── */
-    .damage-inputs {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
+    .damage-inputs { display: flex; align-items: center; gap: 0.5rem; }
     .damage-inputs input { width: 80px; text-align: center; }
     .damage-inputs span { color: var(--text-muted); font-size: 0.9rem; }
 
-    /* ── Сетовый бонус тумблер ── */
-    .toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-top: 0.25rem;
-    }
-
+    .toggle-wrap { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; }
     .toggle-label { font-size: 0.85rem; color: var(--text-muted); }
 
-    .toggle-switch {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; cursor: pointer; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-switch .slider { position: absolute; inset: 0; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 12px; transition: background 0.2s, border-color 0.2s; }
+    .toggle-switch .slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 2px; bottom: 2px; background: var(--text-muted); border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+    .toggle-switch input:checked + .slider { background: var(--gold-dim); border-color: var(--gold-dim); }
+    .toggle-switch input:checked + .slider::before { transform: translateX(20px); background: var(--gold); }
 
-    .toggle-switch .slider {
-      position: absolute;
-      inset: 0;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .toggle-switch .slider::before {
-      content: '';
-      position: absolute;
-      height: 18px;
-      width: 18px;
-      left: 2px;
-      bottom: 2px;
-      background: var(--text-muted);
-      border-radius: 50%;
-      transition: transform 0.2s, background 0.2s;
-    }
-
-    .toggle-switch input:checked + .slider {
-      background: var(--gold-dim);
-      border-color: var(--gold-dim);
-    }
-
-    .toggle-switch input:checked + .slider::before {
-      transform: translateX(20px);
-      background: var(--gold);
-    }
-
-    .set-bonus-fields {
-      margin-top: 0.75rem;
-      padding: 0.75rem;
-      background: var(--bg-card2);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--gold-border);
-      display: none;
-    }
-
+    .set-bonus-fields { margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-card2); border-radius: var(--radius-sm); border: 1px solid var(--gold-border); display: none; }
     .set-bonus-fields.visible { display: block; }
 
-    .field-hidden { display: none !important; }
-
-    /* ── Ошибка ── */
-    #modal-error {
-      font-size: 0.85rem;
-    }
-
-    /* ── Утилиты ── */
     .hidden { display: none !important; }
 
-    /* ══════════════════════════════════════════════════
-       АДАПТИВ МОДАЛКИ
-    ══════════════════════════════════════════════════ */
     @media (max-width: 768px) {
       .modal { padding: 1rem; }
       .form-row { grid-template-columns: 1fr; }
@@ -882,8 +557,6 @@
       .field-value-input { flex: 1 1 100%; }
       .form-actions { flex-direction: column; }
       .form-actions .btn { width: 100%; min-width: unset; }
-      .damage-inputs { flex-wrap: wrap; }
-      .toggle-wrap { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -895,14 +568,17 @@
 <main class="container">
 
   <div class="page-header">
-    <h2>🗡️ Предметы</h2>
-    <button class="btn btn-primary hidden" id="btn-add-item">
-      + Добавить предмет
-    </button>
+    <h2>Предметы</h2>
+    <button class="btn btn-primary hidden" id="btn-add-item">+ Добавить предмет</button>
   </div>
 
   <div class="filter-bar">
-    <input type="text" id="filter-search" placeholder="🔍 Поиск по названию..." />
+    <div class="filter-search-wrap">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="filter-search" placeholder="Поиск по названию..." />
+    </div>
     <select id="filter-slot"><option value="">Все слоты</option></select>
     <select id="filter-quality"><option value="">Все качества</option></select>
     <select id="filter-boss"><option value="">Все боссы</option></select>
@@ -914,9 +590,7 @@
 
 </main>
 
-<!-- ══════════════════════════════════════════════════
-     МОДАЛЬНОЕ ОКНО
-══════════════════════════════════════════════════ -->
+<!-- МОДАЛКА -->
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -928,7 +602,6 @@
 
     <div class="form-section">
       <div class="section-title">Основная информация</div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Название *</label>
@@ -936,12 +609,9 @@
         </div>
         <div class="form-group">
           <label>Слот *</label>
-          <select id="f-slot">
-            <option value="">— выбери слот —</option>
-          </select>
+          <select id="f-slot"><option value="">— выбери слот —</option></select>
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Качество</label>
@@ -955,13 +625,10 @@
           <input type="number" id="f-level" placeholder="12" min="1" max="99" />
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Босс *</label>
-          <select id="f-boss">
-            <option value="">— выбери босса —</option>
-          </select>
+          <select id="f-boss"><option value="">— выбери босса —</option></select>
         </div>
         <div class="form-group" id="weapon-type-group">
           <label>Тип оружия</label>
@@ -978,7 +645,6 @@
           </select>
         </div>
       </div>
-
       <div class="form-row" id="damage-row">
         <div class="form-group" id="damage-min-group">
           <label id="damage-min-label">Урон (мин)</label>
@@ -989,7 +655,6 @@
           <input type="number" id="f-damage-max" placeholder="155" min="0" step="1" />
         </div>
       </div>
-
       <div class="form-group">
         <label>Картинка</label>
         <div class="image-upload-area" id="upload-area">
@@ -1010,14 +675,11 @@
     <div class="form-section">
       <div class="section-title">Характеристики</div>
       <div class="dynamic-fields" id="stats-fields"></div>
-      <button class="btn-add-field" data-target="stats">
-        <span class="icon">+</span> Добавить характеристику
-      </button>
+      <button class="btn-add-field" data-target="stats"><span class="icon">+</span> Добавить характеристику</button>
     </div>
 
     <div class="form-section" id="effect-section">
       <div class="section-title">Эффект</div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Название эффекта</label>
@@ -1031,7 +693,6 @@
           </div>
         </div>
       </div>
-
       <div class="form-group">
         <label>Описание эффекта</label>
         <input type="text" id="f-effect-desc" placeholder="Описание эффекта..." />
@@ -1040,7 +701,6 @@
 
     <div class="form-section" id="set-bonus-section" style="display:none;">
       <div class="section-title">Сетовый бонус</div>
-
       <div class="toggle-wrap">
         <span class="toggle-label">Включить сетовый бонус</span>
         <label class="toggle-switch">
@@ -1048,7 +708,6 @@
           <span class="slider"></span>
         </label>
       </div>
-
       <div class="set-bonus-fields" id="set-bonus-fields">
         <div class="form-group">
           <label>Название бонуса</label>
@@ -1068,9 +727,7 @@
     <div class="form-section">
       <div class="section-title">Возможные свойства</div>
       <div class="dynamic-fields" id="properties-fields"></div>
-      <button class="btn-add-field" data-target="properties">
-        <span class="icon">+</span> Добавить свойство
-      </button>
+      <button class="btn-add-field" data-target="properties"><span class="icon">+</span> Добавить свойство</button>
     </div>
 
     <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
@@ -1084,25 +741,28 @@
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, isAdmin, currentRole, currentUser } from "../js/modules/auth.js";
+  import { initAuth, authReady, getRole } from "../js/modules/auth.js";
   import { getItems, addItem, updateItem, deleteItem } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
-  import { compressImage, pickFile, setItemImage } from "../js/modules/images.js";
+  import { compressImage, pickFile } from "../js/modules/images.js";
   import { SLOTS, QUALITY } from "../js/constants.js";
 
   initNavbar();
 
+  // ── Ждём реального результата authReady ──────────
+  // authReady резолвится с { user, role }, используем его напрямую
   await initAuth();
-  await authReady;
+  const authResult = await authReady;
+  const userRole = authResult?.role || 'guest';
 
-  // ── Кнопка только для админа ──────────────────────
+  // ── Кнопка только для админа ─────────────────────
   const addBtn = document.getElementById('btn-add-item');
-  if (isAdmin()) {
+  if (userRole === 'admin') {
     addBtn.classList.remove('hidden');
-    addBtn.onclick = openAdd;
+    addBtn.addEventListener('click', openAdd);
   }
 
-  // ── Слоты и качества в фильтрах и форме ──────────
+  // ── Слоты ────────────────────────────────────────
   const slotSelect = document.getElementById("f-slot");
   const filterSlot = document.getElementById("filter-slot");
   SLOTS.forEach(slot => {
@@ -1115,192 +775,138 @@
     filterQuality.innerHTML += `<option value="${q.id}">${q.label}</option>`;
   });
 
-  // ── Боссы ─────────────────────────────────────────
+  // ── Боссы ────────────────────────────────────────
   let allBosses = [];
 
   async function loadBosses() {
-    try {
-      allBosses = await getBosses();
-      populateBossSelects();
-    } catch (error) {
-      console.error('Ошибка загрузки боссов:', error);
-      allBosses = [];
-    }
+    try { allBosses = await getBosses(); populateBossSelects(); }
+    catch (e) { console.error('Ошибка загрузки боссов:', e); }
   }
 
   function populateBossSelects() {
     const bossSelect = document.getElementById('f-boss');
     const filterBoss = document.getElementById('filter-boss');
-    const currentValue = bossSelect.value;
-    const filterValue = filterBoss.value;
+    const cv = bossSelect.value, fv = filterBoss.value;
     bossSelect.innerHTML = `<option value="">— выбери босса —</option>`;
     filterBoss.innerHTML = `<option value="">Все боссы</option>`;
-    allBosses.forEach(boss => {
-      bossSelect.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
-      filterBoss.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
+    allBosses.forEach(b => {
+      bossSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+      filterBoss.innerHTML += `<option value="${b.id}">${b.name}</option>`;
     });
-    if (currentValue) bossSelect.value = currentValue;
-    if (filterValue) filterBoss.value = filterValue;
+    if (cv) bossSelect.value = cv;
+    if (fv) filterBoss.value = fv;
   }
 
-  // ── Поля по слоту ─────────────────────────────────
-  const weaponTypeGroup  = document.getElementById('weapon-type-group');
-  const damageMinGroup   = document.getElementById('damage-min-group');
-  const damageMaxGroup   = document.getElementById('damage-max-group');
-  const damageMinLabel   = document.getElementById('damage-min-label');
-  const damageMaxLabel   = document.getElementById('damage-max-label');
-  const effectSection    = document.getElementById('effect-section');
-  const setBonusSection  = document.getElementById('set-bonus-section');
-  const setBonusToggle   = document.getElementById('f-set-bonus-toggle');
-  const setBonusFields   = document.getElementById('set-bonus-fields');
+  // ── Поля по слоту ────────────────────────────────
+  const weaponTypeGroup = document.getElementById('weapon-type-group');
+  const damageMinGroup  = document.getElementById('damage-min-group');
+  const damageMaxGroup  = document.getElementById('damage-max-group');
+  const damageMinLabel  = document.getElementById('damage-min-label');
+  const damageMaxLabel  = document.getElementById('damage-max-label');
+  const effectSection   = document.getElementById('effect-section');
+  const setBonusSection = document.getElementById('set-bonus-section');
+  const setBonusToggle  = document.getElementById('f-set-bonus-toggle');
+  const setBonusFields  = document.getElementById('set-bonus-fields');
 
   const armorSlots     = ['helmet','cloak','chest','gloves','pants','boots'];
   const accessorySlots = ['necklace','belt','ring','bracelet'];
-  const weaponSlot     = 'weapon';
 
   function updateFieldsBySlot(slotId) {
-    const isWeapon    = slotId === weaponSlot;
+    const isWeapon    = slotId === 'weapon';
     const isArmor     = armorSlots.includes(slotId);
     const isAccessory = accessorySlots.includes(slotId);
 
     weaponTypeGroup.style.display = isWeapon ? 'block' : 'none';
+    effectSection.style.display   = isWeapon ? 'block' : 'none';
+    setBonusSection.style.display = isWeapon ? 'none'  : 'block';
 
     if (isWeapon) {
-      damageMinGroup.style.display = 'block';
-      damageMaxGroup.style.display = 'block';
-      damageMinLabel.textContent = 'Урон (мин)';
-      damageMaxLabel.textContent = 'Урон (макс)';
+      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'block';
+      damageMinLabel.textContent = 'Урон (мин)'; damageMaxLabel.textContent = 'Урон (макс)';
     } else if (isArmor) {
-      damageMinGroup.style.display = 'block';
-      damageMaxGroup.style.display = 'block';
-      damageMinLabel.textContent = 'Защита (ближний бой)';
-      damageMaxLabel.textContent = 'Защита (дальний бой)';
+      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'block';
+      damageMinLabel.textContent = 'Защита (ближний)'; damageMaxLabel.textContent = 'Защита (дальний)';
     } else if (isAccessory) {
-      damageMinGroup.style.display = 'block';
-      damageMaxGroup.style.display = 'none';
+      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'none';
       damageMinLabel.textContent = 'Защита (магия)';
     } else {
-      damageMinGroup.style.display = 'none';
-      damageMaxGroup.style.display = 'none';
+      damageMinGroup.style.display = 'none'; damageMaxGroup.style.display = 'none';
     }
 
-    effectSection.style.display   = isWeapon ? 'block' : 'none';
-    setBonusSection.style.display  = isWeapon ? 'none' : 'block';
-
-    if (!isWeapon) {
-      setBonusToggle.checked = false;
-      setBonusFields.classList.remove('visible');
-    }
+    if (!isWeapon) { setBonusToggle.checked = false; setBonusFields.classList.remove('visible'); }
   }
 
-  slotSelect.addEventListener('change', function() {
-    updateFieldsBySlot(this.value);
-  });
+  slotSelect.addEventListener('change', function() { updateFieldsBySlot(this.value); });
+  setBonusToggle.addEventListener('change', function() { setBonusFields.classList.toggle('visible', this.checked); });
 
-  setBonusToggle.addEventListener('change', function() {
-    setBonusFields.classList.toggle('visible', this.checked);
-  });
-
-  // ── Динамические поля ─────────────────────────────
+  // ── Динамические поля ────────────────────────────
   function addField(containerId, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return;
     const row = document.createElement('div');
     row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
-    if (type === 'single') {
-      row.innerHTML = `
-        <input type="text" placeholder="Введите свойство..." class="field-label-input" />
-        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
-      `;
-    } else {
-      row.innerHTML = `
-        <input type="text" placeholder="Название" class="field-label-input" />
-        <input type="text" placeholder="Значение" class="field-value-input" />
-        <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
-      `;
-    }
+    row.innerHTML = type === 'single'
+      ? `<input type="text" placeholder="Введите свойство..." class="field-label-input" />
+         <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`
+      : `<input type="text" placeholder="Название" class="field-label-input" />
+         <input type="text" placeholder="Значение" class="field-value-input" />
+         <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`;
     container.appendChild(row);
-    const firstInput = row.querySelector('input');
-    if (firstInput) setTimeout(() => firstInput.focus(), 50);
+    setTimeout(() => row.querySelector('input')?.focus(), 50);
   }
 
   function getFields(containerId, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return [];
-    const rows = container.querySelectorAll('.field-row');
-    const result = [];
-    rows.forEach(row => {
+    return [...container.querySelectorAll('.field-row')].reduce((acc, row) => {
       const inputs = row.querySelectorAll('input');
       if (type === 'single') {
-        const val = inputs[0]?.value.trim();
-        if (val) result.push(val);
+        const v = inputs[0]?.value.trim();
+        if (v) acc.push(v);
       } else {
-        const label = inputs[0]?.value.trim() || '';
-        const value = inputs[1]?.value.trim() || '';
-        if (label || value) result.push({ label, value });
+        const l = inputs[0]?.value.trim() || '', v = inputs[1]?.value.trim() || '';
+        if (l || v) acc.push({ label: l, value: v });
       }
-    });
-    return result;
+      return acc;
+    }, []);
   }
 
   function setFields(containerId, data, type = 'pair') {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    if (type === 'single') {
-      data.forEach(val => {
-        const row = document.createElement('div');
-        row.className = 'field-row field-single';
-        row.innerHTML = `
-          <input type="text" placeholder="Введите свойство..." class="field-label-input" value="${val}" />
-          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
-        `;
-        container.appendChild(row);
-      });
-    } else {
-      data.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'field-row';
-        row.innerHTML = `
-          <input type="text" placeholder="Название" class="field-label-input" value="${item.label || ''}" />
-          <input type="text" placeholder="Значение" class="field-value-input" value="${item.value || ''}" />
-          <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>
-        `;
-        container.appendChild(row);
-      });
-    }
+    data.forEach(item => {
+      const row = document.createElement('div');
+      row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
+      row.innerHTML = type === 'single'
+        ? `<input type="text" class="field-label-input" value="${item}" />
+           <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`
+        : `<input type="text" class="field-label-input" value="${item.label || ''}" />
+           <input type="text" class="field-value-input" value="${item.value || ''}" />
+           <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`;
+      container.appendChild(row);
+    });
   }
 
   document.querySelectorAll('.btn-add-field').forEach(btn => {
     btn.addEventListener('click', function() {
-      const target = this.dataset.target;
-      if (target === 'properties') {
-        addField('properties-fields', 'single');
-      } else {
-        addField(`${target}-fields`, 'pair');
-      }
+      const t = this.dataset.target;
+      addField(t === 'properties' ? 'properties-fields' : `${t}-fields`, t === 'properties' ? 'single' : 'pair');
     });
   });
 
-  ['stats-fields', 'properties-fields'].forEach(id => {
-    document.getElementById(id).innerHTML = '';
-  });
-
-  // ── Картинка эффекта ──────────────────────────────
+  // ── Картинка эффекта ─────────────────────────────
   let currentEffectImage = null;
-
   document.getElementById('effect-upload-area').addEventListener('click', async () => {
     const file = await pickFile();
     if (!file) return;
-    const base64 = await compressImage(file);
-    currentEffectImage = base64;
-    const preview = document.getElementById('effect-preview');
-    preview.src = base64;
-    preview.classList.remove('hidden');
+    currentEffectImage = await compressImage(file);
+    const ep = document.getElementById('effect-preview');
+    ep.src = currentEffectImage; ep.classList.remove('hidden');
     document.getElementById('effect-upload-hint').style.display = 'none';
   });
 
-  // ── Данные ────────────────────────────────────────
+  // ── Данные ───────────────────────────────────────
   let allItems = [];
   let currentImageBase64 = null;
 
@@ -1309,27 +915,20 @@
       allItems = await getItems();
       populateBossFilter();
       renderItems();
-    } catch (error) {
-      console.error("Ошибка загрузки предметов:", error);
+    } catch (e) {
+      console.error("Ошибка загрузки предметов:", e);
       document.getElementById("items-grid").innerHTML = `<div class="text-danger">Не удалось загрузить предметы</div>`;
     }
   }
 
   function populateBossFilter() {
-    const bossIds = [...new Set(allItems.map(item => item.boss_id).filter(Boolean))];
-    const bossNames = [];
-    bossIds.forEach(id => {
-      const boss = allBosses.find(b => b.id === id);
-      if (boss) bossNames.push({ id: boss.id, name: boss.name });
-    });
-    bossNames.sort((a, b) => a.name.localeCompare(b.name));
+    const bossIds = [...new Set(allItems.map(i => i.boss_id).filter(Boolean))];
+    const names = bossIds.map(id => allBosses.find(b => b.id === id)).filter(Boolean).sort((a,b) => a.name.localeCompare(b.name));
     const select = document.getElementById("filter-boss");
-    const currentValue = select.value;
+    const cv = select.value;
     select.innerHTML = `<option value="">Все боссы</option>`;
-    bossNames.forEach(boss => {
-      select.innerHTML += `<option value="${boss.id}">${boss.name}</option>`;
-    });
-    if (currentValue) select.value = currentValue;
+    names.forEach(b => { select.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
+    if (cv) select.value = cv;
   }
 
   function renderItems() {
@@ -1339,7 +938,7 @@
     const bossId  = document.getElementById("filter-boss").value;
 
     const list = allItems.filter(item => {
-      if (search && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
+      if (search  && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
       if (slot    && item.slot    !== slot)    return false;
       if (quality && item.quality !== quality) return false;
       if (bossId  && item.boss_id !== bossId)  return false;
@@ -1347,143 +946,95 @@
     });
 
     const grid = document.getElementById("items-grid");
-    if (!list.length) {
-      grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`;
-      return;
-    }
-
+    if (!list.length) { grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`; return; }
     grid.innerHTML = "";
     list.forEach(item => grid.appendChild(buildCard(item)));
   }
 
-  // ── Вспомогательные ───────────────────────────────
-  function getWeaponTypeLabel(type) {
-    const types = {
-      'bow':'🏹 Лук','staff':'🪄 Посох','twohand_sword':'⚔️ Двуручный меч',
-      'crossbow':'🎯 Арбалеты','wand':'✨ Жезл','daggers':'🗡️ Кинжалы',
-      'sword_shield':'🛡️ Щит и меч','spear':'🔱 Копье'
-    };
-    return types[type] || type;
-  }
+  // ── Вспомогательные ──────────────────────────────
+  const weaponTypeLabels = { bow:'🏹 Лук', staff:'🪄 Посох', twohand_sword:'⚔️ Двуручный меч', crossbow:'🎯 Арбалеты', wand:'✨ Жезл', daggers:'🗡️ Кинжалы', sword_shield:'🛡️ Щит и меч', spear:'🔱 Копье' };
+  const slotEmojis = { helmet:'🪖', cloak:'🧥', chest:'🛡️', gloves:'🧤', pants:'👖', boots:'👢', necklace:'📿', belt:'🔗', ring:'💍', bracelet:'⌚', weapon:'⚔️' };
 
-  function getBossName(bossId) {
-    return allBosses.find(b => b.id === bossId)?.name || '—';
-  }
+  const getBossName  = id => allBosses.find(b => b.id === id)?.name || '—';
+  const getBossIcon  = id => { const b = allBosses.find(b => b.id === id); return b?.icon ? `/assets/img/bosses/${b.icon}` : null; };
+  const getQuality   = id => QUALITY.find(q => q.id === id)?.label || id;
+  const getSlotLabel = id => SLOTS.find(s => s.id === id)?.label || id;
+  const getDmgLabel  = id => id === 'weapon' ? '🗡️ Урон' : armorSlots.includes(id) ? '🛡️ Защита' : '🛡️ Защ. (магия)';
 
-  function getBossIcon(bossId) {
-    const boss = allBosses.find(b => b.id === bossId);
-    return boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
-  }
-
-  function getQualityLabel(quality) {
-    return QUALITY.find(q => q.id === quality)?.label || quality;
-  }
-
-  function getSlotEmoji(slotId) {
-    const map = {
-      helmet:'🪖', cloak:'🧥', chest:'🛡️', gloves:'🧤', pants:'👖', boots:'👢',
-      necklace:'📿', belt:'🔗', ring:'💍', bracelet:'⌚', weapon:'⚔️'
-    };
-    return map[slotId] || '🎒';
-  }
-
-  function getDamageLabel(slotId) {
-    if (slotId === 'weapon') return '🗡️ Урон';
-    if (['helmet','cloak','chest','gloves','pants','boots'].includes(slotId)) return '🛡️ Защита';
-    if (['necklace','belt','ring','bracelet'].includes(slotId)) return '🛡️ Защ. (магия)';
-    return '';
-  }
-
-  // ── Сборка карточки ───────────────────────────────
+  // ── Карточка ─────────────────────────────────────
   function buildCard(item) {
-    const slotLabel  = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
-    const canEdit    = isAdmin();
-
-    const stats      = item.stats      || [];
-    const effect     = item.effect     || {};
-    const setBonus   = item.set_bonus  || {};
+    const slotLabel = getSlotLabel(item.slot);
+    const canEdit   = userRole === 'admin';
+    const bossName  = getBossName(item.boss_id);
+    const bossIcon  = getBossIcon(item.boss_id);
+    const hasImage  = !!(item.image);
+    const isWeapon  = item.slot === 'weapon';
+    const stats     = item.stats      || [];
+    const effect    = item.effect     || {};
+    const setBonus  = item.set_bonus  || {};
     const properties = item.properties || [];
-    const desc       = item.description || '';
-    const level      = item.level      || '';
-    const damageMin  = item.damage_min || '';
-    const damageMax  = item.damage_max || '';
-    const isWeapon   = item.slot === 'weapon';
-    const bossName   = getBossName(item.boss_id);
-    const bossIcon   = getBossIcon(item.boss_id);
-    const qualityLabel = getQualityLabel(item.quality);
-    const hasImage   = item.image && item.image !== '';
-    const slotEmoji  = getSlotEmoji(item.slot);
+    const desc      = item.description || '';
+    const shortName = item.name?.length > 24 ? item.name.substring(0, 24) + '…' : item.name;
 
     const card = document.createElement("div");
     card.className = `item-card quality-${item.quality || "epic"}`;
 
-    const shortName = item.name && item.name.length > 22
-      ? item.name.substring(0, 22) + '…'
-      : item.name;
-
     card.innerHTML = `
-      ${hasImage
-        ? `<div class="item-img-wrap">
-             <img class="item-img" id="img-${item.id}" alt="${item.name || 'Предмет'}" src="${item.image}" onerror="this.parentElement.style.display='none'" />
-           </div>`
-        : `<div class="item-img-placeholder">${slotEmoji}</div>`
-      }
+      <div class="item-card-top">
+        ${hasImage
+          ? `<div class="item-img-wrap">
+               <img class="item-img" alt="${item.name || ''}" src="${item.image}"
+                    onerror="this.parentElement.style.display='none'" />
+             </div>`
+          : `<div class="item-img-placeholder">${slotEmojis[item.slot] || '🎒'}</div>`}
 
-      <div class="item-info">
-        <div class="item-name" title="${item.name || 'Без названия'}">${shortName || 'Без названия'}</div>
-        <div class="item-meta">
-          <span class="slot-badge">${slotLabel}</span>
-          <span class="boss-tag">
-            ${bossIcon
-              ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />`
-              : '👹'}
-            ${bossName}
-          </span>
-          ${item.slot === 'weapon' && item.weapon_type
-            ? `<span class="weapon-type-badge">${getWeaponTypeLabel(item.weapon_type)}</span>`
-            : ''}
+        <div class="item-info">
+          <div class="item-name" title="${item.name || ''}">${shortName || 'Без названия'}</div>
+          <div class="item-meta">
+            <span class="slot-badge">${slotLabel}</span>
+            <span class="boss-tag">
+              ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'"/>` : '👹'}
+              ${bossName}
+            </span>
+            ${item.slot === 'weapon' && item.weapon_type
+              ? `<span class="weapon-type-badge">${weaponTypeLabels[item.weapon_type] || item.weapon_type}</span>`
+              : ''}
+          </div>
         </div>
-        ${desc ? `<div class="item-desc">${desc}</div>` : ''}
+
+        ${canEdit ? `
+          <div class="item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')" title="Редактировать">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name||'').replace(/'/g,"\\'")}')">🗑️</button>
+          </div>` : ''}
       </div>
 
-      ${canEdit ? `
-        <div class="item-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')" title="Редактировать">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name || '').replace(/'/g, "\\'")}')" title="Удалить">🗑️</button>
-        </div>
-      ` : ''}
+      ${desc ? `<div class="item-desc">${desc}</div>` : ''}
 
       <!-- ТУЛТИП -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" />
           <div class="fc-title">
             <div class="fc-name">${item.name || 'Без названия'}</div>
             <div class="fc-meta">
-              <span class="fc-quality ${item.quality?.startsWith('epic') ? 'epic-label' : ''}">${qualityLabel}</span>
-              ${level ? `<span class="fc-level">Ур. ${level}</span>` : ''}
+              <span class="fc-quality ${item.quality?.startsWith('epic') ? 'epic-label' : ''}">${getQuality(item.quality)}</span>
+              ${item.level ? `<span class="fc-level">Ур. ${item.level}</span>` : ''}
               <span class="fc-quality">· ${slotLabel}</span>
             </div>
           </div>
         </div>
 
-        ${damageMin || damageMax ? `
+        ${item.damage_min || item.damage_max ? `
           <div class="fc-damage">
-            <span class="damage-label">${getDamageLabel(item.slot)}</span>
-            ${damageMin}${damageMax ? ` — ${damageMax}` : ''}
-          </div>
-        ` : ''}
+            <span class="damage-label">${getDmgLabel(item.slot)}</span>
+            ${item.damage_min || ''}${item.damage_max ? ` — ${item.damage_max}` : ''}
+          </div>` : ''}
 
         ${stats.length ? `
           <div class="fc-stats">
-            ${stats.map(s => `
-              <div class="stat">
-                <span class="stat-label">${s.label || s}</span>
-                <span class="stat-value">${s.value || ''}</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
+            ${stats.map(s => `<div class="stat"><span class="stat-label">${s.label||s}</span><span class="stat-value">${s.value||''}</span></div>`).join('')}
+          </div>` : ''}
 
         ${!isWeapon && setBonus.name ? `
           <div class="fc-set-bonus">
@@ -1492,8 +1043,7 @@
               ${setBonus.piece2 ? `<div class="set-piece"><span class="pieces-label">(2):</span>${setBonus.piece2}</div>` : ''}
               ${setBonus.piece4 ? `<div class="set-piece"><span class="pieces-label">(4):</span>${setBonus.piece4}</div>` : ''}
             </div>
-          </div>
-        ` : ''}
+          </div>` : ''}
 
         ${isWeapon && (effect.name || effect.desc) ? `
           <div class="fc-effect">
@@ -1502,100 +1052,78 @@
               ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
               ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
             </div>
-          </div>
-        ` : ''}
+          </div>` : ''}
 
         ${properties.length ? `
           <div class="fc-properties">
             <div class="prop-label">Возможные свойства</div>
-            <div class="prop-list">
-              ${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
+            <div class="prop-list">${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}</div>
+          </div>` : ''}
 
         ${desc ? `<div class="fc-flavor">${desc}</div>` : ''}
 
         <div class="fc-boss">
-          ${bossIcon
-            ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />`
-            : `<span style="font-size:1.2rem;">👹</span>`}
+          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />` : `<span style="font-size:1.2rem">👹</span>`}
           <span class="boss-name">${bossName}</span>
         </div>
-      </div>
-    `;
+      </div>`;
 
     return card;
   }
 
-  // ── Загрузка картинки предмета ────────────────────
+  // ── Картинка предмета ────────────────────────────
   document.getElementById('upload-area').addEventListener('click', async () => {
     const file = await pickFile();
     if (!file) return;
-    const base64 = await compressImage(file);
-    currentImageBase64 = base64;
-    const preview = document.getElementById('img-preview');
-    preview.src = base64;
-    preview.classList.remove('hidden');
+    currentImageBase64 = await compressImage(file);
+    const p = document.getElementById('img-preview');
+    p.src = currentImageBase64; p.classList.remove('hidden');
     document.getElementById('upload-hint').style.display = 'none';
   });
 
-  // ── Модалка ───────────────────────────────────────
+  // ── Модалка ──────────────────────────────────────
   const modal      = document.getElementById('modal');
   const modalTitle = document.getElementById('modal-title');
   const editId     = document.getElementById('edit-id');
 
   function resetForm() {
     editId.value = '';
-    currentImageBase64 = null;
-    currentEffectImage = null;
+    currentImageBase64 = null; currentEffectImage = null;
     ['f-name','f-description','f-level','f-damage-min','f-damage-max',
-     'f-effect-name','f-effect-desc','f-set-name','f-set-2','f-set-4'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('f-boss').value = '';
-    document.getElementById('f-slot').value = '';
+     'f-effect-name','f-effect-desc','f-set-name','f-set-2','f-set-4']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('f-boss').value    = '';
+    document.getElementById('f-slot').value    = '';
     document.getElementById('f-quality').value = 'epic';
     document.getElementById('f-weapon-type').value = '';
     setBonusToggle.checked = false;
     setBonusFields.classList.remove('visible');
-
-    effectSection.style.display   = 'block';
-    setBonusSection.style.display  = 'none';
-    weaponTypeGroup.style.display  = 'block';
-    damageMinGroup.style.display   = 'block';
-    damageMaxGroup.style.display   = 'block';
+    effectSection.style.display = 'block';
+    setBonusSection.style.display = 'none';
+    weaponTypeGroup.style.display = 'block';
+    damageMinGroup.style.display  = 'block';
+    damageMaxGroup.style.display  = 'block';
     damageMinLabel.textContent = 'Урон (мин)';
     damageMaxLabel.textContent = 'Урон (макс)';
-
     document.getElementById('stats-fields').innerHTML = '';
     document.getElementById('properties-fields').innerHTML = '';
-
-    const preview = document.getElementById('img-preview');
-    preview.classList.add('hidden');
-    preview.src = '';
+    const p = document.getElementById('img-preview');
+    p.classList.add('hidden'); p.src = '';
     document.getElementById('upload-hint').style.display = '';
-
-    const effectPreview = document.getElementById('effect-preview');
-    effectPreview.classList.add('hidden');
-    effectPreview.src = '';
+    const ep = document.getElementById('effect-preview');
+    ep.classList.add('hidden'); ep.src = '';
     document.getElementById('effect-upload-hint').style.display = '';
-
     hideError();
   }
 
   window.openEdit = (id) => {
     const item = allItems.find(i => i.id === id);
     if (!item) return;
-
     resetForm();
     modalTitle.textContent = 'Редактировать предмет';
     editId.value = id;
-
-    const slotId = item.slot || '';
-    updateFieldsBySlot(slotId);
-
-    document.getElementById('f-slot').value        = slotId;
+    updateFieldsBySlot(item.slot || '');
+    document.getElementById('f-slot').value        = item.slot || '';
     document.getElementById('f-name').value        = item.name || '';
     document.getElementById('f-boss').value        = item.boss_id || '';
     document.getElementById('f-description').value = item.description || '';
@@ -1604,40 +1132,32 @@
     document.getElementById('f-damage-min').value  = item.damage_min || '';
     document.getElementById('f-damage-max').value  = item.damage_max || '';
     document.getElementById('f-weapon-type').value = item.weapon_type || '';
-
     if (item.effect) {
       document.getElementById('f-effect-name').value = item.effect.name || '';
       document.getElementById('f-effect-desc').value = item.effect.desc || '';
       if (item.effect.image) {
         currentEffectImage = item.effect.image;
         const ep = document.getElementById('effect-preview');
-        ep.src = item.effect.image;
-        ep.classList.remove('hidden');
+        ep.src = item.effect.image; ep.classList.remove('hidden');
         document.getElementById('effect-upload-hint').style.display = 'none';
       }
     }
-
     if (item.set_bonus) {
-      document.getElementById('f-set-name').value = item.set_bonus.name  || '';
+      document.getElementById('f-set-name').value = item.set_bonus.name   || '';
       document.getElementById('f-set-2').value    = item.set_bonus.piece2 || '';
       document.getElementById('f-set-4').value    = item.set_bonus.piece4 || '';
       if (item.set_bonus.name || item.set_bonus.piece2 || item.set_bonus.piece4) {
-        setBonusToggle.checked = true;
-        setBonusFields.classList.add('visible');
+        setBonusToggle.checked = true; setBonusFields.classList.add('visible');
       }
     }
-
     if (item.stats?.length)      setFields('stats-fields', item.stats, 'pair');
     if (item.properties?.length) setFields('properties-fields', item.properties, 'single');
-
     if (item.image) {
       currentImageBase64 = item.image;
-      const preview = document.getElementById('img-preview');
-      preview.src = item.image;
-      preview.classList.remove('hidden');
+      const p = document.getElementById('img-preview');
+      p.src = item.image; p.classList.remove('hidden');
       document.getElementById('upload-hint').style.display = 'none';
     }
-
     modal.classList.remove('hidden');
   };
 
@@ -1647,46 +1167,32 @@
     modal.classList.remove('hidden');
   }
 
-  function closeModal() {
-    modal.classList.add('hidden');
-    resetForm();
-  }
+  function closeModal() { modal.classList.add('hidden'); resetForm(); }
 
   document.getElementById('btn-modal-close').onclick = closeModal;
   document.getElementById('btn-cancel').onclick      = closeModal;
 
-  // ── Сохранение ────────────────────────────────────
+  // ── Сохранение ───────────────────────────────────
   document.getElementById('btn-save').onclick = async () => {
-    const name        = document.getElementById('f-name').value.trim();
-    const slot        = document.getElementById('f-slot').value;
-    const bossId      = document.getElementById('f-boss').value;
-    const description = document.getElementById('f-description').value.trim();
-    const quality     = document.getElementById('f-quality').value;
-    const level       = document.getElementById('f-level').value.trim();
-    const damageMin   = document.getElementById('f-damage-min').value.trim();
-    const damageMax   = document.getElementById('f-damage-max').value.trim();
-    const effectName  = document.getElementById('f-effect-name').value.trim();
-    const effectDesc  = document.getElementById('f-effect-desc').value.trim();
-    const setBonusEnabled = setBonusToggle.checked;
-    const setName     = document.getElementById('f-set-name').value.trim();
-    const set2        = document.getElementById('f-set-2').value.trim();
-    const set4        = document.getElementById('f-set-4').value.trim();
+    const name    = document.getElementById('f-name').value.trim();
+    const slot    = document.getElementById('f-slot').value;
+    const bossId  = document.getElementById('f-boss').value;
 
     if (!name)   return showError('Введи название');
     if (!slot)   return showError('Выбери слот');
     if (!bossId) return showError('Выбери босса');
 
-    const weaponType = document.getElementById('f-weapon-type').value || null;
-    const boss       = allBosses.find(b => b.id === bossId);
-    const bossName   = boss?.name || '';
-
-    const stats      = getFields('stats-fields', 'pair');
-    const properties = getFields('properties-fields', 'single');
+    const boss = allBosses.find(b => b.id === bossId);
+    const effectName = document.getElementById('f-effect-name').value.trim();
+    const effectDesc = document.getElementById('f-effect-desc').value.trim();
+    const setName    = document.getElementById('f-set-name').value.trim();
+    const set2       = document.getElementById('f-set-2').value.trim();
+    const set4       = document.getElementById('f-set-4').value.trim();
+    const setBonusEnabled = setBonusToggle.checked;
 
     const effect = {};
     if (effectName || effectDesc || currentEffectImage) {
-      effect.name = effectName;
-      effect.desc = effectDesc;
+      effect.name = effectName; effect.desc = effectDesc;
       if (currentEffectImage) effect.image = currentEffectImage;
     }
 
@@ -1698,80 +1204,55 @@
     }
 
     const data = {
-      name, slot, quality, level,
-      damage_min:  damageMin || null,
-      damage_max:  damageMax || null,
+      name, slot,
+      quality:     document.getElementById('f-quality').value,
+      level:       document.getElementById('f-level').value.trim(),
+      damage_min:  document.getElementById('f-damage-min').value.trim() || null,
+      damage_max:  document.getElementById('f-damage-max').value.trim() || null,
       boss_id:     bossId,
-      boss_name:   bossName,
-      description, stats,
+      boss_name:   boss?.name || '',
+      description: document.getElementById('f-description').value.trim(),
+      stats:       getFields('stats-fields', 'pair'),
       effect:      slot === 'weapon' ? effect : {},
       set_bonus:   slot !== 'weapon' ? setBonus : {},
-      properties,
+      properties:  getFields('properties-fields', 'single'),
       image:       currentImageBase64 || null,
-      weapon_type: weaponType
+      weapon_type: document.getElementById('f-weapon-type').value || null,
     };
 
     const btn = document.getElementById('btn-save');
-    btn.disabled    = true;
-    btn.textContent = 'Сохранение...';
-
+    btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
       const id = editId.value;
-      if (id) {
-        await updateItem(id, data);
-        showToast('Предмет обновлён');
-      } else {
-        await addItem(data);
-        showToast('Предмет добавлен');
-      }
-      closeModal();
-      await loadItems();
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
-      showError('Ошибка: ' + error.message);
+      if (id) { await updateItem(id, data); showToast('Предмет обновлён'); }
+      else    { await addItem(data);        showToast('Предмет добавлен'); }
+      closeModal(); await loadItems();
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
+      showError('Ошибка: ' + e.message);
     } finally {
-      btn.disabled    = false;
-      btn.textContent = 'Сохранить';
+      btn.disabled = false; btn.textContent = 'Сохранить';
     }
   };
 
-  // ── Удаление ──────────────────────────────────────
   window.confirmDelete = (id, name) => {
     if (!confirm(`Удалить «${name}»?`)) return;
     deleteItem(id)
-      .then(() => {
-        showToast('Предмет удалён');
-        loadItems();
-      })
-      .catch(error => {
-        console.error('Ошибка удаления:', error);
-        showToast('Ошибка удаления', 'error');
-      });
+      .then(() => { showToast('Предмет удалён'); loadItems(); })
+      .catch(e  => { console.error(e); showToast('Ошибка удаления', 'error'); });
   };
 
-  // ── Фильтры ───────────────────────────────────────
   document.getElementById('filter-search').addEventListener('input', renderItems);
   document.getElementById('filter-slot').addEventListener('change', renderItems);
   document.getElementById('filter-quality').addEventListener('change', renderItems);
   document.getElementById('filter-boss').addEventListener('change', renderItems);
 
-  // ── Утилиты ───────────────────────────────────────
-  function showError(msg) {
-    const el = document.getElementById('modal-error');
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-
-  function hideError() {
-    document.getElementById('modal-error').style.display = 'none';
-  }
-
+  function showError(msg) { const el = document.getElementById('modal-error'); el.textContent = msg; el.style.display = 'block'; }
+  function hideError()    { document.getElementById('modal-error').style.display = 'none'; }
   function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    const t = document.createElement('div');
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
   }
 
   await loadBosses();
