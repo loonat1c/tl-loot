@@ -1168,9 +1168,7 @@
       </button>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         ВКЛАДКА: ПОЛЬЗОВАТЕЛИ (только admin)
-    ══════════════════════════════════════════ -->
+    <!-- ВКЛАДКА: ПОЛЬЗОВАТЕЛИ (только admin) -->
     <div id="tab-users" class="tab-content active">
 
       <div class="toolbar">
@@ -1222,9 +1220,7 @@
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         ВКЛАДКА: МОДЕРАЦИЯ (admin + mod + gl)
-    ══════════════════════════════════════════ -->
+    <!-- ВКЛАДКА: МОДЕРАЦИЯ (admin + mod + gl) -->
     <div id="tab-moderation" class="tab-content">
 
       <div class="mod-filter-row" id="mod-filters">
@@ -1245,9 +1241,7 @@
       <div id="moderation-list"></div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         ВКЛАДКА: НАСТРОЙКИ (только admin)
-    ══════════════════════════════════════════ -->
+    <!-- ВКЛАДКА: НАСТРОЙКИ (только admin) -->
     <div id="tab-settings" class="tab-content">
       <div class="settings-layout">
 
@@ -1324,8 +1318,762 @@
   </div><!-- /admin-content -->
 </main>
 
-<!-- Модальные окна и скрипт остаются без изменений -->
-<!-- ... (весь JavaScript код из предыдущего ответа) ... -->
+<!-- МОДАЛКА: Смена роли -->
+<div class="modal-overlay" id="modal-role">
+  <div class="modal">
+    <div class="modal-title">
+      ▼ Смена роли
+      <button class="btn-close" onclick="closeRoleModal()">✕</button>
+    </div>
 
+    <div class="current-user-row" id="role-user-row">
+      <span class="cu-email" id="role-user-email">—</span>
+      <span id="role-user-name" style="font-size:0.8rem;color:var(--text-muted)">—</span>
+      <span style="font-size:0.75rem;color:var(--text-faint)">Текущая роль: <strong id="role-current-name" style="color:var(--accent-soft)">—</strong></span>
+    </div>
+
+    <div id="role-options">
+      <div class="role-option" data-role="user" onclick="selectRole('user')">
+        <span class="ro-icon">○</span>
+        <div>
+          <div class="ro-name">Пользователь</div>
+          <div class="ro-desc">Базовый доступ к системе</div>
+        </div>
+        <span class="ro-check">✓</span>
+      </div>
+      <div class="role-option" data-role="moderator" onclick="selectRole('moderator')">
+        <span class="ro-icon">▲</span>
+        <div>
+          <div class="ro-name">Модератор</div>
+          <div class="ro-desc">Модерирует персонажей</div>
+        </div>
+        <span class="ro-check">✓</span>
+      </div>
+      <div class="role-option" data-role="guild_leader" onclick="selectRole('guild_leader')">
+        <span class="ro-icon">♛</span>
+        <div>
+          <div class="ro-name">Глава гильдии</div>
+          <div class="ro-desc">Роллы и посещаемость</div>
+        </div>
+        <span class="ro-check">✓</span>
+      </div>
+      <div class="role-option" data-role="admin" onclick="selectRole('admin')">
+        <span class="ro-icon">◆</span>
+        <div>
+          <div class="ro-name">Администратор</div>
+          <div class="ro-desc">Полный доступ</div>
+        </div>
+        <span class="ro-check">✓</span>
+      </div>
+    </div>
+
+    <div class="err-msg" id="role-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-gold" id="btn-save-role" style="flex:1">Сохранить</button>
+      <button class="btn-cancel" onclick="closeRoleModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА: Новый пользователь -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-title">
+      + Добавить пользователя
+      <button class="btn-close" onclick="closeModal('modal-user')">✕</button>
+    </div>
+
+    <div class="info-box" style="margin-bottom:1rem;">
+      Создаётся учётная запись Firebase Auth + профиль с ролью <strong>Пользователь</strong>.
+    </div>
+
+    <div class="form-group">
+      <label>Имя пользователя</label>
+      <input type="text" id="new-user-name" placeholder="Имя в гильдии" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="new-user-email" placeholder="user@guild.com" />
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" id="new-user-password" placeholder="Минимум 6 символов" />
+    </div>
+
+    <div class="err-msg" id="user-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-gold" id="btn-create-user" style="flex:1">Создать</button>
+      <button class="btn-cancel" onclick="closeModal('modal-user')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initNavbar } from "../js/modules/navbar.js";
+  import { initAuth, authReady, currentUser, currentRole, isAdmin } from "../js/modules/auth.js";
+  import { db, auth } from "../js/firebase.js";
+  import { getPlayers } from "../js/modules/players.js";
+  import { getLootRules, saveLootRules } from "../js/modules/settings.js";
+  import { getPlayerLocks, removeSlotLock } from "../js/modules/locks.js";
+  import { getItems } from "../js/modules/items.js";
+  import { SLOTS, WEAPONS } from "../js/constants.js";
+  import {
+    collection, getDocs, doc, setDoc, deleteDoc, updateDoc,
+    query, orderBy, where, writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  initNavbar();
+  initAuth();
+
+  let allUsers = [];
+  let allCharacters = [];
+  let allItems = [];
+  let selectedUserId = null;
+  let selectedRole = null;
+  let currentFilter = 'pending';
+  let userRole = 'guest';
+
+  const ROLE_LABELS = {
+    admin: 'Администратор',
+    guild_leader: 'Глава гильдии',
+    moderator: 'Модератор',
+    user: 'Пользователь'
+  };
+
+  const ROLE_ICONS = {
+    admin: '◆',
+    guild_leader: '♛',
+    moderator: '▲',
+    user: '○'
+  };
+
+  // ── Авторизация ──────────────────────────────────
+  authReady.then(async (authData) => {
+    const user = authData?.user || null;
+    const role = authData?.role || 'guest';
+    userRole = role;
+
+    const allowed = ['admin', 'moderator', 'guild_leader'];
+    if (!user || !allowed.includes(role)) {
+      document.getElementById('access-denied').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('admin-content').classList.remove('hidden');
+
+    if (role !== 'admin') {
+      document.getElementById('tab-users-btn').classList.add('hidden');
+      document.getElementById('tab-settings-btn').classList.add('hidden');
+      switchTab('tab-moderation');
+    }
+
+    await loadCharactersForStats();
+    await loadUsers();
+    await loadModerationData();
+    loadSettings();
+    populatePlayerSelect();
+  });
+
+  // ── Переключение вкладок ─────────────────────────
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
+    const content = document.getElementById(tabId);
+    if (content) content.classList.add('active');
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const tabId = this.dataset.tab;
+      if ((tabId === 'tab-users' || tabId === 'tab-settings') && userRole !== 'admin') return;
+      switchTab(tabId);
+    });
+  });
+
+  // ── Легенда ролей ─────────────────────────────────
+  document.getElementById('btn-info-toggle')?.addEventListener('click', () => {
+    document.getElementById('roles-legend').classList.toggle('open');
+  });
+
+  // ── Загрузка персонажей (для счётчиков) ──────────
+  async function loadCharactersForStats() {
+    try {
+      const snap = await getDocs(collection(db, 'characters'));
+      allCharacters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      console.error('Ошибка загрузки персонажей:', e);
+      allCharacters = [];
+    }
+  }
+
+  function getCharsByUser(uid) {
+    return allCharacters.filter(c => c.user_id === uid && (c.status === 'approved' || c.approved === true));
+  }
+
+  function getApprovedCharName(uid) {
+    const c = allCharacters.find(c => c.user_id === uid && (c.status === 'approved' || c.approved === true));
+    return c?.name || null;
+  }
+
+  // ── Удаление персонажа ────────────────────────────
+  async function deleteCharacter(charId) {
+    if (userRole !== 'admin') { showToast('Только администратор может удалять персонажей', 'error'); return; }
+    const char = allCharacters.find(c => c.id === charId);
+    if (!char) return;
+    if (!confirm(`Удалить персонажа «${char.name}»?`)) return;
+    try {
+      await deleteDoc(doc(db, 'characters', charId));
+      showToast(`Персонаж «${char.name}» удалён`);
+      await loadCharactersForStats();
+      await loadModerationData();
+      await loadUsers();
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  }
+  window.deleteCharacter = deleteCharacter;
+
+  // ── Загрузка пользователей ────────────────────────
+  async function loadUsers() {
+    if (userRole !== 'admin') return;
+    const container = document.getElementById('users-list');
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const order = { admin: 0, guild_leader: 1, moderator: 2, user: 3 };
+      allUsers.sort((a, b) => (order[a.role] ?? 3) - (order[b.role] ?? 3));
+      renderUsers(allUsers);
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">✗</span><p>Ошибка загрузки</p></div>`;
+    }
+  }
+
+  function renderUsers(users) {
+    const container = document.getElementById('users-list');
+    const q = (document.getElementById('user-search')?.value || '').toLowerCase();
+    const filtered = users.filter(u =>
+      (u.username || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q)
+    );
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">⌕</span><p>Ничего не найдено</p></div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(u => {
+      const role = u.role || 'user';
+      const isSelf = u.id === currentUser?.uid;
+      const username = u.username || 'Без имени';
+      const avatarLetter = username.charAt(0).toUpperCase();
+      const chars = getCharsByUser(u.id);
+      const totalChars = allCharacters.filter(c => c.user_id === u.id).length;
+      const approvedCount = chars.length;
+      const canEdit = !isSelf && userRole === 'admin';
+
+      return `
+        <div class="user-card role-${role}" id="user-row-${u.id}">
+          <div class="user-avatar">${avatarLetter}</div>
+          <div class="user-identity">
+            <div class="user-email-line">
+              ${username}
+              ${isSelf ? `<span class="self-tag">Вы</span>` : ''}
+            </div>
+            <div class="user-character-line">
+              ${chars.length > 0
+                ? chars.map(c => `
+                    <span class="char-pill">
+                      ◆ ${c.name}
+                      ${canEdit ? `<button class="char-delete" onclick="deleteCharacter('${c.id}')" title="Удалить">✕</button>` : ''}
+                    </span>
+                  `).join('')
+                : `<span class="no-char">Нет персонажа</span>`
+              }
+            </div>
+            <div class="user-meta-row">
+              <span class="role-badge ${role}">${ROLE_ICONS[role]} ${ROLE_LABELS[role] || role}</span>
+              <span class="user-stat">◈ ${totalChars} персонажей</span>
+              <span class="user-stat">✓ ${approvedCount} одобрено</span>
+            </div>
+          </div>
+          ${canEdit ? `
+            <div class="user-actions">
+              <button class="action-btn" onclick="openRoleModal('${u.id}')" title="Сменить роль">▼</button>
+              <button class="action-btn danger" onclick="confirmDelete('${u.id}')" title="Удалить">✕</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('user-search')?.addEventListener('input', () => renderUsers(allUsers));
+
+  // ── Модалка роли ──────────────────────────────────
+  window.openRoleModal = (uid) => {
+    if (userRole !== 'admin') return;
+    const user = allUsers.find(u => u.id === uid);
+    if (!user) return;
+    selectedUserId = uid;
+    selectedRole = user.role || 'user';
+    const username = user.username || 'Без имени';
+    document.getElementById('role-user-email').textContent = username;
+    document.getElementById('role-user-name').textContent = '';
+    document.getElementById('role-current-name').textContent = ROLE_LABELS[selectedRole] || selectedRole;
+    document.getElementById('role-error').style.display = 'none';
+    document.querySelectorAll('.role-option').forEach(el => {
+      el.classList.remove('selected');
+    });
+    document.querySelector(`.role-option[data-role="${selectedRole}"]`)?.classList.add('selected');
+    document.getElementById('modal-role').classList.add('open');
+  };
+
+  window.selectRole = (role) => {
+    selectedRole = role;
+    document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`.role-option[data-role="${role}"]`)?.classList.add('selected');
+  };
+
+  window.closeRoleModal = () => {
+    document.getElementById('modal-role').classList.remove('open');
+    selectedUserId = null;
+    selectedRole = null;
+  };
+
+  document.getElementById('btn-save-role').addEventListener('click', async () => {
+    if (!selectedUserId || !selectedRole) return;
+    const user = allUsers.find(u => u.id === selectedUserId);
+    if (!user || user.role === selectedRole) {
+      document.getElementById('role-error').textContent = 'Роль уже установлена';
+      document.getElementById('role-error').style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('btn-save-role');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      await updateDoc(doc(db, 'users', selectedUserId), { role: selectedRole, updated_at: new Date().toISOString() });
+      showToast(`Роль изменена: ${ROLE_LABELS[selectedRole]}`);
+      closeRoleModal();
+      await loadUsers();
+    } catch (e) {
+      document.getElementById('role-error').textContent = e.message;
+      document.getElementById('role-error').style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Сохранить';
+    }
+  });
+
+  // ── Удаление пользователя ─────────────────────────
+  window.confirmDelete = async (uid) => {
+    if (userRole !== 'admin') return;
+    const user = allUsers.find(u => u.id === uid);
+    if (!user || uid === currentUser?.uid) { showToast('Нельзя удалить себя', 'error'); return; }
+    if (user.role === 'admin') { showToast('Нельзя удалить администратора', 'error'); return; }
+    if (!confirm(`Удалить «${user.username || 'пользователя'}»? Персонажи тоже будут удалены.`)) return;
+    try {
+      const charsQ = query(collection(db, 'characters'), where('user_id', '==', uid));
+      const charsSnap = await getDocs(charsQ);
+      const batch = writeBatch(db);
+      charsSnap.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      await deleteDoc(doc(db, 'users', uid));
+      showToast(`Пользователь удалён (${charsSnap.size} персонажей)`);
+      await loadUsers();
+      await loadModerationData();
+      await loadCharactersForStats();
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  };
+
+  // ── Добавление пользователя ───────────────────────
+  document.getElementById('btn-add-user')?.addEventListener('click', () => {
+    if (userRole !== 'admin') return;
+    ['new-user-name','new-user-email','new-user-password'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('user-error').style.display = 'none';
+    document.getElementById('modal-user').classList.add('open');
+  });
+
+  document.getElementById('btn-create-user')?.addEventListener('click', async () => {
+    const name  = document.getElementById('new-user-name').value.trim();
+    const email = document.getElementById('new-user-email').value.trim();
+    const pass  = document.getElementById('new-user-password').value;
+    const errEl = document.getElementById('user-error');
+    if (!name || !email || !pass) { errEl.textContent = 'Заполните все поля'; errEl.style.display = 'block'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Пароль минимум 6 символов'; errEl.style.display = 'block'; return; }
+    const btn = document.getElementById('btn-create-user');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db, 'users', cred.user.uid), { username: name, email, role: 'user', created_at: new Date().toISOString() });
+      closeModal('modal-user');
+      showToast('Пользователь создан');
+      await loadUsers();
+    } catch (e) {
+      let msg = e.message;
+      if (e.code === 'auth/email-already-in-use') msg = 'Email уже используется';
+      if (e.code === 'auth/invalid-email') msg = 'Некорректный email';
+      errEl.textContent = msg; errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Создать';
+    }
+  });
+
+  // ── Модерация ─────────────────────────────────────
+  async function loadModerationData() {
+    try {
+      allItems = await getItems();
+      const snap = await getDocs(query(collection(db, 'characters'), orderBy('created_at', 'desc')));
+      allCharacters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateModerationStats();
+      renderModeration();
+    } catch (e) { console.error('Ошибка модерации:', e); }
+  }
+
+  function updateModerationStats() {
+    const pending  = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved').length;
+    const approved = allCharacters.filter(c => c.status === 'approved' && !c.previous_status).length;
+    const rejected = allCharacters.filter(c => c.status === 'rejected').length;
+    document.getElementById('stat-pending').textContent  = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('stat-all').textContent      = allCharacters.length;
+    const badge = document.getElementById('pending-badge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
+  }
+
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      renderModeration();
+    });
+  });
+
+  function getWeaponLabel(weaponId) {
+    const weapon = WEAPONS.find(w => w.id === weaponId);
+    if (weapon) return weapon.label;
+    
+    const item = allItems.find(i => i.id === weaponId);
+    if (item) return item.name;
+    
+    const legacyWeaponMap = {
+      'weapon1': 'Лук',
+      'weapon2': 'Посох',
+      'weapon3': 'Жезл',
+      'weapon4': 'Двуручный меч',
+      'weapon5': 'Меч и щит',
+      'weapon6': 'Копьё',
+      'weapon7': 'Арбалет',
+      'weapon8': 'Кинжалы',
+      'bow': 'Лук',
+      'staff': 'Посох',
+      'wand': 'Жезл',
+      'greatsword': 'Двуручный меч',
+      'sword_shield': 'Меч и щит',
+      'spear': 'Копьё',
+      'crossbow': 'Арбалет',
+      'daggers': 'Кинжалы',
+    };
+    
+    return legacyWeaponMap[weaponId] || weaponId || '—';
+  }
+
+  function getSlotLabel(slotId) {
+    const slot = SLOTS.find(s => s.id === slotId);
+    if (slot) return slot.label;
+    
+    const legacySlotMap = {
+      'weapon1': 'Оружие',
+      'weapon2': 'Оружие',
+      'weapon3': 'Оружие',
+      'helmet': 'Шлем',
+      'cloak': 'Плащ',
+      'chest': 'Нагрудник',
+      'gloves': 'Перчатки',
+      'pants': 'Поножи',
+      'boots': 'Сапоги',
+      'necklace': 'Ожерелье',
+      'bracelet': 'Браслет',
+      'ring': 'Кольцо',
+      'belt': 'Пояс',
+    };
+    
+    return legacySlotMap[slotId] || slotId || '—';
+  }
+
+  function renderModeration() {
+    const container = document.getElementById('moderation-list');
+    let filtered = allCharacters;
+    if (currentFilter === 'pending')  filtered = allCharacters.filter(c => c.status === 'pending' || c.previous_status === 'approved');
+    if (currentFilter === 'approved') filtered = allCharacters.filter(c => c.status === 'approved' && !c.previous_status);
+    if (currentFilter === 'rejected') filtered = allCharacters.filter(c => c.status === 'rejected');
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">◆</span><p>Нет персонажей</p><small>Попробуйте другой фильтр</small></div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(char => {
+      const isEditPending = char.previous_status === 'approved';
+      const status = isEditPending ? 'pending' : char.status;
+      const statusLabel = {
+        pending:  isEditPending ? 'Изменение' : 'Ожидает',
+        approved: 'Одобрен',
+        rejected: 'Отклонён'
+      }[status] || 'Ожидает';
+
+      let weaponsText = '—';
+      if (char.weapons?.length) {
+        weaponsText = char.weapons.map((w, i) => {
+          const weaponLabel = getWeaponLabel(w);
+          return `${i + 1}: ${weaponLabel}`;
+        }).join(' / ');
+      }
+
+      let lootHtml = '';
+      if (char.desired_loot && Object.keys(char.desired_loot).length) {
+        const tags = Object.entries(char.desired_loot)
+          .filter(([_, id]) => id)
+          .map(([slot, itemId]) => {
+            const item = allItems.find(i => i.id === itemId);
+            const slotLabel = getSlotLabel(slot);
+            
+            if (item) {
+              return `<span class="loot-tag">${slotLabel}: ${item.name}</span>`;
+            } else if (slot === 'weapon1' || slot === 'weapon2' || slot === 'weapon3' || 
+                       slot === 'weapon4' || slot === 'weapon5' || slot === 'weapon6' || 
+                       slot === 'weapon7' || slot === 'weapon8') {
+              const weaponLabel = getWeaponLabel(itemId);
+              return `<span class="loot-tag">${slotLabel}: ${weaponLabel}</span>`;
+            } else {
+              return '';
+            }
+          }).join('');
+        if (tags) lootHtml = `<div class="mod-detail"><div class="d-label">Желаемый лут</div><div class="loot-tags">${tags}</div></div>`;
+      }
+
+      const isPending = char.status === 'pending' || char.previous_status === 'approved';
+
+      return `
+        <div class="mod-card" id="char-${char.id}">
+          <div class="mod-card-top">
+            <div>
+              <div class="mod-char-name">
+                ${char.name}
+                <span class="status-pill ${status}">${statusLabel}</span>
+              </div>
+              <div class="mod-user-email">◈ ${char.user_email || 'Неизвестно'}</div>
+            </div>
+          </div>
+
+          ${isEditPending ? `<div class="edit-pending-note">Изменение одобренного персонажа${char.edit_note ? ` — ${char.edit_note}` : ''}</div>` : ''}
+
+          <div class="mod-details">
+            <div class="mod-detail">
+              <div class="d-label">Оружие</div>
+              <div class="d-value">${weaponsText}</div>
+            </div>
+            <div class="mod-detail">
+              <div class="d-label">Дата заявки</div>
+              <div class="d-value">${char.created_at ? new Date(char.created_at).toLocaleDateString('ru-RU') : '—'}</div>
+            </div>
+            ${lootHtml}
+          </div>
+
+          ${char.moderation_note ? `<div class="mod-note">◈ ${char.moderation_note}</div>` : ''}
+          ${char.moderation_feedback ? `<div class="mod-feedback">Ответ: ${char.moderation_feedback}</div>` : ''}
+
+          ${isPending ? `
+            <div class="mod-actions">
+              <textarea id="feedback-${char.id}" placeholder="Комментарий (необязательно)..."></textarea>
+              <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                <button class="btn-approve" onclick="approveCharacter('${char.id}')">✓ Одобрить</button>
+                <button class="btn-reject" onclick="rejectCharacter('${char.id}')">✗ Отклонить</button>
+              </div>
+            </div>
+          ` : ''}
+
+          ${userRole === 'admin' ? `
+            <button class="btn-delete-char" onclick="deleteCharacter('${char.id}')">✕ Удалить персонажа</button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    window.approveCharacter = async (id) => {
+      const fb = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      await moderateCharacter(id, 'approved', fb);
+    };
+
+    window.rejectCharacter = async (id) => {
+      const fb = document.getElementById(`feedback-${id}`)?.value.trim() || null;
+      if (!fb && !confirm('Не указана причина отклонения. Продолжить?')) return;
+      await moderateCharacter(id, 'rejected', fb);
+    };
+  }
+
+  async function moderateCharacter(id, status, feedback) {
+    try {
+      const updates = {
+        status,
+        moderation_feedback: feedback || null,
+        moderated_by: currentUser?.uid || 'unknown',
+        moderated_at: new Date().toISOString()
+      };
+      const char = allCharacters.find(c => c.id === id);
+      if (char?.previous_status === 'approved' && status === 'approved') {
+        updates.previous_status = null;
+        updates.edit_note = null;
+      }
+      await updateDoc(doc(db, 'characters', id), updates);
+      showToast(status === 'approved' ? 'Персонаж одобрен' : 'Персонаж отклонён', status === 'approved' ? 'success' : 'error');
+      await loadModerationData();
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  }
+
+  // ── Блокировки ────────────────────────────────────
+  function populatePlayerSelect() {
+    const sel = document.getElementById('lock-player-select');
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— выберите персонажа —</option>`;
+    allCharacters.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+    });
+  }
+
+  document.getElementById('lock-player-select')?.addEventListener('change', async (e) => {
+    const id = e.target.value;
+    if (!id) {
+      document.getElementById('lock-list').innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Выберите персонажа выше</p>`;
+      return;
+    }
+    await renderLocks(id);
+  });
+
+  async function renderLocks(playerId) {
+    const container = document.getElementById('lock-list');
+    container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Загрузка...</p>`;
+    try {
+      const locks = await getPlayerLocks(playerId);
+      const entries = Object.entries(locks);
+      if (!entries.length) { container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Блокировок нет</p>`; return; }
+      container.innerHTML = entries.map(([slot, lock]) => {
+        const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+        const frozen = lock.raids_skipped > 2;
+        return `
+          <div class="lock-row">
+            <div class="lock-info">
+              <div class="lock-name">${slotLabel} ${frozen ? '⚠ заморожено' : ''}</div>
+              <div class="lock-detail">${lock.item_name} · ${lock.raids_attended}/${lock.raids_attended + lock.raids_skipped} рейдов</div>
+            </div>
+            <button class="btn-unlock" onclick="window.removeLock('${playerId}','${slot}')">Снять</button>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      container.innerHTML = `<p style="font-size:0.82rem;color:var(--danger)">Ошибка загрузки</p>`;
+    }
+  }
+
+  window.removeLock = async (playerId, slot) => {
+    if (userRole !== 'admin') { showToast('Только администратор может снимать блокировки', 'error'); return; }
+    const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
+    if (!confirm(`Снять блокировку «${slotLabel}»?`)) return;
+    try {
+      await removeSlotLock(playerId, slot);
+      showToast('Блокировка снята');
+      await renderLocks(playerId);
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
+    }
+  };
+
+  // ── Настройки ─────────────────────────────────────
+  function loadSettings() {
+    getLootRules().then(rules => {
+      const n = rules?.reset_after_raids ?? 6;
+      const m = rules?.max_skip_raids ?? 2;
+      document.getElementById('s-reset-after').value = n;
+      document.getElementById('s-max-skip').value = m;
+      updateExample(n, m);
+    }).catch(() => {
+      document.getElementById('s-reset-after').value = 6;
+      document.getElementById('s-max-skip').value = 2;
+      updateExample(6, 2);
+    });
+  }
+
+  document.getElementById('btn-save-rules')?.addEventListener('click', async () => {
+    if (userRole !== 'admin') { showToast('Только администратор может изменять настройки', 'error'); return; }
+    const n = Number(document.getElementById('s-reset-after').value);
+    const m = Number(document.getElementById('s-max-skip').value);
+    if (isNaN(n) || isNaN(m) || n < 1 || m < 0 || m >= n) {
+      alert('Некорректные значения. Пропусков должно быть меньше рейдов до сброса.');
+      return;
+    }
+    const btn = document.getElementById('btn-save-rules');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      await saveLootRules({ reset_after_raids: n, max_skip_raids: m });
+      const msg = document.getElementById('saved-rules-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2500);
+      updateExample(n, m);
+      showToast('Настройки сохранены');
+    } catch (e) {
+      alert('Ошибка: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Сохранить';
+    }
+  });
+
+  ['s-reset-after','s-max-skip'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      updateExample(
+        Number(document.getElementById('s-reset-after').value || 6),
+        Number(document.getElementById('s-max-skip').value || 2)
+      );
+    });
+  });
+
+  function updateExample(n, m) {
+    const el = document.getElementById('example-text');
+    if (!el) return;
+    el.innerHTML = `
+      Игрок выиграл <strong>перчатки</strong> в основном ролле.<br>
+      Чтобы снова участвовать, нужно пройти <strong>${n} рейдов</strong>, пропустив не более <strong>${m}</strong>.<br><br>
+      Если пропустить <strong>${m + 1}+</strong> рейдов подряд — счётчик замораживается до возвращения.<br><br>
+      <span style="color:var(--success)">✓ Разблокировка:</span> посетил ${n - m} из ${n} рейдов<br>
+      <span style="color:var(--warning)">⚠ Заморожен:</span> пропустил более ${m} рейдов<br>
+      <span style="color:var(--danger)">▲ Заблокирован:</span> только что выиграл
+    `;
+  }
+
+  // ── Утилиты ───────────────────────────────────────
+  window.closeModal = (id) => document.getElementById(id)?.classList.remove('open');
+
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+</script>
 </body>
 </html>
