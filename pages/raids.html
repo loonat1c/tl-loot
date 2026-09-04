@@ -1274,6 +1274,7 @@
     queue: 'main',
     rollResults: null,
     hasPendingWinner: false,
+    animationTimer: null,
   };
 
   function lucentIcon(size = 'small') {
@@ -1611,7 +1612,7 @@
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
       const item = allItems.find(i => i.id === lastWin.item_id);
-      return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде. Одна победа за рейд!` };
+      return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде` };
     }
 
     if (await hasWonItemInCurrentRaid(charId, itemId)) {
@@ -2097,7 +2098,6 @@
       
       activeRaid = updatedRaid;
       
-      allRaids = await getRaids();
       renderRaidList();
       await renderRaidDetail(updatedRaid);
     });
@@ -2485,6 +2485,8 @@
   window.confirmDeleteDrop = confirmDeleteDrop;
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw, itemQualityRaw) => {
+    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
+    
     rollHasResults = false;
     
     const tries = await getRaidTries(raidId);
@@ -2509,8 +2511,6 @@
     
     attendedPlayerIds = tryAttendedIds;
 
-    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-
     rollState = {
       dropId: dropId,
       raidId: raidId,
@@ -2529,6 +2529,7 @@
       queue: 'main',
       rollResults: null,
       hasPendingWinner: false,
+      animationTimer: null,
     };
 
     try {
@@ -2640,6 +2641,7 @@
         rollState.rollResults = data.roll_results || null;
         rollState.queue = data.roll_type || rollState.queue;
         updateRollUI();
+        if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
         return;
       }
 
@@ -2675,42 +2677,65 @@
     rollHasResults = true;
     updateRollUI();
 
-    const ticks = 12;
-    let tick = 0;
-    const interval = setInterval(() => {
-      tick++;
+    const totalDuration = 7000;
+    const startTime = Date.now();
+    
+    function animateRoll() {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / totalDuration, 1);
+      
       rollState.participants.forEach(p => {
         if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
       });
       renderRollParticipantsAnimating();
-
-      if (tick >= ticks) {
-        clearInterval(interval);
+      
+      if (progress < 1) {
+        const delay = 50 + progress * 450;
+        rollState.animationTimer = setTimeout(animateRoll, delay);
+      } else {
         if (rollState.rollResults) {
           rollState.participants = rollState.participants.map(p => {
             const final = rollState.rollResults.find(r => r.playerId === p.playerId);
             return { ...p, roll: final?.roll ?? p.roll };
           });
         }
+        rollState.animationTimer = null;
         finishRoll();
       }
-    }, 250);
+    }
+    
+    animateRoll();
   }
 
   function renderRollParticipantsAnimating() {
     const list = document.getElementById("roll-players-list");
-    list.innerHTML = '';
-    rollState.participants.filter(p => !p.isBlocked).forEach(p => {
-      const isMe = p.playerId === rollState.currentPlayerId;
-      const row  = document.createElement('div');
-      row.className = 'roll-player-row joined-row';
-      row.innerHTML = `
-        <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
-        <span class="roll-player-status">В ролле</span>
-        <span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>
-      `;
-      list.appendChild(row);
-    });
+    const rows = list.querySelectorAll('.roll-player-row');
+    const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
+    
+    if (rows.length !== activeParticipants.length) {
+      list.innerHTML = '';
+      activeParticipants.forEach(p => {
+        const isMe = p.playerId === rollState.currentPlayerId;
+        const row  = document.createElement('div');
+        row.className = 'roll-player-row joined-row';
+        row.innerHTML = `
+          <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
+          <span class="roll-player-status">В ролле</span>
+          <span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>
+        `;
+        list.appendChild(row);
+      });
+    } else {
+      rows.forEach((row, index) => {
+        const p = activeParticipants[index];
+        if (p) {
+          const diceElement = row.querySelector('.roll-dice-result');
+          if (diceElement) {
+            diceElement.innerHTML = `<span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}`;
+          }
+        }
+      });
+    }
   }
 
   function finishRoll() {
@@ -2842,7 +2867,7 @@
 
       const isAdminOrLeader = canStartRoll();
       
-      Promise.all(available.map(async (char) => {
+      Promise.allSettled(available.map(async (char) => {
         const isMe = char.id === rollState.currentPlayerId;
         if (!attendedPlayerIds.includes(char.id)) return null;
         const check = await canJoinCurrentQueue(char.id);
@@ -2853,7 +2878,10 @@
           return;
         }
         
-        const filtered = results.filter(r => r !== null);
+        const filtered = results
+          .filter(r => r.status === 'fulfilled' && r.value !== null)
+          .map(r => r.value);
+          
         const seenIds = new Set();
         const deduped = filtered.filter(({ char }) => {
           if (seenIds.has(char.id)) return false;
@@ -2905,7 +2933,7 @@
         console.error('Ошибка рендера доступных игроков:', err);
         renderAvailableTimeout = null;
       });
-    }, 50);
+    }, 100);
   }
 
   function updateResultCard() {
@@ -3113,6 +3141,11 @@
       rollState.hasPendingWinner = false;
       rollHasResults = false;
 
+      if (rollUnsubscribe) {
+        rollUnsubscribe();
+        rollUnsubscribe = null;
+      }
+
       showToast(`${rollState.winner.nickname} получает предмет!`);
       
       if (btn) btn.style.display = 'none';
@@ -3171,6 +3204,12 @@
 
   function closeRollModalForce() {
     closeModal("modal-roll");
+    
+    if (rollState.animationTimer) {
+      clearTimeout(rollState.animationTimer);
+      rollState.animationTimer = null;
+    }
+    
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     rollState.isRolling = false;
     rollHasResults = false;
