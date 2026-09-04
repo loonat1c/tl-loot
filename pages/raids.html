@@ -6,7 +6,6 @@
   <title>Рейды — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
-    /* ── Переменные для качеств ── */
     :root {
       --epic: #a855f7;
       --epic2: #8b5cf6;
@@ -89,18 +88,27 @@
     }
     .drop-row:last-child { border-bottom: none; }
     .drop-row:hover { background: var(--bg-card); border-radius: 4px; }
-    .drop-img  { 
+    
+    .drop-img { 
       width: 44px; 
       height: 44px; 
       border-radius: 8px; 
-      object-fit: cover; 
+      overflow: hidden;
       background: var(--bg-card2);
       border: 1px solid var(--border);
       position: relative;
-      overflow: hidden;
     }
     
-    /* ── Фоны для качеств в дропах ── */
+    .drop-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Фоны для качеств */
     .drop-img.quality-epic {
       background: #1a0a2e;
       border-color: rgba(168, 85, 247, 0.3);
@@ -120,11 +128,6 @@
       animation: epic-fog 4s ease-in-out infinite alternate;
       z-index: 0;
       pointer-events: none;
-    }
-    
-    .drop-img.quality-epic_ii img {
-      position: relative;
-      z-index: 1;
     }
     
     @keyframes epic-fog {
@@ -187,7 +190,6 @@
     }
     .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
 
-    /* ── Модалки ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
     .modal-overlay.open { opacity: 1; visibility: visible; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; }
@@ -202,17 +204,26 @@
     .item-search-row:last-child { border-bottom: none; }
     .item-search-row:hover   { background: var(--bg-card2); }
     .item-search-row.selected{ background: var(--accent-glow); border-left: 2px solid var(--accent); }
+    
     .item-search-img { 
       width: 36px; 
       height: 36px; 
       border-radius: 4px; 
-      object-fit: cover; 
+      overflow: hidden;
       background: var(--bg-card2);
       position: relative;
-      overflow: hidden;
+      flex-shrink: 0;
     }
     
-    /* ── Фон для epic II в поиске ── */
+    .item-search-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
     .item-search-img.quality-epic_ii {
       background: #1a0a2e;
     }
@@ -226,11 +237,6 @@
       animation: epic-fog 4s ease-in-out infinite alternate;
       z-index: 0;
       pointer-events: none;
-    }
-    
-    .item-search-img.quality-epic_ii img {
-      position: relative;
-      z-index: 1;
     }
 
     .property-select-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
@@ -470,7 +476,15 @@
       position: relative;
     }
     
-    /* Фон для epic II в модалке ролла */
+    .roll-modal-item-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
     .roll-modal-item-icon.quality-epic_ii {
       background: #1a0a2e;
     }
@@ -990,7 +1004,7 @@
     <div class="roll-modal-header">
       <div class="roll-modal-item-info">
         <div class="roll-modal-item-icon" id="roll-item-icon-container">
-          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;position:relative;z-index:1;" />
+          <img id="roll-item-img" src="" alt="" style="display:none;" />
           <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
         </div>
         <div>
@@ -1719,10 +1733,6 @@
       const img = wrap.querySelector(`#drop-img-${d.id}`);
       if (img) {
         setItemImage(img, d.item_image);
-        // Применяем класс качества к контейнеру
-        if (d.item_quality) {
-          img.classList.add(`quality-${d.item_quality}`);
-        }
       }
     });
     
@@ -1762,7 +1772,9 @@
     
     return `
       <div class="drop-row">
-        <img class="drop-img${qualityClass}" id="drop-img-${d.id}" alt="${d.item_name}" />
+        <div class="drop-img${qualityClass}">
+          <img id="drop-img-${d.id}" alt="${d.item_name}" />
+        </div>
         <div>
           <div class="drop-name">${d.item_name}</div>
           <div class="drop-detail">
@@ -2230,7 +2242,9 @@
       const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
       const qualityClass = item.quality ? ` quality-${item.quality}` : '';
       row.innerHTML = `
-        <img class="item-search-img${qualityClass}" alt="${item.name}" />
+        <div class="item-search-img${qualityClass}">
+          <img alt="${item.name}" />
+        </div>
         <div>
           <div style="font-weight:600">${item.name}</div>
           <div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div>
@@ -2352,7 +2366,6 @@
   window.confirmDeleteDrop = confirmDeleteDrop;
 
   window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw, itemQualityRaw) => {
-    // Сбрасываем ВСЕ состояние ролла при открытии нового
     rollHasResults = false;
     
     const tries = await getRaidTries(raidId);
@@ -2379,7 +2392,6 @@
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
-    // Полностью сбрасываем rollState для нового дропа
     rollState = {
       dropId: dropId,
       raidId: raidId,
@@ -2450,7 +2462,6 @@
     const iconContainer = document.getElementById("roll-item-icon-container");
     const dropItem = allItems.find(i => i.id === rollState.itemId);
     
-    // Применяем класс качества к контейнеру иконки
     if (iconContainer) {
       iconContainer.className = 'roll-modal-item-icon';
       if (rollState.itemQuality) {
@@ -2461,8 +2472,6 @@
     if (dropItem?.image) {
       setItemImage(imgEl, dropItem.image);
       imgEl.style.display = 'block';
-      imgEl.style.position = 'relative';
-      imgEl.style.zIndex = '1';
       fallEl.style.display = 'none';
     } else {
       imgEl.style.display = 'none';
