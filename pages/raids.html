@@ -1561,6 +1561,7 @@
 
   async function isSlotLocked(playerId, itemSlot, itemId) {
     const wins = await getPlayerWinsCached(playerId);
+     console.log('isSlotLocked | playerId:', playerId, '| wins:', JSON.stringify(wins)); // добавить
     const char = allCharacters.find(c => c.id === playerId);
     
     if (!char) return { locked: false, reason: '' };
