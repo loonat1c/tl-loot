@@ -3,209 +3,431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Предметы — TL Loot</title>
-
-  <link rel="stylesheet" href="../css/main.css" />
+  <title>DVScorp — Гильдейский трекер</title>
+  <link rel="stylesheet" href="css/main.css" />
 
   <style>
-    /* ══════════════════════════════════════════════════
-       ПЕРЕМЕННЫЕ
-    ══════════════════════════════════════════════════ */
-    :root {
-      --gold:        #c9aa71;
-      --gold-soft:   #e2c98a;
-      --gold-dim:    #8a6f3e;
-      --gold-glow:   rgba(201,170,113,0.18);
-      --gold-border: rgba(201,170,113,0.28);
-      --epic:        #a855f7;
-      --epic2:       #8b5cf6;
+    /* ══════════════════════════════════════════════
+       HERO / ПРИВЕТСТВИЕ
+    ══════════════════════════════════════════════ */
+    .home-hero {
+      position: relative;
+      padding: 2.5rem 0 2rem;
+      overflow: hidden;
     }
 
-    /* ══════════════════════════════════════════════════
-       ЗАГОЛОВОК СТРАНИЦЫ
-    ══════════════════════════════════════════════════ */
-    .page-header {
-      margin-bottom: 2rem;
+    .home-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 300px;
+      background: radial-gradient(ellipse at center,
+        rgba(124,58,237,0.18) 0%,
+        rgba(168,85,247,0.07) 45%,
+        transparent 70%);
+      pointer-events: none;
     }
 
-    .page-header h2 {
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px; height: 2px;
+      background: var(--accent-soft);
+      border-radius: 2px;
+    }
+
+    .hero-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #e2e8f0 0%, var(--accent-soft) 60%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-sub {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      max-width: 480px;
+    }
+
+    .hero-badge-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      border: 1px solid;
+    }
+
+    .hero-tag.purple {
+      background: rgba(124,58,237,0.12);
+      border-color: rgba(124,58,237,0.35);
+      color: var(--accent-soft);
+    }
+
+    .hero-tag.green {
+      background: rgba(34,197,94,0.1);
+      border-color: rgba(34,197,94,0.3);
+      color: var(--success);
+    }
+
+    .hero-tag.amber {
+      background: rgba(245,158,11,0.1);
+      border-color: rgba(245,158,11,0.3);
+      color: var(--warning);
+    }
+
+    .hero-crest {
+      position: relative;
+      width: 90px; height: 90px;
+      flex-shrink: 0;
+    }
+
+    .hero-crest-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(124,58,237,0.4);
+      animation: rotate-ring 8s linear infinite;
+    }
+
+    .hero-crest-ring::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 6px;
+      background: var(--accent-soft);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-soft);
+    }
+
+    @keyframes rotate-ring {
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-crest-inner {
+      position: absolute;
+      inset: 8px;
+      background: var(--bg-card2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 2rem;
-      letter-spacing: 0.01em;
+      border: 1px solid var(--border);
     }
 
-    /* ══════════════════════════════════════════════════
-       ФИЛЬТРЫ — минималистичные, без рамки-блока
-    ══════════════════════════════════════════════════ */
-    .filter-bar {
+    /* ══════════════════════════════════════════════
+       ОСНОВНОЙ LAYOUT
+    ══════════════════════════════════════════════ */
+    .home-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      align-items: start;
+      margin-top: 1.5rem;
+    }
+
+    /* ══════════════════════════════════════════════
+       СЕКЦИЯ СТАТИСТИКИ
+    ══════════════════════════════════════════════ */
+    .stats-section {}
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+    }
+
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--accent), var(--accent-soft)); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #16a34a, var(--success)); }
+    .stat-card.amber::before  { background: linear-gradient(90deg, #d97706, var(--warning)); }
+    .stat-card.blue::before   { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+
+    .stat-card:hover {
+      border-color: rgba(124,58,237,0.3);
+      box-shadow: 0 4px 20px rgba(124,58,237,0.08);
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+
+    .stat-card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .stat-card-icon {
+      font-size: 1.1rem;
+      opacity: 0.7;
+    }
+
+    .stat-card-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-family: 'HeaderFont', var(--font);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-card.purple .stat-card-value { color: var(--accent-soft); }
+    .stat-card.green  .stat-card-value { color: var(--success); }
+    .stat-card.amber  .stat-card-value { color: var(--warning); }
+    .stat-card.blue   .stat-card-value { color: #60a5fa; }
+
+    .stat-card-sub {
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .stat-loading {
+      display: inline-block;
+      width: 60px;
+      height: 28px;
+      background: linear-gradient(90deg, var(--bg-card2) 25%, var(--bg-hover) 50%, var(--bg-card2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ══════════════════════════════════════════════
+       ПОСЛЕДНИЙ РЕЙД — ПАНЕЛЬ
+    ══════════════════════════════════════════════ */
+    .last-raid-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: sticky;
+      top: 76px;
+    }
+
+    .last-raid-header {
+      padding: 1rem 1.2rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card2);
+    }
+
+    .last-raid-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .last-raid-title .live-dot {
+      width: 6px; height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .last-raid-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'HeaderFont', var(--font);
+    }
+
+    .last-raid-meta {
       display: flex;
       gap: 0.75rem;
-      margin-bottom: 2rem;
+      margin-top: 0.35rem;
       flex-wrap: wrap;
+    }
+
+    .last-raid-meta-item {
+      display: flex;
       align-items: center;
-    }
-
-    .filter-search-wrap {
-      position: relative;
-      flex: 0 0 220px;
-    }
-
-    .filter-search-wrap svg {
-      position: absolute;
-      left: 0.7rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 15px;
-      height: 15px;
-      stroke: var(--text-muted);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      pointer-events: none;
-    }
-
-    .filter-search-wrap input {
-      padding-left: 2.1rem;
-      height: 38px;
-      font-size: 0.875rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      width: 100%;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .filter-search-wrap input:focus {
-      border-color: var(--gold);
-      box-shadow: 0 0 0 2px var(--gold-glow);
-    }
-
-    .filter-bar select {
-      height: 38px;
-      font-size: 0.875rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0 2rem 0 0.75rem;
+      gap: 0.3rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      width: auto;
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7591' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.6rem center;
-      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .filter-bar select:focus {
-      border-color: var(--gold);
-      box-shadow: 0 0 0 2px var(--gold-glow);
-      color: var(--text);
+    .last-raid-meta-item .dot {
+      width: 3px; height: 3px;
+      background: var(--text-muted);
+      border-radius: 50%;
     }
 
-    /* ══════════════════════════════════════════════════
-       СЕТКА
-    ══════════════════════════════════════════════════ */
-    .items-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
+    .last-raid-body {
+      padding: 0.85rem 1.2rem;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
     }
 
-    /* ══════════════════════════════════════════════════
-       КАРТОЧКА ПРЕДМЕТА
-    ══════════════════════════════════════════════════ */
-    .item-card {
-      position: relative;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.1rem 1rem;
+    .last-raid-body::-webkit-scrollbar { width: 4px; }
+    .last-raid-body::-webkit-scrollbar-track { background: transparent; }
+    .last-raid-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .loot-sublabel {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      margin-top: 0.2rem;
+    }
+
+    .loot-item-row {
       display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-      overflow: visible;
-      min-height: 160px;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(42,48,71,0.6);
     }
 
-    .item-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--radius);
-      opacity: 0;
-      transition: opacity 0.2s;
-      pointer-events: none;
-      background: linear-gradient(135deg, var(--gold-glow) 0%, transparent 55%);
+    .loot-item-row:last-child {
+      border-bottom: none;
     }
 
-    .item-card:hover {
-      border-color: var(--gold-border);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--gold-border);
-      z-index: 10;
-    }
-
-    .item-card:hover::before { opacity: 1; }
-
-    .item-card.quality-epic {
-      border-left: 3px solid var(--epic);
-      box-shadow: inset 4px 0 14px rgba(168,85,247,0.1);
-    }
-
-    .item-card.quality-epic_ii {
-      border-left: 3px solid var(--epic2);
-      box-shadow: inset 4px 0 14px rgba(139,92,246,0.12);
-    }
-
-    .item-card.quality-epic:hover,
-    .item-card.quality-epic_ii:hover {
-      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--gold-border),
-                  inset 4px 0 18px rgba(168,85,247,0.18);
-    }
-
-    /* ── Верхний ряд: картинка + инфо + кнопки ── */
-    .item-card-top {
-      display: flex;
-      gap: 0.9rem;
-      align-items: flex-start;
-    }
-
-    /* ── Картинка ── */
-    .item-img-wrap {
-      width: 72px;
-      height: 72px;
-      border-radius: 8px;
-      overflow: hidden;
-      flex-shrink: 0;
+    .loot-item-img {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      object-fit: cover;
       background: var(--bg-card2);
       border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .loot-item-img-placeholder {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .loot-item-img-placeholder svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-muted);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Стили для качества предметов в луте */
+    .loot-item-img-wrap {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
       position: relative;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
     }
 
-    .item-img-wrap::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 7px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* ── Фон под картинкой (только плашка 72×72) ── */
-    .item-card.quality-epic .item-img-wrap {
+    .loot-item-img-wrap.quality-epic {
       background: #1a0a2e;
       border-color: rgba(168, 85, 247, 0.3);
     }
 
-    .item-card.quality-epic_ii .item-img-wrap {
+    .loot-item-img-wrap.quality-epic_ii {
       background: #1a0a2e;
       border-color: rgba(139, 92, 246, 0.4);
     }
 
-    .item-card.quality-epic_ii .item-img-wrap::before {
+    .loot-item-img-wrap.quality-epic_ii::before {
       content: '';
       position: absolute;
       inset: -40%;
@@ -216,7 +438,7 @@
       pointer-events: none;
     }
 
-    .item-card.quality-epic_ii .item-img-wrap .item-img {
+    .loot-item-img-wrap.quality-epic_ii .loot-item-img {
       position: relative;
       z-index: 1;
     }
@@ -228,1137 +450,645 @@
       100% { transform: translate(5%, 5%)   scale(1.1);  opacity: 1;    }
     }
 
-    /* ── То же для placeholder (когда картинки нет) ── */
-    .item-card.quality-epic    .item-img-placeholder { background: #1a0a2e; border-color: rgba(168,85,247,0.3); }
-    .item-card.quality-epic_ii .item-img-placeholder { background: #1a0a2e; border-color: rgba(139,92,246,0.4); }
-
-    .item-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .item-img-wrap:has(img:not([src])),
-    .item-img-wrap:has(img[src=""]),
-    .item-img-wrap:has(img[src="#"]) { display: none; }
-
-    .item-img-placeholder {
-      width: 72px;
-      height: 72px;
-      border-radius: 8px;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      flex-shrink: 0;
-    }
-
-    /* ── Текст ── */
-    .item-info {
+    .loot-item-info {
       flex: 1;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
     }
 
-    .item-name {
-      font-weight: 700;
-      font-size: 1rem;
+    .loot-item-name {
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--text);
-      line-height: 1.3;
-      font-family: 'HeaderFont', var(--font);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .item-card.quality-epic    .item-name { color: #c4b5fd; }
-    .item-card.quality-epic_ii .item-name { color: #a78bfa; }
-
-    .item-meta {
+    .loot-item-winner {
+      font-size: 0.7rem;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 0.35rem;
-      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.1rem;
     }
 
-    .slot-badge {
-      font-size: 0.7rem;
-      color: var(--gold);
-      background: rgba(201,170,113,0.1);
-      padding: 0.15rem 0.55rem;
-      border-radius: 4px;
-      border: 1px solid var(--gold-border);
+    .loot-item-winner .winner-name {
+      color: var(--accent-soft);
       font-weight: 600;
     }
 
-    .weapon-type-badge {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      background: var(--bg-card2);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
+    .loot-item-lucent {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--warning);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .boss-tag {
-      font-size: 0.7rem;
+    .loot-item-lucent.zero {
       color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .slot-badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--bg-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      vertical-align: middle;
+      margin-left: 0.2rem;
+    }
+
+    .panel-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .panel-empty .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 0.75rem;
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      justify-content: center;
+      opacity: 0.4;
     }
 
-    .boss-icon-small {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #1a0a2e;
+    .panel-empty .empty-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
-    /* ── Описание внизу карточки ── */
-    .item-desc {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      font-style: italic;
-      line-height: 1.5;
-      opacity: 0.75;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
+    /* ══════════════════════════════════════════════
+       БЫСТРЫЕ ССЫЛКИ
+    ══════════════════════════════════════════════ */
+    .quick-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
     }
 
-    /* ── Кнопки редактирования ── */
-    .item-actions {
+    .quick-nav-link {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-
-    .item-actions .btn {
-      padding: 0.2rem 0.45rem;
-      font-size: 0.72rem;
-    }
-
-    /* ══════════════════════════════════════════════════
-       ТУЛТИП (полная карточка)
-    ══════════════════════════════════════════════════ */
-    .full-card {
-      display: none;
-      position: absolute;
-      left: calc(100% + 14px);
-      right: auto;
-      top: 0;
-      width: 420px;
-      max-width: 80vw;
-      max-height: 85vh;
-      overflow-y: auto;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.9rem 0.5rem;
       background: var(--bg-card);
-      border: 1px solid var(--gold-border);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(201,170,113,0.1);
-      z-index: 1000;
-      pointer-events: none;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-align: center;
+      transition: all 0.18s ease;
     }
 
-    .full-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      border-radius: var(--radius) var(--radius) 0 0;
+    .quick-nav-link:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--bg-card2);
+      box-shadow: 0 0 14px var(--accent-glow);
+      transform: translateY(-2px);
     }
 
-    .item-card:nth-child(3n) .full-card { left: auto; right: calc(100% + 14px); }
-    .item-card:hover .full-card { display: block; }
-
-    .full-card::-webkit-scrollbar { width: 4px; }
-    .full-card::-webkit-scrollbar-track { background: var(--bg-card2); border-radius: 4px; }
-    .full-card::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
-
-    .fc-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: flex-start; }
-
-    .fc-img-wrap {
-      width: 72px; 
-      height: 72px; 
-      border-radius: 8px;
-      flex-shrink: 0;
-      position: relative;
-      overflow: hidden;
-      background: #1a0a2e;
-      border: 1px solid var(--gold-border);
+    .quick-nav-link .nav-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .fc-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      position: relative;
-      z-index: 1;
+    .quick-nav-link .nav-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all 0.18s ease;
     }
 
-    /* Для Epic в тултипе */
-    .item-card.quality-epic .fc-img-wrap {
-      background: #1a0a2e;
-      border-color: rgba(168, 85, 247, 0.3);
+    .quick-nav-link:hover .nav-icon svg {
+      stroke: var(--accent-soft);
     }
 
-    /* Для Epic II в тултипе - с анимацией */
-    .item-card.quality-epic_ii .fc-img-wrap {
-      background: #1a0a2e;
-      border-color: rgba(139, 92, 246, 0.4);
-    }
+    /* ══════════════════════════════════════════════
+       АДАПТИВНОСТЬ
+    ══════════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .home-layout {
+        grid-template-columns: 1fr;
+      }
 
-    .item-card.quality-epic_ii .fc-img-wrap::before {
-      content: '';
-      position: absolute;
-      inset: -40%;
-      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
-                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
-      animation: epic-fog 4s ease-in-out infinite alternate;
-      z-index: 0;
-      pointer-events: none;
-    }
+      .last-raid-panel {
+        position: static;
+        order: -1;
+      }
 
-    .item-card.quality-epic_ii .fc-img-wrap::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 7px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .fc-title { flex: 1; min-width: 0; }
-
-    .fc-name {
-      font-size: 1.1rem; font-weight: 700; color: var(--gold-soft);
-      font-family: 'HeaderFont', var(--font); line-height: 1.3;
-      text-shadow: 0 0 16px rgba(201,170,113,0.3);
-    }
-
-    .fc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin-top: 5px; }
-    .fc-quality { font-size: 0.7rem; color: var(--text-muted); }
-    .fc-quality.epic-label { color: #c4b5fd; }
-
-    .fc-level {
-      font-size: 0.68rem; color: var(--gold-dim);
-      background: rgba(201,170,113,0.08); padding: 0.1rem 0.5rem;
-      border-radius: 4px; border: 1px solid var(--gold-border);
-    }
-
-    .fc-damage {
-      font-size: 1rem; font-weight: 700; color: var(--gold-soft);
-      padding: 0.45rem 0.6rem; background: rgba(201,170,113,0.07);
-      border-radius: var(--radius-sm); border: 1px solid var(--gold-border);
-      margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
-    }
-
-    .damage-label { font-weight: 400; color: var(--text-muted); font-size: 0.78rem; }
-
-    .fc-stats {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 0.2rem 1rem; margin: 0.5rem 0;
-      padding: 0.5rem 0.6rem; background: var(--bg-card2);
-      border-radius: var(--radius-sm); border: 1px solid var(--border);
-    }
-
-    .stat { font-size: 0.8rem; display: flex; justify-content: space-between; gap: 0.4rem; }
-    .stat-label { color: var(--text-muted); }
-    .stat-value { color: var(--gold-soft); font-weight: 600; }
-
-    .fc-set-bonus {
-      margin: 0.5rem 0; padding: 0.55rem 0.75rem;
-      background: rgba(201,170,113,0.06); border-radius: var(--radius-sm);
-      border: 1px solid var(--gold-border);
-    }
-
-    .set-name { font-weight: 700; color: var(--gold); font-size: 0.88rem; font-family: 'HeaderFont', var(--font); }
-    .set-pieces { display: flex; flex-direction: column; gap: 0.2rem; margin-top: 0.3rem; }
-    .set-piece { font-size: 0.78rem; color: var(--text-muted); }
-    .pieces-label { color: var(--gold-dim); font-weight: 600; margin-right: 0.3rem; }
-
-    .fc-effect {
-      display: flex; gap: 0.75rem; margin: 0.6rem 0; padding: 0.65rem 0.75rem;
-      background: rgba(168,85,247,0.07); border-radius: var(--radius-sm);
-      border: 1px solid rgba(168,85,247,0.25);
-    }
-
-    .effect-icon { 
-      width: 36px; height: 36px; border-radius: 4px; 
-      object-fit: cover; background: #1a0a2e; 
-      flex-shrink: 0; 
-    }
-    .effect-info { flex: 1; font-size: 0.8rem; }
-    .effect-name { font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
-    .effect-desc { color: var(--text-muted); }
-
-    .fc-properties { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--border); }
-    .prop-label { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .prop-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
-    .prop-tag { background: var(--bg-card2); padding: 0.12rem 0.5rem; border-radius: 4px; font-size: 0.68rem; border: 1px solid var(--border); color: var(--text-muted); }
-
-    .fc-flavor { margin-top: 0.65rem; padding-top: 0.65rem; font-size: 0.75rem; color: var(--text-muted); font-style: italic; border-top: 1px solid var(--border); line-height: 1.5; }
-
-    .fc-boss { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
-    .fc-boss .boss-icon { 
-      width: 26px; height: 26px; border-radius: 50%; 
-      object-fit: cover; background: #1a0a2e; 
-      border: 1px solid var(--gold-border); flex-shrink: 0; 
-    }
-    .fc-boss .boss-name { color: var(--gold-dim); font-weight: 500; }
-
-    /* ══════════════════════════════════════════════════
-       АДАПТИВ ТУЛТИПА
-    ══════════════════════════════════════════════════ */
-    @media (max-width: 992px) {
-      .item-card .full-card {
-        position: fixed; left: 50%; right: auto; top: 50%;
-        transform: translate(-50%, -50%);
-        width: 440px; max-width: 92vw; max-height: 80vh;
+      .last-raid-body {
+        max-height: 320px;
       }
     }
 
     @media (max-width: 768px) {
-      .items-grid { grid-template-columns: repeat(2, 1fr); }
-      .item-card:nth-child(2n) .full-card { left: auto; right: calc(100% + 12px); }
-      .item-card:nth-child(3n) .full-card { left: calc(100% + 12px); right: auto; }
-      .fc-stats { grid-template-columns: 1fr; }
-      .filter-search-wrap { flex: 1 1 100%; }
+      .hero-title { font-size: 2rem; }
+      .hero-grid  { grid-template-columns: 1fr; }
+      .hero-crest { display: none; }
+      .stat-grid  { grid-template-columns: repeat(2, 1fr); }
+      .quick-nav  { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 480px) {
-      .items-grid { grid-template-columns: 1fr; }
-      .item-card .full-card { left: calc(100% + 12px); right: auto; }
-    }
-
-    /* ══════════════════════════════════════════════════
-       МОДАЛКА
-    ══════════════════════════════════════════════════ */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
-      z-index: 200;
-      display: flex; align-items: center; justify-content: center;
-      padding: 1rem;
-    }
-
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--gold-border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      width: 100%; max-width: 680px; max-height: 90vh;
-      overflow-y: auto; position: relative;
-    }
-
-    .modal::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .modal-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
-    }
-
-    .modal-header h3 { font-size: 1.15rem; font-weight: 700; color: var(--gold-soft); font-family: 'HeaderFont', var(--font); }
-
-    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; line-height: 1; padding: 0.25rem; border-radius: 4px; transition: background 0.15s, color 0.15s; }
-    .btn-close:hover { background: var(--bg-card2); color: var(--text); }
-
-    .form-section { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
-    .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-
-    .section-title { font-size: 0.72rem; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; }
-
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .form-row .form-group { margin-bottom: 0; }
-
-    .image-upload-area { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; background: var(--bg-card2); }
-    .image-upload-area:hover { border-color: var(--gold-border); background: rgba(201,170,113,0.04); }
-    .image-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin: 0 auto 0.3rem; display: block; }
-    .upload-hint { font-size: 0.7rem; color: var(--text-muted); }
-    .image-upload-area.small { padding: 0.4rem; }
-    .image-upload-area.small .image-preview { width: 48px; height: 48px; }
-    .image-upload-area.small .upload-hint { font-size: 0.6rem; }
-
-    .dynamic-fields { margin-top: 0.25rem; }
-
-    .field-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.3rem; background: var(--bg-card2); padding: 0.3rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); transition: border-color 0.15s; }
-    .field-row:hover { border-color: var(--gold-border); }
-
-    .field-row input { padding: 0.3rem 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 0.85rem; transition: border-color 0.15s; }
-    .field-row input:focus { outline: none; border-color: var(--gold-border); }
-
-    .field-label-input { flex: 2; }
-    .field-value-input { flex: 1; }
-
-    .btn-remove-field { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.9rem; padding: 0.1rem 0.3rem; line-height: 1; border-radius: 4px; transition: background 0.15s; flex-shrink: 0; }
-    .btn-remove-field:hover { background: rgba(239,68,68,0.15); }
-
-    .field-single .field-label-input { flex: 1; }
-    .field-single .field-value-input { display: none; }
-
-    .btn-add-field { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; padding: 0.25rem 0.75rem; margin-top: 0.3rem; background: var(--bg-card2); color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: border-color 0.15s, color 0.15s; height: 30px; }
-    .btn-add-field:hover { border-color: var(--gold-border); color: var(--gold); }
-    .btn-add-field .icon { font-size: 0.9rem; line-height: 1; }
-
-    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-    .form-actions .btn { min-width: 120px; }
-
-    .modal .form-group textarea { min-height: 80px; resize: vertical; }
-
-    .damage-inputs { display: flex; align-items: center; gap: 0.5rem; }
-    .damage-inputs input { width: 80px; text-align: center; }
-    .damage-inputs span { color: var(--text-muted); font-size: 0.9rem; }
-
-    .toggle-wrap { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; }
-    .toggle-label { font-size: 0.85rem; color: var(--text-muted); }
-
-    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; cursor: pointer; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-switch .slider { position: absolute; inset: 0; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 12px; transition: background 0.2s, border-color 0.2s; }
-    .toggle-switch .slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 2px; bottom: 2px; background: var(--text-muted); border-radius: 50%; transition: transform 0.2s, background 0.2s; }
-    .toggle-switch input:checked + .slider { background: var(--gold-dim); border-color: var(--gold-dim); }
-    .toggle-switch input:checked + .slider::before { transform: translateX(20px); background: var(--gold); }
-
-    .set-bonus-fields { margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-card2); border-radius: var(--radius-sm); border: 1px solid var(--gold-border); display: none; }
-    .set-bonus-fields.visible { display: block; }
-
-    .hidden { display: none !important; }
-
-    @media (max-width: 768px) {
-      .modal { padding: 1rem; }
-      .form-row { grid-template-columns: 1fr; }
-      .field-row { flex-wrap: wrap; }
-      .field-label-input { flex: 1 1 100%; }
-      .field-value-input { flex: 1 1 100%; }
-      .form-actions { flex-direction: column; }
-      .form-actions .btn { width: 100%; min-width: unset; }
+      .stat-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      .stat-card-value { font-size: 1.7rem; }
     }
   </style>
 </head>
 
 <body>
 
-<nav class="navbar" id="main-nav"></nav>
+  <!-- ═══════════════ НАВБАР ═══════════════ -->
+  <nav class="navbar" id="main-nav"></nav>
 
-<main class="container">
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="container">
 
-  <div class="page-header">
-    <h2>Предметы</h2>
-    <button class="btn btn-primary hidden" id="btn-add-item">+ Добавить предмет</button>
-  </div>
+    <!-- HERO -->
+    <section class="home-hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-eyebrow">Throne &amp; Liberty</div>
+          <h1 class="hero-title">DVScorp</h1>
+          <p class="hero-sub">Гильдейский трекер лута — прозрачное распределение, честная статистика</p>
 
-  <div class="filter-bar">
-    <div class="filter-search-wrap">
-      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" id="filter-search" placeholder="Поиск по названию..." />
-    </div>
-    <select id="filter-slot"><option value="">Все слоты</option></select>
-    <select id="filter-quality"><option value="">Все качества</option></select>
-    <select id="filter-boss"><option value="">Все боссы</option></select>
-  </div>
-
-  <div id="items-grid" class="items-grid">
-    <div class="text-muted">Загрузка...</div>
-  </div>
-
-</main>
-
-<!-- МОДАЛКА -->
-<div class="modal-overlay hidden" id="modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-title">Добавить предмет</h3>
-      <button class="btn-close" id="btn-modal-close">✕</button>
-    </div>
-
-    <input type="hidden" id="edit-id" />
-
-    <div class="form-section">
-      <div class="section-title">Основная информация</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Название *</label>
-          <input type="text" id="f-name" placeholder="Например: Шлем Тени" />
-        </div>
-        <div class="form-group">
-          <label>Слот *</label>
-          <select id="f-slot"><option value="">— выбери слот —</option></select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Качество</label>
-          <select id="f-quality">
-            <option value="epic">🟣 Эпическое</option>
-            <option value="epic_ii">🟣 Эпическое II</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Уровень предмета</label>
-          <input type="number" id="f-level" placeholder="12" min="1" max="99" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Босс *</label>
-          <select id="f-boss"><option value="">— выбери босса —</option></select>
-        </div>
-        <div class="form-group" id="weapon-type-group">
-          <label>Тип оружия</label>
-          <select id="f-weapon-type">
-            <option value="">— не выбрано —</option>
-            <option value="bow">🏹 Лук</option>
-            <option value="staff">🪄 Посох</option>
-            <option value="twohand_sword">⚔️ Двуручный меч</option>
-            <option value="crossbow">🎯 Арбалеты</option>
-            <option value="wand">✨ Жезл</option>
-            <option value="daggers">🗡️ Кинжалы</option>
-            <option value="sword_shield">🛡️ Щит и меч</option>
-            <option value="spear">🔱 Копье</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row" id="damage-row">
-        <div class="form-group" id="damage-min-group">
-          <label id="damage-min-label">Урон (мин)</label>
-          <input type="number" id="f-damage-min" placeholder="15" min="0" step="1" />
-        </div>
-        <div class="form-group" id="damage-max-group">
-          <label id="damage-max-label">Урон (макс)</label>
-          <input type="number" id="f-damage-max" placeholder="155" min="0" step="1" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Картинка</label>
-        <div class="image-upload-area" id="upload-area">
-          <img id="img-preview" class="image-preview hidden" alt="preview" />
-          <div class="upload-hint" id="upload-hint">Нажми чтобы выбрать картинку<br><small>Сожмётся до 128×128</small></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="section-title">Описание</div>
-      <div class="form-group">
-        <label>Описание / Флейвор</label>
-        <textarea id="f-description" rows="4" placeholder="Полное описание предмета, цитата, история..."></textarea>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="section-title">Характеристики</div>
-      <div class="dynamic-fields" id="stats-fields"></div>
-      <button class="btn-add-field" data-target="stats"><span class="icon">+</span> Добавить характеристику</button>
-    </div>
-
-    <div class="form-section" id="effect-section">
-      <div class="section-title">Эффект</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Название эффекта</label>
-          <input type="text" id="f-effect-name" placeholder="Например: Глубинное пламя" />
-        </div>
-        <div class="form-group">
-          <label>Картинка эффекта</label>
-          <div class="image-upload-area small" id="effect-upload-area">
-            <img id="effect-preview" class="image-preview hidden" alt="effect" />
-            <div class="upload-hint" id="effect-upload-hint">Нажми чтобы выбрать</div>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Описание эффекта</label>
-        <input type="text" id="f-effect-desc" placeholder="Описание эффекта..." />
-      </div>
-    </div>
-
-    <div class="form-section" id="set-bonus-section" style="display:none;">
-      <div class="section-title">Сетовый бонус</div>
-      <div class="toggle-wrap">
-        <span class="toggle-label">Включить сетовый бонус</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="f-set-bonus-toggle" />
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="set-bonus-fields" id="set-bonus-fields">
-        <div class="form-group">
-          <label>Название бонуса</label>
-          <input type="text" id="f-set-name" placeholder="Например: Доспехи Дайгона" />
-        </div>
-        <div class="form-group">
-          <label>Эффект за 2 предмета</label>
-          <input type="text" id="f-set-2" placeholder="Урон +5%" />
-        </div>
-        <div class="form-group">
-          <label>Эффект за 4 предмета</label>
-          <input type="text" id="f-set-4" placeholder="Защита +10%" />
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="section-title">Возможные свойства</div>
-      <div class="dynamic-fields" id="properties-fields"></div>
-      <button class="btn-add-field" data-target="properties"><span class="icon">+</span> Добавить свойство</button>
-    </div>
-
-    <div id="modal-error" class="text-danger mt-1" style="display:none; font-size:0.85rem;"></div>
-
-    <div class="form-actions">
-      <button class="btn btn-primary" id="btn-save">Сохранить</button>
-      <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-  import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, getRole } from "../js/modules/auth.js";
-  import { getItems, addItem, updateItem, deleteItem } from "../js/modules/items.js";
-  import { getBosses } from "../js/modules/bosses.js";
-  import { compressImage, pickFile } from "../js/modules/images.js";
-  import { SLOTS, QUALITY } from "../js/constants.js";
-
-  initNavbar();
-
-  // ── Ждём реального результата authReady ──────────
-  await initAuth();
-  const authResult = await authReady;
-  const userRole = authResult?.role || 'guest';
-
-  // ── Кнопка только для админа ─────────────────────
-  const addBtn = document.getElementById('btn-add-item');
-  if (userRole === 'admin') {
-    addBtn.classList.remove('hidden');
-    addBtn.addEventListener('click', openAdd);
-  }
-
-  // ── Слоты ────────────────────────────────────────
-  const slotSelect = document.getElementById("f-slot");
-  const filterSlot = document.getElementById("filter-slot");
-  SLOTS.forEach(slot => {
-    slotSelect.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
-    filterSlot.innerHTML += `<option value="${slot.id}">${slot.label}</option>`;
-  });
-
-  const filterQuality = document.getElementById("filter-quality");
-  QUALITY.forEach(q => {
-    filterQuality.innerHTML += `<option value="${q.id}">${q.label}</option>`;
-  });
-
-  // ── Боссы ────────────────────────────────────────
-  let allBosses = [];
-
-  async function loadBosses() {
-    try { allBosses = await getBosses(); populateBossSelects(); }
-    catch (e) { console.error('Ошибка загрузки боссов:', e); }
-  }
-
-  function populateBossSelects() {
-    const bossSelect = document.getElementById('f-boss');
-    const filterBoss = document.getElementById('filter-boss');
-    const cv = bossSelect.value, fv = filterBoss.value;
-    bossSelect.innerHTML = `<option value="">— выбери босса —</option>`;
-    filterBoss.innerHTML = `<option value="">Все боссы</option>`;
-    allBosses.forEach(b => {
-      bossSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-      filterBoss.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-    });
-    if (cv) bossSelect.value = cv;
-    if (fv) filterBoss.value = fv;
-  }
-
-  // ── Поля по слоту ────────────────────────────────
-  const weaponTypeGroup = document.getElementById('weapon-type-group');
-  const damageMinGroup  = document.getElementById('damage-min-group');
-  const damageMaxGroup  = document.getElementById('damage-max-group');
-  const damageMinLabel  = document.getElementById('damage-min-label');
-  const damageMaxLabel  = document.getElementById('damage-max-label');
-  const effectSection   = document.getElementById('effect-section');
-  const setBonusSection = document.getElementById('set-bonus-section');
-  const setBonusToggle  = document.getElementById('f-set-bonus-toggle');
-  const setBonusFields  = document.getElementById('set-bonus-fields');
-
-  const armorSlots     = ['helmet','cloak','chest','gloves','pants','boots'];
-  const accessorySlots = ['necklace','belt','ring','bracelet'];
-
-  function updateFieldsBySlot(slotId) {
-    const isWeapon    = slotId === 'weapon';
-    const isArmor     = armorSlots.includes(slotId);
-    const isAccessory = accessorySlots.includes(slotId);
-
-    weaponTypeGroup.style.display = isWeapon ? 'block' : 'none';
-    effectSection.style.display   = isWeapon ? 'block' : 'none';
-    setBonusSection.style.display = isWeapon ? 'none'  : 'block';
-
-    if (isWeapon) {
-      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'block';
-      damageMinLabel.textContent = 'Урон (мин)'; damageMaxLabel.textContent = 'Урон (макс)';
-    } else if (isArmor) {
-      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'block';
-      damageMinLabel.textContent = 'Защита (ближний)'; damageMaxLabel.textContent = 'Защита (дальний)';
-    } else if (isAccessory) {
-      damageMinGroup.style.display = 'block'; damageMaxGroup.style.display = 'none';
-      damageMinLabel.textContent = 'Защита (магия)';
-    } else {
-      damageMinGroup.style.display = 'none'; damageMaxGroup.style.display = 'none';
-    }
-
-    if (!isWeapon) { setBonusToggle.checked = false; setBonusFields.classList.remove('visible'); }
-  }
-
-  slotSelect.addEventListener('change', function() { updateFieldsBySlot(this.value); });
-  setBonusToggle.addEventListener('change', function() { setBonusFields.classList.toggle('visible', this.checked); });
-
-  // ── Динамические поля ────────────────────────────
-  function addField(containerId, type = 'pair') {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const row = document.createElement('div');
-    row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
-    row.innerHTML = type === 'single'
-      ? `<input type="text" placeholder="Введите свойство..." class="field-label-input" />
-         <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`
-      : `<input type="text" placeholder="Название" class="field-label-input" />
-         <input type="text" placeholder="Значение" class="field-value-input" />
-         <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`;
-    container.appendChild(row);
-    setTimeout(() => row.querySelector('input')?.focus(), 50);
-  }
-
-  function getFields(containerId, type = 'pair') {
-    const container = document.getElementById(containerId);
-    if (!container) return [];
-    return [...container.querySelectorAll('.field-row')].reduce((acc, row) => {
-      const inputs = row.querySelectorAll('input');
-      if (type === 'single') {
-        const v = inputs[0]?.value.trim();
-        if (v) acc.push(v);
-      } else {
-        const l = inputs[0]?.value.trim() || '', v = inputs[1]?.value.trim() || '';
-        if (l || v) acc.push({ label: l, value: v });
-      }
-      return acc;
-    }, []);
-  }
-
-  function setFields(containerId, data, type = 'pair') {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-    data.forEach(item => {
-      const row = document.createElement('div');
-      row.className = `field-row ${type === 'single' ? 'field-single' : ''}`;
-      row.innerHTML = type === 'single'
-        ? `<input type="text" class="field-label-input" value="${item}" />
-           <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`
-        : `<input type="text" class="field-label-input" value="${item.label || ''}" />
-           <input type="text" class="field-value-input" value="${item.value || ''}" />
-           <button class="btn-remove-field" onclick="this.parentElement.remove()">✕</button>`;
-      container.appendChild(row);
-    });
-  }
-
-  document.querySelectorAll('.btn-add-field').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const t = this.dataset.target;
-      addField(t === 'properties' ? 'properties-fields' : `${t}-fields`, t === 'properties' ? 'single' : 'pair');
-    });
-  });
-
-  // ── Картинка эффекта ─────────────────────────────
-  let currentEffectImage = null;
-  document.getElementById('effect-upload-area').addEventListener('click', async () => {
-    const file = await pickFile();
-    if (!file) return;
-    currentEffectImage = await compressImage(file);
-    const ep = document.getElementById('effect-preview');
-    ep.src = currentEffectImage; ep.classList.remove('hidden');
-    document.getElementById('effect-upload-hint').style.display = 'none';
-  });
-
-  // ── Данные ───────────────────────────────────────
-  let allItems = [];
-  let currentImageBase64 = null;
-
-  async function loadItems() {
-    try {
-      allItems = await getItems();
-      populateBossFilter();
-      renderItems();
-    } catch (e) {
-      console.error("Ошибка загрузки предметов:", e);
-      document.getElementById("items-grid").innerHTML = `<div class="text-danger">Не удалось загрузить предметы</div>`;
-    }
-  }
-
-  function populateBossFilter() {
-    const bossIds = [...new Set(allItems.map(i => i.boss_id).filter(Boolean))];
-    const names = bossIds.map(id => allBosses.find(b => b.id === id)).filter(Boolean).sort((a,b) => a.name.localeCompare(b.name));
-    const select = document.getElementById("filter-boss");
-    const cv = select.value;
-    select.innerHTML = `<option value="">Все боссы</option>`;
-    names.forEach(b => { select.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
-    if (cv) select.value = cv;
-  }
-
-  function renderItems() {
-    const search  = document.getElementById("filter-search").value.toLowerCase();
-    const slot    = document.getElementById("filter-slot").value;
-    const quality = document.getElementById("filter-quality").value;
-    const bossId  = document.getElementById("filter-boss").value;
-
-    const list = allItems.filter(item => {
-      if (search  && !item.name?.toLowerCase().includes(search) && !item.boss_name?.toLowerCase().includes(search)) return false;
-      if (slot    && item.slot    !== slot)    return false;
-      if (quality && item.quality !== quality) return false;
-      if (bossId  && item.boss_id !== bossId)  return false;
-      return true;
-    });
-
-    const grid = document.getElementById("items-grid");
-    if (!list.length) { grid.innerHTML = `<div class="text-muted">Предметов не найдено</div>`; return; }
-    grid.innerHTML = "";
-    list.forEach(item => grid.appendChild(buildCard(item)));
-  }
-
-  // ── Вспомогательные ──────────────────────────────
-  const weaponTypeLabels = { bow:'🏹 Лук', staff:'🪄 Посох', twohand_sword:'⚔️ Двуручный меч', crossbow:'🎯 Арбалеты', wand:'✨ Жезл', daggers:'🗡️ Кинжалы', sword_shield:'🛡️ Щит и меч', spear:'🔱 Копье' };
-  const slotEmojis = { helmet:'🪖', cloak:'🧥', chest:'🛡️', gloves:'🧤', pants:'👖', boots:'👢', necklace:'📿', belt:'🔗', ring:'💍', bracelet:'⌚', weapon:'⚔️' };
-
-  const getBossName  = id => allBosses.find(b => b.id === id)?.name || '—';
-  const getBossIcon  = id => { const b = allBosses.find(b => b.id === id); return b?.icon ? `/assets/img/bosses/${b.icon}` : null; };
-  const getQuality   = id => QUALITY.find(q => q.id === id)?.label || id;
-  const getSlotLabel = id => SLOTS.find(s => s.id === id)?.label || id;
-  const getDmgLabel  = id => id === 'weapon' ? '🗡️ Урон' : armorSlots.includes(id) ? '🛡️ Защита' : '🛡️ Защ. (магия)';
-
-  // ── Карточка ─────────────────────────────────────
-  function buildCard(item) {
-    const slotLabel = getSlotLabel(item.slot);
-    const canEdit   = userRole === 'admin';
-    const bossName  = getBossName(item.boss_id);
-    const bossIcon  = getBossIcon(item.boss_id);
-    const hasImage  = !!(item.image);
-    const isWeapon  = item.slot === 'weapon';
-    const stats     = item.stats      || [];
-    const effect    = item.effect     || {};
-    const setBonus  = item.set_bonus  || {};
-    const properties = item.properties || [];
-    const desc      = item.description || '';
-    const shortName = item.name?.length > 24 ? item.name.substring(0, 24) + '…' : item.name;
-
-    const card = document.createElement("div");
-    card.className = `item-card quality-${item.quality || "epic"}`;
-
-    card.innerHTML = `
-      <div class="item-card-top">
-        ${hasImage
-          ? `<div class="item-img-wrap">
-               <img class="item-img" alt="${item.name || ''}" src="${item.image}"
-                    onerror="this.parentElement.style.display='none'" />
-             </div>`
-          : `<div class="item-img-placeholder">${slotEmojis[item.slot] || '🎒'}</div>`}
-
-        <div class="item-info">
-          <div class="item-name" title="${item.name || ''}">${shortName || 'Без названия'}</div>
-          <div class="item-meta">
-            <span class="slot-badge">${slotLabel}</span>
-            <span class="boss-tag">
-              ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'"/>` : '👹'}
-              ${bossName}
+          <div class="hero-badge-row">
+            <span class="hero-tag purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                <path d="M13 19l6-6"/>
+                <path d="M16 16l4 4"/>
+                <path d="M19 21l2-2"/>
+              </svg>
+              Рейды
             </span>
-            ${item.slot === 'weapon' && item.weapon_type
-              ? `<span class="weapon-type-badge">${weaponTypeLabels[item.weapon_type] || item.weapon_type}</span>`
-              : ''}
+            <span class="hero-tag green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Лут-логи
+            </span>
+            <span class="hero-tag amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Люценты
+            </span>
           </div>
         </div>
 
-        ${canEdit ? `
-          <div class="item-actions">
-            <button class="btn btn-ghost btn-sm" onclick="openEdit('${item.id}')" title="Редактировать">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}','${String(item.name||'').replace(/'/g,"\\'")}')">🗑️</button>
-          </div>` : ''}
+        <div class="hero-crest">
+          <div class="hero-crest-ring"></div>
+          <div class="hero-crest-inner">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent-soft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+              <path d="M13 19l6-6"/>
+              <path d="M16 16l4 4"/>
+              <path d="M19 21l2-2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ОСНОВНОЙ GRID: СТАТИСТИКА + ПАНЕЛЬ РЕЙДА -->
+    <div class="home-layout">
+
+      <!-- ЛЕВАЯ ЧАСТЬ: СТАТИСТИКА -->
+      <div class="stats-section">
+        <div class="section-label">Общая статистика гильдии</div>
+
+        <div class="stat-grid">
+          <!-- Траев боссов -->
+          <div class="stat-card purple">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Траев боссов</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-card-value" id="stat-tries">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-tries-sub">загрузка...</div>
+          </div>
+
+          <!-- Предметов выбито -->
+          <div class="stat-card green">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Предметов выбито</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-card-value" id="stat-items">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-items-sub">загрузка...</div>
+          </div>
+
+          <!-- Победителей лута -->
+          <div class="stat-card amber">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Победителей лута</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-card-value" id="stat-winners">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-winners-sub">загрузка...</div>
+          </div>
+
+          <!-- Люцентов -->
+          <div class="stat-card blue">
+            <div class="stat-card-header">
+              <span class="stat-card-label">Всего люцентов</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+                  <line x1="12" y1="22" x2="12" y2="15.5"/>
+                  <polyline points="22 8.5 12 15.5 2 8.5"/>
+                  <polyline points="2 15.5 12 8.5 22 15.5"/>
+                  <line x1="12" y1="2" x2="12" y2="8.5"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-card-value" id="stat-lucent">
+              <span class="stat-loading"></span>
+            </div>
+            <div class="stat-card-sub" id="stat-lucent-sub">загрузка...</div>
+          </div>
+        </div>
+
+        <!-- БЫСТРАЯ НАВИГАЦИЯ -->
+        <div class="section-label" style="margin-top: 1.75rem;">Навигация</div>
+        <div class="quick-nav">
+          <a href="pages/raids.html" class="quick-nav-link">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                <path d="M13 19l6-6"/>
+                <path d="M16 16l4 4"/>
+                <path d="M19 21l2-2"/>
+              </svg>
+            </span>
+            <span>Рейды</span>
+          </a>
+          <a href="pages/bosses.html" class="quick-nav-link">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+            </span>
+            <span>Боссы</span>
+          </a>
+          <a href="pages/items.html" class="quick-nav-link">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </span>
+            <span>Предметы</span>
+          </a>
+          <a href="pages/profile.html" class="quick-nav-link">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span>Профиль</span>
+          </a>
+        </div>
       </div>
 
-      ${desc ? `<div class="item-desc">${desc}</div>` : ''}
-
-      <!-- ТУЛТИП -->
-      <div class="full-card">
-        <div class="fc-header">
-          <div class="fc-img-wrap">
-            <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" />
+      <!-- ПРАВАЯ ЧАСТЬ: ПОСЛЕДНИЙ РЕЙД -->
+      <div class="last-raid-panel">
+        <div class="last-raid-header">
+          <div class="last-raid-title">
+            <span class="live-dot"></span>
+            Последний рейд
           </div>
-          <div class="fc-title">
-            <div class="fc-name">${item.name || 'Без названия'}</div>
-            <div class="fc-meta">
-              <span class="fc-quality ${item.quality?.startsWith('epic') ? 'epic-label' : ''}">${getQuality(item.quality)}</span>
-              ${item.level ? `<span class="fc-level">Ур. ${item.level}</span>` : ''}
-              <span class="fc-quality">· ${slotLabel}</span>
+          <div class="last-raid-name" id="last-raid-name">
+            <span class="stat-loading" style="width:140px;height:18px;"></span>
+          </div>
+          <div class="last-raid-meta" id="last-raid-meta"></div>
+        </div>
+
+        <div class="last-raid-body" id="last-raid-body">
+          <div class="loot-sublabel">Лут и победители</div>
+          <div id="last-raid-loot">
+            <!-- скелетоны -->
+            <div class="loot-item-row">
+              <div class="loot-item-img-placeholder">
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </div>
+              <div class="loot-item-info">
+                <div class="stat-loading" style="width:110px;height:12px;margin-bottom:5px;"></div>
+                <div class="stat-loading" style="width:70px;height:10px;"></div>
+              </div>
+            </div>
+            <div class="loot-item-row">
+              <div class="loot-item-img-placeholder">
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </div>
+              <div class="loot-item-info">
+                <div class="stat-loading" style="width:90px;height:12px;margin-bottom:5px;"></div>
+                <div class="stat-loading" style="width:55px;height:10px;"></div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        ${item.damage_min || item.damage_max ? `
-          <div class="fc-damage">
-            <span class="damage-label">${getDmgLabel(item.slot)}</span>
-            ${item.damage_min || ''}${item.damage_max ? ` — ${item.damage_max}` : ''}
-          </div>` : ''}
+    </div><!-- /home-layout -->
+  </main>
 
-        ${stats.length ? `
-          <div class="fc-stats">
-            ${stats.map(s => `<div class="stat"><span class="stat-label">${s.label||s}</span><span class="stat-value">${s.value||''}</span></div>`).join('')}
-          </div>` : ''}
+  <script type="module">
+    import { initNavbar } from "./js/modules/navbar.js";
+    import { initAuth, authReady } from "./js/modules/auth.js";
+    import { db } from "./js/firebase.js";
+    import {
+      collection, getDocs, query, orderBy, limit,
+      where, collectionGroup
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        ${!isWeapon && setBonus.name ? `
-          <div class="fc-set-bonus">
-            <div class="set-name">${setBonus.name}</div>
-            <div class="set-pieces">
-              ${setBonus.piece2 ? `<div class="set-piece"><span class="pieces-label">(2):</span>${setBonus.piece2}</div>` : ''}
-              ${setBonus.piece4 ? `<div class="set-piece"><span class="pieces-label">(4):</span>${setBonus.piece4}</div>` : ''}
-            </div>
-          </div>` : ''}
+    initNavbar();
+    initAuth();
+    await authReady;
 
-        ${isWeapon && (effect.name || effect.desc) ? `
-          <div class="fc-effect">
-            ${effect.image ? `<img class="effect-icon" src="${effect.image}" alt="effect" />` : ''}
-            <div class="effect-info">
-              ${effect.name ? `<div class="effect-name">${effect.name}</div>` : ''}
-              ${effect.desc ? `<div class="effect-desc">${effect.desc}</div>` : ''}
-            </div>
-          </div>` : ''}
+    // ──────────────────────────────────────────────
+    // Форматирование чисел
+    // ──────────────────────────────────────────────
+    function fmt(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return String(n);
+    }
 
-        ${properties.length ? `
-          <div class="fc-properties">
-            <div class="prop-label">Возможные свойства</div>
-            <div class="prop-list">${properties.map(p => `<span class="prop-tag">${p}</span>`).join('')}</div>
-          </div>` : ''}
+    function fmtDate(str) {
+      if (!str) return '—';
+      const d = new Date(str);
+      return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
 
-        ${desc ? `<div class="fc-flavor">${desc}</div>` : ''}
+    // ──────────────────────────────────────────────
+    // Локализация
+    // ──────────────────────────────────────────────
+    function fmtRollType(type) {
+      const map = {
+        main: 'Основная',
+        open: 'Дополнительная',
+      };
+      return map[type] ?? type ?? '';
+    }
 
-        <div class="fc-boss">
-          ${bossIcon ? `<img class="boss-icon" src="${bossIcon}" alt="${bossName}" onerror="this.style.display='none'" />` : `<span style="font-size:1.2rem">👹</span>`}
-          <span class="boss-name">${bossName}</span>
-        </div>
-      </div>`;
+    function fmtSlot(slot) {
+      const map = {
+        weapon: 'Оружие', head: 'Шлем', chest: 'Нагрудник',
+        legs: 'Поножи', feet: 'Сапоги', hands: 'Перчатки',
+        neck: 'Ожерелье', ring: 'Кольцо', belt: 'Пояс',
+        cloak: 'Плащ', bracelet: 'Браслет'
+      };
+      return map[slot] ?? slot ?? '';
+    }
 
-    return card;
-  }
-
-  // ── Картинка предмета ────────────────────────────
-  document.getElementById('upload-area').addEventListener('click', async () => {
-    const file = await pickFile();
-    if (!file) return;
-    currentImageBase64 = await compressImage(file);
-    const p = document.getElementById('img-preview');
-    p.src = currentImageBase64; p.classList.remove('hidden');
-    document.getElementById('upload-hint').style.display = 'none';
-  });
-
-  // ── Модалка ──────────────────────────────────────
-  const modal      = document.getElementById('modal');
-  const modalTitle = document.getElementById('modal-title');
-  const editId     = document.getElementById('edit-id');
-
-  function resetForm() {
-    editId.value = '';
-    currentImageBase64 = null; currentEffectImage = null;
-    ['f-name','f-description','f-level','f-damage-min','f-damage-max',
-     'f-effect-name','f-effect-desc','f-set-name','f-set-2','f-set-4']
-      .forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('f-boss').value    = '';
-    document.getElementById('f-slot').value    = '';
-    document.getElementById('f-quality').value = 'epic';
-    document.getElementById('f-weapon-type').value = '';
-    setBonusToggle.checked = false;
-    setBonusFields.classList.remove('visible');
-    effectSection.style.display = 'block';
-    setBonusSection.style.display = 'none';
-    weaponTypeGroup.style.display = 'block';
-    damageMinGroup.style.display  = 'block';
-    damageMaxGroup.style.display  = 'block';
-    damageMinLabel.textContent = 'Урон (мин)';
-    damageMaxLabel.textContent = 'Урон (макс)';
-    document.getElementById('stats-fields').innerHTML = '';
-    document.getElementById('properties-fields').innerHTML = '';
-    const p = document.getElementById('img-preview');
-    p.classList.add('hidden'); p.src = '';
-    document.getElementById('upload-hint').style.display = '';
-    const ep = document.getElementById('effect-preview');
-    ep.classList.add('hidden'); ep.src = '';
-    document.getElementById('effect-upload-hint').style.display = '';
-    hideError();
-  }
-
-  window.openEdit = (id) => {
-    const item = allItems.find(i => i.id === id);
-    if (!item) return;
-    resetForm();
-    modalTitle.textContent = 'Редактировать предмет';
-    editId.value = id;
-    updateFieldsBySlot(item.slot || '');
-    document.getElementById('f-slot').value        = item.slot || '';
-    document.getElementById('f-name').value        = item.name || '';
-    document.getElementById('f-boss').value        = item.boss_id || '';
-    document.getElementById('f-description').value = item.description || '';
-    document.getElementById('f-quality').value     = item.quality || 'epic';
-    document.getElementById('f-level').value       = item.level || '';
-    document.getElementById('f-damage-min').value  = item.damage_min || '';
-    document.getElementById('f-damage-max').value  = item.damage_max || '';
-    document.getElementById('f-weapon-type').value = item.weapon_type || '';
-    if (item.effect) {
-      document.getElementById('f-effect-name').value = item.effect.name || '';
-      document.getElementById('f-effect-desc').value = item.effect.desc || '';
-      if (item.effect.image) {
-        currentEffectImage = item.effect.image;
-        const ep = document.getElementById('effect-preview');
-        ep.src = item.effect.image; ep.classList.remove('hidden');
-        document.getElementById('effect-upload-hint').style.display = 'none';
+    // ──────────────────────────────────────────────
+    // Безопасное обновление элемента
+    // ──────────────────────────────────────────────
+    function setTextSafe(id, text) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = text;
+      } else {
+        console.warn(`Элемент с ID "${id}" не найден`);
       }
     }
-    if (item.set_bonus) {
-      document.getElementById('f-set-name').value = item.set_bonus.name   || '';
-      document.getElementById('f-set-2').value    = item.set_bonus.piece2 || '';
-      document.getElementById('f-set-4').value    = item.set_bonus.piece4 || '';
-      if (item.set_bonus.name || item.set_bonus.piece2 || item.set_bonus.piece4) {
-        setBonusToggle.checked = true; setBonusFields.classList.add('visible');
-      }
-    }
-    if (item.stats?.length)      setFields('stats-fields', item.stats, 'pair');
-    if (item.properties?.length) setFields('properties-fields', item.properties, 'single');
-    if (item.image) {
-      currentImageBase64 = item.image;
-      const p = document.getElementById('img-preview');
-      p.src = item.image; p.classList.remove('hidden');
-      document.getElementById('upload-hint').style.display = 'none';
-    }
-    modal.classList.remove('hidden');
-    modal.classList.add('open');
-  };
 
-  function openAdd() {
-    resetForm();
-    modalTitle.textContent = 'Добавить предмет';
-    modal.classList.remove('hidden');
-    modal.classList.add('open');
-  }
-
-  function closeModal() {
-    modal.classList.add('hidden');
-    modal.classList.remove('open');
-    resetForm();
-  }
-
-  document.getElementById('btn-modal-close').onclick = closeModal;
-  document.getElementById('btn-cancel').onclick      = closeModal;
-
-  // ── Сохранение ───────────────────────────────────
-  document.getElementById('btn-save').onclick = async () => {
-    const name    = document.getElementById('f-name').value.trim();
-    const slot    = document.getElementById('f-slot').value;
-    const bossId  = document.getElementById('f-boss').value;
-
-    if (!name)   return showError('Введи название');
-    if (!slot)   return showError('Выбери слот');
-    if (!bossId) return showError('Выбери босса');
-
-    const boss = allBosses.find(b => b.id === bossId);
-    const effectName = document.getElementById('f-effect-name').value.trim();
-    const effectDesc = document.getElementById('f-effect-desc').value.trim();
-    const setName    = document.getElementById('f-set-name').value.trim();
-    const set2       = document.getElementById('f-set-2').value.trim();
-    const set4       = document.getElementById('f-set-4').value.trim();
-    const setBonusEnabled = setBonusToggle.checked;
-
-    const effect = {};
-    if (effectName || effectDesc || currentEffectImage) {
-      effect.name = effectName; effect.desc = effectDesc;
-      if (currentEffectImage) effect.image = currentEffectImage;
-    }
-
-    const setBonus = {};
-    if (setBonusEnabled && (setName || set2 || set4)) {
-      setBonus.name = setName;
-      if (set2) setBonus.piece2 = set2;
-      if (set4) setBonus.piece4 = set4;
-    }
-
-    const data = {
-      name, slot,
-      quality:     document.getElementById('f-quality').value,
-      level:       document.getElementById('f-level').value.trim(),
-      damage_min:  document.getElementById('f-damage-min').value.trim() || null,
-      damage_max:  document.getElementById('f-damage-max').value.trim() || null,
-      boss_id:     bossId,
-      boss_name:   boss?.name || '',
-      description: document.getElementById('f-description').value.trim(),
-      stats:       getFields('stats-fields', 'pair'),
-      effect:      slot === 'weapon' ? effect : {},
-      set_bonus:   slot !== 'weapon' ? setBonus : {},
-      properties:  getFields('properties-fields', 'single'),
-      image:       currentImageBase64 || null,
-      weapon_type: document.getElementById('f-weapon-type').value || null,
-    };
-
-    const btn = document.getElementById('btn-save');
-    btn.disabled = true; btn.textContent = 'Сохранение...';
+    // ──────────────────────────────────────────────
+    // Загрузка данных
+    // ──────────────────────────────────────────────
     try {
-      const id = editId.value;
-      if (id) { await updateItem(id, data); showToast('Предмет обновлён'); }
-      else    { await addItem(data);        showToast('Предмет добавлен'); }
-      closeModal(); await loadItems();
-    } catch (e) {
-      console.error('Ошибка сохранения:', e);
-      showError('Ошибка: ' + e.message);
-    } finally {
-      btn.disabled = false; btn.textContent = 'Сохранить';
+      // 1. Получаем активные рейды (не удаленные)
+      const raidsSnap = await getDocs(
+        query(collection(db, 'raids'), orderBy('date', 'desc'))
+      );
+      const allRaids = raidsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const activeRaids = allRaids.filter(r => !r.deleted);
+      const activeRaidIds = new Set(activeRaids.map(r => r.id));
+
+      // 2. loot_history — только для активных рейдов
+      const lootSnap = await getDocs(collection(db, 'loot_history'));
+      const allLootDocs = lootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const lootDocs = allLootDocs.filter(d => activeRaidIds.has(d.raid_id));
+
+      // Предметов выбито
+      setTextSafe('stat-items', fmt(lootDocs.length));
+      setTextSafe('stat-items-sub', 
+        lootDocs.length === 1 ? '1 дроп записан' : `${lootDocs.length} дропов записано`);
+
+      // Уникальных победителей
+      const winners = new Set(lootDocs.map(d => d.player_id).filter(Boolean));
+      setTextSafe('stat-winners', fmt(winners.size));
+      setTextSafe('stat-winners-sub', 'уникальных игроков с лутом');
+
+      // Люценты
+      const totalLucent = lootDocs.reduce((s, d) => s + (Number(d.lucent_value_snapshot) || 0), 0);
+      setTextSafe('stat-lucent', fmt(totalLucent));
+      setTextSafe('stat-lucent-sub', 
+        totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются');
+
+      // 3. Траи
+      let totalTries = 0;
+      try {
+        const triesSnap = await getDocs(collectionGroup(db, 'tries'));
+        const triesDocs = triesSnap.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          parentRaidId: d.ref.parent.parent?.id
+        }));
+        totalTries = triesDocs.filter(t => activeRaidIds.has(t.parentRaidId)).length;
+      } catch (e) {
+        console.warn('CollectionGroup failed, using fallback:', e);
+        totalTries = activeRaids.reduce((s, r) => s + (Number(r.drop_count) || 0), 0);
+      }
+
+      setTextSafe('stat-tries', fmt(totalTries));
+      setTextSafe('stat-tries-sub', `за ${activeRaids.length} рейдов`);
+
+      // 4. Последний активный рейд
+      if (activeRaids.length > 0) {
+        const last = activeRaids[0];
+        const lastLoot = lootDocs.filter(d => d.raid_id === last.id);
+        const bossName = lastLoot[0]?.boss_name || last.boss_name || '—';
+
+        const lastRaidNameEl = document.getElementById('last-raid-name');
+        if (lastRaidNameEl) {
+          lastRaidNameEl.textContent = bossName !== '—' ? bossName : 'Рейд';
+        }
+
+        const meta = document.getElementById('last-raid-meta');
+        if (meta) {
+          const statusColor = last.status === 'closed' ? 'var(--text-muted)' : 'var(--success)';
+          const statusLabel = last.status === 'closed' ? 'Завершён' : 'Активен';
+          meta.innerHTML = `
+            <span class="last-raid-meta-item" style="color:${statusColor}">
+              ● ${statusLabel}
+            </span>
+            <span class="last-raid-meta-item">
+              <span class="dot"></span>${fmtDate(last.date)}
+            </span>
+            <span class="last-raid-meta-item">
+              <span class="dot"></span>${last.drop_count || 0} дропов
+            </span>
+            ${last.attended_player_ids ? `<span class="last-raid-meta-item"><span class="dot"></span>${last.attended_player_ids.length} участников</span>` : ''}
+          `;
+        }
+
+        const lootContainer = document.getElementById('last-raid-loot');
+        if (lootContainer) {
+          if (lastLoot.length === 0) {
+            lootContainer.innerHTML = `
+              <div class="panel-empty">
+                <div class="empty-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                  </svg>
+                </div>
+                <div>Лут-лог пуст</div>
+              </div>`;
+          } else {
+            lootContainer.innerHTML = '';
+            lastLoot.forEach(item => {
+              const hasImage = item.item_image && item.item_image.length < 100_000;
+              const lucentVal = Number(item.lucent_value_snapshot) || 0;
+              const quality = item.item_quality || 'epic';
+
+              const row = document.createElement('div');
+              row.className = 'loot-item-row';
+              row.innerHTML = `
+                ${hasImage
+                  ? `<div class="loot-item-img-wrap quality-${quality}">
+                      <img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />
+                    </div>`
+                  : `<div class="loot-item-img-placeholder">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                      </svg>
+                    </div>`}
+                <div class="loot-item-info">
+                  <div class="loot-item-name">
+                    ${item.item_name || 'Предмет'}
+                    ${item.item_slot ? `<span class="slot-badge">${fmtSlot(item.item_slot)}</span>` : ''}
+                  </div>
+                  <div class="loot-item-winner">
+                    <span>→</span>
+                    <span class="winner-name">${item.player_nickname || '—'}</span>
+                    ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${fmtRollType(item.roll_type)}</span>` : ''}
+                  </div>
+                </div>
+                <div class="loot-item-lucent ${lucentVal === 0 ? 'zero' : ''}">
+                  ${lucentVal > 0 ? `💎 ${fmt(lucentVal)}` : '—'}
+                </div>
+              `;
+              lootContainer.appendChild(row);
+            });
+          }
+        }
+      } else {
+        const lastRaidNameEl = document.getElementById('last-raid-name');
+        if (lastRaidNameEl) {
+          lastRaidNameEl.textContent = 'Нет активных рейдов';
+        }
+        
+        const lastRaidBodyEl = document.getElementById('last-raid-body');
+        if (lastRaidBodyEl) {
+          lastRaidBodyEl.innerHTML = `
+            <div class="panel-empty">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                  <path d="M13 19l6-6"/>
+                  <path d="M16 16l4 4"/>
+                  <path d="M19 21l2-2"/>
+                </svg>
+              </div>
+              <div>Активные рейды не найдены</div>
+            </div>`;
+        }
+      }
+
+    } catch (err) {
+      console.error('❌ Ошибка загрузки статистики:', err);
+      
+      const statIds = ['stat-tries', 'stat-items', 'stat-winners', 'stat-lucent'];
+      statIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
+      });
+      
+      const subIds = ['stat-tries-sub', 'stat-items-sub', 'stat-winners-sub', 'stat-lucent-sub'];
+      subIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'ошибка загрузки';
+      });
     }
-  };
-
-  window.confirmDelete = (id, name) => {
-    if (!confirm(`Удалить «${name}»?`)) return;
-    deleteItem(id)
-      .then(() => { showToast('Предмет удалён'); loadItems(); })
-      .catch(e  => { console.error(e); showToast('Ошибка удаления', 'error'); });
-  };
-
-  document.getElementById('filter-search').addEventListener('input', renderItems);
-  document.getElementById('filter-slot').addEventListener('change', renderItems);
-  document.getElementById('filter-quality').addEventListener('change', renderItems);
-  document.getElementById('filter-boss').addEventListener('change', renderItems);
-
-  function showError(msg) { const el = document.getElementById('modal-error'); el.textContent = msg; el.style.display = 'block'; }
-  function hideError()    { document.getElementById('modal-error').style.display = 'none'; }
-  function showToast(msg, type = 'success') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`; t.textContent = msg;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
-  }
-
-  await loadBosses();
-  await loadItems();
-</script>
-
+  </script>
 </body>
 </html>
