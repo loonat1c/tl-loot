@@ -393,8 +393,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
       flex-shrink: 0;
+    }
+
+    .loot-item-img-placeholder svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-muted);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .loot-item-info {
@@ -461,9 +470,23 @@
     }
 
     .panel-empty .empty-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       opacity: 0.4;
+    }
+
+    .panel-empty .empty-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     /* ══════════════════════════════════════════════
@@ -574,15 +597,42 @@
           <p class="hero-sub">Гильдейский трекер лута — прозрачное распределение, честная статистика</p>
 
           <div class="hero-badge-row">
-            <span class="hero-tag purple">⚔️ Рейды</span>
-            <span class="hero-tag green">🏆 Лут-логи</span>
-            <span class="hero-tag amber">💰 Люценты</span>
+            <span class="hero-tag purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                <path d="M13 19l6-6"/>
+                <path d="M16 16l4 4"/>
+                <path d="M19 21l2-2"/>
+              </svg>
+              Рейды
+            </span>
+            <span class="hero-tag green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Лут-логи
+            </span>
+            <span class="hero-tag amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Люценты
+            </span>
           </div>
         </div>
 
         <div class="hero-crest">
           <div class="hero-crest-ring"></div>
-          <div class="hero-crest-inner">⚔️</div>
+          <div class="hero-crest-inner">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent-soft)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+              <path d="M13 19l6-6"/>
+              <path d="M16 16l4 4"/>
+              <path d="M19 21l2-2"/>
+            </svg>
+          </div>
         </div>
       </div>
     </section>
@@ -599,7 +649,12 @@
           <div class="stat-card purple">
             <div class="stat-card-header">
               <span class="stat-card-label">Траев боссов</span>
-              <span class="stat-card-icon">💀</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                </svg>
+              </span>
             </div>
             <div class="stat-card-value" id="stat-tries">
               <span class="stat-loading"></span>
@@ -611,7 +666,13 @@
           <div class="stat-card green">
             <div class="stat-card-header">
               <span class="stat-card-label">Предметов выбито</span>
-              <span class="stat-card-icon">🎁</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </span>
             </div>
             <div class="stat-card-value" id="stat-items">
               <span class="stat-loading"></span>
@@ -623,7 +684,11 @@
           <div class="stat-card amber">
             <div class="stat-card-header">
               <span class="stat-card-label">Победителей лута</span>
-              <span class="stat-card-icon">👑</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </span>
             </div>
             <div class="stat-card-value" id="stat-winners">
               <span class="stat-loading"></span>
@@ -635,7 +700,15 @@
           <div class="stat-card blue">
             <div class="stat-card-header">
               <span class="stat-card-label">Всего люцентов</span>
-              <span class="stat-card-icon">💎</span>
+              <span class="stat-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+                  <line x1="12" y1="22" x2="12" y2="15.5"/>
+                  <polyline points="22 8.5 12 15.5 2 8.5"/>
+                  <polyline points="2 15.5 12 8.5 22 15.5"/>
+                  <line x1="12" y1="2" x2="12" y2="8.5"/>
+                </svg>
+              </span>
             </div>
             <div class="stat-card-value" id="stat-lucent">
               <span class="stat-loading"></span>
@@ -661,9 +734,8 @@
           <a href="pages/bosses.html" class="quick-nav-link">
             <span class="nav-icon">
               <svg viewBox="0 0 24 24">
-                <path d="M12 2L13 8L19 9L13 10L12 16L11 10L5 9L11 8L12 2Z"/>
-                <circle cx="12" cy="19" r="3"/>
-                <path d="M7 22h10"/>
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
               </svg>
             </span>
             <span>Боссы</span>
@@ -671,9 +743,9 @@
           <a href="pages/items.html" class="quick-nav-link">
             <span class="nav-icon">
               <svg viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
               </svg>
             </span>
             <span>Предметы</span>
@@ -708,14 +780,26 @@
           <div id="last-raid-loot">
             <!-- скелетоны -->
             <div class="loot-item-row">
-              <div class="loot-item-img-placeholder" style="background:var(--bg-hover);"></div>
+              <div class="loot-item-img-placeholder">
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </div>
               <div class="loot-item-info">
                 <div class="stat-loading" style="width:110px;height:12px;margin-bottom:5px;"></div>
                 <div class="stat-loading" style="width:70px;height:10px;"></div>
               </div>
             </div>
             <div class="loot-item-row">
-              <div class="loot-item-img-placeholder" style="background:var(--bg-hover);"></div>
+              <div class="loot-item-img-placeholder">
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </div>
               <div class="loot-item-info">
                 <div class="stat-loading" style="width:90px;height:12px;margin-bottom:5px;"></div>
                 <div class="stat-loading" style="width:55px;height:10px;"></div>
@@ -785,7 +869,7 @@
       // 2. loot_history — только для активных рейдов
       const lootSnap = await getDocs(collection(db, 'loot_history'));
       const allLootDocs = lootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const lootDocs = allLootDocs.filter(d => activeRaidIds.has(d.raid_id)); // Только лут из активных рейдов
+      const lootDocs = allLootDocs.filter(d => activeRaidIds.has(d.raid_id));
 
       console.log(`Найдено лута: ${allLootDocs.length}, из активных рейдов: ${lootDocs.length}`);
 
@@ -805,23 +889,19 @@
       setTextSafe('stat-lucent-sub', 
         totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются');
 
-      // 3. Считаем траи только для активных рейдов
+      // 3. Траи
       let totalTries = 0;
       try {
-        // Загружаем все tries через collectionGroup
         const triesSnap = await getDocs(collectionGroup(db, 'tries'));
         const triesDocs = triesSnap.docs.map(d => ({
           id: d.id,
           ...d.data(),
-          parentRaidId: d.ref.parent.parent?.id // Получаем ID родительского рейда
+          parentRaidId: d.ref.parent.parent?.id
         }));
-        
-        // Фильтруем tries по активным рейдам
         totalTries = triesDocs.filter(t => activeRaidIds.has(t.parentRaidId)).length;
         console.log(`Найдено траев: ${triesDocs.length}, из активных рейдов: ${totalTries}`);
       } catch (e) {
         console.warn('CollectionGroup failed, using fallback:', e);
-        // Fallback: суммируем drop_count только активных рейдов
         totalTries = activeRaids.reduce((s, r) => s + (Number(r.drop_count) || 0), 0);
       }
 
@@ -830,9 +910,7 @@
 
       // 4. Последний активный рейд
       if (activeRaids.length > 0) {
-        const last = activeRaids[0]; // Уже отсортированы по дате
-
-        // Название: берём босса из первого loot_history с этим raid_id
+        const last = activeRaids[0];
         const lastLoot = lootDocs.filter(d => d.raid_id === last.id);
         const bossName = lastLoot[0]?.boss_name || last.boss_name || '—';
 
@@ -841,7 +919,6 @@
           lastRaidNameEl.textContent = bossName !== '—' ? `Рейд · ${bossName}` : 'Последний рейд';
         }
 
-        // Мета
         const meta = document.getElementById('last-raid-meta');
         if (meta) {
           const statusColor = last.status === 'closed' ? 'var(--text-muted)' : 'var(--success)';
@@ -860,19 +937,24 @@
           `;
         }
 
-        // Лут
         const lootContainer = document.getElementById('last-raid-loot');
         if (lootContainer) {
           if (lastLoot.length === 0) {
             lootContainer.innerHTML = `
               <div class="panel-empty">
-                <div class="empty-icon">🎁</div>
+                <div class="empty-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                  </svg>
+                </div>
                 <div>Лут-лог пуст</div>
               </div>`;
           } else {
             lootContainer.innerHTML = '';
             lastLoot.forEach(item => {
-              const hasImage = item.item_image && item.item_image.length < 100_000; // не слишком большой base64
+              const hasImage = item.item_image && item.item_image.length < 100_000;
               const lucentVal = Number(item.lucent_value_snapshot) || 0;
               const slotLabel = item.item_slot || '';
 
@@ -881,7 +963,13 @@
               row.innerHTML = `
                 ${hasImage
                   ? `<img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />`
-                  : `<div class="loot-item-img-placeholder">⚔️</div>`}
+                  : `<div class="loot-item-img-placeholder">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                      </svg>
+                    </div>`}
                 <div class="loot-item-info">
                   <div class="loot-item-name">
                     ${item.item_name || 'Предмет'}
@@ -911,7 +999,14 @@
         if (lastRaidBodyEl) {
           lastRaidBodyEl.innerHTML = `
             <div class="panel-empty">
-              <div class="empty-icon">⚔️</div>
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                  <path d="M13 19l6-6"/>
+                  <path d="M16 16l4 4"/>
+                  <path d="M19 21l2-2"/>
+                </svg>
+              </div>
               <div>Активные рейды не найдены</div>
             </div>`;
         }
@@ -920,7 +1015,6 @@
     } catch (err) {
       console.error('❌ Ошибка загрузки статистики:', err);
       
-      // Безопасная обработка ошибок
       const statIds = ['stat-tries', 'stat-items', 'stat-winners', 'stat-lucent'];
       statIds.forEach(id => {
         const el = document.getElementById(id);
