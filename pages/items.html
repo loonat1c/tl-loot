@@ -317,7 +317,7 @@
       height: 15px;
       border-radius: 50%;
       object-fit: cover;
-      background: var(--bg-card2);
+      background: #1a0a2e;
     }
 
     /* ── Описание внизу карточки ── */
@@ -390,8 +390,18 @@
 
     .fc-img {
       width: 72px; height: 72px; border-radius: 8px;
-      object-fit: cover; background: var(--bg-card2);
+      object-fit: cover; background: #1a0a2e;
       flex-shrink: 0; border: 1px solid var(--gold-border);
+    }
+
+    .item-card.quality-epic .fc-img {
+      background: #1a0a2e;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .item-card.quality-epic_ii .fc-img {
+      background: #1a0a2e;
+      border-color: rgba(139, 92, 246, 0.4);
     }
 
     .fc-title { flex: 1; min-width: 0; }
@@ -449,7 +459,11 @@
       border: 1px solid rgba(168,85,247,0.25);
     }
 
-    .effect-icon { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); flex-shrink: 0; }
+    .effect-icon { 
+      width: 36px; height: 36px; border-radius: 4px; 
+      object-fit: cover; background: #1a0a2e; 
+      flex-shrink: 0; 
+    }
     .effect-info { flex: 1; font-size: 0.8rem; }
     .effect-name { font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
     .effect-desc { color: var(--text-muted); }
@@ -462,7 +476,11 @@
     .fc-flavor { margin-top: 0.65rem; padding-top: 0.65rem; font-size: 0.75rem; color: var(--text-muted); font-style: italic; border-top: 1px solid var(--border); line-height: 1.5; }
 
     .fc-boss { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
-    .fc-boss .boss-icon { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; background: var(--bg-card2); border: 1px solid var(--gold-border); flex-shrink: 0; }
+    .fc-boss .boss-icon { 
+      width: 26px; height: 26px; border-radius: 50%; 
+      object-fit: cover; background: #1a0a2e; 
+      border: 1px solid var(--gold-border); flex-shrink: 0; 
+    }
     .fc-boss .boss-name { color: var(--gold-dim); font-weight: 500; }
 
     /* ══════════════════════════════════════════════════
@@ -1199,18 +1217,18 @@
     modal.classList.add('open');
   };
 
-function openAdd() {
-  resetForm();
-  modalTitle.textContent = 'Добавить предмет';
-  modal.classList.remove('hidden');
-  modal.classList.add('open');
-}
+  function openAdd() {
+    resetForm();
+    modalTitle.textContent = 'Добавить предмет';
+    modal.classList.remove('hidden');
+    modal.classList.add('open');
+  }
 
-function closeModal() {
-  modal.classList.add('hidden');
-  modal.classList.remove('open');
-  resetForm();
-}
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('open');
+    resetForm();
+  }
 
   document.getElementById('btn-modal-close').onclick = closeModal;
   document.getElementById('btn-cancel').onclick      = closeModal;
