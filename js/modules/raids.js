@@ -19,7 +19,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ====================================================
-// ПОЛУЧЕНИЕ ВСЕХ РЕЙДОВ
+// ПОЛУЧЕНИЕ ВСЕХ РЕЙДОВ (ОПТИМИЗИРОВАНО)
 // ====================================================
 
 export async function getRaids() {
@@ -28,33 +28,13 @@ export async function getRaids() {
     const q = query(raidsRef, orderBy("date", "desc"));
     const snapshot = await getDocs(q);
     
-    const raids = [];
-    for (const docSnap of snapshot.docs) {
-      const raidData = docSnap.data();
-      
-      // Подсчитываем количество дропов
-      let dropCount = 0;
-      try {
-        const triesRef = collection(db, "raids", docSnap.id, "tries");
-        const triesSnap = await getDocs(triesRef);
-        
-        for (const tryDoc of triesSnap.docs) {
-          const dropsRef = collection(db, "raids", docSnap.id, "tries", tryDoc.id, "drops");
-          const dropsSnap = await getDocs(dropsRef);
-          dropCount += dropsSnap.size;
-        }
-      } catch (e) {
-        console.warn("Ошибка подсчета дропов:", e);
-      }
-      
-      raids.push({
-        id: docSnap.id,
-        ...raidData,
-        drop_count: dropCount,
-      });
-    }
-    
-    return raids;
+    // Просто возвращаем рейды без подсчета дропов
+    // Подсчет дропов будет происходить при выборе конкретного рейда
+    return snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+      drop_count: docSnap.data().drop_count || 0, // Используем сохраненное значение или 0
+    }));
   } catch (e) {
     console.error("Ошибка получения рейдов:", e);
     return [];
@@ -72,6 +52,7 @@ export async function createRaid(data) {
       ...data,
       status: "open",
       deleted: false,
+      drop_count: 0, // Инициализируем счетчик дропов
       created_at: serverTimestamp(),
       updated_at: serverTimestamp(),
     });
@@ -227,6 +208,9 @@ export async function deleteTry(raidId, tryId) {
     const tryRef = doc(db, "raids", raidId, "tries", tryId);
     await deleteDoc(tryRef);
     
+    // Обновляем счетчик дропов в рейде
+    await updateRaidDropCount(raidId);
+    
     return true;
   } catch (e) {
     console.error("Ошибка удаления трая:", e);
@@ -269,6 +253,9 @@ export async function addDrop(raidId, tryId, data) {
       created_at: serverTimestamp(),
     });
     
+    // Обновляем счетчик дропов в рейде
+    await updateRaidDropCount(raidId);
+    
     return docRef.id;
   } catch (e) {
     console.error("Ошибка добавления дропа:", e);
@@ -284,10 +271,40 @@ export async function deleteDrop(raidId, tryId, dropId) {
   try {
     const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
     await deleteDoc(dropRef);
+    
+    // Обновляем счетчик дропов в рейде
+    await updateRaidDropCount(raidId);
+    
     return true;
   } catch (e) {
     console.error("Ошибка удаления дропа:", e);
     throw e;
+  }
+}
+
+// ====================================================
+// ОБНОВЛЕНИЕ СЧЕТЧИКА ДРОПОВ В РЕЙДЕ
+// ====================================================
+
+async function updateRaidDropCount(raidId) {
+  try {
+    const triesRef = collection(db, "raids", raidId, "tries");
+    const triesSnap = await getDocs(triesRef);
+    
+    let dropCount = 0;
+    for (const tryDoc of triesSnap.docs) {
+      const dropsRef = collection(db, "raids", raidId, "tries", tryDoc.id, "drops");
+      const dropsSnap = await getDocs(dropsRef);
+      dropCount += dropsSnap.size;
+    }
+    
+    const raidRef = doc(db, "raids", raidId);
+    await updateDoc(raidRef, {
+      drop_count: dropCount,
+      updated_at: serverTimestamp(),
+    });
+  } catch (e) {
+    console.warn("Ошибка обновления счетчика дропов:", e);
   }
 }
 
