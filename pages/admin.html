@@ -34,7 +34,7 @@
     .admin-header .title-block .eyebrow {
       font-size: 0.7rem;
       letter-spacing: 0.2em;
-      color: var(--text-faint);
+      color: var(--text-muted);
       margin-bottom: 0.35rem;
       text-transform: uppercase;
     }
@@ -134,7 +134,7 @@
       left: 0.9rem;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-faint);
+      color: var(--text-muted);
       font-size: 0.9rem;
       pointer-events: none;
     }
@@ -333,6 +333,13 @@
       color: var(--text-muted);
     }
 
+    .user-display-name {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+      font-weight: 500;
+    }
+
     .user-character-line {
       margin-top: 0.25rem;
       display: flex;
@@ -356,7 +363,7 @@
     .char-pill .char-delete {
       background: none;
       border: none;
-      color: var(--text-faint);
+      color: var(--text-muted);
       cursor: pointer;
       padding: 0 0.1rem;
       font-size: 0.7rem;
@@ -368,7 +375,7 @@
 
     .no-char {
       font-size: 0.75rem;
-      color: var(--text-faint);
+      color: var(--text-muted);
     }
 
     /* Роль / бейджи */
@@ -404,7 +411,7 @@
 
     .user-stat {
       font-size: 0.72rem;
-      color: var(--text-faint);
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 0.2rem;
@@ -555,7 +562,7 @@
 
     .mod-detail .d-label {
       font-size: 0.68rem;
-      color: var(--text-faint);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-bottom: 0.2rem;
@@ -638,7 +645,7 @@
       border-color: var(--accent);
     }
 
-    .mod-actions textarea::placeholder { color: var(--text-faint); }
+    .mod-actions textarea::placeholder { color: var(--text-muted); }
 
     .btn-approve {
       padding: 0.45rem 1.1rem;
@@ -684,8 +691,8 @@
       padding: 0.45rem 0.9rem;
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      background: none;
-      color: var(--text-faint);
+      background: var(--bg-card2);
+      color: var(--text-muted);
       font-size: 0.78rem;
       cursor: pointer;
       transition: all 0.15s;
@@ -695,9 +702,9 @@
     }
 
     .btn-delete-char:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-      background: var(--danger-bg);
+      border-color: var(--accent);
+      color: var(--accent-soft);
+      background: var(--accent-glow);
     }
 
     /* ── Настройки ───────────────────────────────── */
@@ -1001,7 +1008,7 @@
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    .form-group input::placeholder { color: var(--text-faint); }
+    .form-group input::placeholder { color: var(--text-muted); }
 
     .modal-actions {
       display: flex;
@@ -1067,7 +1074,7 @@
     }
 
     .empty-state p { font-size: 0.9rem; }
-    .empty-state small { font-size: 0.75rem; color: var(--text-faint); }
+    .empty-state small { font-size: 0.75rem; color: var(--text-muted); }
 
     /* ── Доступ запрещён ─────────────────────────── */
     .access-denied {
@@ -1296,7 +1303,7 @@
               </select>
             </div>
             <div id="lock-list">
-              <p style="font-size:0.82rem;color:var(--text-faint)">Выберите персонажа выше</p>
+              <p style="font-size:0.82rem;color:var(--text-muted)">Выберите персонажа выше</p>
             </div>
           </div>
         </div>
@@ -1329,7 +1336,7 @@
     <div class="current-user-row" id="role-user-row">
       <span class="cu-email" id="role-user-email">—</span>
       <span id="role-user-name" style="font-size:0.8rem;color:var(--text-muted)">—</span>
-      <span style="font-size:0.75rem;color:var(--text-faint)">Текущая роль: <strong id="role-current-name" style="color:var(--accent-soft)">—</strong></span>
+      <span style="font-size:0.75rem;color:var(--text-muted)">Текущая роль: <strong id="role-current-name" style="color:var(--accent-soft)">—</strong></span>
     </div>
 
     <div id="role-options">
@@ -1560,6 +1567,7 @@
     const q = (document.getElementById('user-search')?.value || '').toLowerCase();
     const filtered = users.filter(u =>
       (u.username || '').toLowerCase().includes(q) ||
+      (u.displayName || '').toLowerCase().includes(q) ||
       (u.email || '').toLowerCase().includes(q)
     );
 
@@ -1571,27 +1579,40 @@
     container.innerHTML = filtered.map(u => {
       const role = u.role || 'user';
       const isSelf = u.id === currentUser?.uid;
-      const username = u.username || 'Без имени';
-      const avatarLetter = username.charAt(0).toUpperCase();
+      
+      // Получаем displayName и username
+      const displayName = u.displayName || u.username || u.name || 'Без имени';
+      const username = u.username || u.email?.split('@')[0] || '—';
+      const avatarLetter = displayName.charAt(0).toUpperCase();
+      
       const chars = getCharsByUser(u.id);
       const totalChars = allCharacters.filter(c => c.user_id === u.id).length;
       const approvedCount = chars.length;
-      const canEdit = !isSelf && userRole === 'admin';
+      
+      // Админ может удалять персонажей у всех, включая себя
+      const canDeleteChars = userRole === 'admin';
+      // Но не может менять роль или удалять самого себя
+      const canManageUser = !isSelf && userRole === 'admin';
 
       return `
         <div class="user-card role-${role}" id="user-row-${u.id}">
           <div class="user-avatar">${avatarLetter}</div>
           <div class="user-identity">
             <div class="user-email-line">
-              ${username}
+              ${displayName}
+              ${username !== '—' && username !== displayName ? `<span class="username-hint">(${username})</span>` : ''}
               ${isSelf ? `<span class="self-tag">Вы</span>` : ''}
+            </div>
+            <div class="user-display-name">
+              ${u.displayName && u.displayName !== displayName ? u.displayName : ''}
+              ${u.name && u.name !== displayName ? u.name : ''}
             </div>
             <div class="user-character-line">
               ${chars.length > 0
                 ? chars.map(c => `
                     <span class="char-pill">
                       ◆ ${c.name}
-                      ${canEdit ? `<button class="char-delete" onclick="deleteCharacter('${c.id}')" title="Удалить">✕</button>` : ''}
+                      ${canDeleteChars ? `<button class="char-delete" onclick="deleteCharacter('${c.id}')" title="Удалить">✕</button>` : ''}
                     </span>
                   `).join('')
                 : `<span class="no-char">Нет персонажа</span>`
@@ -1603,7 +1624,7 @@
               <span class="user-stat">✓ ${approvedCount} одобрено</span>
             </div>
           </div>
-          ${canEdit ? `
+          ${canManageUser ? `
             <div class="user-actions">
               <button class="action-btn" onclick="openRoleModal('${u.id}')" title="Сменить роль">▼</button>
               <button class="action-btn danger" onclick="confirmDelete('${u.id}')" title="Удалить">✕</button>
@@ -1623,9 +1644,9 @@
     if (!user) return;
     selectedUserId = uid;
     selectedRole = user.role || 'user';
-    const username = user.username || 'Без имени';
-    document.getElementById('role-user-email').textContent = username;
-    document.getElementById('role-user-name').textContent = '';
+    const displayName = user.displayName || user.username || 'Без имени';
+    document.getElementById('role-user-email').textContent = displayName;
+    document.getElementById('role-user-name').textContent = user.username ? `(${user.username})` : '';
     document.getElementById('role-current-name').textContent = ROLE_LABELS[selectedRole] || selectedRole;
     document.getElementById('role-error').style.display = 'none';
     document.querySelectorAll('.role-option').forEach(el => {
@@ -1676,7 +1697,7 @@
     const user = allUsers.find(u => u.id === uid);
     if (!user || uid === currentUser?.uid) { showToast('Нельзя удалить себя', 'error'); return; }
     if (user.role === 'admin') { showToast('Нельзя удалить администратора', 'error'); return; }
-    if (!confirm(`Удалить «${user.username || 'пользователя'}»? Персонажи тоже будут удалены.`)) return;
+    if (!confirm(`Удалить «${user.displayName || user.username || 'пользователя'}»? Персонажи тоже будут удалены.`)) return;
     try {
       const charsQ = query(collection(db, 'characters'), where('user_id', '==', uid));
       const charsSnap = await getDocs(charsQ);
@@ -1955,7 +1976,7 @@
   document.getElementById('lock-player-select')?.addEventListener('change', async (e) => {
     const id = e.target.value;
     if (!id) {
-      document.getElementById('lock-list').innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Выберите персонажа выше</p>`;
+      document.getElementById('lock-list').innerHTML = `<p style="font-size:0.82rem;color:var(--text-muted)">Выберите персонажа выше</p>`;
       return;
     }
     await renderLocks(id);
@@ -1963,11 +1984,11 @@
 
   async function renderLocks(playerId) {
     const container = document.getElementById('lock-list');
-    container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Загрузка...</p>`;
+    container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-muted)">Загрузка...</p>`;
     try {
       const locks = await getPlayerLocks(playerId);
       const entries = Object.entries(locks);
-      if (!entries.length) { container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-faint)">Блокировок нет</p>`; return; }
+      if (!entries.length) { container.innerHTML = `<p style="font-size:0.82rem;color:var(--text-muted)">Блокировок нет</p>`; return; }
       container.innerHTML = entries.map(([slot, lock]) => {
         const slotLabel = SLOTS.find(s => s.id === slot)?.label || slot;
         const frozen = lock.raids_skipped > 2;
