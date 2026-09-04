@@ -1,3200 +1,568 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Рейды — TL Loot</title>
-  <link rel="stylesheet" href="../css/main.css" />
-  <style>
-    .raids-layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; align-items: start; }
-    @media (max-width: 800px) { .raids-layout { grid-template-columns: 1fr; } }
-
-    .raid-list-item { 
-      padding: 0.75rem 1rem; 
-      border: 1px solid var(--border); 
-      border-radius: var(--radius); 
-      cursor: pointer; 
-      transition: all 0.2s; 
-      margin-bottom: 0.5rem;
-      background: var(--bg-card);
-    }
-    .raid-list-item:hover  { border-color: var(--accent); transform: translateX(4px); }
-    .raid-list-item.active { border-color: var(--accent); background: var(--accent-glow); box-shadow: 0 0 20px var(--accent-glow); }
-    .raid-list-item.deleted { opacity: 0.3; border-style: dashed; }
-    .raid-date { font-weight: 600; font-size: 0.95rem; }
-    .raid-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
-
-    .try-block {
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 1rem;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .try-block:hover { border-color: var(--accent); }
-    .try-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: rgba(201,168,76,0.05);
-      border-bottom: 1px solid var(--border);
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .try-title { font-weight: 700; color: var(--accent-soft); font-size: 0.95rem; }
-    .try-boss { 
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.82rem; 
-      color: var(--text-muted); 
-      margin-left: 0.5rem; 
-    }
-    .try-boss .boss-icon-small {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-    }
-    .try-body  { padding: 0.75rem 1rem; }
-    .try-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    .try-actions .btn-sm {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.6rem;
-    }
-
-    .drop-row {
-      display: grid; 
-      grid-template-columns: 44px 1fr auto auto;
-      gap: 0.75rem; 
-      align-items: center;
-      padding: 0.5rem 0; 
-      border-bottom: 1px solid var(--border); 
-      font-size: 0.85rem;
-      transition: background 0.15s;
-    }
-    .drop-row:last-child { border-bottom: none; }
-    .drop-row:hover { background: var(--bg-card); border-radius: 4px; }
-    .drop-img  { 
-      width: 44px; 
-      height: 44px; 
-      border-radius: 8px; 
-      object-fit: cover; 
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-    }
-    .drop-name { font-weight: 600; color: var(--text); }
-    .drop-detail { 
-      font-size: 0.75rem; 
-      color: var(--text-muted); 
-      margin-top: 1px;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      flex-wrap: wrap;
-    }
-    .drop-property { 
-      font-size: 0.65rem; 
-      color: var(--accent-soft); 
-      background: var(--accent-glow); 
-      padding: 0.1rem 0.5rem; 
-      border-radius: 10px; 
-      display: inline-block; 
-      margin-top: 2px; 
-    }
-    .drop-boss-tag {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-      margin-top: 2px;
-    }
-    .drop-boss-tag img {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .drop-winner { text-align: right; }
-    .drop-winner strong { 
-      display: block; 
-      font-size: 0.85rem; 
-      color: var(--success);
-    }
-    .drop-winner span   { 
-      font-size: 0.65rem; 
-      color: var(--text-muted);
-      background: var(--bg-card2);
-      padding: 0.1rem 0.4rem;
-      border-radius: 10px;
-    }
-    .drop-winner .no-winner { 
-      color: var(--text-muted); 
-      font-style: italic; 
-      font-size: 0.75rem; 
-    }
-    .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; }
-    .modal-overlay.open .modal { transform: scale(1); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .modal-header h3 { font-size: 1.1rem; }
-    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
-    .btn-close:hover { color: var(--text); }
-
-    .item-search-results { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); margin-top: 0.5rem; }
-    .item-search-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.85rem; transition: background 0.15s; }
-    .item-search-row:last-child { border-bottom: none; }
-    .item-search-row:hover   { background: var(--bg-card2); }
-    .item-search-row.selected{ background: var(--accent-glow); border-left: 2px solid var(--accent); }
-    .item-search-img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
-
-    .property-select-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
-    .property-btn { padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card2); color: var(--text); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
-    .property-btn:hover { border-color: var(--accent); }
-    .property-btn.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
-
-    .section-title { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.4rem; }
-
-    .empty-raid { text-align: center; padding: 3rem; color: var(--text-muted); }
-
-    .roll-btn { 
-      background: var(--accent); 
-      color: #fff; 
-      border: none; 
-      padding: 0.3rem 0.9rem; 
-      border-radius: 6px; 
-      font-size: 0.85rem; 
-      font-weight: 600;
-      cursor: pointer; 
-      transition: all 0.15s; 
-    }
-    .roll-btn:hover { 
-      background: var(--accent-soft); 
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
-    }
-    .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .roll-btn.rolling { background: var(--warning); animation: pulse 1s infinite; }
-    .roll-btn.finished { background: var(--bg-card2); color: var(--text-muted); cursor: default; }
-    .roll-btn.finished:hover { transform: none; box-shadow: none; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-
-    .status-badge {
-      font-size: 0.65rem;
-      padding: 0.15rem 0.6rem;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-    .status-badge.open { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-    .status-badge.rolling { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-    .status-badge.closed { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
-
-    .show-deleted-btn { font-size: 0.78rem; color: var(--text-muted); cursor: pointer; text-decoration: underline; margin-top: 0.5rem; display: block; }
-    
-    .roll-participant {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 0.7rem;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-    .roll-participant:hover { background: var(--bg-card2); }
-    .roll-participant .player-name { font-weight: 500; flex: 1; }
-    .roll-participant .player-status { font-size: 0.75rem; color: var(--text-muted); margin: 0 0.75rem; }
-    .roll-participant .player-roll { 
-      font-size: 1.1rem; 
-      font-weight: 700; 
-      color: var(--accent-soft);
-      min-width: 50px;
-      text-align: center;
-    }
-    .roll-participant.joined { background: var(--accent-glow); border-left: 2px solid var(--accent); }
-    .roll-participant.winner { background: rgba(34, 197, 94, 0.15); border-left: 2px solid #22c55e; }
-    .roll-participant.blocked { opacity: 0.5; border-left: 2px solid var(--danger); }
-    .roll-participant.not-attended { opacity: 0.4; border-left: 2px solid var(--text-muted); }
-    
-    .join-btn {
-      padding: 0.25rem 0.8rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text);
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .join-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
-    .join-btn.joined { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
-    .join-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .roll-section-title {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.5rem 0 0.3rem 0;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0.3rem;
-    }
-    .roll-section-title .count {
-      color: var(--accent-soft);
-      font-weight: 600;
-    }
-
-    .queue-toggle {
-      display: flex;
-      gap: 0.5rem;
-      margin: 0.5rem 0;
-    }
-    .queue-btn {
-      padding: 0.3rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg-card2);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 0.8rem;
-    }
-    .queue-btn:hover { border-color: var(--accent); }
-    .queue-btn.active { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
-    .queue-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    
-    .lucent-icon {
-      width: 16px;
-      height: 16px;
-      vertical-align: middle;
-      display: inline-block;
-      margin-right: 2px;
-    }
-    .lucent-icon-lg {
-      width: 20px;
-      height: 20px;
-      vertical-align: middle;
-      display: inline-block;
-      margin-right: 2px;
-    }
-
-    .btn-sm {
-      padding: 0.3rem 0.8rem;
-      font-size: 0.75rem;
-      border-radius: 6px;
-    }
-    .btn-sm:hover {
-      transform: translateY(-1px);
-    }
-
-    .attendance-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .attendance-player {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 0.6rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-size: 0.85rem;
-      user-select: none;
-      transition: all 0.15s;
-    }
-    .attendance-player.present {
-      border-color: var(--success);
-      background: rgba(34,197,94,0.1);
-      color: var(--success);
-    }
-    .attendance-player .char-weapon-tag {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      background: var(--bg-card2);
-      padding: 0.05rem 0.4rem;
-      border-radius: 10px;
-    }
-
-    .attendance-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-    }
-    .attendance-actions .btn {
-      font-size: 0.75rem;
-      padding: 0.3rem 0.8rem;
-    }
-
-    .roll-actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
-    }
-    .roll-actions .btn {
-      font-size: 0.8rem;
-      padding: 0.35rem 0.9rem;
-    }
-
-    /* ── ROLL MODAL STYLES (УВЕЛИЧЕННЫЕ) ── */
-    .roll-modal {
-      max-width: 560px;
-      padding: 0;
-      overflow: hidden;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
-
-    .roll-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.25rem 1.5rem 1rem;
-      border-bottom: 1px solid var(--border);
-      background: rgba(201,168,76,0.04);
-    }
-
-    .roll-modal-item-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .roll-modal-item-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .roll-modal-item-name {
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .roll-modal-item-detail {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 3px;
-    }
-
-    .roll-status-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 1.5rem;
-      background: var(--bg-card2);
-      border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .roll-status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      flex-shrink: 0;
-    }
-    .roll-status-dot.waiting { background: #888; }
-    .roll-status-dot.active  { background: #22c55e; box-shadow: 0 0 8px #22c55e88; }
-    .roll-status-dot.rolling { background: #f59e0b; animation: pulse-dot 0.8s infinite; }
-    .roll-status-dot.done    { background: #a78bfa; }
-
-    @keyframes pulse-dot {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.5; transform: scale(1.4); }
-    }
-
-    .roll-live-badge {
-      margin-left: auto;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #22c55e;
-      letter-spacing: 0.05em;
-      animation: pulse-dot 1.5s infinite;
-    }
-
-    .roll-queue-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .roll-queue-tab {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.8rem 1.25rem;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      color: var(--text-muted);
-      text-align: left;
-      transition: all 0.15s;
-      font-size: inherit;
-    }
-    .roll-queue-tab:hover { background: var(--bg-card2); }
-    .roll-queue-tab.active {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-      background: rgba(201,168,76,0.05);
-    }
-    .roll-queue-tab:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .queue-tab-icon { font-size: 1.3rem; flex-shrink: 0; }
-    .queue-tab-title { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
-    .queue-tab-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
-    .roll-queue-tab.active .queue-tab-sub { color: var(--accent-soft); }
-
-    .roll-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1.5rem 0.5rem;
-    }
-
-    .roll-section-label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-    }
-
-    .roll-count-badge {
-      font-size: 0.8rem;
-      font-weight: 700;
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-      padding: 0.1rem 0.6rem;
-      border-radius: 12px;
-      min-width: 28px;
-      text-align: center;
-    }
-
-    .roll-players-list {
-      min-height: 70px;
-      max-height: 250px;
-      overflow-y: auto;
-      margin: 0.5rem 1rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg-card2);
-    }
-
-    .roll-player-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.65rem 0.9rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
-      transition: background 0.1s;
-    }
-    .roll-player-row:last-child { border-bottom: none; }
-    .roll-player-row:hover { background: rgba(255,255,255,0.03); }
-
-    .roll-player-row.winner-row {
-      background: rgba(34,197,94,0.08);
-      border-left: 3px solid #22c55e;
-    }
-    .roll-player-row.joined-row {
-      border-left: 3px solid var(--accent);
-    }
-
-    .roll-player-name { font-weight: 500; color: var(--text); font-size: 0.95rem; }
-    .roll-player-you  { font-size: 0.7rem; color: var(--text-muted); margin-left: 6px; }
-
-    .roll-player-status {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .roll-dice-result {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--accent-soft);
-      min-width: 44px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
-    .roll-dice-result.winner-dice { color: #22c55e; }
-    .roll-dice-result.pending-dice { color: var(--text-muted); font-size: 1rem; font-weight: 400; }
-
-    .roll-empty-msg {
-      padding: 1.2rem;
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--text-muted);
+// ====================================================
+// auth.js — авторизация и роли
+// ====================================================
+
+import { auth, db } from "../firebase.js";
+
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ====================================================
+// Состояние
+// ====================================================
+
+export let currentUser = null;
+export let currentRole = "guest";
+
+export let user = null;
+export let role = "guest";
+
+// ====================================================
+// Auth Ready (исправлено)
+// ====================================================
+
+let authReadyResolve;
+let authReadyResolved = false;
+
+export const authReady = new Promise((resolve) => {
+  authReadyResolve = (result) => {
+    if (!authReadyResolved) {
+      authReadyResolved = true;
+      console.log("✅ authReady резолвится:", result);
+      resolve(result);
     }
-
-    .roll-result-card {
-      margin: 0.5rem 1rem;
-      background: rgba(167,139,250,0.08);
-      border: 1px solid rgba(167,139,250,0.25);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-    }
-    .roll-result-card.hidden { display: none; }
-
-    .roll-result-winner {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 0.6rem;
-    }
-
-    .roll-trophy { font-size: 2rem; line-height: 1; }
-
-    .roll-winner-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--accent-soft);
-    }
-    .roll-winner-roll {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .roll-results-breakdown {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.25rem;
-    }
-
-    .roll-breakdown-chip {
-      font-size: 0.8rem;
-      padding: 0.2rem 0.7rem;
-      border-radius: 20px;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-    }
-    .roll-breakdown-chip.winner-chip {
-      background: rgba(167,139,250,0.15);
-      border-color: rgba(167,139,250,0.4);
-      color: var(--accent-soft);
-      font-weight: 600;
-    }
-
-    .roll-available-section {
-      margin: 0.25rem 1rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .roll-available-summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.65rem 0.9rem;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      background: var(--bg-card2);
-      user-select: none;
-      list-style: none;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .roll-available-summary::-webkit-details-marker { display: none; }
-    .roll-available-summary::after {
-      content: '▾';
-      font-size: 0.85rem;
-      margin-left: auto;
-      margin-right: 0.25rem;
-      color: var(--text-muted);
-    }
-    details[open] .roll-available-summary::after { content: '▴'; }
-
-    .roll-available-list { max-height: 220px; overflow-y: auto; }
-
-    .roll-available-row {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.55rem 0.9rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
-    .roll-available-row:last-child { border-bottom: none; }
-
-    .roll-available-name { flex: 1; font-weight: 500; color: var(--text); }
-    .roll-available-reason {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .roll-available-reason.can-join { color: #22c55e; }
-    .roll-available-reason.blocked  { color: var(--danger, #ef4444); }
-
-    .btn-add-to-roll {
-      padding: 0.3rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-card2);
-      color: var(--text);
-      font-size: 0.8rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.1s;
-    }
-    .btn-add-to-roll:hover {
-      border-color: var(--accent);
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-    }
-
-    .roll-footer {
-      padding: 0.9rem 1.5rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(0,0,0,0.15);
-    }
-
-    .roll-footer-user-actions,
-    .roll-footer-admin-actions {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm {
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.5rem 1.1rem;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid;
-      transition: all 0.15s;
-    }
-
-    .btn-roll-join {
-      background: var(--accent-glow);
-      border-color: var(--accent);
-      color: var(--accent-soft);
-    }
-    .btn-roll-join:hover:not(:disabled) {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-roll-leave {
-      background: transparent;
-      border-color: var(--border);
-      color: var(--text-muted);
-    }
-    .btn-roll-leave:hover:not(:disabled) {
-      border-color: var(--danger, #ef4444);
-      color: var(--danger, #ef4444);
-    }
-
-    .btn-roll-start {
-      background: #f59e0b22;
-      border-color: #f59e0b;
-      color: #f59e0b;
-    }
-    .btn-roll-start:hover:not(:disabled) {
-      background: #f59e0b;
-      color: #000;
-    }
-    .btn-roll-start:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    .btn-roll-confirm {
-      background: var(--accent-glow);
-      border-color: var(--accent);
-      color: var(--accent-soft);
-    }
-    .btn-roll-confirm:hover:not(:disabled) {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-roll-join:disabled, .btn-roll-leave:disabled, .btn-roll-confirm:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    @keyframes rolling-anim {
-      0% { transform: rotate(0deg) scale(1); }
-      25% { transform: rotate(-10deg) scale(1.1); }
-      75% { transform: rotate(10deg) scale(1.1); }
-      100% { transform: rotate(0deg) scale(1); }
-    }
-    .dice-rolling { animation: rolling-anim 0.3s ease-in-out infinite; display: inline-block; }
-
-    /* ── Кнопка закрытия модалки ── */
-    .roll-modal-header .btn-close {
-      font-size: 1.5rem;
-      padding: 0.25rem 0.5rem;
-    }
-
-    /* ── Бейдж участия в трае ── */
-    .attendance-badge {
-      font-size: 0.6rem;
-      padding: 0.1rem 0.5rem;
-      border-radius: 10px;
-      background: var(--bg-card2);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .attendance-badge.has-attendance {
-      border-color: var(--success);
-      color: var(--success);
-      background: rgba(34,197,94,0.1);
-    }
-
-    /* ── ДИАЛОГОВОЕ ОКНО ── */
-    #modal-dialog .modal {
-      max-width: 420px;
-    }
-    #modal-dialog .modal-header h3 {
-      font-size: 1.1rem;
-    }
-    #dialog-message {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      margin-bottom: 1.25rem;
-      line-height: 1.6;
-      white-space: pre-line;
-    }
-    #dialog-message br {
-      display: block;
-      content: '';
-      margin: 0.25rem 0;
-    }
-
-    .property-error {
-      color: var(--danger, #ef4444);
-      font-size: 0.8rem;
-      margin-top: 0.3rem;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-<nav class="navbar" id="main-nav"></nav>
-
-<main class="container">
-  <div class="page-header">
-    <h2>⚔️ Рейды</h2>
-    <div class="flex gap-1">
-      <button class="btn btn-primary hidden" id="btn-new-raid">+ Новый рейд</button>
-    </div>
-  </div>
-  <div class="raids-layout">
-    <div>
-      <div id="raids-list"><div class="text-muted">Загрузка...</div></div>
-      <span class="show-deleted-btn hidden" id="btn-show-deleted" data-role="admin">Показать удалённые</span>
-    </div>
-    <div id="raid-detail">
-      <div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>
-    </div>
-  </div>
-</main>
-
-<!-- Новый рейд -->
-<div class="modal-overlay hidden" id="modal-raid">
-  <div class="modal">
-    <div class="modal-header"><h3 id="modal-raid-title">Новый рейд</h3><button class="btn-close" onclick="closeModal('modal-raid')">✕</button></div>
-    <div class="form-group"><label>Дата *</label><input type="date" id="raid-date" /></div>
-    <div class="form-group"><label>Заметки</label><textarea id="raid-notes" rows="2"></textarea></div>
-    <div id="raid-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-create-raid">Создать</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-raid')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Новый трай -->
-<div class="modal-overlay hidden" id="modal-try">
-  <div class="modal">
-    <div class="modal-header"><h3>Добавить трай</h3><button class="btn-close" onclick="closeModal('modal-try')">✕</button></div>
-    <div class="form-group">
-      <label>Босс</label>
-      <select id="try-boss-select"><option value="">— без босса —</option></select>
-    </div>
-    <div id="try-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-create-try">Добавить</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-try')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Дроп -->
-<div class="modal-overlay hidden" id="modal-drop">
-  <div class="modal">
-    <div class="modal-header"><h3>Добавить дроп</h3><button class="btn-close" onclick="closeModal('modal-drop')">✕</button></div>
-
-    <div class="section-title">Предмет</div>
-    <input type="text" id="item-search" placeholder="Поиск предмета..." />
-    <div id="item-search-results" class="item-search-results"></div>
-
-    <div class="section-title">Особенность предмета</div>
-    <div id="property-select-grid" class="property-select-grid"></div>
-    <div id="property-error" class="property-error">⚠️ Выберите особенность предмета</div>
-
-    <div class="section-title">Цена в Lucent (текущая)</div>
-    <input type="number" id="drop-lucent" placeholder="0" min="0" />
-
-    <div id="drop-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-drop">Добавить дроп</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-drop')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- РОЛЛ ОКНО (УВЕЛИЧЕННОЕ) -->
-<div class="modal-overlay hidden" id="modal-roll">
-  <div class="modal roll-modal">
-    <div class="roll-modal-header">
-      <div class="roll-modal-item-info">
-        <div class="roll-modal-item-icon">
-          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;" />
-          <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
-        </div>
-        <div>
-          <div class="roll-modal-item-name" id="roll-item-name">—</div>
-          <div class="roll-modal-item-detail" id="roll-item-detail">—</div>
-        </div>
-      </div>
-      <button class="btn-close" onclick="closeRollModal()">✕</button>
-    </div>
-
-    <!-- Статус -->
-    <div id="roll-status-bar" class="roll-status-bar">
-      <span class="roll-status-dot" id="roll-status-dot"></span>
-      <span id="roll-status-text">Ожидание участников</span>
-      <span class="roll-live-badge" id="roll-live-badge" style="display:none;">● LIVE</span>
-    </div>
-
-    <!-- Переключатель очередей -->
-    <div class="roll-queue-tabs" id="queue-tabs">
-      <button class="roll-queue-tab active" data-queue="main" id="queue-main">
-        <span class="queue-tab-icon">🎯</span>
-        <div>
-          <div class="queue-tab-title">Основная</div>
-          <div class="queue-tab-sub">Желаемый лут + спек</div>
-        </div>
-      </button>
-      <button class="roll-queue-tab" data-queue="open" id="queue-open">
-        <span class="queue-tab-icon">🎲</span>
-        <div>
-          <div class="queue-tab-title">Дополнительная</div>
-          <div class="queue-tab-sub">Только спек</div>
-        </div>
-      </button>
-    </div>
-
-    <!-- Участники ролла -->
-    <div class="roll-section-header">
-      <span class="roll-section-label">Участники ролла</span>
-      <span class="roll-count-badge" id="roll-players-count">0</span>
-    </div>
-    <div id="roll-players-list" class="roll-players-list">
-      <div class="roll-empty-msg">Пока никто не присоединился</div>
-    </div>
-
-    <!-- Итог ролла -->
-    <div id="roll-result-card" class="roll-result-card hidden">
-      <div class="roll-result-winner">
-        <span class="roll-trophy">🏆</span>
-        <div>
-          <div class="roll-winner-name" id="roll-winner-name">—</div>
-          <div class="roll-winner-roll" id="roll-winner-roll">Бросок: —</div>
-        </div>
-      </div>
-      <div class="roll-results-breakdown" id="roll-results-breakdown"></div>
-    </div>
-
-    <!-- Доступные игроки -->
-    <details class="roll-available-section" id="roll-available-section">
-      <summary class="roll-available-summary">
-        <span>Могут участвовать</span>
-        <span class="roll-count-badge" id="roll-available-count">0</span>
-      </summary>
-      <div id="roll-available-list" class="roll-available-list"></div>
-    </details>
-
-    <!-- Действия -->
-    <div class="roll-footer">
-      <div class="roll-footer-user-actions">
-        <button class="btn-roll-join" id="btn-join-roll">
-          <i class="ti ti-user-plus" aria-hidden="true"></i> Присоединиться
-        </button>
-        <button class="btn-roll-leave" id="btn-leave-roll">
-          <i class="ti ti-door-exit" aria-hidden="true"></i> Выйти
-        </button>
-        <button class="btn-roll-confirm" id="btn-confirm-roll" style="display:none;">
-          <i class="ti ti-check" aria-hidden="true"></i> Зафиксировать
-        </button>
-      </div>
-      <div class="roll-footer-admin-actions" id="roll-admin-actions" style="display:none;">
-        <button class="btn-roll-start" id="btn-start-roll" disabled>
-          <i class="ti ti-dice" aria-hidden="true"></i> Запустить ролл
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Модалка участия (для трая) -->
-<div class="modal-overlay hidden" id="modal-attendance">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>👥 Участие в трае</h3>
-      <button class="btn-close" onclick="closeModal('modal-attendance')">✕</button>
-    </div>
-    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Отметь кто участвовал в этом трае.</p>
-    
-    <div class="attendance-actions">
-      <button class="btn btn-primary btn-sm" id="btn-attendance-all">✅ Выбрать всех</button>
-      <button class="btn btn-ghost btn-sm" id="btn-attendance-copy">📋 Скопировать с прошлого трая</button>
-    </div>
-    
-    <div id="attendance-grid" class="attendance-grid"></div>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-save-attendance">Сохранить участие</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-attendance')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Закрыть рейд -->
-<div class="modal-overlay hidden" id="modal-close-raid">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Закрыть рейд</h3>
-      <button class="btn-close" onclick="closeModal('modal-close-raid')">✕</button>
-    </div>
-    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Закрыть рейд и зафиксировать все траи?</p>
-    <div class="flex gap-1 mt-3">
-      <button class="btn btn-primary" id="btn-confirm-close">Закрыть рейд</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-close-raid')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- ⭐ УНИВЕРСАЛЬНОЕ ДИАЛОГОВОЕ ОКНО -->
-<div class="modal-overlay hidden" id="modal-dialog">
-  <div class="modal" style="max-width:420px;">
-    <div class="modal-header">
-      <h3 id="dialog-title">Подтверждение</h3>
-      <button class="btn-close" onclick="closeDialog()">✕</button>
-    </div>
-    <div id="dialog-message" style="font-size:0.95rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.5;">
-      Вы уверены?
-    </div>
-    <div class="flex gap-1" style="justify-content:flex-end;">
-      <button class="btn btn-ghost" id="dialog-cancel">Отмена</button>
-      <button class="btn btn-primary" id="dialog-confirm">Подтвердить</button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-  // ============================================================
-  // ЗАЩИТА
-  // ============================================================
-  
-  document.addEventListener('contextmenu', function(e) {
-    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (
-      e.key === 'F12' ||
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
-      (e.ctrlKey && e.key === 'u') ||
-      (e.ctrlKey && e.key === 's')
-    ) {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  console.log('🔒 Защита активирована');
-
-  // ============================================================
-  // ИМПОРТЫ
-  // ============================================================
-  
-  import { initNavbar } from "../js/modules/navbar.js";
-  import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole, isGuildLeader } from "../js/modules/auth.js";
-  
-  // ============================================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ============================================================
-  
-  initNavbar();
-  
-  console.log('⏳ Ожидание авторизации...');
-  await initAuth();
-  await authReady;
-
-  console.log('🔐 Авторизация:', { 
-    user: currentUser?.email || 'Нет',
-    role: currentRole,
-    uid: currentUser?.uid
-  });
-
-  if (!currentUser) {
-    console.log('🚫 Пользователь не авторизован, редирект на логин');
-    window.location.href = '/pages/login.html';
-    throw new Error('Redirect to login');
-  }
-
-  // ============================================================
-  // ИМПОРТЫ МОДУЛЕЙ
-  // ============================================================
-  
-  import {
-    getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid, hardDeleteRaid,
-    getRaidTries, addTry, deleteTry,
-    getTryDrops, addDrop, deleteDrop,
-    closeRaid, updateRaidStatus, updateDropWinner,
-    updateTryAttendance
-  } from "../js/modules/raids.js";
-  import { getBosses } from "../js/modules/bosses.js";
-  import { getItems } from "../js/modules/items.js";
-  import { setItemImage } from "../js/modules/images.js";
-  import { SLOTS, WEAPONS } from "../js/constants.js";
-  
-  import { 
-    collection, 
-    getDocs, 
-    query, 
-    orderBy,
-    where,
-    doc,
-    getDoc,
-    onSnapshot,
-    updateDoc as firestoreUpdate
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { db } from "../js/firebase.js";
-
-  // ============================================================
-  // ПРОВЕРКА ИМПОРТОВ
-  // ============================================================
-  
-  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid', 'updateTryAttendance'];
-  let importsOk = true;
-  
-  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus, hardDeleteRaid, updateTryAttendance };
-  for (const fn of requiredFunctions) {
-    if (typeof fnMap[fn] !== 'function') {
-      console.error(`🔒 Критическая функция ${fn} не найдена`);
-      importsOk = false;
-    }
-  }
-  
-  if (!importsOk) {
-    document.body.innerHTML = `
-      <div style="text-align:center;padding:4rem;color:var(--danger);">
-        <h2>🔒 Ошибка безопасности</h2>
-        <p>Обнаружена попытка подмены критических функций.</p>
-        <p>Пожалуйста, перезагрузите страницу.</p>
-      </div>
-    `;
-    throw new Error('Security: Function integrity check failed');
-  }
-
-  // ============================================================
-  // УНИВЕРСАЛЬНЫЙ ДИАЛОГ
-  // ============================================================
-
-  let dialogResolve = null;
-
-  function openDialog(title, message, confirmText = 'Подтвердить', cancelText = 'Отмена') {
-    return new Promise((resolve) => {
-      const modal = document.getElementById('modal-dialog');
-      document.getElementById('dialog-title').textContent = title;
-      document.getElementById('dialog-message').textContent = message;
-      document.getElementById('dialog-confirm').textContent = confirmText;
-      document.getElementById('dialog-cancel').textContent = cancelText;
-      
-      dialogResolve = resolve;
-      
-      modal.classList.remove('hidden');
-      modal.classList.add('open');
-    });
-  }
-
-  function closeDialog() {
-    const modal = document.getElementById('modal-dialog');
-    modal.classList.remove('open');
-    modal.classList.add('hidden');
-    if (dialogResolve) {
-      dialogResolve(false);
-      dialogResolve = null;
-    }
-  }
-
-  // Навешиваем обработчики
-  document.getElementById('dialog-confirm')?.addEventListener('click', () => {
-    const modal = document.getElementById('modal-dialog');
-    modal.classList.remove('open');
-    modal.classList.add('hidden');
-    if (dialogResolve) {
-      dialogResolve(true);
-      dialogResolve = null;
-    }
-  });
-
-  document.getElementById('dialog-cancel')?.addEventListener('click', closeDialog);
-
-  document.getElementById('modal-dialog')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeDialog();
-  });
-
-  // ============================================================
-  // ОСНОВНАЯ ЛОГИКА
-  // ============================================================
-
-  let allRaids = [], allCharacters = [], allBosses = [], allItems = [];
-  let activeRaid = null;
-  let showDeleted = false;
-  let editingRaidId = null;
-  let currentDropRaidId = null, currentDropTryId = null, currentDropBossId = null;
-  let selectedItem = null, selectedProperty = null;
-  let attendedPlayerIds = [];
-  let rollUnsubscribe = null;
-  let raidUnsubscribe = null;
-  let currentEditingTryId = null;
-  let tryAttendanceCache = {};
-  let lockSettings = { raids_to_unlock: 999, max_misses: 0 };
-
-  // ⭐ Флаг, что ролл был запущен и есть результаты
-  let rollHasResults = false;
-
-  // ============================================================
-  // СОСТОЯНИЕ РОЛЛА
-  // ============================================================
-  
-  let rollState = {
-    dropId: null,
-    raidId: null,
-    tryId: null,
-    itemName: '',
-    itemDetail: '',
-    itemSlot: null,
-    itemId: null,
-    participants: [],
-    isRolling: false,
-    isFinished: false,
-    winner: null,
-    currentUserId: null,
-    currentPlayerId: null,
-    queue: 'main',
-    rollResults: null,
-    hasPendingWinner: false,
   };
+});
 
-  // ============================================================
-  // HELPER ФУНКЦИИ
-  // ============================================================
+let isInitialized = false;
+let initializationPromise = null;
+let currentAuthResult = null;
 
-  function lucentIcon(size = 'small') {
-    const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
-    return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
+// ====================================================
+// Инициализация Auth (исправлено)
+// ====================================================
+
+export function initAuth(onReady = null) {
+  console.log("🔄 initAuth вызван");
+
+  // Если уже есть результат - возвращаем его
+  if (currentAuthResult) {
+    console.log("📦 Используем кэшированный результат:", currentAuthResult);
+    return Promise.resolve(currentAuthResult);
   }
 
-  function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.remove("hidden");
-      modal.classList.add("open");
+  // Если Auth уже запускается — возвращаем тот же Promise
+  if (initializationPromise) {
+    console.log("⏳ Используем существующий initializationPromise");
+    return initializationPromise;
+  }
+
+  initializationPromise = new Promise(async (resolve) => {
+    console.log("🔄 Инициализация Auth...");
+
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log("💾 Firebase persistence установлена");
+    } catch (e) {
+      console.warn("⚠️ Не удалось установить persistence:", e);
     }
-  }
 
-  function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.remove("open");
-      modal.classList.add("hidden");
+    isInitialized = true;
+
+    // ==================================================
+    // Слушаем изменение авторизации
+    // ==================================================
+
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log(
+        "📡 onAuthStateChanged:",
+        firebaseUser ? firebaseUser.email : "guest"
+      );
+
+      let roleValue = "guest";
+
+      // =================================================
+      // Пользователь авторизован
+      // =================================================
+
+      if (firebaseUser) {
+        currentUser = firebaseUser;
+        user = firebaseUser;
+        console.log("👤 Пользователь:", firebaseUser.email);
+
+        // Получаем роль
+        roleValue = await fetchRole(firebaseUser.uid);
+        currentRole = roleValue;
+        role = roleValue;
+
+        sessionStorage.setItem(`role_${firebaseUser.uid}`, roleValue);
+        console.log("🔐 Роль:", roleValue);
+      } else {
+        // Пользователь не авторизован
+        currentUser = null;
+        currentRole = "guest";
+        user = null;
+        role = "guest";
+        console.log("👤 Пользователь не авторизован");
+      }
+
+      // Обновляем Navbar
+      updateNavUI();
+
+      const result = {
+        user: currentUser,
+        role: currentRole,
+      };
+
+      currentAuthResult = result;
+      console.log("✅ Auth готов:", result);
+
+      // Callback
+      if (onReady) {
+        try {
+          onReady(currentUser, currentRole);
+        } catch (e) {
+          console.error("❌ Ошибка auth callback:", e);
+        }
+      }
+
+      // Резолвим authReady
+      if (authReadyResolve) {
+        authReadyResolve(result);
+      }
+
+      // Резолвим initAuth()
+      resolve(result);
+    });
+  });
+
+  return initializationPromise;
+}
+
+// ====================================================
+// Получение роли
+// ====================================================
+
+async function fetchRole(uid) {
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+
+    if (snap.exists()) {
+      const roleValue = snap.data().role || "guest";
+      console.log(`📋 Роль пользователя ${uid}:`, roleValue);
+      return roleValue;
     }
-  }
-  window.closeModal = closeModal;
 
-  function showDropError(msg) { 
-    const el = document.getElementById("drop-error"); 
-    if (el) {
-      el.textContent = msg; 
-      el.style.display = "block"; 
+    console.warn(`⚠️ Документ users/${uid} не найден`);
+
+    // Если документа нет — создаём его с ролью "user"
+    try {
+      const userData = await getUserData(uid);
+      await setDoc(doc(db, "users", uid), {
+        email: currentUser?.email || "",
+        role: "user",
+        username: userData?.username || currentUser?.email?.split('@')[0] || "User",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      console.log("✅ Создан новый документ пользователя с ролью user");
+      return "user";
+    } catch (createError) {
+      console.error("❌ Ошибка создания документа:", createError);
     }
-  }
-  
-  function formatDate(str) { 
-    if (!str) return "—"; 
-    return new Date(str).toLocaleDateString("ru-RU", { 
-      day: "numeric", 
-      month: "long", 
-      year: "numeric" 
-    }); 
-  }
-  
-  function todayStr() { 
-    return new Date().toISOString().split("T")[0]; 
-  }
-  
-  function showToast(msg, type = 'success') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+
+  } catch (e) {
+    console.error("❌ Ошибка получения роли:", e);
   }
 
-  function canStartRoll() {
-    return isGuildLeader() || isAdmin();
-  }
+  return "guest";
+}
 
-  function canEditRaid() {
-    return isAdmin() || currentRole === 'guild_leader' || canWrite();
-  }
+// ====================================================
+// Получение данных пользователя
+// ====================================================
 
-  function getWeaponType(itemId) {
-    const item = allItems.find(i => i.id === itemId);
-    if (!item) return null;
-    if (item.weapon_type) return item.weapon_type;
-    if (item.slot === 'weapon') {
-      const weapon = WEAPONS.find(w => w.label && item.name?.toLowerCase().includes(w.label.toLowerCase()));
-      return weapon?.id || null;
+export async function getUserData(uid) {
+  try {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      return userDoc.data();
     }
     return null;
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    return null;
   }
+}
 
-  function getWeaponLabel(id) {
-    return WEAPONS.find(w => w.id === id)?.label || id;
-  }
+// ====================================================
+// Публичное получение роли
+// ====================================================
 
-  function getWeaponTypeLabel(weaponType) {
-    const typeMap = {
-      'staff': 'Посох',
-      'bow': 'Лук',
-      'greatsword': 'Двуручный меч',
-      'sword_shield': 'Щит и меч',
-      'wand': 'Жезл',
-      'spear': 'Копьё',
-      'crossbow': 'Арбалеты',
-      'daggers': 'Кинжалы'
-    };
-    return typeMap[weaponType] || weaponType;
-  }
+export async function getUserRole(uid) {
+  return await fetchRole(uid);
+}
 
-  function getSlotLabel(slotId) {
-    const slotMap = {
-      'weapon': 'Оружие',
-      'head': 'Шлем',
-      'chest': 'Нагрудник',
-      'legs': 'Поножи',
-      'feet': 'Сапоги',
-      'hands': 'Перчатки',
-      'neck': 'Ожерелье',
-      'ring': 'Кольцо',
-      'belt': 'Пояс',
-      'cloak': 'Плащ',
-      'bracelet': 'Браслет'
-    };
-    return slotMap[slotId] || slotId;
-  }
+// ====================================================
+// РЕГИСТРАЦИЯ ПО ЛОГИНУ
+// ====================================================
 
-  async function loadLockSettings() {
-    try {
-      const settingsRef = doc(db, 'settings', 'locks');
-      const settingsSnap = await getDoc(settingsRef);
-      if (settingsSnap.exists()) {
-        lockSettings = settingsSnap.data();
-        console.log('🔒 Настройки блокировок загружены:', lockSettings);
-      }
-    } catch (e) {
-      console.warn('⚠️ Не удалось загрузить настройки блокировок:', e);
-    }
-  }
+export async function registerWithUsername(username, password, displayName = null) {
+  console.log("📝 Регистрация с логином:", username);
 
-  async function getPlayerWins(playerId) {
-    try {
-      const historyRef = collection(db, 'loot_history');
-      const q = query(
-        historyRef, 
-        where('player_id', '==', playerId),
-        where('raid_deleted', '==', false)
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map(d => d.data());
-    } catch (e) {
-      console.warn('⚠️ Ошибка получения истории побед:', e);
-      return [];
-    }
-  }
-
-  async function getPlayerWinsInCurrentRaid(playerId) {
-    if (!activeRaid) return [];
-    try {
-      const historyRef = collection(db, 'loot_history');
-      const q = query(
-        historyRef, 
-        where('player_id', '==', playerId),
-        where('raid_id', '==', activeRaid.id),
-        where('raid_deleted', '==', false)
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map(d => d.data());
-    } catch (e) {
-      console.warn('⚠️ Ошибка получения побед в рейде:', e);
-      return [];
-    }
-  }
-
-  async function isSlotLocked(playerId, itemSlot, itemId) {
-    const wins = await getPlayerWins(playerId);
-    const char = allCharacters.find(c => c.id === playerId);
+  try {
+    // Нормализуем логин
+    const normalizedUsername = username.toLowerCase().trim();
     
-    if (!char) return { locked: false, reason: '' };
-    
-    const exactItemWins = wins.filter(w => w.item_id === itemId);
-    if (exactItemWins.length > 0) {
-        const item = allItems.find(i => i.id === itemId);
-        return { 
-            locked: true, 
-            reason: `Уже выиграл «${item?.name || 'этот предмет'}» в другом рейде` 
-        };
-    }
-    
-    if (itemSlot === 'weapon') {
-        const item = allItems.find(i => i.id === itemId);
-        if (!item) return { locked: false, reason: '' };
-        
-        const weaponType = item.weapon_type || getWeaponType(itemId);
-        if (!weaponType) return { locked: false, reason: '' };
-        
-        const weaponTypeLabel = getWeaponTypeLabel(weaponType);
-        
-        const weaponTypeWins = wins.filter(w => {
-            const winItem = allItems.find(i => i.id === w.item_id);
-            return winItem?.slot === 'weapon' && 
-                   (winItem.weapon_type === weaponType || getWeaponType(w.item_id) === weaponType);
-        });
-        
-        if (weaponTypeWins.length > 0) {
-            return { 
-                locked: true, 
-                reason: `Уже выиграл оружие типа «${weaponTypeLabel}» в другом рейде` 
-            };
-        }
-        
-        const charWeapons = char.weapons || [];
-        const weaponWins = wins.filter(w => {
-            const winItem = allItems.find(i => i.id === w.item_id);
-            if (!winItem || winItem.slot !== 'weapon') return false;
-            const wType = winItem.weapon_type || getWeaponType(w.item_id);
-            return charWeapons.includes(wType);
-        });
-        
-        const wonWeaponTypes = new Set();
-        weaponWins.forEach(w => {
-            const winItem = allItems.find(i => i.id === w.item_id);
-            const wType = winItem?.weapon_type || getWeaponType(w.item_id);
-            if (wType) wonWeaponTypes.add(wType);
-        });
-        
-        if (wonWeaponTypes.size >= 2) {
-            const wonLabels = Array.from(wonWeaponTypes).map(t => getWeaponTypeLabel(t));
-            return { 
-                locked: true, 
-                reason: `Уже выиграл 2 оружия из своего спека (${wonLabels.join(', ')})` 
-            };
-        }
-    }
-    
-    if (itemSlot === 'ring') {
-        const ringWins = wins.filter(w => {
-            const winItem = allItems.find(i => i.id === w.item_id);
-            return winItem?.slot === 'ring';
-        });
-        
-        if (ringWins.length >= 2) {
-            return { 
-                locked: true, 
-                reason: `Уже выиграл 2 кольца, больше нельзя роллить на кольца` 
-            };
-        }
-    }
-    
-    const slotWins = wins.filter(w => {
-        const winItem = allItems.find(i => i.id === w.item_id);
-        return winItem?.slot === itemSlot;
-    });
-    
-    if (slotWins.length > 0) {
-        const slotLabel = getSlotLabel(itemSlot);
-        return { 
-            locked: true, 
-            reason: `Уже выиграл предмет в слоте «${slotLabel}» в другом рейде` 
-        };
-    }
-    
-    return { locked: false, reason: '' };
-  }
-
-  async function hasWonItemInCurrentRaid(playerId, itemId) {
-    const winsInRaid = await getPlayerWinsInCurrentRaid(playerId);
-    return winsInRaid.some(w => w.item_id === itemId);
-  }
-
-  async function canJoinMainQueue(charId) {
-    const char = allCharacters.find(c => c.id === charId);
-    if (!char) return { can: false, reason: 'Персонаж не найден' };
-    if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
-    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
-
-    const itemSlot = rollState.itemSlot;
-    const itemId   = rollState.itemId;
-
-    if (!itemSlot || !itemId) {
-      return { can: false, reason: 'Данные предмета не загружены' };
+    // Проверяем, не занят ли логин
+    const usernameExists = await checkUsernameExists(normalizedUsername);
+    if (usernameExists) {
+      return { 
+        success: false, 
+        error: 'Этот логин уже занят' 
+      };
     }
 
-    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
-    if (winsInRaid.length > 0) {
-      const lastWin = winsInRaid[0];
-      const item = allItems.find(i => i.id === lastWin.item_id);
-      return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде. Одна победа за рейд!` };
-    }
-
-    if (await hasWonItemInCurrentRaid(charId, itemId)) {
-      const item = allItems.find(i => i.id === itemId);
-      return { can: false, reason: `Уже выиграл «${item?.name || 'этот предмет'}» в текущем рейде` };
-    }
-
-    const slotLock = await isSlotLocked(charId, itemSlot, itemId);
-    if (slotLock.locked) {
-      return { can: false, reason: slotLock.reason };
-    }
-
-    const desired = char.desired_loot || {};
+    // Создаём виртуальный email
+    const email = `${normalizedUsername}@tlloot.app`;
     
-    if (itemSlot === 'weapon') {
-      const wantedInWeapon1 = desired.weapon1 === itemId;
-      const wantedInWeapon2 = desired.weapon2 === itemId;
-      
-      if (!wantedInWeapon1 && !wantedInWeapon2) {
-        return { can: false, reason: 'Оружие не в желаемом луте' };
-      }
-    }
-    else if (itemSlot === 'ring') {
-      const wantedInRing1 = desired.ring1 === itemId;
-      const wantedInRing2 = desired.ring2 === itemId;
-      
-      if (!wantedInRing1 && !wantedInRing2) {
-        return { can: false, reason: 'Кольцо не в желаемом луте' };
-      }
-    }
-    else {
-      if (desired[itemSlot] !== itemId) {
-        const slotLabel = getSlotLabel(itemSlot);
-        return { can: false, reason: `Предмет не в желаемом луте (слот «${slotLabel}»)` };
-      }
-    }
-
-    if (itemSlot === 'weapon') {
-      const item = allItems.find(i => i.id === itemId);
-      if (item?.weapon_type) {
-        const charWeapons = char.weapons || [];
-        const weaponTypeLabel = getWeaponTypeLabel(item.weapon_type);
-        if (!charWeapons.includes(item.weapon_type)) {
-          return { can: false, reason: `Нужен спек: ${weaponTypeLabel}` };
-        }
-      }
-    }
-
-    return { can: true };
-  }
-
-  async function canJoinOpenQueue(charId) {
-    const char = allCharacters.find(c => c.id === charId);
-    if (!char) return { can: false, reason: 'Персонаж не найден' };
-    if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
-    if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
-
-    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
-    if (winsInRaid.length > 0) {
-      const lastWin = winsInRaid[0];
-      const item = allItems.find(i => i.id === lastWin.item_id);
-      return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде` };
-    }
-
-    return { can: true };
-  }
-
-  async function canJoinCurrentQueue(charId) {
-    return rollState.queue === 'main'
-      ? await canJoinMainQueue(charId)
-      : await canJoinOpenQueue(charId);
-  }
-
-  async function loadCharacters() {
-    try {
-      const charsRef = collection(db, 'characters');
-      const q = query(charsRef, orderBy('name'));
-      const querySnapshot = await getDocs(q);
-      allCharacters = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      return allCharacters;
-    } catch (e) {
-      console.error('❌ Ошибка загрузки персонажей:', e);
-      allCharacters = [];
-      return [];
-    }
-  }
-
-  function populateBossSelect() {
-    const sel = document.getElementById("try-boss-select");
-    if (!sel) return;
-    sel.innerHTML = `<option value="">— без босса —</option>`;
-    allBosses.forEach(b => {
-      const icon = b.icon ? `<img src="/assets/img/bosses/${b.icon}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px;" />` : '👹 ';
-      sel.innerHTML += `<option value="${b.id}">${icon} ${b.name}</option>`;
-    });
-  }
-
-  function renderRaidList() {
-    const container = document.getElementById("raids-list");
-    const visible = allRaids.filter(r => showDeleted ? r.deleted : !r.deleted);
-
-    if (!visible.length) {
-      container.innerHTML = `<div class="text-muted">Рейдов нет</div>`;
-      return;
-    }
-    container.innerHTML = "";
-    visible.forEach(r => {
-      const el = document.createElement("div");
-      el.className = `raid-list-item${activeRaid?.id === r.id ? " active" : ""}${r.deleted ? " deleted" : ""}`;
-      
-      const statusMap = { open: 'Открыт', rolling: 'Ролл', closed: 'Закрыт' };
-      const statusClass = r.status || 'open';
-      
-      el.innerHTML = `
-        <div class="raid-date">${formatDate(r.date)}</div>
-        <div class="raid-meta">
-          ${r.drop_count || 0} дропов &nbsp;·&nbsp;
-          <span class="status-badge ${statusClass}">${statusMap[statusClass] || 'Открыт'}</span>
-          ${r.deleted ? ' <span style="color:var(--danger);font-size:0.65rem;">🗑️ Удалён</span>' : ''}
-        </div>
-      `;
-      if (isAdmin() || !r.deleted) {
-        el.addEventListener("click", () => selectRaid(r));
-      }
-      container.appendChild(el);
-    });
-
-    const btnDel = document.getElementById("btn-show-deleted");
-    if (btnDel) {
-      if (isAdmin()) {
-        btnDel.classList.remove("hidden");
-        btnDel.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
-      } else {
-        btnDel.classList.add("hidden");
-      }
-    }
-  }
-
-  const btnShowDeleted = document.getElementById("btn-show-deleted");
-  if (btnShowDeleted) {
-    btnShowDeleted.addEventListener("click", () => {
-      showDeleted = !showDeleted;
-      renderRaidList();
-      btnShowDeleted.textContent = showDeleted ? "Скрыть удалённые" : "Показать удалённые";
-    });
-  }
-
-  const newRaidBtn = document.getElementById("btn-new-raid");
-  if (newRaidBtn) {
-    if (canEditRaid()) {
-      newRaidBtn.classList.remove("hidden");
-    }
-    
-    newRaidBtn.addEventListener("click", () => {
-      console.log('🆕 Создание нового рейда из основной кнопки...');
-      editingRaidId = null;
-      const titleEl = document.getElementById("modal-raid-title");
-      const dateEl = document.getElementById("raid-date");
-      const notesEl = document.getElementById("raid-notes");
-      const errorEl = document.getElementById("raid-error");
-      
-      if (titleEl) titleEl.textContent = "Новый рейд";
-      if (dateEl) dateEl.value = todayStr();
-      if (notesEl) notesEl.value = "";
-      if (errorEl) errorEl.style.display = "none";
-      
-      openModal("modal-raid");
-    });
-  }
-
-  function buildTryBlock(t, num, drops, boss, raidId, canEdit, raid) {
-    const wrap = document.createElement("div");
-    wrap.className = "try-block";
-    
-    const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
-    const hasAttendance = t.attended_player_ids && t.attended_player_ids.length > 0;
-    
-    wrap.innerHTML = `
-      <div class="try-header">
-        <div class="flex items-center gap-1">
-          <span class="try-title">Трай ${num}</span>
-          ${boss ? `
-            <span class="try-boss">
-              ${bossIcon ? `<img class="boss-icon-small" src="${bossIcon}" alt="${boss.name}" />` : '👹'}
-              ${boss.name}
-            </span>
-          ` : ""}
-          <span class="text-muted" style="font-size:0.75rem">${drops.length} дропов</span>
-          <span class="attendance-badge ${hasAttendance ? 'has-attendance' : ''}">
-            ${hasAttendance ? '✅' : '⬜'} Участие: ${t.attended_player_ids?.length || 0}
-          </span>
-        </div>
-        <div class="try-actions">
-          ${canEdit ? `
-            <button class="btn btn-ghost btn-sm" onclick="openAttendanceModalForTry('${raidId}','${t.id}')">👥</button>
-            <button class="btn btn-primary btn-sm" onclick="openDropModal('${raidId}','${t.id}','${t.boss_id||""}')">+ Дроп</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmDeleteTry('${raidId}','${t.id}')">🗑️</button>
-          ` : ""}
-        </div>
-      </div>
-      <div class="try-body">
-        ${drops.length ? drops.map(d => buildDropRow(d, raidId, t.id, canEdit, raid)).join("") :
-          `<div class="text-muted" style="font-size:0.82rem">Дропов нет</div>`}
-      </div>
-    `;
-    
-    drops.forEach(d => {
-      const img = wrap.querySelector(`#drop-img-${d.id}`);
-      if (img) setItemImage(img, d.item_image);
-    });
-    
-    return wrap;
-  }
-
-  function buildDropRow(d, raidId, tryId, canEdit, raid) {
-    const slotLabel = SLOTS.find(s => s.id === d.item_slot)?.label || d.item_slot || "—";
-    const hasWinner = d.winner_player_id && d.winner_nickname;
-    
-    const isClosed = raid?.status === "closed";
-    const isRolling = raid?.status === "rolling";
-    
-    const boss = allBosses.find(b => b.id === d.boss_id);
-    const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
-    
-    let rollButtonClass = 'roll-btn';
-    let rollButtonText = '🎲';
-    let rollButtonTitle = '';
-    
-    if (hasWinner) {
-      rollButtonClass += ' finished';
-      rollButtonText = '📊';
-      rollButtonTitle = 'Просмотр результатов';
-    } else if (isClosed) {
-      rollButtonText = '🔒';
-      rollButtonTitle = 'Рейд закрыт — просмотр истории';
-    } else if (isRolling) {
-      rollButtonClass += ' rolling';
-      rollButtonText = '⏳';
-      rollButtonTitle = 'Идёт ролл — просмотр в реальном времени';
-    } else {
-      rollButtonTitle = 'Открыть окно ролла';
-    }
-    
-    return `
-      <div class="drop-row">
-        <img class="drop-img" id="drop-img-${d.id}" alt="${d.item_name}" />
-        <div>
-          <div class="drop-name">${d.item_name}</div>
-          <div class="drop-detail">
-            ${slotLabel} · ${lucentIcon()} ${(d.lucent_value_snapshot||0).toLocaleString()} L
-            ${d.property ? `<span class="drop-property">✦ ${d.property}</span>` : ''}
-          </div>
-          ${boss ? `
-            <div class="drop-boss-tag">
-              ${bossIcon ? `<img src="${bossIcon}" alt="${boss.name}" />` : '👹'}
-              ${boss.name}
-            </div>
-          ` : ''}
-        </div>
-        <div class="drop-winner">
-          ${hasWinner ? `
-            <strong>${d.winner_nickname}</strong>
-            <span>${d.roll_type === "main" ? "Основная" : "Дополнительная"}</span>
-          ` : `
-            <span class="no-winner">${isRolling ? '⏳ Ролл...' : 'Ожидает ролла'}</span>
-          `}
-        </div>
-        <div class="drop-actions">
-          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" title="${rollButtonTitle}">
-            ${rollButtonText}
-          </button>
-          ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-  async function renderRaidDetail(raid) {
-    const detail = document.getElementById("raid-detail");
-    
-    const tries = await getRaidTries(raid.id);
-    const canEdit = canEditRaid() && !raid.deleted && (raid.status === "open" || raid.status === "rolling" || raid.status === "closed");
-    const admin = isAdmin();
-    const isClosed = raid.status === "closed";
-
-    detail.innerHTML = `
-      <div class="card">
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 style="color:var(--accent-soft)">${formatDate(raid.date)}</h3>
-            <div class="text-muted" style="font-size:0.82rem;margin-top:2px">${raid.notes || ""}</div>
-          </div>
-          <div class="flex gap-1" style="flex-wrap:wrap;justify-content:flex-end">
-            ${canEdit ? `
-              ${isClosed ? `
-                <button class="btn btn-warning btn-sm" id="btn-reopen-raid" style="background:var(--warning);color:#000;border-color:var(--warning);">🔓 Открыть рейд</button>
-              ` : `
-                <button class="btn btn-primary btn-sm" id="btn-add-try">+ Трай</button>
-                <button class="btn btn-ghost btn-sm" id="btn-close-raid">Закрыть рейд</button>
-              `}
-            ` : ""}
-            ${admin && !raid.deleted ? `
-              <button class="btn btn-danger btn-sm" id="btn-delete-raid">🗑️</button>
-            ` : ""}
-            ${admin && raid.deleted ? `
-              <button class="btn btn-ghost btn-sm" id="btn-restore-raid">♻️ Восстановить</button>
-              <button class="btn btn-danger btn-sm" id="btn-hard-delete-raid">💀 Удалить навсегда</button>
-            ` : ""}
-          </div>
-        </div>
-
-        <div style="margin-top:1.25rem" id="tries-container">
-          ${tries.length ? "" : `<div class="text-muted" style="text-align:center;padding:1.5rem">Нет траёв — нажми "+ Трай"</div>`}
-        </div>
-      </div>
-    `;
-
-    const triesContainer = document.getElementById("tries-container");
-    for (let i = 0; i < tries.length; i++) {
-      const t = tries[i];
-      const drops = await getTryDrops(raid.id, t.id);
-      const boss = allBosses.find(b => b.id === t.boss_id);
-      triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit && !isClosed, raid));
-    }
-
-    const btnAddTry = document.getElementById("btn-add-try");
-    if (btnAddTry) btnAddTry.addEventListener("click", () => openTryModal());
-    
-    const btnCloseRaid = document.getElementById("btn-close-raid");
-    if (btnCloseRaid) btnCloseRaid.addEventListener("click", openCloseRaidModal);
-    
-    const btnReopenRaid = document.getElementById("btn-reopen-raid");
-    if (btnReopenRaid) btnReopenRaid.addEventListener("click", reopenRaid);
-    
-    const btnDeleteRaid = document.getElementById("btn-delete-raid");
-    if (btnDeleteRaid) btnDeleteRaid.addEventListener("click", confirmDeleteRaid);
-    
-    const btnRestoreRaid = document.getElementById("btn-restore-raid");
-    if (btnRestoreRaid) btnRestoreRaid.addEventListener("click", confirmRestoreRaid);
-    
-    const btnHardDeleteRaid = document.getElementById("btn-hard-delete-raid");
-    if (btnHardDeleteRaid) btnHardDeleteRaid.addEventListener("click", confirmHardDeleteRaid);
-  }
-
-  async function reopenRaid() {
-    const confirmed = await openDialog(
-      '🔓 Открыть рейд',
-      'Открыть рейд для редактирования?\n\nВы сможете добавлять/удалять траи и дропы.',
-      'Открыть',
-      'Отмена'
+    // Создаём пользователя в Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
     );
-    if (!confirmed) return;
-    
-    try {
-      await updateRaid(activeRaid.id, { status: 'open' });
-      showToast('Рейд открыт для редактирования');
-      allRaids = await getRaids();
-      activeRaid = allRaids.find(r => r.id === activeRaid.id);
-      renderRaidList();
-      selectRaid(activeRaid);
-    } catch(e) {
-      showToast('Ошибка: ' + e.message, 'error');
-    }
-  }
 
-  async function confirmHardDeleteRaid() {
-    const raid = activeRaid;
-    if (!raid) return;
-    
-    const confirmed1 = await openDialog(
-      '💀 Удалить навсегда!',
-      `Вы собираетесь навсегда удалить рейд от ${formatDate(raid.date)}.\n\nЭто действие НЕЛЬЗЯ будет отменить!\n\nВсе траи и дропы будут удалены безвозвратно.\n\nВы уверены?`,
-      'Да, удалить навсегда',
-      'Отмена'
-    );
-    if (!confirmed1) return;
-    
-    const confirmed2 = await openDialog(
-      '⚠️ Последнее предупреждение',
-      'Вы точно уверены? Это действие необратимо!',
-      'Да, я уверен',
-      'Нет, отмена'
-    );
-    if (!confirmed2) return;
-    
-    try {
-      const tries = await getRaidTries(raid.id);
-      for (const t of tries) {
-        await deleteTry(raid.id, t.id);
-      }
-      await hardDeleteRaid(raid.id);
-      showToast('Рейд удалён навсегда');
-      allRaids = await getRaids();
-      activeRaid = null;
-      document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
-      renderRaidList();
-    } catch(e) {
-      showToast('Ошибка: ' + e.message, 'error');
-    }
-  }
+    const newUser = userCredential.user;
+    console.log("✅ Пользователь создан:", newUser.uid);
 
-  async function confirmDeleteRaid() {
-    const raid = activeRaid;
-    if (!raid) return;
-    
-    const confirmed = await openDialog(
-      '🗑️ Удалить рейд?',
-      `Вы уверены, что хотите удалить рейд от ${formatDate(raid.date)}?`,
-      'Удалить',
-      'Отмена'
-    );
-    if (!confirmed) return;
-    
-    await softDeleteRaid(raid.id);
-    showToast("Рейд удалён");
-    allRaids = await getRaids();
-    activeRaid = null;
-    document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">⚔️</div><div class="mt-1">Выбери рейд слева</div></div>`;
-    renderRaidList();
-  }
-
-  async function confirmRestoreRaid() {
-    const raid = activeRaid;
-    if (!raid) return;
-    
-    const confirmed = await openDialog(
-      '♻️ Восстановить рейд?',
-      `Восстановить рейд от ${formatDate(raid.date)}?`,
-      'Восстановить',
-      'Отмена'
-    );
-    if (!confirmed) return;
-    
-    await restoreRaid(raid.id);
-    showToast("Рейд восстановлен");
-    allRaids = await getRaids();
-    renderRaidList();
-    selectRaid(allRaids.find(r => r.id === raid.id));
-  }
-
-  async function selectRaid(raid) {
-    activeRaid = raid;
-    renderRaidList();
-
-    const detail = document.getElementById("raid-detail");
-    detail.innerHTML = `<div class="text-muted">Загрузка...</div>`;
-
-    if (raidUnsubscribe) {
-      raidUnsubscribe();
-      raidUnsubscribe = null;
-    }
-
-    const raidRef = doc(db, "raids", raid.id);
-    raidUnsubscribe = onSnapshot(raidRef, async (docSnap) => {
-      if (!docSnap.exists()) return;
-      
-      const raidData = docSnap.data();
-      const updatedRaid = { id: docSnap.id, ...raidData };
-      
-      activeRaid = updatedRaid;
-      
-      allRaids = await getRaids();
-      renderRaidList();
-      await renderRaidDetail(updatedRaid);
+    // Создаём документ в Firestore
+    await setDoc(doc(db, "users", newUser.uid), {
+      email: email,
+      role: "user",
+      username: normalizedUsername,
+      displayName: displayName || normalizedUsername,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
-  }
 
-  const createRaidBtn = document.getElementById("btn-create-raid");
-  if (createRaidBtn) {
-    createRaidBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для создания рейда", "error");
-        return;
-      }
-      
-      const date  = document.getElementById("raid-date").value;
-      const notes = document.getElementById("raid-notes").value.trim();
-      const errEl = document.getElementById("raid-error");
-      if (!date) { 
-        if (errEl) {
-          errEl.textContent = "Выбери дату"; 
-          errEl.style.display = "block"; 
-        }
-        return; 
-      }
+    console.log("📄 Документ пользователя создан");
 
-      const btn = document.getElementById("btn-create-raid");
-      btn.disabled = true; 
-      btn.textContent = "Сохранение...";
-      try {
-        if (editingRaidId) {
-          await updateRaid(editingRaidId, { date, notes });
-          showToast("Рейд обновлён");
-          closeModal("modal-raid");
-          allRaids = await getRaids();
-          renderRaidList();
-          activeRaid = allRaids.find(r => r.id === editingRaidId);
-          if (activeRaid) selectRaid(activeRaid);
-        } else {
-          const newId = await createRaid({ date, notes });
-          showToast("Рейд создан");
-          closeModal("modal-raid");
-          allRaids = await getRaids();
-          renderRaidList();
-          const newRaid = allRaids.find(r => r.id === newId);
-          if (newRaid) selectRaid(newRaid);
-        }
-      } catch(e) { 
-        if (errEl) {
-          errEl.textContent = e.message; 
-          errEl.style.display = "block"; 
-        }
-      }
-      finally { 
-        btn.disabled = false; 
-        btn.textContent = editingRaidId ? "Сохранить" : "Создать"; 
-      }
-    });
-  }
-
-  function openTryModal() {
-    document.getElementById("try-boss-select").value = "";
-    document.getElementById("try-error").style.display = "none";
-    openModal("modal-try");
-  }
-
-  const createTryBtn = document.getElementById("btn-create-try");
-  if (createTryBtn) {
-    createTryBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для добавления трая", "error");
-        return;
-      }
-      
-      if (!activeRaid) {
-        showToast("Сначала выберите рейд", "error");
-        return;
-      }
-      
-      const bossId   = document.getElementById("try-boss-select").value;
-      const boss     = allBosses.find(b => b.id === bossId);
-      const tries    = await getRaidTries(activeRaid.id);
-      const btn      = document.getElementById("btn-create-try");
-      btn.disabled   = true; 
-      btn.textContent = "Добавление...";
-      try {
-        await addTry(activeRaid.id, {
-          boss_id:   bossId || null,
-          boss_name: boss?.name || "",
-          order:     tries.length,
-        });
-        closeModal("modal-try");
-        selectRaid(activeRaid);
-        showToast("Трай добавлен");
-      } catch(e) {
-        const errEl = document.getElementById("try-error");
-        if (errEl) {
-          errEl.textContent = e.message;
-          errEl.style.display = "block";
-        }
-      } finally { 
-        btn.disabled = false; 
-        btn.textContent = "Добавить"; 
-      }
-    });
-  }
-
-  async function confirmDeleteTry(raidId, tryId) {
-    const confirmed = await openDialog(
-      '🗑️ Удалить трай?',
-      'Удалить трай и все его дропы?',
-      'Удалить',
-      'Отмена'
-    );
-    if (!confirmed) return;
-    
-    await deleteTry(raidId, tryId);
-    selectRaid(activeRaid);
-    showToast("Трай удалён");
-  }
-  window.confirmDeleteTry = confirmDeleteTry;
-
-  window.openAttendanceModalForTry = async (raidId, tryId) => {
-    currentEditingTryId = tryId;
-    
-    const grid = document.getElementById("attendance-grid");
-    grid.innerHTML = "";
-    
-    const approvedChars = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-    
-    const tries = await getRaidTries(raidId);
-    const currentTry = tries.find(t => t.id === tryId);
-    const currentAttended = currentTry?.attended_player_ids || [];
-    
-    tryAttendanceCache[tryId] = [...currentAttended];
-    
-    const currentIndex = tries.findIndex(t => t.id === tryId);
-    let previousTryAttended = [];
-    if (currentIndex > 0) {
-      const previousTry = tries[currentIndex - 1];
-      previousTryAttended = previousTry?.attended_player_ids || [];
-    }
-    
-    approvedChars.forEach(p => {
-      const el = document.createElement("div");
-      const isPresent = currentAttended.includes(p.id);
-      el.className = `attendance-player${isPresent ? ' present' : ''}`;
-      el.dataset.id = p.id;
-      
-      const weapons = p.weapons || [];
-      const weaponLabels = weapons.map(w => {
-        const weapon = WEAPONS.find(wp => wp.id === w);
-        return weapon?.label || w;
-      }).join(', ');
-      
-      el.innerHTML = `
-        <span>${isPresent ? '✅' : '⬜'}</span>
-        ${p.name}
-        ${weaponLabels ? `<span class="char-weapon-tag">${weaponLabels}</span>` : ''}
-      `;
-      el.addEventListener("click", () => {
-        el.classList.toggle("present");
-        el.querySelector("span").textContent = el.classList.contains("present") ? "✅" : "⬜";
-      });
-      grid.appendChild(el);
-    });
-    
-    window._previousTryAttendance = previousTryAttended;
-    
-    openModal("modal-attendance");
-  };
-
-  document.getElementById("btn-attendance-all")?.addEventListener("click", () => {
-    document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
-      el.classList.add("present");
-      el.querySelector("span").textContent = "✅";
-    });
-  });
-
-  document.getElementById("btn-attendance-copy")?.addEventListener("click", () => {
-    const previousAttended = window._previousTryAttendance || [];
-    if (previousAttended.length === 0) {
-      showToast('Нет предыдущего трая для копирования', 'error');
-      return;
-    }
-    document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
-      const isPresent = previousAttended.includes(el.dataset.id);
-      el.classList.toggle("present", isPresent);
-      el.querySelector("span").textContent = isPresent ? "✅" : "⬜";
-    });
-    showToast(`Скопировано ${previousAttended.length} участников`);
-  });
-
-  const saveAttendanceBtn = document.getElementById("btn-save-attendance");
-  if (saveAttendanceBtn) {
-    saveAttendanceBtn.addEventListener("click", async () => {
-      const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
-      const btn = document.getElementById("btn-save-attendance");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-      try {
-        await updateTryAttendance(activeRaid.id, currentEditingTryId, attendedIds);
-        tryAttendanceCache[currentEditingTryId] = attendedIds;
-        closeModal("modal-attendance");
-        showToast("Участие сохранено");
-        selectRaid(activeRaid);
-      } catch(e) { 
-        showToast("Ошибка: " + e.message, "error"); 
-      }
-      finally { 
-        btn.disabled = false; 
-        btn.textContent = "Сохранить участие"; 
-      }
-    });
-  }
-
-  window.openDropModal = async (raidId, tryId, bossId) => {
-    currentDropRaidId  = raidId;
-    currentDropTryId   = tryId;
-    currentDropBossId  = bossId || null;
-    selectedItem       = null;
-    selectedProperty   = null;
-
-    document.getElementById("item-search").value       = "";
-    document.getElementById("drop-lucent").value       = "";
-    document.getElementById("drop-error").style.display = "none";
-    document.getElementById("property-error").style.display = "none";
-
-    renderDropItems("");
-    renderProperties();
-    openModal("modal-drop");
-  };
-
-  function renderDropItems(query) {
-    const boss = allBosses.find(b => b.id === currentDropBossId);
-    let itemPool = boss?.item_ids?.length
-      ? boss.item_ids.map(id => allItems.find(i => i.id === id)).filter(i => i?.id)
-      : allItems;
-
-    if (query) itemPool = itemPool.filter(i => i.name?.toLowerCase().includes(query.toLowerCase()));
-
-    const container = document.getElementById("item-search-results");
-    container.innerHTML = "";
-
-    if (boss?.item_ids?.length && !query) {
-      const header = document.createElement("div");
-      header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--accent);background:var(--accent-glow);border-bottom:1px solid var(--border)";
-      header.textContent = `📦 Предметы с ${boss.name}`;
-      container.appendChild(header);
-    }
-
-    if (!itemPool.length) {
-      const empty = document.createElement("div");
-      empty.style.cssText = "padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.82rem";
-      empty.textContent = "Нет предметов";
-      container.appendChild(empty);
-      return;
-    }
-
-    itemPool.forEach(item => {
-      const row = document.createElement("div");
-      row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
-      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
-      row.innerHTML = `
-        <img class="item-search-img" alt="${item.name}" />
-        <div><div style="font-weight:600">${item.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div></div>
-      `;
-      setItemImage(row.querySelector("img"), item.image);
-      row.addEventListener("click", () => { 
-        selectedItem = item; 
-        selectedProperty = null;
-        renderDropItems(document.getElementById("item-search").value);
-        renderProperties();
-        document.getElementById("property-error").style.display = "none";
-      });
-      container.appendChild(row);
-    });
-  }
-
-  function renderProperties() {
-    const container = document.getElementById("property-select-grid");
-    container.innerHTML = '';
-    
-    if (!selectedItem || !selectedItem.properties?.length) {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.style.cssText = 'color:var(--text-muted);font-size:0.82rem;padding:0.25rem 0';
-      emptyMsg.textContent = 'У этого предмета нет особенностей';
-      container.appendChild(emptyMsg);
-      return;
-    }
-    
-    selectedProperty = null;
-    
-    selectedItem.properties.forEach(prop => {
-      const btn = document.createElement("button");
-      btn.className = "property-btn";
-      btn.dataset.prop = prop;
-      btn.textContent = prop;
-      btn.addEventListener("click", () => {
-        selectedProperty = prop;
-        document.querySelectorAll(".property-btn").forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-        document.getElementById("property-error").style.display = "none";
-      });
-      container.appendChild(btn);
-    });
-  }
-
-  const itemSearch = document.getElementById("item-search");
-  if (itemSearch) {
-    itemSearch.addEventListener("input", e => renderDropItems(e.target.value));
-  }
-
-  const saveDropBtn = document.getElementById("btn-save-drop");
-  if (saveDropBtn) {
-    saveDropBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для добавления дропа", "error");
-        return;
-      }
-      
-      if (!selectedItem)   return showDropError("Выбери предмет");
-      
-      if (selectedItem.properties?.length && !selectedProperty) {
-        document.getElementById("property-error").style.display = "block";
-        return;
-      }
-
-      const boss   = allBosses.find(b => b.id === currentDropBossId);
-      const lucent = Number(document.getElementById("drop-lucent").value) || 0;
-      const btn    = document.getElementById("btn-save-drop");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-
-      try {
-        await addDrop(currentDropRaidId, currentDropTryId, {
-          item_id:               selectedItem.id,
-          item_name:             selectedItem.name,
-          item_slot:             selectedItem.slot,
-          item_image:            selectedItem.image,
-          winner_player_id:      null,
-          winner_nickname:       null,
-          boss_id:               currentDropBossId || null,
-          boss_name:             boss?.name || "",
-          lucent_value_snapshot: lucent,
-          roll_type:             null,
-          property:              selectedProperty || null,
-        });
-        
-        if (activeRaid && activeRaid.status === "open") {
-          await updateRaidStatus(currentDropRaidId, "rolling");
-          activeRaid.status = "rolling";
-        }
-        
-        closeModal("modal-drop");
-        allRaids = await getRaids();
-        activeRaid = allRaids.find(r => r.id === currentDropRaidId);
-        selectRaid(activeRaid);
-        showToast("Дроп добавлен");
-      } catch(e) { showDropError("Ошибка: " + e.message); }
-      finally { btn.disabled = false; btn.textContent = "Добавить дроп"; }
-    });
-  }
-
-  async function confirmDeleteDrop(raidId, tryId, dropId, name) {
-    const confirmed = await openDialog(
-      '🗑️ Удалить дроп?',
-      `Удалить дроп «${name}»?`,
-      'Удалить',
-      'Отмена'
-    );
-    if (!confirmed) return;
-    
-    await deleteDrop(raidId, tryId, dropId);
-    allRaids = await getRaids();
-    activeRaid = allRaids.find(r => r.id === raidId);
-    selectRaid(activeRaid);
-    showToast("Дроп удалён");
-  }
-  window.confirmDeleteDrop = confirmDeleteDrop;
-
-  window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
-    rollHasResults = false;
-    
-    const tries = await getRaidTries(raidId);
-    const currentTry = tries.find(t => t.id === tryId);
-    const tryAttendedIds = currentTry?.attended_player_ids || [];
-    
-    if (tryAttendedIds.length === 0) {
-      const confirmed = await openDialog(
-        '⚠️ Участие не отмечено',
-        'Участие в этом трае не отмечено!\n\nСначала отметьте кто участвовал в этом трае, чтобы участники могли присоединиться к роллу.',
-        'Открыть участие',
-        'Отмена'
-      );
-      if (confirmed) {
-        sessionStorage.setItem('pending_roll_data', JSON.stringify({
-          raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw
-        }));
-        openAttendanceModalForTry(raidId, tryId);
-      }
-      return;
-    }
-    
-    attendedPlayerIds = tryAttendedIds;
-
-    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-
-    const oldParticipants = rollState.participants || [];
-    const oldRollResults = rollState.rollResults || null;
-    const oldWinner = rollState.winner || null;
-    const oldIsFinished = rollState.isFinished || false;
-    const oldHasPending = rollState.hasPendingWinner || false;
-
-    rollState = {
-      dropId: dropId,
-      raidId: raidId,
-      tryId: tryId,
-      itemName: itemName,
-      itemDetail: `${slotLabel}${property ? ` · ✦ ${property}` : ''}`,
-      itemSlot: itemSlotRaw || null,
-      itemId: null,
-      participants: oldParticipants.length > 0 ? oldParticipants : [],
-      isRolling: false,
-      isFinished: oldIsFinished,
-      winner: oldWinner,
-      currentUserId: currentUser?.uid || null,
-      currentPlayerId: rollState.currentPlayerId || null,
-      queue: 'main',
-      rollResults: oldRollResults,
-      hasPendingWinner: oldHasPending,
+    return {
+      success: true,
+      user: newUser,
+      message: "Регистрация успешна!"
     };
 
-    try {
-      const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
-      const dropSnap = await getDoc(dropRef);
-      if (dropSnap.exists()) {
-        const data = dropSnap.data();
-        rollState.itemId = data.item_id || null;
-        
-        if (data.item_slot) {
-          rollState.itemSlot = data.item_slot;
-        }
+  } catch (error) {
+    console.error("❌ Ошибка регистрации:", error);
 
-        if (data.participants?.length) {
-          rollState.participants = data.participants.map(p => ({
-            playerId: p.playerId, nickname: p.nickname,
-            roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
-          }));
-        }
-        
-        if (data.pending_winner && !data.winner_player_id) {
-          rollState.hasPendingWinner = true;
-          rollState.winner = data.pending_winner;
-          rollState.rollResults = data.roll_results || null;
-          rollState.isFinished = true;
-          rollHasResults = true;
-        }
-        
-        if (data.winner_player_id && data.winner_nickname) {
-          rollState.isFinished = true;
-          rollState.hasPendingWinner = false;
-          rollHasResults = false;
-          rollState.winner = { 
-            playerId: data.winner_player_id, 
-            nickname: data.winner_nickname,
-            roll: (data.roll_results || []).find(r => r.playerId === data.winner_player_id)?.roll 
-          };
-          rollState.rollResults = data.roll_results || null;
-          rollState.queue = data.roll_type || 'main';
-        }
-      }
-    } catch(e) { console.error('openRollModal drop fetch:', e); }
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
+}
 
-    document.getElementById("roll-item-name").textContent   = itemName;
-    document.getElementById("roll-item-detail").textContent = rollState.itemDetail;
+// ====================================================
+// ВХОД ПО ЛОГИНУ
+// ====================================================
 
-    const imgEl = document.getElementById("roll-item-img");
-    const fallEl = document.getElementById("roll-item-icon-fallback");
-    const dropItem = allItems.find(i => i.id === rollState.itemId);
-    if (dropItem?.image) {
-      setItemImage(imgEl, dropItem.image);
-      imgEl.style.display = 'block';
-      fallEl.style.display = 'none';
-    } else {
-      imgEl.style.display = 'none';
-      fallEl.style.display = '';
-    }
+export async function loginWithUsername(username, password) {
+  console.log("🔑 Попытка входа с логином:", username);
 
-    document.querySelectorAll('.roll-queue-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.queue === rollState.queue);
-      b.disabled = rollState.isFinished || rollState.isRolling;
-    });
-
-    const adminActions = document.getElementById("roll-admin-actions");
-    if (adminActions) adminActions.style.display = canStartRoll() ? 'flex' : 'none';
-
-    updateRollUI();
-    openModal("modal-roll");
-
-    const dropRef2 = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
-    let isFirstSnapshot = true;
+  try {
+    // Нормализуем логин
+    const normalizedUsername = username.toLowerCase().trim();
     
-    rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
-      if (!snap.exists()) return;
-      
-      if (isFirstSnapshot) { 
-        isFirstSnapshot = false; 
-        return; 
-      }
-      
-      const data = snap.data();
+    // Создаём виртуальный email
+    const email = `${normalizedUsername}@tlloot.app`;
+    
+    await setPersistence(auth, browserLocalPersistence);
 
-      if (data.participants?.length) {
-        rollState.participants = data.participants.map(p => ({
-          playerId: p.playerId, nickname: p.nickname,
-          roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
-        }));
-      }
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-      if (data.winner_player_id && data.winner_nickname && !rollState.isFinished) {
-        rollState.isFinished = true;
-        rollState.isRolling  = false;
-        rollState.hasPendingWinner = false;
-        rollHasResults = false;
-        rollState.winner = {
-          playerId: data.winner_player_id,
-          nickname: data.winner_nickname,
-          roll: (data.roll_results || []).find(r => r.playerId === data.winner_player_id)?.roll
-        };
-        rollState.rollResults = data.roll_results || null;
-        rollState.queue = data.roll_type || rollState.queue;
-        updateRollUI();
-        return;
-      }
+    console.log("✅ Вход выполнен:", cred.user.email);
 
-      if (data.rolling === true && !rollState.isRolling && !rollState.isFinished) {
-        rollState.rollResults = data.roll_results || null;
-        if (data.pending_winner) {
-          rollState.winner = data.pending_winner;
-          rollState.hasPendingWinner = true;
-          rollHasResults = true;
-        }
-        startLocalRollAnimation();
-        return;
-      }
-      
-      if (data.pending_winner && !data.rolling && !data.winner_player_id && !rollState.isFinished) {
-        rollState.winner = data.pending_winner;
-        rollState.rollResults = data.roll_results || null;
-        rollState.hasPendingWinner = true;
-        rollHasResults = true;
-        rollState.isFinished = true;
-        rollState.isRolling = false;
-        updateRollUI();
-        return;
-      }
+    return {
+      success: true,
+      user: cred.user
+    };
+  } catch (error) {
+    console.error("❌ Ошибка входа:", error);
+    return {
+      success: false,
+      error: 'Неверный логин или пароль'
+    };
+  }
+}
 
-      updateRollUI();
+// ====================================================
+// Проверка существования логина
+// ====================================================
+
+async function checkUsernameExists(username) {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', username));
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Ошибка проверки логина:', error);
+    return false;
+  }
+}
+
+// ====================================================
+// РЕГИСТРАЦИЯ (старая, для обратной совместимости)
+// ====================================================
+
+export async function register(email, password, username = null) {
+  console.log("📝 Регистрация:", email);
+
+  try {
+    // 1. Создаём пользователя в Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const newUser = userCredential.user;
+    console.log("✅ Пользователь создан:", newUser.uid);
+
+    // Если username не указан — берём из email (до @)
+    const finalUsername = username || newUser.email?.split('@')[0] || 'User';
+
+    // 2. Создаём документ в Firestore
+    await setDoc(doc(db, "users", newUser.uid), {
+      email: newUser.email,
+      role: "user",
+      username: finalUsername,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
+
+    console.log("📄 Документ пользователя создан");
+
+    return {
+      success: true,
+      user: newUser,
+      message: "Регистрация успешна!"
+    };
+
+  } catch (error) {
+    console.error("❌ Ошибка регистрации:", error);
+
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
+}
+
+// ====================================================
+// Login (старый, для обратной совместимости)
+// ====================================================
+
+export async function login(email, password) {
+  console.log("🔑 Попытка входа:", email);
+
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    console.log("✅ Вход выполнен:", cred.user.email);
+
+    return {
+      success: true,
+      user: cred.user
+    };
+  } catch (error) {
+    console.error("❌ Ошибка входа:", error);
+    return {
+      success: false,
+      error: getAuthErrorMessage(error.code)
+    };
+  }
+}
+
+// ====================================================
+// Logout
+// ====================================================
+
+export async function logout() {
+  console.log("🚪 Выход из системы");
+
+  sessionStorage.clear();
+
+  await signOut(auth);
+  
+  return { success: true };
+}
+
+// ====================================================
+// Проверка прав
+// ====================================================
+
+// ⭐ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ПРАВ НА ЗАПИСЬ (ВКЛЮЧАЯ ГИЛЬД-ЛИДЕРА)
+export function canWrite() {
+  return (
+    currentRole === "admin" ||
+    currentRole === "moderator" ||
+    currentRole === "guild_leader"
+  );
+}
+
+export function isAdmin() {
+  return currentRole === "admin";
+}
+
+export function isModerator() {
+  return currentRole === "moderator" || currentRole === "admin";
+}
+
+// ⭐ НОВАЯ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ГИЛЬД-ЛИДЕРА
+export function isGuildLeader() {
+  return currentRole === "guild_leader" || currentRole === "admin";
+}
+
+// ⭐ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ПРАВ НА УПРАВЛЕНИЕ РЕЙДАМИ
+export function canManageRaids() {
+  return isAdmin() || currentRole === "guild_leader" || canWrite();
+}
+
+// ====================================================
+// Вспомогательные функции
+// ====================================================
+
+function getAuthErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'Этот логин уже зарегистрирован',
+    'auth/invalid-email': 'Некорректный логин',
+    'auth/weak-password': 'Пароль должен содержать минимум 6 символов',
+    'auth/user-not-found': 'Пользователь с таким логином не найден',
+    'auth/wrong-password': 'Неверный пароль',
+    'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
+    'auth/operation-not-allowed': 'Вход отключён',
+    'auth/user-disabled': 'Аккаунт заблокирован',
+    'auth/network-request-failed': 'Ошибка сети. Проверьте подключение',
+    'auth/requires-recent-login': 'Требуется повторный вход',
+    'auth/credential-already-in-use': 'Аккаунт уже используется',
+    'auth/email-already-exists': 'Этот логин уже зарегистрирован',
+    'auth/invalid-credential': 'Неверный логин или пароль'
   };
+  return messages[code] || `Ошибка: ${code}`;
+}
 
-  function startLocalRollAnimation() {
-    if (rollState.isRolling) return;
-    rollState.isRolling = true;
-    rollHasResults = true;
-    updateRollUI();
+// ====================================================
+// Navbar UI
+// ====================================================
 
-    const ticks = 12;
-    let tick = 0;
-    const interval = setInterval(() => {
-      tick++;
-      rollState.participants.forEach(p => {
-        if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
+export function updateNavUI() {
+  user = currentUser;
+  role = currentRole;
+
+  const loginBtn = document.getElementById("btn-login");
+  const logoutBtn = document.getElementById("btn-logout");
+  const userLabel = document.getElementById("nav-user-label");
+
+  if (loginBtn) {
+    loginBtn.classList.toggle("hidden", !!currentUser);
+  }
+
+  if (logoutBtn) {
+    logoutBtn.classList.toggle("hidden", !currentUser);
+  }
+
+  if (userLabel) {
+    if (currentUser) {
+      // Пытаемся получить username из Firestore
+      getUserData(currentUser.uid).then(userData => {
+        const username = userData?.username || currentUser.email?.split('@')[0] || 'User';
+        userLabel.textContent = `${username} (${currentRole})`;
       });
-      renderRollParticipantsAnimating();
-
-      if (tick >= ticks) {
-        clearInterval(interval);
-        if (rollState.rollResults) {
-          rollState.participants = rollState.participants.map(p => {
-            const final = rollState.rollResults.find(r => r.playerId === p.playerId);
-            return { ...p, roll: final?.roll ?? p.roll };
-          });
-        }
-        finishRoll();
-      }
-    }, 250);
-  }
-
-  function renderRollParticipantsAnimating() {
-    const list = document.getElementById("roll-players-list");
-    list.innerHTML = '';
-    rollState.participants.filter(p => !p.isBlocked).forEach(p => {
-      const isMe = p.playerId === rollState.currentPlayerId;
-      const row  = document.createElement('div');
-      row.className = 'roll-player-row joined-row';
-      row.innerHTML = `
-        <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
-        <span class="roll-player-status">В ролле</span>
-        <span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>
-      `;
-      list.appendChild(row);
-    });
-  }
-
-  function finishRoll() {
-    rollState.isRolling  = false;
-    rollState.isFinished = true;
-    rollState.hasPendingWinner = true;
-    rollHasResults = true;
-    updateRollUI();
-    if (rollState.winner) {
-      showToast(`🏆 ${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
-    }
-  }
-
-  let updateUITimeout = null;
-
-  function updateRollUI() {
-    if (updateUITimeout) {
-      clearTimeout(updateUITimeout);
-      updateUITimeout = null;
-    }
-    
-    updateUITimeout = setTimeout(() => {
-      updateStatusBar();
-      renderRollParticipants();
-      renderAvailablePlayers();
-      updateResultCard();
-      updateFooterButtons();
-      updateUITimeout = null;
-    }, 20);
-  }
-
-  function updateStatusBar() {
-    const dot  = document.getElementById("roll-status-dot");
-    const text = document.getElementById("roll-status-text");
-    const live = document.getElementById("roll-live-badge");
-
-    if (rollState.isFinished) {
-      dot.className  = 'roll-status-dot done';
-      text.textContent = `Победитель: ${rollState.winner?.nickname || '—'}`;
-      live.style.display = 'none';
-    } else if (rollState.isRolling) {
-      dot.className  = 'roll-status-dot rolling';
-      text.textContent = 'Идёт ролл...';
-      live.style.display = '';
-    } else if (rollState.participants.filter(p => !p.isBlocked).length > 0) {
-      dot.className  = 'roll-status-dot active';
-      text.textContent = 'Участники подключились';
-      live.style.display = '';
     } else {
-      dot.className  = 'roll-status-dot waiting';
-      text.textContent = 'Ожидание участников';
-      live.style.display = 'none';
+      userLabel.textContent = "Гость";
     }
   }
 
-  function renderRollParticipants() {
-    const list  = document.getElementById("roll-players-list");
-    const count = document.getElementById("roll-players-count");
-    const active = rollState.participants.filter(p => !p.isBlocked);
-
-    list.innerHTML = '';
-    count.textContent = active.length;
-
-    if (!active.length) {
-      list.innerHTML = '<div class="roll-empty-msg">Пока никто не присоединился</div>';
-      return;
-    }
-
-    const sorted = [...active].sort((a, b) => {
-      if (rollState.winner?.playerId === a.playerId) return -1;
-      if (rollState.winner?.playerId === b.playerId) return 1;
-      return (b.roll || 0) - (a.roll || 0);
-    });
-
-    sorted.forEach(p => {
-      const isWinner  = rollState.winner?.playerId === p.playerId;
-      const isMe      = p.playerId === rollState.currentPlayerId;
-      const hasRoll   = p.roll !== null && p.roll !== undefined;
-
-      const row = document.createElement('div');
-      row.className = `roll-player-row ${isWinner ? 'winner-row' : 'joined-row'}`;
-
-      let diceHtml = '';
-      if (rollState.isRolling && !hasRoll) {
-        diceHtml = `<span class="roll-dice-result pending-dice"><span class="dice-rolling">🎲</span></span>`;
-      } else if (hasRoll) {
-        diceHtml = `<span class="roll-dice-result ${isWinner ? 'winner-dice' : ''}">${p.roll}</span>`;
-      } else {
-        diceHtml = `<span class="roll-dice-result pending-dice">—</span>`;
-      }
-
-      row.innerHTML = `
-        <span class="roll-player-name">
-          ${isWinner ? '🏆 ' : ''}${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}
-        </span>
-        <span class="roll-player-status">${isWinner ? 'Победитель' : (rollState.isFinished ? '' : 'В ролле')}</span>
-        ${diceHtml}
-      `;
-      list.appendChild(row);
-    });
-  }
-
-  let renderAvailableVersion = 0;
-  let renderAvailableTimeout = null;
-
-  function renderAvailablePlayers() {
-    renderAvailableVersion++;
-    const currentVersion = renderAvailableVersion;
-    
-    if (renderAvailableTimeout) {
-      clearTimeout(renderAvailableTimeout);
-      renderAvailableTimeout = null;
-    }
-    
-    renderAvailableTimeout = setTimeout(() => {
-      const list = document.getElementById("roll-available-list");
-      const count = document.getElementById("roll-available-count");
-      
-      if (currentVersion !== renderAvailableVersion) {
-        renderAvailableTimeout = null;
-        return;
-      }
-      
-      list.innerHTML = '';
-
-      const inRoll = new Set(rollState.participants.map(p => p.playerId));
-      const approved = allCharacters.filter(c => c.status === 'approved' || c.approved === true);
-      const available = approved.filter(c => !inRoll.has(c.id));
-
-      const isAdminOrLeader = canStartRoll();
-      
-      Promise.all(available.map(async (char) => {
-        const isMe = char.id === rollState.currentPlayerId;
-        if (!attendedPlayerIds.includes(char.id)) return null;
-        const check = await canJoinCurrentQueue(char.id);
-        return { char, check, isMe };
-      })).then(results => {
-        if (currentVersion !== renderAvailableVersion) {
-          renderAvailableTimeout = null;
-          return;
-        }
-        
-        const filtered = results.filter(r => r !== null);
-        const seenIds = new Set();
-        const deduped = filtered.filter(({ char }) => {
-          if (seenIds.has(char.id)) return false;
-          seenIds.add(char.id);
-          return true;
-        });
-
-        count.textContent = deduped.length;
-
-        if (!deduped.length) {
-          list.innerHTML = '<div class="roll-empty-msg">Нет доступных игроков</div>';
-          renderAvailableTimeout = null;
-          return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        
-        deduped.forEach(({ char, check, isMe }) => {
-          const row = document.createElement('div');
-          row.className = 'roll-available-row';
-
-          let actionHtml = '';
-          if (rollState.isFinished || rollState.isRolling) {
-            actionHtml = `<span class="roll-available-reason">${rollState.isFinished ? '🔒 Завершён' : '⏳'}</span>`;
-          } else if (!check.can) {
-            actionHtml = `<span class="roll-available-reason blocked">✗ ${check.reason}</span>`;
-          } else if (isMe) {
-            actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
-              Присоединиться
-            </button>`;
-          } else if (isAdminOrLeader) {
-            actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
-              + Добавить
-            </button>`;
-          } else {
-            actionHtml = `<span class="roll-available-reason can-join">✓ Доступен</span>`;
-          }
-
-          row.innerHTML = `
-            <span class="roll-available-name">${char.name}${isMe ? ' <span style="font-size:0.75rem;color:var(--text-muted)">(вы)</span>' : ''}</span>
-            ${actionHtml}
-          `;
-          fragment.appendChild(row);
-        });
-        
-        list.appendChild(fragment);
-        renderAvailableTimeout = null;
-      }).catch(err => {
-        console.error('❌ Ошибка рендера доступных игроков:', err);
-        renderAvailableTimeout = null;
-      });
-    }, 50);
-  }
-
-  function updateResultCard() {
-    const card = document.getElementById("roll-result-card");
-    if (!rollState.isFinished || !rollState.winner) {
-      card.classList.add('hidden');
-      return;
-    }
-    card.classList.remove('hidden');
-    document.getElementById("roll-winner-name").textContent = rollState.winner.nickname;
-    document.getElementById("roll-winner-roll").textContent = `Бросок: ${rollState.winner.roll || '—'} из 100`;
-
-    const breakdown = document.getElementById("roll-results-breakdown");
-    breakdown.innerHTML = '';
-    if (rollState.rollResults?.length) {
-      const sorted = [...rollState.rollResults].sort((a,b) => b.roll - a.roll);
-      sorted.forEach(r => {
-        const chip = document.createElement('span');
-        const isW = r.playerId === rollState.winner.playerId;
-        chip.className = `roll-breakdown-chip ${isW ? 'winner-chip' : ''}`;
-        chip.textContent = `${r.nickname}: ${r.roll}`;
-        breakdown.appendChild(chip);
-      });
-    }
-  }
-
-  function updateFooterButtons() {
-    const isParticipant = rollState.participants.some(p => p.playerId === rollState.currentPlayerId && !p.isBlocked);
-    const canAct = !rollState.isRolling && !rollState.isFinished;
-
-    const joinBtn    = document.getElementById("btn-join-roll");
-    const leaveBtn   = document.getElementById("btn-leave-roll");
-    const startBtn   = document.getElementById("btn-start-roll");
-    const confirmBtn = document.getElementById("btn-confirm-roll");
-
-    if (joinBtn)  joinBtn.disabled  = isParticipant || !canAct;
-    if (leaveBtn) leaveBtn.disabled = !isParticipant || !canAct;
-
-    if (startBtn) {
-      const canStart = rollState.participants.filter(p => !p.isBlocked).length >= 2 && canAct && canStartRoll();
-      startBtn.disabled = !canStart;
-      
-      if (rollState.isFinished) {
-        startBtn.style.display = 'none';
-      } else {
-        startBtn.style.display = 'flex';
-        startBtn.textContent = '🎲 Запустить ролл';
-        startBtn.style.cssText = '';
-      }
-    }
-
-    if (confirmBtn) {
-      const showConfirm = rollState.isFinished && rollState.winner && canStartRoll() && rollState.hasPendingWinner;
-      confirmBtn.style.display = showConfirm ? 'flex' : 'none';
-    }
-
-    document.querySelectorAll('.roll-queue-tab').forEach(b => {
-      b.disabled = rollState.isRolling || rollState.isFinished;
-    });
-  }
-
-  window.joinRoll = async (playerId, nickname) => {
-    if (rollState.isRolling || rollState.isFinished) return;
-    
-    if (playerId !== rollState.currentPlayerId && !canStartRoll()) {
-      showToast('Вы можете добавить только себя', 'error');
-      return;
-    }
-    
-    if (rollState.participants.some(p => p.playerId === playerId)) {
-      showToast('Этот игрок уже в ролле', 'error');
-      return;
-    }
-
-    const check = await canJoinCurrentQueue(playerId);
-    if (!check.can) { 
-      showToast(check.reason, 'error'); 
-      return; 
-    }
-
-    const char = allCharacters.find(c => c.id === playerId);
-    
-    rollState.participants.push({ 
-      playerId, 
-      nickname, 
-      roll: null, 
-      isBlocked: false,
-      userId: char?.user_id || null
-    });
-    
-    await saveParticipants();
-    renderAvailableVersion++;
-    updateRollUI();
-  };
-
-  document.getElementById("btn-join-roll").addEventListener("click", () => {
-    if (!rollState.currentPlayerId) { showToast("Нет персонажа. Создайте его в профиле.", "error"); return; }
-    const char = allCharacters.find(c => c.id === rollState.currentPlayerId);
-    if (!char) { showToast("Персонаж не найден", "error"); return; }
-    window.joinRoll(char.id, char.name);
+  document.querySelectorAll("[data-role='admin']").forEach((el) => {
+    el.classList.toggle("hidden", currentRole !== "admin");
   });
 
-  document.getElementById("btn-leave-roll").addEventListener("click", async () => {
-    if (rollState.isRolling || rollState.isFinished || !rollState.currentPlayerId) return;
-    rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
-    await saveParticipants();
-    renderAvailableVersion++;
-    updateRollUI();
+  document.querySelectorAll("[data-role='moderator']").forEach((el) => {
+    el.classList.toggle("hidden", !canWrite());
   });
+  
+  // ⭐ ДОБАВЛЯЕМ ПОДДЕРЖКУ data-role='guild_leader'
+  document.querySelectorAll("[data-role='guild_leader']").forEach((el) => {
+    el.classList.toggle("hidden", !isGuildLeader());
+  });
+}
 
-  async function saveParticipants() {
-    try {
-      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
-      await firestoreUpdate(dropRef, {
-        participants: rollState.participants.map(p => ({
-          playerId: p.playerId,
-          nickname: p.nickname,
-          roll: p.roll ?? null,
-          isBlocked: p.isBlocked || false,
-          userId: p.userId || null
-        }))
-      });
-    } catch(e) { 
-      console.error('saveParticipants ERROR:', e);
-      if (e.code === 'permission-denied') {
-        showToast('⚠️ Недостаточно прав для сохранения. Обратитесь к администратору.', 'error');
-      } else {
-        showToast('Ошибка сохранения: ' + e.message, 'error');
-      }
-      throw e;
-    }
+// ====================================================
+// ОБНОВЛЕНИЕ ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ
+// ====================================================
+
+export async function updateUserProfile(data) {
+  if (!currentUser) {
+    return {
+      success: false,
+      error: 'Пользователь не авторизован'
+    };
   }
 
-  document.querySelectorAll('.roll-queue-tab').forEach(btn => {
-    btn.addEventListener('click', function() {
-      if (rollState.isRolling || rollState.isFinished) return;
-      if (!canStartRoll()) { showToast("Только администратор или Глава гильдии", "error"); return; }
-
-      document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      rollState.queue = this.dataset.queue;
-      rollState.participants = [];
-      saveParticipants();
-      updateRollUI();
-      showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, {
+      ...data,
+      updated_at: new Date().toISOString()
     });
-  });
 
-  document.getElementById("btn-start-roll").addEventListener("click", async () => {
-    const active = rollState.participants.filter(p => !p.isBlocked);
-    if (active.length < 2) { showToast("Нужно минимум 2 участника", "error"); return; }
-    if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
-
-    const finalRolls = rollState.participants.map(p => ({
-      ...p,
-      roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1
-    }));
-    const active2   = finalRolls.filter(p => !p.isBlocked);
-    const maxRoll   = Math.max(...active2.map(p => p.roll));
-    const winner    = active2.find(p => p.roll === maxRoll);
-
-    const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
-    await firestoreUpdate(dropRef, {
-      rolling: true,
-      roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
-      pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
-      participants: finalRolls.map(p => ({
-        playerId: p.playerId, nickname: p.nickname,
-        roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null
-      }))
-    });
-  });
-
-  document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
-    if (!rollState.winner || !canStartRoll()) return;
-    const btn = document.getElementById("btn-confirm-roll");
-    btn.disabled = true; btn.textContent = 'Сохранение...';
-
-    try {
-      await updateDropWinner(
-        rollState.raidId, rollState.tryId, rollState.dropId,
-        rollState.winner.playerId, rollState.winner.nickname, rollState.queue
-      );
-
-      const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
-      await firestoreUpdate(dropRef, {
-        roll_results: rollState.rollResults,
-        roll_type: rollState.queue,
-        participants: rollState.participants.map(p => ({
-          playerId: p.playerId, 
-          nickname: p.nickname, 
-          roll: p.roll, 
-          isBlocked: p.isBlocked || false,
-          userId: p.userId || null
-        })),
-        rolling: false,
-        pending_winner: null
-      });
-
-      rollState.hasPendingWinner = false;
-      rollHasResults = false;
-
-      showToast(`✅ ${rollState.winner.nickname} получает предмет!`);
-      btn.style.display = 'none';
-
-      allRaids  = await getRaids();
-      activeRaid = allRaids.find(r => r.id === rollState.raidId);
-      if (activeRaid) selectRaid(activeRaid);
-
-    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-    finally { btn.disabled = false; btn.textContent = '✅ Зафиксировать победителя'; }
-  });
-
-  function closeRollModal() {
-    const hasUnfinished = rollHasResults || rollState.hasPendingWinner || 
-                          (rollState.isFinished && rollState.winner && !rollState.rollResults);
-    
-    if (hasUnfinished && canStartRoll()) {
-      const customActions = `
-        <div class="dialog-roll-actions">
-          <button class="btn btn-danger" onclick="closeRollModalForce()">Закрыть без фиксации</button>
-          <button class="btn btn-success" onclick="closeRollModalAndConfirm()">✅ Зафиксировать результаты</button>
-        </div>
-      `;
-      
-      openDialog(
-        '⚠️ Ролл завершён, но не зафиксирован',
-        'Результаты ролла уже есть, но они не зафиксированы!\n\nЕсли вы закроете окно, результаты будут потеряны и придётся роллить заново.',
-        '',
-        '',
-        customActions
-      );
-      return;
-    }
-    
-    if (!rollState.isFinished && rollState.participants.filter(p => !p.isBlocked).length > 0) {
-      openDialog('⚠️ Есть участники', 'В ролле есть участники, но ролл ещё не запущен.\n\nВы уверены, что хотите выйти?', 'Выйти', 'Остаться')
-        .then(confirmed => {
-          if (confirmed) {
-            closeRollModalForce();
-          }
-        });
-      return;
-    }
-
-    closeRollModalForce();
+    console.log('✅ Профиль обновлён в Firestore');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Ошибка обновления профиля:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
-  window.closeRollModal = closeRollModal;
+}
 
-  function closeRollModalForce() {
-    closeModal("modal-roll");
-    if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
-    rollState.isRolling = false;
-    rollHasResults = false;
-    closeDialog();
-  }
-  window.closeRollModalForce = closeRollModalForce;
+// ⭐ ДОПОЛНИТЕЛЬНЫЕ ЭКСПОРТЫ
+export function getUser() { 
+  return currentUser; 
+}
 
-  function closeRollModalAndConfirm() {
-    closeDialog();
-    const confirmBtn = document.getElementById("btn-confirm-roll");
-    if (confirmBtn && confirmBtn.style.display !== 'none') {
-      confirmBtn.click();
-    } else {
-      showToast('❌ Сначала зафиксируйте победителя', 'error');
-    }
-  }
-  window.closeRollModalAndConfirm = closeRollModalAndConfirm;
-
-  async function openCloseRaidModal() {
-    const tries = await getRaidTries(activeRaid.id);
-    let allHaveAttendance = true;
-    let missingTry = null;
-    
-    for (const t of tries) {
-      if (!t.attended_player_ids || t.attended_player_ids.length === 0) {
-        allHaveAttendance = false;
-        missingTry = t;
-        break;
-      }
-    }
-    
-    if (!allHaveAttendance && tries.length > 0) {
-      const tryNum = tries.findIndex(t => t.id === missingTry.id) + 1;
-      const confirmed = await openDialog(
-        '⚠️ Участие не отмечено',
-        `В трае #${tryNum} не отмечено участие!\n\nРекомендуется отметить участие во всех траях перед закрытием рейда.`,
-        'Открыть участие',
-        'Продолжить закрытие'
-      );
-      if (confirmed) {
-        openAttendanceModalForTry(activeRaid.id, missingTry.id);
-        return;
-      }
-    }
-    
-    openModal("modal-close-raid");
-  }
-
-  const confirmCloseBtn = document.getElementById("btn-confirm-close");
-  if (confirmCloseBtn) {
-    confirmCloseBtn.addEventListener("click", async () => {
-      const btn = document.getElementById("btn-confirm-close");
-      btn.disabled = true; btn.textContent = "Закрываем...";
-      try {
-        const tries = await getRaidTries(activeRaid.id);
-        const allAttended = new Set();
-        for (const t of tries) {
-          if (t.attended_player_ids) {
-            t.attended_player_ids.forEach(id => allAttended.add(id));
-          }
-        }
-        const attendedIds = Array.from(allAttended);
-        
-        await closeRaid(activeRaid.id, attendedIds, allCharacters.map(p => p.id));
-        closeModal("modal-close-raid");
-        allRaids   = await getRaids();
-        allCharacters = await loadCharacters();
-        activeRaid = allRaids.find(r => r.id === activeRaid.id);
-        renderRaidList();
-        selectRaid(activeRaid);
-        showToast("Рейд закрыт");
-      } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-      finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
-    });
-  }
-
-  async function init() {
-    if (!importsOk) return;
-    
-    try {
-      console.log('📥 Загрузка данных...');
-      
-      [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
-        getRaids(), 
-        loadCharacters(), 
-        getBosses(), 
-        getItems()
-      ]);
-      
-      await loadLockSettings();
-      console.log('🔒 Настройки блокировок:', lockSettings);
-      
-      console.log('✅ Данные загружены:', {
-        рейдов: allRaids.length,
-        персонажей: allCharacters.length,
-        боссов: allBosses.length,
-        предметов: allItems.length
-      });
-      
-      if (!Array.isArray(allRaids) || !Array.isArray(allCharacters)) {
-        throw new Error('Ошибка загрузки данных');
-      }
-      
-      populateBossSelect();
-      renderRaidList();
-      
-      const active = allRaids.find(r => !r.deleted);
-      if (active) {
-        selectRaid(active);
-      } else {
-        const detailEl = document.getElementById("raid-detail");
-        if (detailEl) {
-          detailEl.innerHTML = `
-            <div class="empty-raid">
-              <div style="font-size:2rem">⚔️</div>
-              <div class="mt-1">Нет активных рейдов</div>
-              ${canEditRaid() ? '<button class="btn btn-primary btn-sm mt-1" id="btn-create-empty-raid">+ Создать рейд</button>' : ''}
-            </div>
-          `;
-          
-          const emptyRaidBtn = document.getElementById("btn-create-empty-raid");
-          if (emptyRaidBtn) {
-            emptyRaidBtn.addEventListener("click", () => {
-              console.log('🆕 Создание рейда из пустого состояния...');
-              editingRaidId = null;
-              const titleEl = document.getElementById("modal-raid-title");
-              const dateEl = document.getElementById("raid-date");
-              const notesEl = document.getElementById("raid-notes");
-              const errorEl = document.getElementById("raid-error");
-              
-              if (titleEl) titleEl.textContent = "Новый рейд";
-              if (dateEl) dateEl.value = todayStr();
-              if (notesEl) notesEl.value = "";
-              if (errorEl) errorEl.style.display = "none";
-              
-              openModal("modal-raid");
-            });
-          }
-        }
-      }
-      
-      rollState.currentUserId = currentUser?.uid || null;
-      
-      if (rollState.currentUserId) {
-        const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
-        if (player) {
-          rollState.currentPlayerId = player.id;
-          console.log('✅ Найден персонаж:', player.name, 'ID:', player.id);
-        } else {
-          console.log('❌ Персонаж НЕ найден для пользователя:', rollState.currentUserId);
-        }
-      }
-      
-    } catch (e) {
-      console.error('❌ Ошибка инициализации:', e);
-      showToast('Ошибка загрузки данных', 'error');
-    }
-  }
-
-  init();
-</script>
-</body>
-</html>
+export function getRole() { 
+  return currentRole; 
+}
