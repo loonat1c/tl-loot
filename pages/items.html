@@ -389,31 +389,39 @@
 
     .fc-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: flex-start; }
 
-    .fc-img {
+    .fc-img-wrap {
       width: 72px; 
       height: 72px; 
       border-radius: 8px;
-      object-fit: cover; 
-      background: #1a0a2e;
-      flex-shrink: 0; 
-      border: 1px solid var(--gold-border);
+      flex-shrink: 0;
       position: relative;
       overflow: hidden;
+      background: #1a0a2e;
+      border: 1px solid var(--gold-border);
+    }
+
+    .fc-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
     }
 
     /* Для Epic в тултипе */
-    .item-card.quality-epic .fc-img {
+    .item-card.quality-epic .fc-img-wrap {
       background: #1a0a2e;
       border-color: rgba(168, 85, 247, 0.3);
     }
 
     /* Для Epic II в тултипе - с анимацией */
-    .item-card.quality-epic_ii .fc-img {
+    .item-card.quality-epic_ii .fc-img-wrap {
       background: #1a0a2e;
       border-color: rgba(139, 92, 246, 0.4);
     }
 
-    .item-card.quality-epic_ii .fc-img::before {
+    .item-card.quality-epic_ii .fc-img-wrap::before {
       content: '';
       position: absolute;
       inset: -40%;
@@ -424,7 +432,7 @@
       pointer-events: none;
     }
 
-    .item-card.quality-epic_ii .fc-img::after {
+    .item-card.quality-epic_ii .fc-img-wrap::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -1099,7 +1107,9 @@
       <!-- ТУЛТИП -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" style="position: relative; z-index: 1;" />
+          <div class="fc-img-wrap">
+            <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" />
+          </div>
           <div class="fc-title">
             <div class="fc-name">${item.name || 'Без названия'}</div>
             <div class="fc-meta">
