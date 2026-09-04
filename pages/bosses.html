@@ -673,7 +673,7 @@
   await authReady;
 
   import { getBosses, addBoss, updateBoss, deleteBoss } from "../js/modules/bosses.js";
-  import { getItems } from "../js/modules/items.js";
+  import { getItems, updateItem } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
   import { BOSS_CLASSES, SLOTS, QUALITY } from "../js/constants.js";
 
@@ -745,7 +745,8 @@
 
     const clsLabel = BOSS_CLASSES.find(c => c.id === b.boss_class)?.label || b.boss_class || '—';
     const clsId = b.boss_class || 'unknown';
-    const bItems = (b.item_ids || []).map(id => allItems.find(i => i.id === id)).filter(Boolean);
+    // ИЗМЕНЕНО: Получаем предметы по boss_id вместо item_ids
+    const bItems = allItems.filter(item => item.boss_id === b.id);
 
     const imageFile = b.image || '';
     const bgImage = imageFile ? `url('/assets/img/bosses/${imageFile}')` : '';
@@ -885,7 +886,8 @@
     document.getElementById('f-description').value = b.description  || '';
     document.getElementById('f-image').value       = b.image        || '';
     document.getElementById('f-icon').value        = b.icon         || '';
-    selectedItemIds = [...(b.item_ids || [])];
+    // ИЗМЕНЕНО: Получаем предметы по boss_id
+    selectedItemIds = allItems.filter(item => item.boss_id === id).map(item => item.id);
     renderPicker();
     modal.classList.remove('hidden');
   };
@@ -902,6 +904,9 @@
     const btn = document.getElementById('btn-save');
     btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
+      const id = document.getElementById('edit-id').value;
+      
+      // Сохраняем босса без item_ids
       const data = {
         name,
         level:       document.getElementById('f-level').value.trim(),
@@ -909,13 +914,39 @@
         description: document.getElementById('f-description').value.trim(),
         image:       document.getElementById('f-image').value.trim(),
         icon:        document.getElementById('f-icon').value.trim(),
-        item_ids:    selectedItemIds,
       };
-      const id = document.getElementById('edit-id').value;
-      if (id) { await updateBoss(id, data); showToast('Босс обновлён'); }
-      else    { await addBoss(data);        showToast('Босс добавлен'); }
+      
+      let bossId;
+      if (id) { 
+        await updateBoss(id, data); 
+        bossId = id;
+        showToast('Босс обновлён'); 
+      }
+      else { 
+        bossId = await addBoss(data);
+        showToast('Босс добавлен'); 
+      }
+      
+      // Обновляем связи предметов
+      // Сначала убираем связь у всех предметов этого босса
+      const oldBossItems = allItems.filter(i => i.boss_id === bossId);
+      for (const item of oldBossItems) {
+        if (!selectedItemIds.includes(item.id)) {
+          await updateItem(item.id, { boss_id: null, boss_name: '' });
+        }
+      }
+      
+      // Добавляем связь для выбранных предметов
+      for (const itemId of selectedItemIds) {
+        await updateItem(itemId, { 
+          boss_id: bossId, 
+          boss_name: name 
+        });
+      }
+      
       closeModal();
       allBosses = await getBosses();
+      allItems = await getItems(); // Обновляем и предметы
       renderList();
       if (allBosses.length) {
         const active = allBosses.find(b => b.id === selectedBossId) || allBosses[0];
@@ -924,8 +955,13 @@
         selectedBossId = null;
         renderDetail(null);
       }
-    } catch(e) { showError('Ошибка: ' + e.message); }
-    finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
+    } catch(e) { 
+      showError('Ошибка: ' + e.message); 
+    }
+    finally { 
+      btn.disabled = false; 
+      btn.textContent = 'Сохранить'; 
+    }
   };
 
   window.confirmDelete = (id, name) => {
@@ -933,6 +969,7 @@
     deleteBoss(id).then(async () => {
       showToast('Босс удалён');
       allBosses = await getBosses();
+      allItems = await getItems();
       renderList();
       if (allBosses.length) {
         selectBoss(allBosses[0].id);
