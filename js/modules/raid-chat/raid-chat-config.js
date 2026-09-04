@@ -1,5 +1,6 @@
 // ====================================================
 // raid-chat-config.js — конфигурация чата рейда
+// Адаптировано под Throne & Liberty тему
 // ====================================================
 
 export const CHAT_CONFIG = {
@@ -16,17 +17,17 @@ export const CHAT_CONFIG = {
   roles: {
     admin: {
       label: 'Админ',
-      color: '#ff4444',
+      color: '#ff6b6b',
       badge: '👑'
     },
     guild_leader: {
       label: 'Глава гильдии',
-      color: '#ffaa00',
+      color: '#c9aa71',
       badge: '⚔️'
     },
     moderator: {
       label: 'Модератор',
-      color: '#44aaff',
+      color: '#6bbaff',
       badge: '🛡️'
     },
     user: {
@@ -45,11 +46,11 @@ export const CHAT_CONFIG = {
   systemEvents: {
     loot_start: {
       icon: '🎲',
-      template: 'Начат розыгрыш лута!'
+      template: 'Начат розыгрыш лута: {item}'
     },
     loot_winner: {
       icon: '🏆',
-      template: 'Победитель лута: {winner}'
+      template: 'Победитель лута: {winner} (бросок: {roll}) — {item}'
     }
   },
   
