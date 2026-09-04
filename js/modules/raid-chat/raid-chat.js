@@ -22,7 +22,7 @@ import {
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { currentUser, currentRole, getUserData } from "../../auth.js";
+import { currentUser, currentRole, getUserData } from "../auth.js";
 import { CHAT_CONFIG } from "./raid-chat-config.js";
 
 export class RaidChat {
