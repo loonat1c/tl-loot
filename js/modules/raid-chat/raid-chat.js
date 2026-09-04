@@ -81,11 +81,11 @@ export class RaidChat {
           </div>
         </div>
         
-        <div class="raid-chat-messages" id="chat-messages">
+        <div class="raid-chat-messages">
           <div class="chat-loading">Загрузка сообщений...</div>
         </div>
         
-        <div class="raid-chat-reactions" id="chat-reactions">
+        <div class="raid-chat-reactions">
           ${CHAT_CONFIG.reactions.map(emoji => 
             `<button class="reaction-btn" data-emoji="${emoji}">${emoji}</button>`
           ).join('')}
@@ -94,7 +94,7 @@ export class RaidChat {
         <div class="raid-chat-input">
           <input 
             type="text" 
-            id="chat-input" 
+            class="chat-input" 
             placeholder="Написать сообщение..." 
             maxlength="500"
           />
@@ -105,11 +105,14 @@ export class RaidChat {
     
     this.container.appendChild(this.chatContainer);
     
-    // Ссылки на элементы
-    this.messagesContainer = this.chatContainer.querySelector('#chat-messages');
-    this.chatInput = this.chatContainer.querySelector('#chat-input');
-    this.reactionsContainer = this.chatContainer.querySelector('#chat-reactions');
+    // Ссылки на элементы (используем классы вместо ID)
+    this.messagesContainer = this.chatContainer.querySelector('.raid-chat-messages');
+    this.chatInput = this.chatContainer.querySelector('.chat-input');
+    this.reactionsContainer = this.chatContainer.querySelector('.raid-chat-reactions');
     this.window = this.chatContainer.querySelector('.raid-chat-window');
+    this.minimizeBtn = this.chatContainer.querySelector('.chat-btn-minimize');
+    this.closeBtn = this.chatContainer.querySelector('.chat-btn-close');
+    this.sendBtn = this.chatContainer.querySelector('.chat-btn-send');
   }
   
   createFloatingIcon() {
@@ -122,33 +125,49 @@ export class RaidChat {
   }
   
   bindEvents() {
-    // Кнопки управления
-    this.chatContainer.querySelector('.chat-btn-minimize').addEventListener('click', () => this.minimize());
-    this.chatContainer.querySelector('.chat-btn-close').addEventListener('click', () => this.hide());
+    // Кнопки управления (проверяем существование)
+    if (this.minimizeBtn) {
+      this.minimizeBtn.addEventListener('click', () => this.minimize());
+    }
+    
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => this.hide());
+    }
     
     // Отправка сообщений
-    this.chatContainer.querySelector('.chat-btn-send').addEventListener('click', () => this.sendMessage());
-    this.chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') this.sendMessage();
-    });
+    if (this.sendBtn) {
+      this.sendBtn.addEventListener('click', () => this.sendMessage());
+    }
+    
+    if (this.chatInput) {
+      this.chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.sendMessage();
+      });
+    }
     
     // Реакции
-    this.reactionsContainer.addEventListener('click', (e) => {
-      const btn = e.target.closest('.reaction-btn');
-      if (btn) {
-        this.toggleReaction(btn.dataset.emoji);
-      }
-    });
+    if (this.reactionsContainer) {
+      this.reactionsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.reaction-btn');
+        if (btn) {
+          this.toggleReaction(btn.dataset.emoji);
+        }
+      });
+    }
     
     // Плавающая иконка
-    this.floatingIcon.addEventListener('click', () => this.unminimize());
+    if (this.floatingIcon) {
+      this.floatingIcon.addEventListener('click', () => this.unminimize());
+    }
     
     // Загрузка истории при скролле
-    this.messagesContainer.addEventListener('scroll', () => {
-      if (this.messagesContainer.scrollTop === 0 && !this.isLoadingHistory) {
-        this.loadOlderMessages();
-      }
-    });
+    if (this.messagesContainer) {
+      this.messagesContainer.addEventListener('scroll', () => {
+        if (this.messagesContainer.scrollTop === 0 && !this.isLoadingHistory) {
+          this.loadOlderMessages();
+        }
+      });
+    }
   }
   
   // ====================================================
@@ -278,7 +297,7 @@ export class RaidChat {
       const messagesRef = collection(db, CHAT_CONFIG.collection, this.raidId, 'messages');
       await addDoc(messagesRef, messageData);
       
-      // Очистка старых сообщений при отправке (если прошло достаточно времени)
+      // Очистка старых сообщений при отправке
       this.cleanupFirestoreMessages();
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
@@ -318,11 +337,10 @@ export class RaidChat {
   }
   
   // ====================================================
-  // Очистка старых сообщений (гибридный вариант)
+  // Очистка старых сообщений
   // ====================================================
   
   async cleanupFirestoreMessages() {
-    // Проверяем, не чистили ли недавно
     const now = Date.now();
     if (now - this.lastCleanupTime < CHAT_CONFIG.minCleanupInterval) {
       return;
@@ -336,13 +354,12 @@ export class RaidChat {
       const q = query(
         messagesRef,
         where('timestamp', '<', cutoffTime),
-        limit(100) // Ограничиваем для бесплатного тарифа
+        limit(100)
       );
       
       const snapshot = await getDocs(q);
       
       if (!snapshot.empty) {
-        // Используем batch для эффективного удаления
         const batch = writeBatch(db);
         snapshot.docs.forEach(doc => {
           batch.delete(doc.ref);
@@ -363,7 +380,6 @@ export class RaidChat {
   async toggleReaction(emoji) {
     if (!this.currentUser) return;
     
-    // Находим последнее сообщение для реакции
     const lastMessage = this.messages[this.messages.length - 1];
     if (!lastMessage || lastMessage.userId === 'system') return;
     
@@ -374,12 +390,10 @@ export class RaidChat {
       const users = reactions[emoji] || [];
       
       if (users.includes(this.currentUser.uid)) {
-        // Убираем реакцию
         await updateDoc(messageRef, {
           [`reactions.${emoji}`]: arrayRemove(this.currentUser.uid)
         });
       } else {
-        // Добавляем реакцию
         await updateDoc(messageRef, {
           [`reactions.${emoji}`]: arrayUnion(this.currentUser.uid)
         });
@@ -398,13 +412,11 @@ export class RaidChat {
     
     this.messagesContainer.innerHTML = '';
     
-    // Группируем сообщения по времени
     let lastTimestamp = null;
     
     this.messages.forEach(message => {
-      // Добавляем разделитель времени
       const messageTime = message.timestamp?.toDate?.() || new Date();
-      if (!lastTimestamp || messageTime - lastTimestamp > 300000) { // 5 минут
+      if (!lastTimestamp || messageTime - lastTimestamp > 300000) {
         this.renderTimeDivider(messageTime);
         lastTimestamp = messageTime;
       }
@@ -421,14 +433,12 @@ export class RaidChat {
     const roleConfig = CHAT_CONFIG.roles[message.userRole] || CHAT_CONFIG.roles.user;
     
     if (message.type === 'system' || message.userId === 'system') {
-      // Системное сообщение
       messageEl.innerHTML = `
         <div class="system-message-content">
           ${message.text}
         </div>
       `;
     } else {
-      // Пользовательское сообщение
       messageEl.innerHTML = `
         <div class="message-avatar" style="background: ${roleConfig.color}20; color: ${roleConfig.color}">
           ${roleConfig.badge || message.userName[0].toUpperCase()}
@@ -481,39 +491,49 @@ export class RaidChat {
   // ====================================================
   
   open() {
+    if (!this.chatContainer || !this.floatingIcon) return;
+    
     this.isOpen = true;
     this.isMinimized = false;
     this.chatContainer.classList.add('open');
     this.floatingIcon.style.display = 'none';
     setTimeout(() => {
       this.scrollToBottom();
-      this.chatInput.focus();
+      if (this.chatInput) this.chatInput.focus();
     }, 300);
   }
   
   close() {
+    if (!this.chatContainer) return;
+    
     this.isOpen = false;
     this.chatContainer.classList.remove('open');
   }
   
   hide() {
     this.close();
-    this.floatingIcon.style.display = 'flex';
+    if (this.floatingIcon) {
+      this.floatingIcon.style.display = 'flex';
+    }
   }
   
   minimize() {
+    if (!this.chatContainer || !this.floatingIcon) return;
+    
     this.isMinimized = true;
     this.chatContainer.classList.add('minimized');
     this.floatingIcon.style.display = 'flex';
   }
   
   unminimize() {
+    if (!this.chatContainer || !this.floatingIcon) return;
+    
     this.isMinimized = false;
     this.floatingIcon.style.display = 'none';
     this.chatContainer.classList.remove('minimized');
     setTimeout(() => {
       this.scrollToBottom();
-      this.chatInput.focus();
+      if (this.chatInput) this.chatInput.focus();
     }, 300);
   }
   
@@ -566,6 +586,8 @@ export class RaidChat {
   }
   
   showLoadingIndicator() {
+    if (!this.messagesContainer) return;
+    
     const loading = document.createElement('div');
     loading.className = 'chat-loading';
     loading.textContent = 'Загрузка...';
@@ -573,11 +595,15 @@ export class RaidChat {
   }
   
   removeLoadingIndicator() {
+    if (!this.messagesContainer) return;
+    
     const loading = this.messagesContainer.querySelector('.chat-loading');
     if (loading) loading.remove();
   }
   
   showError(message) {
+    if (!this.messagesContainer) return;
+    
     const error = document.createElement('div');
     error.className = 'chat-error';
     error.textContent = message;
