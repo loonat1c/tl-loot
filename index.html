@@ -841,6 +841,27 @@
     }
 
     // ──────────────────────────────────────────────
+    // Локализация
+    // ──────────────────────────────────────────────
+    function fmtRollType(type) {
+      const map = {
+        main: 'Основная',
+        open: 'Дополнительная',
+      };
+      return map[type] ?? type ?? '';
+    }
+
+    function fmtSlot(slot) {
+      const map = {
+        weapon: 'Оружие', head: 'Шлем', chest: 'Нагрудник',
+        legs: 'Поножи', feet: 'Сапоги', hands: 'Перчатки',
+        neck: 'Ожерелье', ring: 'Кольцо', belt: 'Пояс',
+        cloak: 'Плащ', bracelet: 'Браслет'
+      };
+      return map[slot] ?? slot ?? '';
+    }
+
+    // ──────────────────────────────────────────────
     // Безопасное обновление элемента
     // ──────────────────────────────────────────────
     function setTextSafe(id, text) {
@@ -973,12 +994,12 @@
                 <div class="loot-item-info">
                   <div class="loot-item-name">
                     ${item.item_name || 'Предмет'}
-                    ${slotLabel ? `<span class="slot-badge">${slotLabel}</span>` : ''}
+                    ${item.item_slot ? `<span class="slot-badge">${fmtSlot(item.item_slot)}</span>` : ''}
                   </div>
                   <div class="loot-item-winner">
                     <span>→</span>
                     <span class="winner-name">${item.player_nickname || '—'}</span>
-                    ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${item.roll_type}</span>` : ''}
+                    ${item.roll_type ? `<span style="opacity:0.5;font-size:0.65rem;">${fmtRollType(item.roll_type)}</span>` : ''}
                   </div>
                 </div>
                 <div class="loot-item-lucent ${lucentVal === 0 ? 'zero' : ''}">
