@@ -225,10 +225,12 @@
     
     .item-search-img.quality-epic {
       background: #1a0a2e;
+      border-color: rgba(168, 85, 247, 0.3);
     }
     
     .item-search-img.quality-epic_ii {
       background: #1a0a2e;
+      border-color: rgba(139, 92, 246, 0.4);
     }
     
     .item-search-img.quality-epic_ii::before {
@@ -1391,7 +1393,14 @@
     }
   }
 
+  // ══════════════════════════════════════════════════
+  // ИСПРАВЛЕННЫЕ ФУНКЦИИ ПОЛУЧЕНИЯ ПОБЕД
+  // ══════════════════════════════════════════════════
+
   async function getPlayerWins(playerId) {
+    const wins = [];
+    
+    // 1. Из истории лута (закрытые рейды)
     try {
       const historyRef = collection(db, 'loot_history');
       const q = query(
@@ -1400,14 +1409,56 @@
         where('raid_deleted', '==', false)
       );
       const snap = await getDocs(q);
-      return snap.docs.map(d => d.data());
+      wins.push(...snap.docs.map(d => d.data()));
     } catch (e) {
-      return [];
+      console.warn('Ошибка получения истории побед:', e);
     }
+    
+    // 2. Из дропов всех рейдов (включая открытые)
+    try {
+      const raids = await getRaids();
+      for (const raid of raids) {
+        if (raid.deleted) continue;
+        const tries = await getRaidTries(raid.id);
+        for (const tryData of tries) {
+          const drops = await getTryDrops(raid.id, tryData.id);
+          for (const drop of drops) {
+            if (drop.winner_player_id === playerId && drop.winner_player_id) {
+              wins.push({
+                raid_id: raid.id,
+                item_id: drop.item_id,
+                item_name: drop.item_name,
+                item_slot: drop.item_slot,
+                won_at: drop.updated_at || null,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Ошибка получения побед из дропов:', e);
+    }
+    
+    // Убираем дубликаты
+    const uniqueWins = [];
+    const seenKeys = new Set();
+    for (const win of wins) {
+      const key = `${win.raid_id || ''}_${win.item_id || ''}_${win.won_at || ''}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueWins.push(win);
+      }
+    }
+    
+    return uniqueWins;
   }
 
   async function getPlayerWinsInCurrentRaid(playerId) {
     if (!activeRaid) return [];
+    
+    const wins = [];
+    
+    // 1. Из истории лута (если рейд уже был закрыт)
     try {
       const historyRef = collection(db, 'loot_history');
       const q = query(
@@ -1417,11 +1468,49 @@
         where('raid_deleted', '==', false)
       );
       const snap = await getDocs(q);
-      return snap.docs.map(d => d.data());
+      wins.push(...snap.docs.map(d => d.data()));
     } catch (e) {
-      return [];
+      console.warn('Ошибка получения побед из истории:', e);
     }
+    
+    // 2. Из дропов текущего рейда
+    try {
+      const tries = await getRaidTries(activeRaid.id);
+      for (const tryData of tries) {
+        const drops = await getTryDrops(activeRaid.id, tryData.id);
+        for (const drop of drops) {
+          if (drop.winner_player_id === playerId && drop.winner_player_id) {
+            wins.push({
+              raid_id: activeRaid.id,
+              item_id: drop.item_id,
+              item_name: drop.item_name,
+              item_slot: drop.item_slot,
+              won_at: drop.updated_at || null,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Ошибка получения побед из дропов:', e);
+    }
+    
+    // Убираем дубликаты
+    const uniqueWins = [];
+    const seenKeys = new Set();
+    for (const win of wins) {
+      const key = `${win.raid_id || ''}_${win.item_id || ''}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueWins.push(win);
+      }
+    }
+    
+    return uniqueWins;
   }
+
+  // ══════════════════════════════════════════════════
+  // ОСТАЛЬНЫЕ ФУНКЦИИ
+  // ══════════════════════════════════════════════════
 
   async function isSlotLocked(playerId, itemSlot, itemId) {
     const wins = await getPlayerWins(playerId);
@@ -2999,7 +3088,8 @@
           userId: p.userId || null
         })),
         rolling: false,
-        pending_winner: null
+        pending_winner: null,
+        updated_at: new Date().toISOString()
       });
 
       rollState.hasPendingWinner = false;
