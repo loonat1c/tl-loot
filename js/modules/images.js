@@ -31,7 +31,7 @@ export function compressImage(file) {
       ctx.drawImage(img, 0, 0, width, height);
 
 // Сохраняем PNG с прозрачностью, остальное — jpeg
-const format = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+const format = (file.type === 'image/png' || file.type === 'image/webp') ? 'image/png' : 'image/jpeg';
 const base64 = canvas.toDataURL(format, format === 'image/jpeg' ? QUALITY : undefined);
       resolve(base64);
     };
