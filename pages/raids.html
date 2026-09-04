@@ -1393,14 +1393,9 @@
     }
   }
 
-  // ══════════════════════════════════════════════════
-  // ИСПРАВЛЕННЫЕ ФУНКЦИИ ПОЛУЧЕНИЯ ПОБЕД
-  // ══════════════════════════════════════════════════
-
   async function getPlayerWins(playerId) {
     const wins = [];
     
-    // 1. Из истории лута (закрытые рейды)
     try {
       const historyRef = collection(db, 'loot_history');
       const q = query(
@@ -1414,7 +1409,6 @@
       console.warn('Ошибка получения истории побед:', e);
     }
     
-    // 2. Из дропов всех рейдов (включая открытые)
     try {
       const raids = await getRaids();
       for (const raid of raids) {
@@ -1439,7 +1433,6 @@
       console.warn('Ошибка получения побед из дропов:', e);
     }
     
-    // Убираем дубликаты
     const uniqueWins = [];
     const seenKeys = new Set();
     for (const win of wins) {
@@ -1458,7 +1451,6 @@
     
     const wins = [];
     
-    // 1. Из истории лута (если рейд уже был закрыт)
     try {
       const historyRef = collection(db, 'loot_history');
       const q = query(
@@ -1473,7 +1465,6 @@
       console.warn('Ошибка получения побед из истории:', e);
     }
     
-    // 2. Из дропов текущего рейда
     try {
       const tries = await getRaidTries(activeRaid.id);
       for (const tryData of tries) {
@@ -1494,7 +1485,6 @@
       console.warn('Ошибка получения побед из дропов:', e);
     }
     
-    // Убираем дубликаты
     const uniqueWins = [];
     const seenKeys = new Set();
     for (const win of wins) {
@@ -1507,10 +1497,6 @@
     
     return uniqueWins;
   }
-
-  // ══════════════════════════════════════════════════
-  // ОСТАЛЬНЫЕ ФУНКЦИИ
-  // ══════════════════════════════════════════════════
 
   async function isSlotLocked(playerId, itemSlot, itemId) {
     const wins = await getPlayerWins(playerId);
@@ -2001,12 +1987,18 @@
     if (!confirmed2) return;
     
     try {
+      if (raidUnsubscribe) {
+        raidUnsubscribe();
+        raidUnsubscribe = null;
+      }
+      
       const tries = await getRaidTries(raid.id);
       for (const t of tries) {
         await deleteTry(raid.id, t.id);
       }
       await hardDeleteRaid(raid.id);
       showToast('Рейд удалён навсегда');
+      
       allRaids = await getRaids();
       activeRaid = null;
       document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">—</div><div class="mt-1">Выбери рейд слева</div></div>`;
@@ -2028,8 +2020,14 @@
     );
     if (!confirmed) return;
     
+    if (raidUnsubscribe) {
+      raidUnsubscribe();
+      raidUnsubscribe = null;
+    }
+    
     await softDeleteRaid(raid.id);
     showToast("Рейд удалён");
+    
     allRaids = await getRaids();
     activeRaid = null;
     document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">—</div><div class="mt-1">Выбери рейд слева</div></div>`;
@@ -2048,17 +2046,23 @@
     );
     if (!confirmed) return;
     
+    if (raidUnsubscribe) {
+      raidUnsubscribe();
+      raidUnsubscribe = null;
+    }
+    
     await restoreRaid(raid.id);
     showToast("Рейд восстановлен");
+    
     allRaids = await getRaids();
+    activeRaid = null;
+    document.getElementById("raid-detail").innerHTML = `<div class="empty-raid"><div style="font-size:2rem">—</div><div class="mt-1">Выбери рейд слева</div></div>`;
     renderRaidList();
-    const restoredRaid = allRaids.find(r => r.id === raid.id);
-    if (restoredRaid) {
-      selectRaid(restoredRaid);
-    }
   }
 
   async function selectRaid(raid) {
+    if (raid.deleted && !isAdmin()) return;
+    
     activeRaid = raid;
     renderRaidList();
 
@@ -2072,10 +2076,24 @@
 
     const raidRef = doc(db, "raids", raid.id);
     raidUnsubscribe = onSnapshot(raidRef, async (docSnap) => {
-      if (!docSnap.exists()) return;
+      if (!docSnap.exists()) {
+        if (raidUnsubscribe) {
+          raidUnsubscribe();
+          raidUnsubscribe = null;
+        }
+        return;
+      }
       
       const raidData = docSnap.data();
       const updatedRaid = { id: docSnap.id, ...raidData };
+      
+      if (updatedRaid.deleted && !isAdmin()) {
+        if (raidUnsubscribe) {
+          raidUnsubscribe();
+          raidUnsubscribe = null;
+        }
+        return;
+      }
       
       activeRaid = updatedRaid;
       
