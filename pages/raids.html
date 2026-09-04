@@ -1650,20 +1650,23 @@
     return { locked: false, reason: '' };
   }
 
-  async function canJoinMainQueue(charId) {
+async function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
+    console.log('char:', char);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
     const itemSlot = rollState.itemSlot;
     const itemId   = rollState.itemId;
+    console.log('itemSlot:', itemSlot, 'itemId:', itemId);
 
     if (!itemSlot || !itemId) {
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    const winsInRaid = await getPlayerWinsInCurrentRaidCached(charId);
+    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
+    console.log('winsInRaid:', winsInRaid);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
       const item = allItems.find(i => i.id === lastWin.item_id);
@@ -1676,11 +1679,13 @@
     }
 
     const slotLock = await isSlotLocked(charId, itemSlot, itemId);
+    console.log('slotLock:', slotLock);
     if (slotLock.locked) {
       return { can: false, reason: slotLock.reason };
     }
 
     const desired = char.desired_loot || {};
+    console.log('desired:', desired, 'itemSlot:', itemSlot, 'itemId:', itemId);
     
     if (itemSlot === 'weapon') {
       const wantedInWeapon1 = desired.weapon1 === itemId;
