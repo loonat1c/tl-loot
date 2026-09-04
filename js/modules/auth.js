@@ -46,7 +46,7 @@ export const authReady = new Promise((resolve) => {
   authReadyResolve = (result) => {
     if (!authReadyResolved) {
       authReadyResolved = true;
-      console.log("✅ authReady резолвится:", result);
+      console.log("authReady резолвится:", result);
       resolve(result);
     }
   };
@@ -61,28 +61,28 @@ let currentAuthResult = null;
 // ====================================================
 
 export function initAuth(onReady = null) {
-  console.log("🔄 initAuth вызван");
+  console.log("initAuth вызван");
 
   // Если уже есть результат - возвращаем его
   if (currentAuthResult) {
-    console.log("📦 Используем кэшированный результат:", currentAuthResult);
+    console.log("Используем кэшированный результат:", currentAuthResult);
     return Promise.resolve(currentAuthResult);
   }
 
   // Если Auth уже запускается — возвращаем тот же Promise
   if (initializationPromise) {
-    console.log("⏳ Используем существующий initializationPromise");
+    console.log("Используем существующий initializationPromise");
     return initializationPromise;
   }
 
   initializationPromise = new Promise(async (resolve) => {
-    console.log("🔄 Инициализация Auth...");
+    console.log("Инициализация Auth...");
 
     try {
       await setPersistence(auth, browserLocalPersistence);
-      console.log("💾 Firebase persistence установлена");
+      console.log("Firebase persistence установлена");
     } catch (e) {
-      console.warn("⚠️ Не удалось установить persistence:", e);
+      console.warn("Не удалось установить persistence:", e);
     }
 
     isInitialized = true;
@@ -93,7 +93,7 @@ export function initAuth(onReady = null) {
 
     onAuthStateChanged(auth, async (firebaseUser) => {
       console.log(
-        "📡 onAuthStateChanged:",
+        "onAuthStateChanged:",
         firebaseUser ? firebaseUser.email : "guest"
       );
 
@@ -106,7 +106,7 @@ export function initAuth(onReady = null) {
       if (firebaseUser) {
         currentUser = firebaseUser;
         user = firebaseUser;
-        console.log("👤 Пользователь:", firebaseUser.email);
+        console.log("Пользователь:", firebaseUser.email);
 
         // Получаем роль
         roleValue = await fetchRole(firebaseUser.uid);
@@ -114,14 +114,14 @@ export function initAuth(onReady = null) {
         role = roleValue;
 
         sessionStorage.setItem(`role_${firebaseUser.uid}`, roleValue);
-        console.log("🔐 Роль:", roleValue);
+        console.log("Роль:", roleValue);
       } else {
         // Пользователь не авторизован
         currentUser = null;
         currentRole = "guest";
         user = null;
         role = "guest";
-        console.log("👤 Пользователь не авторизован");
+        console.log("Пользователь не авторизован");
       }
 
       // Обновляем Navbar
@@ -133,14 +133,14 @@ export function initAuth(onReady = null) {
       };
 
       currentAuthResult = result;
-      console.log("✅ Auth готов:", result);
+      console.log("Auth готов:", result);
 
       // Callback
       if (onReady) {
         try {
           onReady(currentUser, currentRole);
         } catch (e) {
-          console.error("❌ Ошибка auth callback:", e);
+          console.error("Ошибка auth callback:", e);
         }
       }
 
@@ -167,11 +167,11 @@ async function fetchRole(uid) {
 
     if (snap.exists()) {
       const roleValue = snap.data().role || "guest";
-      console.log(`📋 Роль пользователя ${uid}:`, roleValue);
+      console.log(`Роль пользователя ${uid}:`, roleValue);
       return roleValue;
     }
 
-    console.warn(`⚠️ Документ users/${uid} не найден`);
+    console.warn(`Документ users/${uid} не найден`);
 
     // Если документа нет — создаём его с ролью "user"
     try {
@@ -183,14 +183,14 @@ async function fetchRole(uid) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
-      console.log("✅ Создан новый документ пользователя с ролью user");
+      console.log("Создан новый документ пользователя с ролью user");
       return "user";
     } catch (createError) {
-      console.error("❌ Ошибка создания документа:", createError);
+      console.error("Ошибка создания документа:", createError);
     }
 
   } catch (e) {
-    console.error("❌ Ошибка получения роли:", e);
+    console.error("Ошибка получения роли:", e);
   }
 
   return "guest";
@@ -226,7 +226,7 @@ export async function getUserRole(uid) {
 // ====================================================
 
 export async function registerWithUsername(username, password, displayName = null) {
-  console.log("📝 Регистрация с логином:", username);
+  console.log("Регистрация с логином:", username);
 
   try {
     // Нормализуем логин
@@ -252,7 +252,7 @@ export async function registerWithUsername(username, password, displayName = nul
     );
 
     const newUser = userCredential.user;
-    console.log("✅ Пользователь создан:", newUser.uid);
+    console.log("Пользователь создан:", newUser.uid);
 
     // Создаём документ в Firestore
     await setDoc(doc(db, "users", newUser.uid), {
@@ -264,7 +264,7 @@ export async function registerWithUsername(username, password, displayName = nul
       updated_at: new Date().toISOString()
     });
 
-    console.log("📄 Документ пользователя создан");
+    console.log("Документ пользователя создан");
 
     return {
       success: true,
@@ -273,7 +273,7 @@ export async function registerWithUsername(username, password, displayName = nul
     };
 
   } catch (error) {
-    console.error("❌ Ошибка регистрации:", error);
+    console.error("Ошибка регистрации:", error);
 
     return {
       success: false,
@@ -287,7 +287,7 @@ export async function registerWithUsername(username, password, displayName = nul
 // ====================================================
 
 export async function loginWithUsername(username, password) {
-  console.log("🔑 Попытка входа с логином:", username);
+  console.log("Попытка входа с логином:", username);
 
   try {
     // Нормализуем логин
@@ -304,14 +304,14 @@ export async function loginWithUsername(username, password) {
       password
     );
 
-    console.log("✅ Вход выполнен:", cred.user.email);
+    console.log("Вход выполнен:", cred.user.email);
 
     return {
       success: true,
       user: cred.user
     };
   } catch (error) {
-    console.error("❌ Ошибка входа:", error);
+    console.error("Ошибка входа:", error);
     return {
       success: false,
       error: 'Неверный логин или пароль'
@@ -340,7 +340,7 @@ async function checkUsernameExists(username) {
 // ====================================================
 
 export async function register(email, password, username = null) {
-  console.log("📝 Регистрация:", email);
+  console.log("Регистрация:", email);
 
   try {
     // 1. Создаём пользователя в Firebase Auth
@@ -351,7 +351,7 @@ export async function register(email, password, username = null) {
     );
 
     const newUser = userCredential.user;
-    console.log("✅ Пользователь создан:", newUser.uid);
+    console.log("Пользователь создан:", newUser.uid);
 
     // Если username не указан — берём из email (до @)
     const finalUsername = username || newUser.email?.split('@')[0] || 'User';
@@ -365,7 +365,7 @@ export async function register(email, password, username = null) {
       updated_at: new Date().toISOString()
     });
 
-    console.log("📄 Документ пользователя создан");
+    console.log("Документ пользователя создан");
 
     return {
       success: true,
@@ -374,7 +374,7 @@ export async function register(email, password, username = null) {
     };
 
   } catch (error) {
-    console.error("❌ Ошибка регистрации:", error);
+    console.error("Ошибка регистрации:", error);
 
     return {
       success: false,
@@ -388,7 +388,7 @@ export async function register(email, password, username = null) {
 // ====================================================
 
 export async function login(email, password) {
-  console.log("🔑 Попытка входа:", email);
+  console.log("Попытка входа:", email);
 
   try {
     await setPersistence(auth, browserLocalPersistence);
@@ -399,14 +399,14 @@ export async function login(email, password) {
       password
     );
 
-    console.log("✅ Вход выполнен:", cred.user.email);
+    console.log("Вход выполнен:", cred.user.email);
 
     return {
       success: true,
       user: cred.user
     };
   } catch (error) {
-    console.error("❌ Ошибка входа:", error);
+    console.error("Ошибка входа:", error);
     return {
       success: false,
       error: getAuthErrorMessage(error.code)
@@ -419,7 +419,7 @@ export async function login(email, password) {
 // ====================================================
 
 export async function logout() {
-  console.log("🚪 Выход из системы");
+  console.log("Выход из системы");
 
   sessionStorage.clear();
 
@@ -432,10 +432,12 @@ export async function logout() {
 // Проверка прав
 // ====================================================
 
+// ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ПРАВ НА ЗАПИСЬ (ВКЛЮЧАЯ ГИЛЬД-ЛИДЕРА)
 export function canWrite() {
   return (
     currentRole === "admin" ||
-    currentRole === "moderator"
+    currentRole === "moderator" ||
+    currentRole === "guild_leader"
   );
 }
 
@@ -445,6 +447,16 @@ export function isAdmin() {
 
 export function isModerator() {
   return currentRole === "moderator" || currentRole === "admin";
+}
+
+// НОВАЯ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ГИЛЬД-ЛИДЕРА
+export function isGuildLeader() {
+  return currentRole === "guild_leader" || currentRole === "admin";
+}
+
+// ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ПРАВ НА УПРАВЛЕНИЕ РЕЙДАМИ
+export function canManageRaids() {
+  return isAdmin() || currentRole === "guild_leader" || canWrite();
 }
 
 // ====================================================
@@ -509,6 +521,11 @@ export function updateNavUI() {
   document.querySelectorAll("[data-role='moderator']").forEach((el) => {
     el.classList.toggle("hidden", !canWrite());
   });
+  
+  // ДОБАВЛЯЕМ ПОДДЕРЖКУ data-role='guild_leader'
+  document.querySelectorAll("[data-role='guild_leader']").forEach((el) => {
+    el.classList.toggle("hidden", !isGuildLeader());
+  });
 }
 
 // ====================================================
@@ -530,10 +547,10 @@ export async function updateUserProfile(data) {
       updated_at: new Date().toISOString()
     });
 
-    console.log('✅ Профиль обновлён в Firestore');
+    console.log('Профиль обновлён в Firestore');
     return { success: true };
   } catch (error) {
-    console.error('❌ Ошибка обновления профиля:', error);
+    console.error('Ошибка обновления профиля:', error);
     return {
       success: false,
       error: error.message
@@ -541,7 +558,7 @@ export async function updateUserProfile(data) {
   }
 }
 
-// ⭐ ДОПОЛНИТЕЛЬНЫЕ ЭКСПОРТЫ
+// ДОПОЛНИТЕЛЬНЫЕ ЭКСПОРТЫ
 export function getUser() { 
   return currentUser; 
 }
