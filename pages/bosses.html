@@ -910,6 +910,7 @@
     document.getElementById('modal-title').textContent = 'Добавить босса';
     resetForm();
     modal.classList.remove('hidden');
+    modal.classList.add('open');
   }
 
   function openEdit(id) {
@@ -927,9 +928,13 @@
     selectedItemIds = allItems.filter(item => item.boss_id === id).map(item => item.id);
     renderPicker();
     modal.classList.remove('hidden');
+    modal.classList.add('open');
   }
 
-  function closeModal() { modal.classList.add('hidden'); }
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('open');
+  }
   document.getElementById('btn-modal-close').onclick = closeModal;
   document.getElementById('btn-cancel').onclick      = closeModal;
   document.getElementById('btn-add-boss').onclick    = openAdd;
