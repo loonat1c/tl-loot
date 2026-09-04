@@ -1,0 +1,405 @@
+/* ====================================================
+   raid-chat.css — стили чата рейда
+   ==================================================== */
+
+/* Контейнер */
+.raid-chat-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: none;
+}
+
+.raid-chat-container.open {
+  display: block;
+  animation: slideIn 0.3s ease-out;
+}
+
+.raid-chat-container.minimized {
+  display: none;
+}
+
+/* Окно чата */
+.raid-chat-window {
+  width: 350px;
+  height: 500px;
+  background: #1a1a2e;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Шапка */
+.raid-chat-header {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.raid-chat-title {
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-icon {
+  font-size: 20px;
+}
+
+.raid-chat-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.raid-chat-controls button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.raid-chat-controls button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Сообщения */
+.raid-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.raid-chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.raid-chat-messages::-webkit-scrollbar-thumb {
+  background: #4a4a6a;
+  border-radius: 3px;
+}
+
+.raid-chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #5a5a7a;
+}
+
+/* Сообщение */
+.chat-message {
+  display: flex;
+  gap: 10px;
+  animation: messageIn 0.3s ease-out;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.message-author {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.role-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: normal;
+}
+
+.message-time {
+  font-size: 11px;
+  color: #777;
+  margin-left: auto;
+}
+
+.message-text {
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Системные сообщения */
+.system-message {
+  justify-content: center;
+}
+
+.system-message-content {
+  background: rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  padding: 10px 15px;
+  border-radius: 20px;
+  color: #aabbee;
+  font-size: 13px;
+  text-align: center;
+  animation: systemMessageIn 0.5s ease-out;
+}
+
+/* Разделитель времени */
+.chat-time-divider {
+  text-align: center;
+  color: #666;
+  font-size: 11px;
+  margin: 10px 0;
+  position: relative;
+}
+
+.chat-time-divider::before,
+.chat-time-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: #333;
+}
+
+.chat-time-divider::before {
+  left: 0;
+}
+
+.chat-time-divider::after {
+  right: 0;
+}
+
+/* Реакции */
+.raid-chat-reactions {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reaction-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.reaction-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+/* Реакции на сообщениях */
+.message-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reaction-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.reaction-badge.active {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
+}
+
+/* Поле ввода */
+.raid-chat-input {
+  display: flex;
+  gap: 10px;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#chat-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 15px;
+  color: white;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+#chat-input:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #667eea;
+}
+
+#chat-input::placeholder {
+  color: #666;
+}
+
+.chat-btn-send {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-btn-send:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Плавающая иконка */
+.raid-chat-floating-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+  transition: all 0.3s;
+  z-index: 9998;
+  animation: bounce 2s infinite;
+}
+
+.raid-chat-floating-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.7);
+}
+
+/* Индикаторы */
+.chat-loading,
+.chat-error {
+  text-align: center;
+  padding: 10px;
+  color: #888;
+  font-size: 12px;
+}
+
+.chat-error {
+  color: #ff6b6b;
+}
+
+/* Анимации */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes systemMessageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .raid-chat-window {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  .raid-chat-container {
+    bottom: 0;
+    right: 0;
+  }
+}
+
+/* Тёмная тема (по умолчанию) */
+.raid-chat-window {
+  color-scheme: dark;
+}
