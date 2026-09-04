@@ -1255,6 +1255,7 @@
   let lockSettings = { raids_to_unlock: 999, max_misses: 0 };
 
   let rollHasResults = false;
+  let availablePlayersLoaded = false;
 
   let rollState = {
     dropId: null,
@@ -2122,22 +2123,18 @@
     btn.disabled = true; 
     btn.textContent = "Сохранение...";
     try {
-      if (editingRaidId) {
-        await updateRaid(editingRaidId, { date, notes });
-        showToast("Рейд обновлён");
-        closeModal("modal-raid");
-        allRaids = await getRaids();
+      const newId = await createRaid({ date, notes });
+      showToast("Рейд создан");
+      closeModal("modal-raid");
+      
+      allRaids = await getRaids();
+      renderRaidList();
+      
+      const newRaid = allRaids.find(r => r.id === newId);
+      if (newRaid) {
+        activeRaid = newRaid;
         renderRaidList();
-        activeRaid = allRaids.find(r => r.id === editingRaidId);
-        if (activeRaid) selectRaid(activeRaid);
-      } else {
-        const newId = await createRaid({ date, notes });
-        showToast("Рейд создан");
-        closeModal("modal-raid");
-        allRaids = await getRaids();
-        renderRaidList();
-        const newRaid = allRaids.find(r => r.id === newId);
-        if (newRaid) selectRaid(newRaid);
+        await renderRaidDetail(newRaid);
       }
     } catch(e) { 
       errEl.textContent = e.message; 
@@ -2145,7 +2142,7 @@
     }
     finally { 
       btn.disabled = false; 
-      btn.textContent = editingRaidId ? "Сохранить" : "Создать"; 
+      btn.textContent = "Создать"; 
     }
   });
 
@@ -2488,6 +2485,7 @@
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     
     rollHasResults = false;
+    availablePlayersLoaded = false;
     
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
@@ -2620,6 +2618,10 @@
       }
       
       const data = snap.data();
+
+      if (data.participants?.length !== rollState.participants.length) {
+        availablePlayersLoaded = false;
+      }
 
       if (data.participants?.length) {
         rollState.participants = data.participants.map(p => ({
@@ -2842,6 +2844,14 @@
   let renderAvailableTimeout = null;
 
   function renderAvailablePlayers() {
+    if (rollState.isFinished || rollState.isRolling) {
+      return;
+    }
+    
+    if (availablePlayersLoaded) {
+      return;
+    }
+    
     renderAvailableVersion++;
     const currentVersion = renderAvailableVersion;
     
@@ -2867,7 +2877,7 @@
 
       const isAdminOrLeader = canStartRoll();
       
-      Promise.allSettled(available.map(async (char) => {
+      Promise.all(available.map(async (char) => {
         const isMe = char.id === rollState.currentPlayerId;
         if (!attendedPlayerIds.includes(char.id)) return null;
         const check = await canJoinCurrentQueue(char.id);
@@ -2878,10 +2888,7 @@
           return;
         }
         
-        const filtered = results
-          .filter(r => r.status === 'fulfilled' && r.value !== null)
-          .map(r => r.value);
-          
+        const filtered = results.filter(r => r !== null);
         const seenIds = new Set();
         const deduped = filtered.filter(({ char }) => {
           if (seenIds.has(char.id)) return false;
@@ -2904,9 +2911,7 @@
           row.className = 'roll-available-row';
 
           let actionHtml = '';
-          if (rollState.isFinished || rollState.isRolling) {
-            actionHtml = `<span class="roll-available-reason">${rollState.isFinished ? 'Завершён' : '...'}</span>`;
-          } else if (!check.can) {
+          if (!check.can) {
             actionHtml = `<span class="roll-available-reason blocked">${check.reason}</span>`;
           } else if (isMe) {
             actionHtml = `<button class="btn-add-to-roll" onclick="joinRoll('${char.id}','${char.name.replace(/'/g,"\\'")}')">
@@ -2928,12 +2933,13 @@
         });
         
         list.appendChild(fragment);
+        availablePlayersLoaded = true;
         renderAvailableTimeout = null;
       }).catch(err => {
         console.error('Ошибка рендера доступных игроков:', err);
         renderAvailableTimeout = null;
       });
-    }, 100);
+    }, 50);
   }
 
   function updateResultCard() {
@@ -3025,6 +3031,7 @@
     });
     
     await saveParticipants();
+    availablePlayersLoaded = false;
     renderAvailableVersion++;
     updateRollUI();
   };
@@ -3040,6 +3047,7 @@
     if (rollState.isRolling || rollState.isFinished || !rollState.currentPlayerId) return;
     rollState.participants = rollState.participants.filter(p => p.playerId !== rollState.currentPlayerId);
     await saveParticipants();
+    availablePlayersLoaded = false;
     renderAvailableVersion++;
     updateRollUI();
   });
@@ -3076,6 +3084,7 @@
       this.classList.add('active');
       rollState.queue = this.dataset.queue;
       rollState.participants = [];
+      availablePlayersLoaded = false;
       saveParticipants();
       updateRollUI();
       showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
