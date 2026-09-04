@@ -108,7 +108,6 @@
       z-index: 1;
     }
     
-    /* Фоны для качеств */
     .drop-img.quality-epic {
       background: #1a0a2e;
       border-color: rgba(168, 85, 247, 0.3);
@@ -222,6 +221,10 @@
       display: block;
       position: relative;
       z-index: 1;
+    }
+    
+    .item-search-img.quality-epic {
+      background: #1a0a2e;
     }
     
     .item-search-img.quality-epic_ii {
@@ -485,8 +488,14 @@
       z-index: 1;
     }
     
+    .roll-modal-item-icon.quality-epic {
+      background: #1a0a2e;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+    
     .roll-modal-item-icon.quality-epic_ii {
       background: #1a0a2e;
+      border-color: rgba(139, 92, 246, 0.4);
     }
     
     .roll-modal-item-icon.quality-epic_ii::before {
@@ -1954,7 +1963,10 @@
     showToast("Рейд восстановлен");
     allRaids = await getRaids();
     renderRaidList();
-    selectRaid(allRaids.find(r => r.id === raid.id));
+    const restoredRaid = allRaids.find(r => r.id === raid.id);
+    if (restoredRaid) {
+      selectRaid(restoredRaid);
+    }
   }
 
   async function selectRaid(raid) {
