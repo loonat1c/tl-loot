@@ -406,6 +406,50 @@
       stroke-linejoin: round;
     }
 
+    /* Стили для качества предметов в луте */
+    .loot-item-img-wrap {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+    }
+
+    .loot-item-img-wrap.quality-epic {
+      background: #1a0a2e;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .loot-item-img-wrap.quality-epic_ii {
+      background: #1a0a2e;
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    .loot-item-img-wrap.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .loot-item-img-wrap.quality-epic_ii .loot-item-img {
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes epic-fog {
+      0%   { transform: translate(0%, 0%)   scale(1);    opacity: 0.85; }
+      33%  { transform: translate(8%, -5%)  scale(1.08); opacity: 1;    }
+      66%  { transform: translate(-6%, 8%)  scale(1.05); opacity: 0.9;  }
+      100% { transform: translate(5%, 5%)   scale(1.1);  opacity: 1;    }
+    }
+
     .loot-item-info {
       flex: 1;
       min-width: 0;
@@ -882,17 +926,20 @@
         query(collection(db, 'raids'), orderBy('date', 'desc'))
       );
       const allRaids = raidsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const activeRaids = allRaids.filter(r => !r.deleted); // Только активные рейды
+      const activeRaids = allRaids.filter(r => !r.deleted);
       const activeRaidIds = new Set(activeRaids.map(r => r.id));
 
-      console.log(`Найдено рейдов: ${allRaids.length}, активных: ${activeRaids.length}`);
+      // 2. Загружаем предметы для получения картинок
+      const itemsSnap = await getDocs(collection(db, 'items'));
+      const itemsMap = {};
+      itemsSnap.docs.forEach(d => {
+        itemsMap[d.id] = { id: d.id, ...d.data() };
+      });
 
-      // 2. loot_history — только для активных рейдов
+      // 3. loot_history — только для активных рейдов
       const lootSnap = await getDocs(collection(db, 'loot_history'));
       const allLootDocs = lootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const lootDocs = allLootDocs.filter(d => activeRaidIds.has(d.raid_id));
-
-      console.log(`Найдено лута: ${allLootDocs.length}, из активных рейдов: ${lootDocs.length}`);
 
       // Предметов выбито
       setTextSafe('stat-items', fmt(lootDocs.length));
@@ -910,7 +957,7 @@
       setTextSafe('stat-lucent-sub', 
         totalLucent > 0 ? 'суммарная стоимость' : 'данные обновляются');
 
-      // 3. Траи
+      // 4. Траи
       let totalTries = 0;
       try {
         const triesSnap = await getDocs(collectionGroup(db, 'tries'));
@@ -920,7 +967,6 @@
           parentRaidId: d.ref.parent.parent?.id
         }));
         totalTries = triesDocs.filter(t => activeRaidIds.has(t.parentRaidId)).length;
-        console.log(`Найдено траев: ${triesDocs.length}, из активных рейдов: ${totalTries}`);
       } catch (e) {
         console.warn('CollectionGroup failed, using fallback:', e);
         totalTries = activeRaids.reduce((s, r) => s + (Number(r.drop_count) || 0), 0);
@@ -929,7 +975,7 @@
       setTextSafe('stat-tries', fmt(totalTries));
       setTextSafe('stat-tries-sub', `за ${activeRaids.length} рейдов`);
 
-      // 4. Последний активный рейд
+      // 5. Последний активный рейд
       if (activeRaids.length > 0) {
         const last = activeRaids[0];
         const lastLoot = lootDocs.filter(d => d.raid_id === last.id);
@@ -937,7 +983,7 @@
 
         const lastRaidNameEl = document.getElementById('last-raid-name');
         if (lastRaidNameEl) {
-          lastRaidNameEl.textContent = bossName !== '—' ? `Рейд · ${bossName}` : 'Последний рейд';
+          lastRaidNameEl.textContent = bossName !== '—' ? bossName : 'Рейд';
         }
 
         const meta = document.getElementById('last-raid-meta');
@@ -975,15 +1021,23 @@
           } else {
             lootContainer.innerHTML = '';
             lastLoot.forEach(item => {
-              const hasImage = item.item_image && item.item_image.length < 100_000;
+              // Получаем данные предмета из itemsMap
+              const itemData = itemsMap[item.item_id];
+              const itemImage = item.item_image || itemData?.image || null;
+              const itemName = item.item_name || itemData?.name || 'Предмет';
+              const itemSlot = item.item_slot || itemData?.slot || '';
+              const itemQuality = item.item_quality || itemData?.quality || 'epic';
+              
+              const hasImage = itemImage && itemImage.length < 100_000;
               const lucentVal = Number(item.lucent_value_snapshot) || 0;
-              const slotLabel = item.item_slot || '';
 
               const row = document.createElement('div');
               row.className = 'loot-item-row';
               row.innerHTML = `
                 ${hasImage
-                  ? `<img class="loot-item-img" src="${item.item_image}" alt="${item.item_name}" loading="lazy" />`
+                  ? `<div class="loot-item-img-wrap quality-${itemQuality}">
+                      <img class="loot-item-img" src="${itemImage}" alt="${itemName}" loading="lazy" />
+                    </div>`
                   : `<div class="loot-item-img-placeholder">
                       <svg viewBox="0 0 24 24">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -993,8 +1047,8 @@
                     </div>`}
                 <div class="loot-item-info">
                   <div class="loot-item-name">
-                    ${item.item_name || 'Предмет'}
-                    ${item.item_slot ? `<span class="slot-badge">${fmtSlot(item.item_slot)}</span>` : ''}
+                    ${itemName}
+                    ${itemSlot ? `<span class="slot-badge">${fmtSlot(itemSlot)}</span>` : ''}
                   </div>
                   <div class="loot-item-winner">
                     <span>→</span>
