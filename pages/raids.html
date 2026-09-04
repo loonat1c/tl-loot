@@ -778,13 +778,11 @@
     }
     .dice-rolling { animation: rolling-anim 0.3s ease-in-out infinite; display: inline-block; }
 
-    /* ── Кнопка закрытия модалки ── */
     .roll-modal-header .btn-close {
       font-size: 1.5rem;
       padding: 0.25rem 0.5rem;
     }
 
-    /* ── Бейдж участия в трае ── */
     .attendance-badge {
       font-size: 0.6rem;
       padding: 0.1rem 0.5rem;
@@ -802,7 +800,6 @@
       background: rgba(34,197,94,0.1);
     }
 
-    /* ── ДИАЛОГОВОЕ ОКНО ── */
     #modal-dialog .modal {
       max-width: 420px;
     }
@@ -892,7 +889,7 @@
 
     <div class="section-title">Особенность предмета</div>
     <div id="property-select-grid" class="property-select-grid"></div>
-    <div id="property-error" class="property-error">⚠️ Выберите особенность предмета</div>
+    <div id="property-error" class="property-error">Выберите особенность предмета</div>
 
     <div class="section-title">Цена в Lucent (текущая)</div>
     <input type="number" id="drop-lucent" placeholder="0" min="0" />
@@ -905,7 +902,7 @@
   </div>
 </div>
 
-<!-- РОЛЛ ОКНО (УВЕЛИЧЕННОЕ) -->
+<!-- РОЛЛ ОКНО -->
 <div class="modal-overlay hidden" id="modal-roll">
   <div class="modal roll-modal">
     <div class="roll-modal-header">
@@ -922,14 +919,12 @@
       <button class="btn-close" onclick="closeRollModal()">✕</button>
     </div>
 
-    <!-- Статус -->
     <div id="roll-status-bar" class="roll-status-bar">
       <span class="roll-status-dot" id="roll-status-dot"></span>
       <span id="roll-status-text">Ожидание участников</span>
       <span class="roll-live-badge" id="roll-live-badge" style="display:none;">● LIVE</span>
     </div>
 
-    <!-- Переключатель очередей -->
     <div class="roll-queue-tabs" id="queue-tabs">
       <button class="roll-queue-tab active" data-queue="main" id="queue-main">
         <span class="queue-tab-icon"></span>
@@ -947,7 +942,6 @@
       </button>
     </div>
 
-    <!-- Участники ролла -->
     <div class="roll-section-header">
       <span class="roll-section-label">Участники ролла</span>
       <span class="roll-count-badge" id="roll-players-count">0</span>
@@ -956,7 +950,6 @@
       <div class="roll-empty-msg">Пока никто не присоединился</div>
     </div>
 
-    <!-- Итог ролла -->
     <div id="roll-result-card" class="roll-result-card hidden">
       <div class="roll-result-winner">
         <span class="roll-trophy"></span>
@@ -968,7 +961,6 @@
       <div class="roll-results-breakdown" id="roll-results-breakdown"></div>
     </div>
 
-    <!-- Доступные игроки -->
     <details class="roll-available-section" id="roll-available-section">
       <summary class="roll-available-summary">
         <span>Могут участвовать</span>
@@ -977,7 +969,6 @@
       <div id="roll-available-list" class="roll-available-list"></div>
     </details>
 
-    <!-- Действия -->
     <div class="roll-footer">
       <div class="roll-footer-user-actions">
         <button class="btn-roll-join" id="btn-join-roll">
@@ -999,7 +990,7 @@
   </div>
 </div>
 
-<!-- Модалка участия (для трая) -->
+<!-- Модалка участия -->
 <div class="modal-overlay hidden" id="modal-attendance">
   <div class="modal">
     <div class="modal-header">
@@ -1036,7 +1027,7 @@
   </div>
 </div>
 
-<!-- ⭐ УНИВЕРСАЛЬНОЕ ДИАЛОГОВОЕ ОКНО -->
+<!-- Универсальное диалоговое окно -->
 <div class="modal-overlay hidden" id="modal-dialog">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
@@ -1054,10 +1045,6 @@
 </div>
 
 <script type="module">
-  // ============================================================
-  // ЗАЩИТА
-  // ============================================================
-  
   document.addEventListener('contextmenu', function(e) {
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
       e.preventDefault();
@@ -1077,41 +1064,19 @@
     }
   });
 
-  console.log('🔒 Защита активирована');
-
-  // ============================================================
-  // ИМПОРТЫ
-  // ============================================================
-  
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole, isGuildLeader } from "../js/modules/auth.js";
   
-  // ============================================================
-  // ИНИЦИАЛИЗАЦИЯ
-  // ============================================================
-  
   initNavbar();
   
-  console.log('⏳ Ожидание авторизации...');
   await initAuth();
   await authReady;
 
-  console.log('🔐 Авторизация:', { 
-    user: currentUser?.email || 'Нет',
-    role: currentRole,
-    uid: currentUser?.uid
-  });
-
   if (!currentUser) {
-    console.log('🚫 Пользователь не авторизован, редирект на логин');
     window.location.href = '/pages/login.html';
     throw new Error('Redirect to login');
   }
 
-  // ============================================================
-  // ИМПОРТЫ МОДУЛЕЙ
-  // ============================================================
-  
   import {
     getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid, hardDeleteRaid,
     getRaidTries, addTry, deleteTry,
@@ -1137,10 +1102,6 @@
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
-  // ============================================================
-  // ПРОВЕРКА ИМПОРТОВ
-  // ============================================================
-  
   const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid', 'updateTryAttendance'];
   let importsOk = true;
   
@@ -1162,10 +1123,6 @@
     `;
     throw new Error('Security: Function integrity check failed');
   }
-
-  // ============================================================
-  // УНИВЕРСАЛЬНЫЙ ДИАЛОГ
-  // ============================================================
 
   let dialogResolve = null;
 
@@ -1210,10 +1167,6 @@
     if (e.target === e.currentTarget) closeDialog();
   });
 
-  // ============================================================
-  // ОСНОВНАЯ ЛОГИКА
-  // ============================================================
-
   let allRaids = [], allCharacters = [], allBosses = [], allItems = [];
   let activeRaid = null;
   let showDeleted = false;
@@ -1247,10 +1200,6 @@
     rollResults: null,
     hasPendingWinner: false,
   };
-
-  // ============================================================
-  // HELPER ФУНКЦИИ
-  // ============================================================
 
   function lucentIcon(size = 'small') {
     const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
@@ -1363,7 +1312,6 @@
       const settingsSnap = await getDoc(settingsRef);
       if (settingsSnap.exists()) {
         lockSettings = settingsSnap.data();
-        console.log('Настройки блокировок загружены:', lockSettings);
       }
     } catch (e) {
       console.warn('Не удалось загрузить настройки блокировок:', e);
@@ -1381,7 +1329,6 @@
       const snap = await getDocs(q);
       return snap.docs.map(d => d.data());
     } catch (e) {
-      console.warn('Ошибка получения истории побед:', e);
       return [];
     }
   }
@@ -1399,7 +1346,6 @@
       const snap = await getDocs(q);
       return snap.docs.map(d => d.data());
     } catch (e) {
-      console.warn('Ошибка получения побед в рейде:', e);
       return [];
     }
   }
@@ -1602,7 +1548,6 @@
       }));
       return allCharacters;
     } catch (e) {
-      console.error('Ошибка загрузки персонажей:', e);
       allCharacters = [];
       return [];
     }
@@ -1675,18 +1620,11 @@
     }
     
     newRaidBtn.addEventListener("click", () => {
-      console.log('Создание нового рейда из основной кнопки...');
       editingRaidId = null;
-      const titleEl = document.getElementById("modal-raid-title");
-      const dateEl = document.getElementById("raid-date");
-      const notesEl = document.getElementById("raid-notes");
-      const errorEl = document.getElementById("raid-error");
-      
-      if (titleEl) titleEl.textContent = "Новый рейд";
-      if (dateEl) dateEl.value = todayStr();
-      if (notesEl) notesEl.value = "";
-      if (errorEl) errorEl.style.display = "none";
-      
+      document.getElementById("modal-raid-title").textContent = "Новый рейд";
+      document.getElementById("raid-date").value = todayStr();
+      document.getElementById("raid-notes").value = "";
+      document.getElementById("raid-error").style.display = "none";
       openModal("modal-raid");
     });
   }
@@ -1846,23 +1784,12 @@
       triesContainer.appendChild(buildTryBlock(t, i + 1, drops, boss, raid.id, canEdit && !isClosed, raid));
     }
 
-    const btnAddTry = document.getElementById("btn-add-try");
-    if (btnAddTry) btnAddTry.addEventListener("click", () => openTryModal());
-    
-    const btnCloseRaid = document.getElementById("btn-close-raid");
-    if (btnCloseRaid) btnCloseRaid.addEventListener("click", openCloseRaidModal);
-    
-    const btnReopenRaid = document.getElementById("btn-reopen-raid");
-    if (btnReopenRaid) btnReopenRaid.addEventListener("click", reopenRaid);
-    
-    const btnDeleteRaid = document.getElementById("btn-delete-raid");
-    if (btnDeleteRaid) btnDeleteRaid.addEventListener("click", confirmDeleteRaid);
-    
-    const btnRestoreRaid = document.getElementById("btn-restore-raid");
-    if (btnRestoreRaid) btnRestoreRaid.addEventListener("click", confirmRestoreRaid);
-    
-    const btnHardDeleteRaid = document.getElementById("btn-hard-delete-raid");
-    if (btnHardDeleteRaid) btnHardDeleteRaid.addEventListener("click", confirmHardDeleteRaid);
+    document.getElementById("btn-add-try")?.addEventListener("click", () => openTryModal());
+    document.getElementById("btn-close-raid")?.addEventListener("click", openCloseRaidModal);
+    document.getElementById("btn-reopen-raid")?.addEventListener("click", reopenRaid);
+    document.getElementById("btn-delete-raid")?.addEventListener("click", confirmDeleteRaid);
+    document.getElementById("btn-restore-raid")?.addEventListener("click", confirmRestoreRaid);
+    document.getElementById("btn-hard-delete-raid")?.addEventListener("click", confirmHardDeleteRaid);
   }
 
   async function reopenRaid() {
@@ -1988,58 +1915,51 @@
     });
   }
 
-  const createRaidBtn = document.getElementById("btn-create-raid");
-  if (createRaidBtn) {
-    createRaidBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для создания рейда", "error");
-        return;
-      }
-      
-      const date  = document.getElementById("raid-date").value;
-      const notes = document.getElementById("raid-notes").value.trim();
-      const errEl = document.getElementById("raid-error");
-      if (!date) { 
-        if (errEl) {
-          errEl.textContent = "Выбери дату"; 
-          errEl.style.display = "block"; 
-        }
-        return; 
-      }
+  document.getElementById("btn-create-raid").addEventListener("click", async () => {
+    if (!canEditRaid()) {
+      showToast("Недостаточно прав для создания рейда", "error");
+      return;
+    }
+    
+    const date  = document.getElementById("raid-date").value;
+    const notes = document.getElementById("raid-notes").value.trim();
+    const errEl = document.getElementById("raid-error");
+    if (!date) { 
+      errEl.textContent = "Выбери дату"; 
+      errEl.style.display = "block"; 
+      return; 
+    }
 
-      const btn = document.getElementById("btn-create-raid");
-      btn.disabled = true; 
-      btn.textContent = "Сохранение...";
-      try {
-        if (editingRaidId) {
-          await updateRaid(editingRaidId, { date, notes });
-          showToast("Рейд обновлён");
-          closeModal("modal-raid");
-          allRaids = await getRaids();
-          renderRaidList();
-          activeRaid = allRaids.find(r => r.id === editingRaidId);
-          if (activeRaid) selectRaid(activeRaid);
-        } else {
-          const newId = await createRaid({ date, notes });
-          showToast("Рейд создан");
-          closeModal("modal-raid");
-          allRaids = await getRaids();
-          renderRaidList();
-          const newRaid = allRaids.find(r => r.id === newId);
-          if (newRaid) selectRaid(newRaid);
-        }
-      } catch(e) { 
-        if (errEl) {
-          errEl.textContent = e.message; 
-          errEl.style.display = "block"; 
-        }
+    const btn = document.getElementById("btn-create-raid");
+    btn.disabled = true; 
+    btn.textContent = "Сохранение...";
+    try {
+      if (editingRaidId) {
+        await updateRaid(editingRaidId, { date, notes });
+        showToast("Рейд обновлён");
+        closeModal("modal-raid");
+        allRaids = await getRaids();
+        renderRaidList();
+        activeRaid = allRaids.find(r => r.id === editingRaidId);
+        if (activeRaid) selectRaid(activeRaid);
+      } else {
+        const newId = await createRaid({ date, notes });
+        showToast("Рейд создан");
+        closeModal("modal-raid");
+        allRaids = await getRaids();
+        renderRaidList();
+        const newRaid = allRaids.find(r => r.id === newId);
+        if (newRaid) selectRaid(newRaid);
       }
-      finally { 
-        btn.disabled = false; 
-        btn.textContent = editingRaidId ? "Сохранить" : "Создать"; 
-      }
-    });
-  }
+    } catch(e) { 
+      errEl.textContent = e.message; 
+      errEl.style.display = "block"; 
+    }
+    finally { 
+      btn.disabled = false; 
+      btn.textContent = editingRaidId ? "Сохранить" : "Создать"; 
+    }
+  });
 
   function openTryModal() {
     document.getElementById("try-boss-select").value = "";
@@ -2047,46 +1967,41 @@
     openModal("modal-try");
   }
 
-  const createTryBtn = document.getElementById("btn-create-try");
-  if (createTryBtn) {
-    createTryBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для добавления трая", "error");
-        return;
-      }
-      
-      if (!activeRaid) {
-        showToast("Сначала выберите рейд", "error");
-        return;
-      }
-      
-      const bossId   = document.getElementById("try-boss-select").value;
-      const boss     = allBosses.find(b => b.id === bossId);
-      const tries    = await getRaidTries(activeRaid.id);
-      const btn      = document.getElementById("btn-create-try");
-      btn.disabled   = true; 
-      btn.textContent = "Добавление...";
-      try {
-        await addTry(activeRaid.id, {
-          boss_id:   bossId || null,
-          boss_name: boss?.name || "",
-          order:     tries.length,
-        });
-        closeModal("modal-try");
-        selectRaid(activeRaid);
-        showToast("Трай добавлен");
-      } catch(e) {
-        const errEl = document.getElementById("try-error");
-        if (errEl) {
-          errEl.textContent = e.message;
-          errEl.style.display = "block";
-        }
-      } finally { 
-        btn.disabled = false; 
-        btn.textContent = "Добавить"; 
-      }
-    });
-  }
+  document.getElementById("btn-create-try").addEventListener("click", async () => {
+    if (!canEditRaid()) {
+      showToast("Недостаточно прав для добавления трая", "error");
+      return;
+    }
+    
+    if (!activeRaid) {
+      showToast("Сначала выберите рейд", "error");
+      return;
+    }
+    
+    const bossId   = document.getElementById("try-boss-select").value;
+    const boss     = allBosses.find(b => b.id === bossId);
+    const tries    = await getRaidTries(activeRaid.id);
+    const btn      = document.getElementById("btn-create-try");
+    btn.disabled   = true; 
+    btn.textContent = "Добавление...";
+    try {
+      await addTry(activeRaid.id, {
+        boss_id:   bossId || null,
+        boss_name: boss?.name || "",
+        order:     tries.length,
+      });
+      closeModal("modal-try");
+      selectRaid(activeRaid);
+      showToast("Трай добавлен");
+    } catch(e) {
+      const errEl = document.getElementById("try-error");
+      errEl.textContent = e.message;
+      errEl.style.display = "block";
+    } finally { 
+      btn.disabled = false; 
+      btn.textContent = "Добавить"; 
+    }
+  });
 
   async function confirmDeleteTry(raidId, tryId) {
     const confirmed = await openDialog(
@@ -2153,14 +2068,14 @@
     openModal("modal-attendance");
   };
 
-  document.getElementById("btn-attendance-all")?.addEventListener("click", () => {
+  document.getElementById("btn-attendance-all").addEventListener("click", () => {
     document.querySelectorAll("#attendance-grid .attendance-player").forEach(el => {
       el.classList.add("present");
       el.querySelector("span").textContent = "✓";
     });
   });
 
-  document.getElementById("btn-attendance-copy")?.addEventListener("click", () => {
+  document.getElementById("btn-attendance-copy").addEventListener("click", () => {
     const previousAttended = window._previousTryAttendance || [];
     if (previousAttended.length === 0) {
       showToast('Нет предыдущего трая для копирования', 'error');
@@ -2174,27 +2089,24 @@
     showToast(`Скопировано ${previousAttended.length} участников`);
   });
 
-  const saveAttendanceBtn = document.getElementById("btn-save-attendance");
-  if (saveAttendanceBtn) {
-    saveAttendanceBtn.addEventListener("click", async () => {
-      const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
-      const btn = document.getElementById("btn-save-attendance");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-      try {
-        await updateTryAttendance(activeRaid.id, currentEditingTryId, attendedIds);
-        tryAttendanceCache[currentEditingTryId] = attendedIds;
-        closeModal("modal-attendance");
-        showToast("Участие сохранено");
-        selectRaid(activeRaid);
-      } catch(e) { 
-        showToast("Ошибка: " + e.message, "error"); 
-      }
-      finally { 
-        btn.disabled = false; 
-        btn.textContent = "Сохранить участие"; 
-      }
-    });
-  }
+  document.getElementById("btn-save-attendance").addEventListener("click", async () => {
+    const attendedIds = [...document.querySelectorAll("#attendance-grid .attendance-player.present")].map(el => el.dataset.id);
+    const btn = document.getElementById("btn-save-attendance");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+    try {
+      await updateTryAttendance(activeRaid.id, currentEditingTryId, attendedIds);
+      tryAttendanceCache[currentEditingTryId] = attendedIds;
+      closeModal("modal-attendance");
+      showToast("Участие сохранено");
+      selectRaid(activeRaid);
+    } catch(e) { 
+      showToast("Ошибка: " + e.message, "error"); 
+    }
+    finally { 
+      btn.disabled = false; 
+      btn.textContent = "Сохранить участие"; 
+    }
+  });
 
   window.openDropModal = async (raidId, tryId, bossId) => {
     currentDropRaidId  = raidId;
@@ -2218,67 +2130,64 @@
     
     let itemPool = [];
     
-    if (boss?.item_ids?.length) {
-        itemPool = boss.item_ids
-            .map(id => allItems.find(i => i.id === id))
-            .filter(i => i?.id);
-    } else if (!boss) {
-        itemPool = allItems;
+    if (boss) {
+      // Ищем предметы по boss_id
+      itemPool = allItems.filter(item => item.boss_id === boss.id);
     } else {
-        itemPool = [];
+      itemPool = allItems;
     }
 
     if (query) {
-        itemPool = itemPool.filter(i => 
-            i.name?.toLowerCase().includes(query.toLowerCase())
-        );
+      itemPool = itemPool.filter(i => 
+        i.name?.toLowerCase().includes(query.toLowerCase())
+      );
     }
 
     const container = document.getElementById("item-search-results");
     container.innerHTML = "";
 
     if (boss) {
-        const header = document.createElement("div");
-        header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--accent);background:var(--accent-glow);border-bottom:1px solid var(--border)";
-        header.textContent = `Предметы с ${boss.name}${query ? ` (поиск: "${query}")` : ''}`;
-        container.appendChild(header);
+      const header = document.createElement("div");
+      header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--accent);background:var(--accent-glow);border-bottom:1px solid var(--border)";
+      header.textContent = `Предметы с ${boss.name}${query ? ` (поиск: "${query}")` : ''} (${itemPool.length})`;
+      container.appendChild(header);
     } else {
-        const header = document.createElement("div");
-        header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--warning);background:var(--accent-glow);border-bottom:1px solid var(--border)";
-        header.textContent = `Босс не выбран — показаны все предметы`;
-        container.appendChild(header);
+      const header = document.createElement("div");
+      header.style.cssText = "padding:4px 8px;font-size:0.72rem;color:var(--warning);background:var(--accent-glow);border-bottom:1px solid var(--border)";
+      header.textContent = `Босс не выбран — показаны все предметы`;
+      container.appendChild(header);
     }
 
     if (!itemPool.length) {
-        const empty = document.createElement("div");
-        empty.style.cssText = "padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.82rem";
-        empty.textContent = boss 
-            ? `У босса ${boss.name} нет предметов в базе` 
-            : "Нет предметов";
-        container.appendChild(empty);
-        return;
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.82rem";
+      empty.textContent = boss 
+        ? `У босса ${boss.name} нет предметов в базе` 
+        : "Нет предметов";
+      container.appendChild(empty);
+      return;
     }
 
     itemPool.forEach(item => {
-        const row = document.createElement("div");
-        row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
-        const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
-        row.innerHTML = `
-            <img class="item-search-img" alt="${item.name}" />
-            <div>
-                <div style="font-weight:600">${item.name}</div>
-                <div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div>
-            </div>
-        `;
-        setItemImage(row.querySelector("img"), item.image);
-        row.addEventListener("click", () => { 
-            selectedItem = item; 
-            selectedProperty = null;
-            renderDropItems(document.getElementById("item-search").value);
-            renderProperties();
-            document.getElementById("property-error").style.display = "none";
-        });
-        container.appendChild(row);
+      const row = document.createElement("div");
+      row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
+      const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+      row.innerHTML = `
+        <img class="item-search-img" alt="${item.name}" />
+        <div>
+          <div style="font-weight:600">${item.name}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div>
+        </div>
+      `;
+      setItemImage(row.querySelector("img"), item.image);
+      row.addEventListener("click", () => { 
+        selectedItem = item; 
+        selectedProperty = null;
+        renderDropItems(document.getElementById("item-search").value);
+        renderProperties();
+        document.getElementById("property-error").style.display = "none";
+      });
+      container.appendChild(row);
     });
   }
 
@@ -2311,62 +2220,61 @@
     });
   }
 
-  const itemSearch = document.getElementById("item-search");
-  if (itemSearch) {
-    itemSearch.addEventListener("input", e => {
-      renderDropItems(e.target.value);
-    });
-  }
+  document.getElementById("item-search").addEventListener("input", e => {
+    renderDropItems(e.target.value);
+  });
 
-  const saveDropBtn = document.getElementById("btn-save-drop");
-  if (saveDropBtn) {
-    saveDropBtn.addEventListener("click", async () => {
-      if (!canEditRaid()) {
-        showToast("Недостаточно прав для добавления дропа", "error");
-        return;
+  document.getElementById("btn-save-drop").addEventListener("click", async () => {
+    if (!canEditRaid()) {
+      showToast("Недостаточно прав для добавления дропа", "error");
+      return;
+    }
+    
+    if (!selectedItem) return showDropError("Выбери предмет");
+    
+    if (selectedItem.properties?.length && !selectedProperty) {
+      document.getElementById("property-error").style.display = "block";
+      return;
+    }
+
+    const boss   = allBosses.find(b => b.id === currentDropBossId);
+    const lucent = Number(document.getElementById("drop-lucent").value) || 0;
+    const btn    = document.getElementById("btn-save-drop");
+    btn.disabled = true; btn.textContent = "Сохранение...";
+
+    try {
+      await addDrop(currentDropRaidId, currentDropTryId, {
+        item_id:               selectedItem.id,
+        item_name:             selectedItem.name,
+        item_slot:             selectedItem.slot,
+        item_image:            selectedItem.image,
+        winner_player_id:      null,
+        winner_nickname:       null,
+        boss_id:               currentDropBossId || null,
+        boss_name:             boss?.name || "",
+        lucent_value_snapshot: lucent,
+        roll_type:             null,
+        property:              selectedProperty || null,
+      });
+      
+      if (activeRaid && activeRaid.status === "open") {
+        await updateRaidStatus(currentDropRaidId, "rolling");
+        activeRaid.status = "rolling";
       }
       
-      if (!selectedItem)   return showDropError("Выбери предмет");
-      
-      if (selectedItem.properties?.length && !selectedProperty) {
-        document.getElementById("property-error").style.display = "block";
-        return;
-      }
-
-      const boss   = allBosses.find(b => b.id === currentDropBossId);
-      const lucent = Number(document.getElementById("drop-lucent").value) || 0;
-      const btn    = document.getElementById("btn-save-drop");
-      btn.disabled = true; btn.textContent = "Сохранение...";
-
-      try {
-        await addDrop(currentDropRaidId, currentDropTryId, {
-          item_id:               selectedItem.id,
-          item_name:             selectedItem.name,
-          item_slot:             selectedItem.slot,
-          item_image:            selectedItem.image,
-          winner_player_id:      null,
-          winner_nickname:       null,
-          boss_id:               currentDropBossId || null,
-          boss_name:             boss?.name || "",
-          lucent_value_snapshot: lucent,
-          roll_type:             null,
-          property:              selectedProperty || null,
-        });
-        
-        if (activeRaid && activeRaid.status === "open") {
-          await updateRaidStatus(currentDropRaidId, "rolling");
-          activeRaid.status = "rolling";
-        }
-        
-        closeModal("modal-drop");
-        allRaids = await getRaids();
-        activeRaid = allRaids.find(r => r.id === currentDropRaidId);
-        selectRaid(activeRaid);
-        showToast("Дроп добавлен");
-      } catch(e) { showDropError("Ошибка: " + e.message); }
-      finally { btn.disabled = false; btn.textContent = "Добавить дроп"; }
-    });
-  }
+      closeModal("modal-drop");
+      allRaids = await getRaids();
+      activeRaid = allRaids.find(r => r.id === currentDropRaidId);
+      selectRaid(activeRaid);
+      showToast("Дроп добавлен");
+    } catch(e) { 
+      showDropError("Ошибка: " + e.message); 
+    }
+    finally { 
+      btn.disabled = false; 
+      btn.textContent = "Добавить дроп"; 
+    }
+  });
 
   async function confirmDeleteDrop(raidId, tryId, dropId, name) {
     const confirmed = await openDialog(
@@ -2498,8 +2406,7 @@
       b.disabled = rollState.isFinished || rollState.isRolling;
     });
 
-    const adminActions = document.getElementById("roll-admin-actions");
-    if (adminActions) adminActions.style.display = canStartRoll() ? 'flex' : 'none';
+    document.getElementById("roll-admin-actions").style.display = canStartRoll() ? 'flex' : 'none';
 
     updateRollUI();
     openModal("modal-roll");
@@ -3100,40 +3007,35 @@
     openModal("modal-close-raid");
   }
 
-  const confirmCloseBtn = document.getElementById("btn-confirm-close");
-  if (confirmCloseBtn) {
-    confirmCloseBtn.addEventListener("click", async () => {
-      const btn = document.getElementById("btn-confirm-close");
-      btn.disabled = true; btn.textContent = "Закрываем...";
-      try {
-        const tries = await getRaidTries(activeRaid.id);
-        const allAttended = new Set();
-        for (const t of tries) {
-          if (t.attended_player_ids) {
-            t.attended_player_ids.forEach(id => allAttended.add(id));
-          }
+  document.getElementById("btn-confirm-close").addEventListener("click", async () => {
+    const btn = document.getElementById("btn-confirm-close");
+    btn.disabled = true; btn.textContent = "Закрываем...";
+    try {
+      const tries = await getRaidTries(activeRaid.id);
+      const allAttended = new Set();
+      for (const t of tries) {
+        if (t.attended_player_ids) {
+          t.attended_player_ids.forEach(id => allAttended.add(id));
         }
-        const attendedIds = Array.from(allAttended);
-        
-        await closeRaid(activeRaid.id, attendedIds, allCharacters.map(p => p.id));
-        closeModal("modal-close-raid");
-        allRaids   = await getRaids();
-        allCharacters = await loadCharacters();
-        activeRaid = allRaids.find(r => r.id === activeRaid.id);
-        renderRaidList();
-        selectRaid(activeRaid);
-        showToast("Рейд закрыт");
-      } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-      finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
-    });
-  }
+      }
+      const attendedIds = Array.from(allAttended);
+      
+      await closeRaid(activeRaid.id, attendedIds, allCharacters.map(p => p.id));
+      closeModal("modal-close-raid");
+      allRaids   = await getRaids();
+      allCharacters = await loadCharacters();
+      activeRaid = allRaids.find(r => r.id === activeRaid.id);
+      renderRaidList();
+      selectRaid(activeRaid);
+      showToast("Рейд закрыт");
+    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
+    finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
+  });
 
   async function init() {
     if (!importsOk) return;
     
     try {
-      console.log('Загрузка данных...');
-      
       [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
         getRaids(), 
         loadCharacters(), 
@@ -3142,18 +3044,6 @@
       ]);
       
       await loadLockSettings();
-      console.log('Настройки блокировок:', lockSettings);
-      
-      console.log('Данные загружены:', {
-        рейдов: allRaids.length,
-        персонажей: allCharacters.length,
-        боссов: allBosses.length,
-        предметов: allItems.length
-      });
-      
-      if (!Array.isArray(allRaids) || !Array.isArray(allCharacters)) {
-        throw new Error('Ошибка загрузки данных');
-      }
       
       populateBossSelect();
       renderRaidList();
@@ -3172,24 +3062,14 @@
             </div>
           `;
           
-          const emptyRaidBtn = document.getElementById("btn-create-empty-raid");
-          if (emptyRaidBtn) {
-            emptyRaidBtn.addEventListener("click", () => {
-              console.log('Создание рейда из пустого состояния...');
-              editingRaidId = null;
-              const titleEl = document.getElementById("modal-raid-title");
-              const dateEl = document.getElementById("raid-date");
-              const notesEl = document.getElementById("raid-notes");
-              const errorEl = document.getElementById("raid-error");
-              
-              if (titleEl) titleEl.textContent = "Новый рейд";
-              if (dateEl) dateEl.value = todayStr();
-              if (notesEl) notesEl.value = "";
-              if (errorEl) errorEl.style.display = "none";
-              
-              openModal("modal-raid");
-            });
-          }
+          document.getElementById("btn-create-empty-raid")?.addEventListener("click", () => {
+            editingRaidId = null;
+            document.getElementById("modal-raid-title").textContent = "Новый рейд";
+            document.getElementById("raid-date").value = todayStr();
+            document.getElementById("raid-notes").value = "";
+            document.getElementById("raid-error").style.display = "none";
+            openModal("modal-raid");
+          });
         }
       }
       
@@ -3199,9 +3079,6 @@
         const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
         if (player) {
           rollState.currentPlayerId = player.id;
-          console.log('Найден персонаж:', player.name, 'ID:', player.id);
-        } else {
-          console.log('Персонаж НЕ найден для пользователя:', rollState.currentUserId);
         }
       }
       
