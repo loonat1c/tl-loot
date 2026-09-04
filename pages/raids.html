@@ -357,7 +357,6 @@
       padding: 0.35rem 0.9rem;
     }
 
-    /* ── ROLL MODAL STYLES (УВЕЛИЧЕННЫЕ) ── */
     .roll-modal {
       max-width: 560px;
       padding: 0;
@@ -848,7 +847,7 @@
   </div>
 </main>
 
-<!-- Новый рейд -->
+<!-- Модальные окна -->
 <div class="modal-overlay hidden" id="modal-raid">
   <div class="modal">
     <div class="modal-header"><h3 id="modal-raid-title">Новый рейд</h3><button class="btn-close" onclick="closeModal('modal-raid')">✕</button></div>
@@ -862,7 +861,6 @@
   </div>
 </div>
 
-<!-- Новый трай -->
 <div class="modal-overlay hidden" id="modal-try">
   <div class="modal">
     <div class="modal-header"><h3>Добавить трай</h3><button class="btn-close" onclick="closeModal('modal-try')">✕</button></div>
@@ -878,22 +876,17 @@
   </div>
 </div>
 
-<!-- Дроп -->
 <div class="modal-overlay hidden" id="modal-drop">
   <div class="modal">
     <div class="modal-header"><h3>Добавить дроп</h3><button class="btn-close" onclick="closeModal('modal-drop')">✕</button></div>
-
     <div class="section-title">Предмет</div>
     <input type="text" id="item-search" placeholder="Поиск предмета..." />
     <div id="item-search-results" class="item-search-results"></div>
-
     <div class="section-title">Особенность предмета</div>
     <div id="property-select-grid" class="property-select-grid"></div>
     <div id="property-error" class="property-error">Выберите особенность предмета</div>
-
     <div class="section-title">Цена в Lucent (текущая)</div>
     <input type="number" id="drop-lucent" placeholder="0" min="0" />
-
     <div id="drop-error" class="text-danger mt-1" style="display:none;font-size:0.85rem"></div>
     <div class="flex gap-1 mt-3">
       <button class="btn btn-primary" id="btn-save-drop">Добавить дроп</button>
@@ -902,14 +895,13 @@
   </div>
 </div>
 
-<!-- РОЛЛ ОКНО -->
 <div class="modal-overlay hidden" id="modal-roll">
   <div class="modal roll-modal">
     <div class="roll-modal-header">
       <div class="roll-modal-item-info">
         <div class="roll-modal-item-icon">
           <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;" />
-          <span id="roll-item-icon-fallback" style="font-size:1.8rem;"></span>
+          <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
         </div>
         <div>
           <div class="roll-modal-item-name" id="roll-item-name">—</div>
@@ -918,30 +910,27 @@
       </div>
       <button class="btn-close" onclick="closeRollModal()">✕</button>
     </div>
-
     <div id="roll-status-bar" class="roll-status-bar">
       <span class="roll-status-dot" id="roll-status-dot"></span>
       <span id="roll-status-text">Ожидание участников</span>
       <span class="roll-live-badge" id="roll-live-badge" style="display:none;">● LIVE</span>
     </div>
-
     <div class="roll-queue-tabs" id="queue-tabs">
       <button class="roll-queue-tab active" data-queue="main" id="queue-main">
-        <span class="queue-tab-icon"></span>
+        <span class="queue-tab-icon">🎯</span>
         <div>
           <div class="queue-tab-title">Основная</div>
           <div class="queue-tab-sub">Желаемый лут + спек</div>
         </div>
       </button>
       <button class="roll-queue-tab" data-queue="open" id="queue-open">
-        <span class="queue-tab-icon"></span>
+        <span class="queue-tab-icon">🎲</span>
         <div>
           <div class="queue-tab-title">Дополнительная</div>
           <div class="queue-tab-sub">Только спек</div>
         </div>
       </button>
     </div>
-
     <div class="roll-section-header">
       <span class="roll-section-label">Участники ролла</span>
       <span class="roll-count-badge" id="roll-players-count">0</span>
@@ -949,10 +938,9 @@
     <div id="roll-players-list" class="roll-players-list">
       <div class="roll-empty-msg">Пока никто не присоединился</div>
     </div>
-
     <div id="roll-result-card" class="roll-result-card hidden">
       <div class="roll-result-winner">
-        <span class="roll-trophy"></span>
+        <span class="roll-trophy">🏆</span>
         <div>
           <div class="roll-winner-name" id="roll-winner-name">—</div>
           <div class="roll-winner-roll" id="roll-winner-roll">Бросок: —</div>
@@ -960,7 +948,6 @@
       </div>
       <div class="roll-results-breakdown" id="roll-results-breakdown"></div>
     </div>
-
     <details class="roll-available-section" id="roll-available-section">
       <summary class="roll-available-summary">
         <span>Могут участвовать</span>
@@ -968,7 +955,6 @@
       </summary>
       <div id="roll-available-list" class="roll-available-list"></div>
     </details>
-
     <div class="roll-footer">
       <div class="roll-footer-user-actions">
         <button class="btn-roll-join" id="btn-join-roll">
@@ -990,7 +976,6 @@
   </div>
 </div>
 
-<!-- Модалка участия -->
 <div class="modal-overlay hidden" id="modal-attendance">
   <div class="modal">
     <div class="modal-header">
@@ -998,12 +983,10 @@
       <button class="btn-close" onclick="closeModal('modal-attendance')">✕</button>
     </div>
     <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem">Отметь кто участвовал в этом трае.</p>
-    
     <div class="attendance-actions">
       <button class="btn btn-primary btn-sm" id="btn-attendance-all">Выбрать всех</button>
       <button class="btn btn-ghost btn-sm" id="btn-attendance-copy">Скопировать с прошлого трая</button>
     </div>
-    
     <div id="attendance-grid" class="attendance-grid"></div>
     <div class="flex gap-1 mt-3">
       <button class="btn btn-primary" id="btn-save-attendance">Сохранить участие</button>
@@ -1012,7 +995,6 @@
   </div>
 </div>
 
-<!-- Закрыть рейд -->
 <div class="modal-overlay hidden" id="modal-close-raid">
   <div class="modal">
     <div class="modal-header">
@@ -1027,7 +1009,6 @@
   </div>
 </div>
 
-<!-- Универсальное диалоговое окно -->
 <div class="modal-overlay hidden" id="modal-dialog">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
@@ -1101,28 +1082,6 @@
     updateDoc as firestoreUpdate
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
-
-  const requiredFunctions = ['addDrop', 'updateDropWinner', 'closeRaid', 'updateRaidStatus', 'hardDeleteRaid', 'updateTryAttendance'];
-  let importsOk = true;
-  
-  const fnMap = { addDrop, updateDropWinner, closeRaid, updateRaidStatus, hardDeleteRaid, updateTryAttendance };
-  for (const fn of requiredFunctions) {
-    if (typeof fnMap[fn] !== 'function') {
-      console.error(`Критическая функция ${fn} не найдена`);
-      importsOk = false;
-    }
-  }
-  
-  if (!importsOk) {
-    document.body.innerHTML = `
-      <div style="text-align:center;padding:4rem;color:var(--danger);">
-        <h2>Ошибка безопасности</h2>
-        <p>Обнаружена попытка подмены критических функций.</p>
-        <p>Пожалуйста, перезагрузите страницу.</p>
-      </div>
-    `;
-    throw new Error('Security: Function integrity check failed');
-  }
 
   let dialogResolve = null;
 
@@ -1684,19 +1643,19 @@
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
     
     let rollButtonClass = 'roll-btn';
-    let rollButtonText = 'Бросок';
+    let rollButtonText = '🎲';
     let rollButtonTitle = '';
     
     if (hasWinner) {
       rollButtonClass += ' finished';
-      rollButtonText = 'Итоги';
+      rollButtonText = '📊';
       rollButtonTitle = 'Просмотр результатов';
     } else if (isClosed) {
-      rollButtonText = 'Закрыт';
+      rollButtonText = '🔒';
       rollButtonTitle = 'Рейд закрыт — просмотр истории';
     } else if (isRolling) {
       rollButtonClass += ' rolling';
-      rollButtonText = 'Идёт...';
+      rollButtonText = '🎲';
       rollButtonTitle = 'Идёт ролл — просмотр в реальном времени';
     } else {
       rollButtonTitle = 'Открыть окно ролла';
@@ -1723,7 +1682,7 @@
             <strong>${d.winner_nickname}</strong>
             <span>${d.roll_type === "main" ? "Основная" : "Дополнительная"}</span>
           ` : `
-            <span class="no-winner">${isRolling ? 'Ролл...' : 'Ожидает ролла'}</span>
+            <span class="no-winner">${isRolling ? '🎲 Ролл...' : 'Ожидает ролла'}</span>
           `}
         </div>
         <div class="drop-actions">
@@ -1769,7 +1728,6 @@
             ` : ""}
           </div>
         </div>
-
         <div style="margin-top:1.25rem" id="tries-container">
           ${tries.length ? "" : `<div class="text-muted" style="text-align:center;padding:1.5rem">Нет траёв — нажми "+ Трай"</div>`}
         </div>
@@ -2131,7 +2089,6 @@
     let itemPool = [];
     
     if (boss) {
-      // Ищем предметы по boss_id
       itemPool = allItems.filter(item => item.boss_id === boss.id);
     } else {
       itemPool = allItems;
@@ -2511,7 +2468,7 @@
       row.innerHTML = `
         <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
         <span class="roll-player-status">В ролле</span>
-        <span class="roll-dice-result"><span class="dice-rolling">—</span> ${p._animRoll ?? '—'}</span>
+        <span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>
       `;
       list.appendChild(row);
     });
@@ -2599,7 +2556,7 @@
 
       let diceHtml = '';
       if (rollState.isRolling && !hasRoll) {
-        diceHtml = `<span class="roll-dice-result pending-dice"><span class="dice-rolling">—</span></span>`;
+        diceHtml = `<span class="roll-dice-result pending-dice"><span class="dice-rolling">🎲</span></span>`;
       } else if (hasRoll) {
         diceHtml = `<span class="roll-dice-result ${isWinner ? 'winner-dice' : ''}">${p.roll}</span>`;
       } else {
@@ -2883,10 +2840,14 @@
     });
   });
 
-  document.getElementById("btn-confirm-roll").addEventListener("click", async () => {
+  async function confirmRollWinner() {
     if (!rollState.winner || !canStartRoll()) return;
+    
     const btn = document.getElementById("btn-confirm-roll");
-    btn.disabled = true; btn.textContent = 'Сохранение...';
+    if (btn) {
+      btn.disabled = true; 
+      btn.textContent = 'Сохранение...';
+    }
 
     try {
       await updateDropWinner(
@@ -2913,15 +2874,26 @@
       rollHasResults = false;
 
       showToast(`${rollState.winner.nickname} получает предмет!`);
-      btn.style.display = 'none';
+      
+      if (btn) btn.style.display = 'none';
 
-      allRaids  = await getRaids();
+      allRaids = await getRaids();
       activeRaid = allRaids.find(r => r.id === rollState.raidId);
       if (activeRaid) selectRaid(activeRaid);
+      
+      closeRollModalForce();
 
-    } catch(e) { showToast("Ошибка: " + e.message, "error"); }
-    finally { btn.disabled = false; btn.textContent = 'Зафиксировать победителя'; }
-  });
+    } catch(e) { 
+      showToast("Ошибка: " + e.message, "error"); 
+    } finally { 
+      if (btn) {
+        btn.disabled = false; 
+        btn.textContent = 'Зафиксировать победителя'; 
+      }
+    }
+  }
+
+  document.getElementById("btn-confirm-roll").addEventListener("click", confirmRollWinner);
 
   function closeRollModal() {
     const hasUnfinished = rollHasResults || rollState.hasPendingWinner || 
@@ -2931,8 +2903,8 @@
       openDialog(
         'Ролл завершён, но не зафиксирован',
         'Результаты ролла уже есть, но они не зафиксированы!\n\nЕсли вы закроете окно, результаты будут потеряны и придётся роллить заново.',
-        'Закрыть без фиксации',
-        'Зафиксировать результаты'
+        'Зафиксировать',
+        'Закрыть'
       ).then(confirmed => {
         if (confirmed) {
           closeRollModalAndConfirm();
@@ -2968,12 +2940,13 @@
 
   function closeRollModalAndConfirm() {
     closeDialog();
-    const confirmBtn = document.getElementById("btn-confirm-roll");
-    if (confirmBtn && confirmBtn.style.display !== 'none') {
-      confirmBtn.click();
-    } else {
-      showToast('Сначала зафиксируйте победителя', 'error');
+    
+    if (!rollState.winner || !canStartRoll()) {
+      showToast('Нет победителя для фиксации', 'error');
+      return;
     }
+    
+    confirmRollWinner();
   }
   window.closeRollModalAndConfirm = closeRollModalAndConfirm;
 
@@ -3033,8 +3006,6 @@
   });
 
   async function init() {
-    if (!importsOk) return;
-    
     try {
       [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
         getRaids(), 
