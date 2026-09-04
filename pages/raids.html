@@ -1278,6 +1278,65 @@
     animationTimer: null,
   };
 
+  // ============================================================
+  // ПАТЧ: кэш побед для модалки ролла
+  // ============================================================
+
+  let playerWinsCache = new Map();
+  let playerWinsInRaidCache = new Map();
+  let playerWinsCacheRaidId = null;
+  let winsPreloadPromise = null;
+  let preloadAbortId = 0;
+
+  function invalidateWinsCache() {
+    playerWinsCache.clear();
+    playerWinsInRaidCache.clear();
+    playerWinsCacheRaidId = null;
+    winsPreloadPromise = null;
+    preloadAbortId++;
+  }
+
+  async function getPlayerWinsCached(playerId) {
+    if (playerWinsCacheRaidId !== activeRaid?.id) {
+      playerWinsCache.clear();
+      playerWinsInRaidCache.clear();
+      playerWinsCacheRaidId = activeRaid?.id || null;
+    }
+    if (playerWinsCache.has(playerId)) return playerWinsCache.get(playerId);
+    const wins = await getPlayerWins(playerId);
+    playerWinsCache.set(playerId, wins);
+    return wins;
+  }
+
+  async function getPlayerWinsInCurrentRaidCached(playerId) {
+    if (playerWinsInRaidCache.has(playerId)) return playerWinsInRaidCache.get(playerId);
+    const wins = await getPlayerWinsInCurrentRaid(playerId);
+    playerWinsInRaidCache.set(playerId, wins);
+    return wins;
+  }
+
+  async function preloadWinsForAttendees() {
+    const myAbortId = ++preloadAbortId;
+
+    const approved = allCharacters.filter(c =>
+      (c.status === 'approved' || c.approved === true) &&
+      attendedPlayerIds.includes(c.id)
+    );
+
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < approved.length; i += BATCH_SIZE) {
+      if (preloadAbortId !== myAbortId) return;
+
+      const batch = approved.slice(i, i + BATCH_SIZE);
+      await Promise.allSettled(
+        batch.map(c => Promise.all([
+          getPlayerWinsCached(c.id),
+          getPlayerWinsInCurrentRaidCached(c.id)
+        ]))
+      );
+    }
+  }
+
   function lucentIcon(size = 'small') {
     const className = size === 'large' ? 'lucent-icon-lg' : 'lucent-icon';
     return `<img src="/assets/img/lucenticon.webp" class="${className}" alt="Lucent" />`;
@@ -1501,7 +1560,7 @@
   }
 
   async function isSlotLocked(playerId, itemSlot, itemId) {
-    const wins = await getPlayerWins(playerId);
+    const wins = await getPlayerWinsCached(playerId);
     const char = allCharacters.find(c => c.id === playerId);
     
     if (!char) return { locked: false, reason: '' };
@@ -1591,11 +1650,6 @@
     return { locked: false, reason: '' };
   }
 
-  async function hasWonItemInCurrentRaid(playerId, itemId) {
-    const winsInRaid = await getPlayerWinsInCurrentRaid(playerId);
-    return winsInRaid.some(w => w.item_id === itemId);
-  }
-
   async function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
@@ -1609,14 +1663,14 @@
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
+    const winsInRaid = await getPlayerWinsInCurrentRaidCached(charId);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
       const item = allItems.find(i => i.id === lastWin.item_id);
       return { can: false, reason: `Уже выиграл «${item?.name || 'предмет'}» в этом рейде` };
     }
 
-    if (await hasWonItemInCurrentRaid(charId, itemId)) {
+    if (winsInRaid.some(w => w.item_id === itemId)) {
       const item = allItems.find(i => i.id === itemId);
       return { can: false, reason: `Уже выиграл «${item?.name || 'этот предмет'}» в текущем рейде` };
     }
@@ -1671,7 +1725,7 @@
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
-    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
+    const winsInRaid = await getPlayerWinsInCurrentRaidCached(charId);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
       const item = allItems.find(i => i.id === lastWin.item_id);
@@ -2508,6 +2562,7 @@
     }
     
     attendedPlayerIds = tryAttendedIds;
+    winsPreloadPromise = preloadWinsForAttendees();
 
     rollState = {
       dropId: dropId,
@@ -3014,6 +3069,8 @@
       return;
     }
 
+    if (winsPreloadPromise) await winsPreloadPromise;
+
     const check = await canJoinCurrentQueue(playerId);
     if (!check.can) { 
       showToast(check.reason, 'error'); 
@@ -3131,6 +3188,8 @@
         rollState.winner.playerId, rollState.winner.nickname, rollState.queue
       );
 
+      invalidateWinsCache();
+
       const dropRef = doc(db, "raids", rollState.raidId, "tries", rollState.tryId, "drops", rollState.dropId);
       await firestoreUpdate(dropRef, {
         roll_results: rollState.rollResults,
@@ -3222,6 +3281,7 @@
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     rollState.isRolling = false;
     rollHasResults = false;
+    invalidateWinsCache();
     closeDialog();
   }
   window.closeRollModalForce = closeRollModalForce;
