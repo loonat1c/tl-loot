@@ -6,6 +6,12 @@
   <title>Рейды — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
   <style>
+    /* ── Переменные для качеств ── */
+    :root {
+      --epic: #a855f7;
+      --epic2: #8b5cf6;
+    }
+
     .raids-layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; align-items: start; }
     @media (max-width: 800px) { .raids-layout { grid-template-columns: 1fr; } }
 
@@ -90,7 +96,44 @@
       object-fit: cover; 
       background: var(--bg-card2);
       border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
     }
+    
+    /* ── Фоны для качеств в дропах ── */
+    .drop-img.quality-epic {
+      background: #1a0a2e;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+    
+    .drop-img.quality-epic_ii {
+      background: #1a0a2e;
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+    
+    .drop-img.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    .drop-img.quality-epic_ii img {
+      position: relative;
+      z-index: 1;
+    }
+    
+    @keyframes epic-fog {
+      0%   { transform: translate(0%, 0%)   scale(1);    opacity: 0.85; }
+      33%  { transform: translate(8%, -5%)  scale(1.08); opacity: 1;    }
+      66%  { transform: translate(-6%, 8%)  scale(1.05); opacity: 0.9;  }
+      100% { transform: translate(5%, 5%)   scale(1.1);  opacity: 1;    }
+    }
+
     .drop-name { font-weight: 600; color: var(--text); }
     .drop-detail { 
       font-size: 0.75rem; 
@@ -144,6 +187,7 @@
     }
     .drop-actions { display: flex; gap: 0.3rem; align-items: center; }
 
+    /* ── Модалки ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
     .modal-overlay.open { opacity: 1; visibility: visible; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; }
@@ -158,7 +202,36 @@
     .item-search-row:last-child { border-bottom: none; }
     .item-search-row:hover   { background: var(--bg-card2); }
     .item-search-row.selected{ background: var(--accent-glow); border-left: 2px solid var(--accent); }
-    .item-search-img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(--bg-card2); }
+    .item-search-img { 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 4px; 
+      object-fit: cover; 
+      background: var(--bg-card2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ── Фон для epic II в поиске ── */
+    .item-search-img.quality-epic_ii {
+      background: #1a0a2e;
+    }
+    
+    .item-search-img.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    .item-search-img.quality-epic_ii img {
+      position: relative;
+      z-index: 1;
+    }
 
     .property-select-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
     .property-btn { padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card2); color: var(--text); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
@@ -394,6 +467,23 @@
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
+      position: relative;
+    }
+    
+    /* Фон для epic II в модалке ролла */
+    .roll-modal-item-icon.quality-epic_ii {
+      background: #1a0a2e;
+    }
+    
+    .roll-modal-item-icon.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
     }
 
     .roll-modal-item-name {
@@ -899,8 +989,8 @@
   <div class="modal roll-modal">
     <div class="roll-modal-header">
       <div class="roll-modal-item-info">
-        <div class="roll-modal-item-icon">
-          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;" />
+        <div class="roll-modal-item-icon" id="roll-item-icon-container">
+          <img id="roll-item-img" src="" alt="" style="width:100%;height:100%;border-radius:10px;object-fit:cover;display:none;position:relative;z-index:1;" />
           <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
         </div>
         <div>
@@ -1149,6 +1239,7 @@
     itemDetail: '',
     itemSlot: null,
     itemId: null,
+    itemQuality: null,
     participants: [],
     isRolling: false,
     isFinished: false,
@@ -1626,7 +1717,13 @@
     
     drops.forEach(d => {
       const img = wrap.querySelector(`#drop-img-${d.id}`);
-      if (img) setItemImage(img, d.item_image);
+      if (img) {
+        setItemImage(img, d.item_image);
+        // Применяем класс качества к контейнеру
+        if (d.item_quality) {
+          img.classList.add(`quality-${d.item_quality}`);
+        }
+      }
     });
     
     return wrap;
@@ -1661,9 +1758,11 @@
       rollButtonTitle = 'Открыть окно ролла';
     }
     
+    const qualityClass = d.item_quality ? ` quality-${d.item_quality}` : '';
+    
     return `
       <div class="drop-row">
-        <img class="drop-img" id="drop-img-${d.id}" alt="${d.item_name}" />
+        <img class="drop-img${qualityClass}" id="drop-img-${d.id}" alt="${d.item_name}" />
         <div>
           <div class="drop-name">${d.item_name}</div>
           <div class="drop-detail">
@@ -1686,7 +1785,7 @@
           `}
         </div>
         <div class="drop-actions">
-          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}')" title="${rollButtonTitle}">
+          <button class="${rollButtonClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}','${d.item_quality||''}')" title="${rollButtonTitle}">
             ${rollButtonText}
           </button>
           ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">Удалить</button>` : ''}
@@ -2129,8 +2228,9 @@
       const row = document.createElement("div");
       row.className = `item-search-row${selectedItem?.id === item.id ? " selected" : ""}`;
       const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+      const qualityClass = item.quality ? ` quality-${item.quality}` : '';
       row.innerHTML = `
-        <img class="item-search-img" alt="${item.name}" />
+        <img class="item-search-img${qualityClass}" alt="${item.name}" />
         <div>
           <div style="font-weight:600">${item.name}</div>
           <div style="font-size:0.72rem;color:var(--text-muted)">${slotLabel}</div>
@@ -2205,6 +2305,7 @@
         item_name:             selectedItem.name,
         item_slot:             selectedItem.slot,
         item_image:            selectedItem.image,
+        item_quality:          selectedItem.quality || null,
         winner_player_id:      null,
         winner_nickname:       null,
         boss_id:               currentDropBossId || null,
@@ -2250,7 +2351,8 @@
   }
   window.confirmDeleteDrop = confirmDeleteDrop;
 
-  window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw) => {
+  window.openRollModal = async (raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw, itemQualityRaw) => {
+    // Сбрасываем ВСЕ состояние ролла при открытии нового
     rollHasResults = false;
     
     const tries = await getRaidTries(raidId);
@@ -2266,7 +2368,7 @@
       );
       if (confirmed) {
         sessionStorage.setItem('pending_roll_data', JSON.stringify({
-          raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw
+          raidId, tryId, dropId, itemName, slotLabel, property, itemSlotRaw, itemQualityRaw
         }));
         openAttendanceModalForTry(raidId, tryId);
       }
@@ -2277,12 +2379,7 @@
 
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
 
-    const oldParticipants = rollState.participants || [];
-    const oldRollResults = rollState.rollResults || null;
-    const oldWinner = rollState.winner || null;
-    const oldIsFinished = rollState.isFinished || false;
-    const oldHasPending = rollState.hasPendingWinner || false;
-
+    // Полностью сбрасываем rollState для нового дропа
     rollState = {
       dropId: dropId,
       raidId: raidId,
@@ -2291,15 +2388,16 @@
       itemDetail: `${slotLabel}${property ? ` · ✦ ${property}` : ''}`,
       itemSlot: itemSlotRaw || null,
       itemId: null,
-      participants: oldParticipants.length > 0 ? oldParticipants : [],
+      itemQuality: itemQualityRaw || null,
+      participants: [],
       isRolling: false,
-      isFinished: oldIsFinished,
-      winner: oldWinner,
+      isFinished: false,
+      winner: null,
       currentUserId: currentUser?.uid || null,
       currentPlayerId: rollState.currentPlayerId || null,
       queue: 'main',
-      rollResults: oldRollResults,
-      hasPendingWinner: oldHasPending,
+      rollResults: null,
+      hasPendingWinner: false,
     };
 
     try {
@@ -2308,6 +2406,7 @@
       if (dropSnap.exists()) {
         const data = dropSnap.data();
         rollState.itemId = data.item_id || null;
+        rollState.itemQuality = data.item_quality || itemQualityRaw || null;
         
         if (data.item_slot) {
           rollState.itemSlot = data.item_slot;
@@ -2348,10 +2447,22 @@
 
     const imgEl = document.getElementById("roll-item-img");
     const fallEl = document.getElementById("roll-item-icon-fallback");
+    const iconContainer = document.getElementById("roll-item-icon-container");
     const dropItem = allItems.find(i => i.id === rollState.itemId);
+    
+    // Применяем класс качества к контейнеру иконки
+    if (iconContainer) {
+      iconContainer.className = 'roll-modal-item-icon';
+      if (rollState.itemQuality) {
+        iconContainer.classList.add(`quality-${rollState.itemQuality}`);
+      }
+    }
+    
     if (dropItem?.image) {
       setItemImage(imgEl, dropItem.image);
       imgEl.style.display = 'block';
+      imgEl.style.position = 'relative';
+      imgEl.style.zIndex = '1';
       fallEl.style.display = 'none';
     } else {
       imgEl.style.display = 'none';
