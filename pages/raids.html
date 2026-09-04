@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Рейды — TL Loot</title>
   <link rel="stylesheet" href="../css/main.css" />
-  <link rel="stylesheet" href="../css/raid-chat.css" />
   <style>
     :root {
       --epic: #a855f7;
@@ -1185,7 +1184,6 @@
   import { getItems } from "../js/modules/items.js";
   import { setItemImage } from "../js/modules/images.js";
   import { SLOTS, WEAPONS } from "../js/constants.js";
-  import { createRaidChat } from '../js/modules/raid-chat/raid-chat.js';
   
   import { 
     collection, 
@@ -1258,30 +1256,6 @@
 
   let rollHasResults = false;
 
-  let raidChat = null;
-
-function initRaidChat(raidId) {
-  if (raidChat) {
-    raidChat.destroy();
-  }
-  
-  raidChat = createRaidChat({
-    raidId: raidId || 'general',
-    container: document.body,
-    currentUser: currentUser,
-    currentRole: currentRole
-  });
-  
-  raidChat.open();
-  window.raidChat = raidChat;
-}
-
-function sendLootEvent(eventType, eventData = {}) {
-  if (raidChat && activeRaid) {
-    raidChat.addSystemEvent(eventType, eventData);
-  }
-}
-  
   let rollState = {
     dropId: null,
     raidId: null,
@@ -2084,19 +2058,8 @@ function sendLootEvent(eventType, eventData = {}) {
     }
   }
 
-async function selectRaid(raid) {
+  async function selectRaid(raid) {
     activeRaid = raid;
-    
-    // Инициализируем чат для этого рейда
-    if (raid && !raid.deleted) {
-      initRaidChat(raid.id);
-    } else {
-      if (raidChat) {
-        raidChat.destroy();
-        raidChat = null;
-      }
-    }
-    
     renderRaidList();
 
     const detail = document.getElementById("raid-detail");
@@ -3073,17 +3036,11 @@ async function selectRaid(raid) {
     });
   });
 
-document.getElementById("btn-start-roll").addEventListener("click", async () => {
+  document.getElementById("btn-start-roll").addEventListener("click", async () => {
     const active = rollState.participants.filter(p => !p.isBlocked);
     if (active.length < 2) { showToast("Нужно минимум 2 участника", "error"); return; }
     if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
 
-    // Отправляем событие в чат
-    sendLootEvent('loot_start', {
-      item: rollState.itemName,
-      participants: active.length
-    });
-    
     const finalRolls = rollState.participants.map(p => ({
       ...p,
       roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1
@@ -3139,12 +3096,7 @@ document.getElementById("btn-start-roll").addEventListener("click", async () => 
       rollHasResults = false;
 
       showToast(`${rollState.winner.nickname} получает предмет!`);
-       // Отправляем событие о победителе в чат
-      sendLootEvent('loot_winner', {
-        winner: rollState.winner.nickname,
-        roll: rollState.winner.roll,
-        item: rollState.itemName
-      });
+      
       if (btn) btn.style.display = 'none';
 
       allRaids = await getRaids();
@@ -3329,16 +3281,6 @@ document.getElementById("btn-start-roll").addEventListener("click", async () => 
     }
   }
 
-  const originalInit = init;
-  init = async function() {
-    await originalInit();
-    
-    // Инициализируем чат после загрузки данных
-    if (activeRaid && !activeRaid.deleted) {
-      initRaidChat(activeRaid.id);
-    }
-  };
-  
   init();
 </script>
 </body>
