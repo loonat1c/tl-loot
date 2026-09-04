@@ -30,8 +30,9 @@ export function compressImage(file) {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Конвертируем в base64 jpeg
-      const base64 = canvas.toDataURL("image/jpeg", QUALITY);
+// Сохраняем PNG с прозрачностью, остальное — jpeg
+const format = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+const base64 = canvas.toDataURL(format, format === 'image/jpeg' ? QUALITY : undefined);
       resolve(base64);
     };
 
