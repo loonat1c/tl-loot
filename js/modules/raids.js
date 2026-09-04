@@ -25,15 +25,13 @@ import {
 export async function getRaids() {
   try {
     const raidsRef = collection(db, "raids");
-    const q = query(raidsRef, orderBy("date", "desc"));
+    const q = query(raidsRef, orderBy("deleted", "asc"), orderBy("date", "desc"));
     const snapshot = await getDocs(q);
     
-    // Просто возвращаем рейды без подсчета дропов
-    // Подсчет дропов будет происходить при выборе конкретного рейда
     return snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data(),
-      drop_count: docSnap.data().drop_count || 0, // Используем сохраненное значение или 0
+      drop_count: docSnap.data().drop_count || 0,
     }));
   } catch (e) {
     console.error("Ошибка получения рейдов:", e);
@@ -52,7 +50,7 @@ export async function createRaid(data) {
       ...data,
       status: "open",
       deleted: false,
-      drop_count: 0, // Инициализируем счетчик дропов
+      drop_count: 0,
       created_at: serverTimestamp(),
       updated_at: serverTimestamp(),
     });
@@ -83,7 +81,7 @@ export async function updateRaid(raidId, data) {
 }
 
 // ====================================================
-// МЯГКОЕ УДАЛЕНИЕ РЕЙДА
+// МЯГКОЕ УДАЛЕНИЕ РЕЙДА (ФИКС 1: помечаем loot_history)
 // ====================================================
 
 export async function softDeleteRaid(raidId) {
@@ -93,6 +91,18 @@ export async function softDeleteRaid(raidId) {
       deleted: true,
       deleted_at: serverTimestamp(),
     });
+
+    // Помечаем записи истории как удалённые
+    const historyRef = collection(db, "loot_history");
+    const q = query(historyRef, where("raid_id", "==", raidId));
+    const snap = await getDocs(q);
+    
+    if (snap.docs.length > 0) {
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => batch.update(d.ref, { raid_deleted: true }));
+      await batch.commit();
+    }
+
     return true;
   } catch (e) {
     console.error("Ошибка удаления рейда:", e);
@@ -101,7 +111,7 @@ export async function softDeleteRaid(raidId) {
 }
 
 // ====================================================
-// ВОССТАНОВЛЕНИЕ РЕЙДА
+// ВОССТАНОВЛЕНИЕ РЕЙДА (ФИКС 2: восстанавливаем loot_history)
 // ====================================================
 
 export async function restoreRaid(raidId) {
@@ -111,6 +121,18 @@ export async function restoreRaid(raidId) {
       deleted: false,
       deleted_at: null,
     });
+
+    // Восстанавливаем записи истории
+    const historyRef = collection(db, "loot_history");
+    const q = query(historyRef, where("raid_id", "==", raidId));
+    const snap = await getDocs(q);
+    
+    if (snap.docs.length > 0) {
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => batch.update(d.ref, { raid_deleted: false }));
+      await batch.commit();
+    }
+
     return true;
   } catch (e) {
     console.error("Ошибка восстановления рейда:", e);
@@ -119,12 +141,23 @@ export async function restoreRaid(raidId) {
 }
 
 // ====================================================
-// ПОЛНОЕ УДАЛЕНИЕ РЕЙДА
+// ПОЛНОЕ УДАЛЕНИЕ РЕЙДА (ФИКС 3: удаляем loot_history)
 // ====================================================
 
 export async function hardDeleteRaid(raidId) {
   try {
-    // Удаляем все траи и дропы
+    // 1. Удаляем записи истории лута
+    const historyRef = collection(db, "loot_history");
+    const hq = query(historyRef, where("raid_id", "==", raidId));
+    const hSnap = await getDocs(hq);
+    
+    if (hSnap.docs.length > 0) {
+      const hBatch = writeBatch(db);
+      hSnap.docs.forEach(d => hBatch.delete(d.ref));
+      await hBatch.commit();
+    }
+
+    // 2. Удаляем все траи и дропы
     const triesRef = collection(db, "raids", raidId, "tries");
     const triesSnap = await getDocs(triesRef);
     
@@ -139,7 +172,7 @@ export async function hardDeleteRaid(raidId) {
       await deleteDoc(tryDoc.ref);
     }
     
-    // Удаляем сам рейд
+    // 3. Удаляем сам рейд
     const raidRef = doc(db, "raids", raidId);
     await deleteDoc(raidRef);
     
@@ -253,7 +286,6 @@ export async function addDrop(raidId, tryId, data) {
       created_at: serverTimestamp(),
     });
     
-    // Обновляем счетчик дропов в рейде
     await updateRaidDropCount(raidId);
     
     return docRef.id;
@@ -272,7 +304,6 @@ export async function deleteDrop(raidId, tryId, dropId) {
     const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
     await deleteDoc(dropRef);
     
-    // Обновляем счетчик дропов в рейде
     await updateRaidDropCount(raidId);
     
     return true;
