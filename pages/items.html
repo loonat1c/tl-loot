@@ -191,6 +191,7 @@
       border-radius: 7px;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       pointer-events: none;
+      z-index: 2;
     }
 
     /* ── Фон под картинкой (только плашка 72×72) ── */
@@ -389,19 +390,48 @@
     .fc-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: flex-start; }
 
     .fc-img {
-      width: 72px; height: 72px; border-radius: 8px;
-      object-fit: cover; background: #1a0a2e;
-      flex-shrink: 0; border: 1px solid var(--gold-border);
+      width: 72px; 
+      height: 72px; 
+      border-radius: 8px;
+      object-fit: cover; 
+      background: #1a0a2e;
+      flex-shrink: 0; 
+      border: 1px solid var(--gold-border);
+      position: relative;
+      overflow: hidden;
     }
 
+    /* Для Epic в тултипе */
     .item-card.quality-epic .fc-img {
       background: #1a0a2e;
       border-color: rgba(168, 85, 247, 0.3);
     }
 
+    /* Для Epic II в тултипе - с анимацией */
     .item-card.quality-epic_ii .fc-img {
       background: #1a0a2e;
       border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    .item-card.quality-epic_ii .fc-img::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .item-card.quality-epic_ii .fc-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 7px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      pointer-events: none;
+      z-index: 2;
     }
 
     .fc-title { flex: 1; min-width: 0; }
@@ -1069,7 +1099,7 @@
       <!-- ТУЛТИП -->
       <div class="full-card">
         <div class="fc-header">
-          <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" />
+          <img class="fc-img" src="${item.image || ''}" alt="${item.name||''}" onerror="this.style.display='none'" style="position: relative; z-index: 1;" />
           <div class="fc-title">
             <div class="fc-name">${item.name || 'Без названия'}</div>
             <div class="fc-meta">
