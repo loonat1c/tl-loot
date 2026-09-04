@@ -1256,6 +1256,7 @@
 
   let rollHasResults = false;
   let availablePlayersLoaded = false;
+  let joinRollInProgress = false;
 
   let rollState = {
     dropId: null,
@@ -1277,10 +1278,6 @@
     hasPendingWinner: false,
     animationTimer: null,
   };
-
-  // ============================================================
-  // ПАТЧ: кэш побед для модалки ролла
-  // ============================================================
 
   let playerWinsCache = new Map();
   let playerWinsInRaidCache = new Map();
@@ -1561,7 +1558,6 @@
 
   async function isSlotLocked(playerId, itemSlot, itemId) {
     const wins = await getPlayerWinsCached(playerId);
-     console.log('isSlotLocked | playerId:', playerId, '| wins:', JSON.stringify(wins)); // добавить
     const char = allCharacters.find(c => c.id === playerId);
     
     if (!char) return { locked: false, reason: '' };
@@ -1651,23 +1647,20 @@
     return { locked: false, reason: '' };
   }
 
-async function canJoinMainQueue(charId) {
+  async function canJoinMainQueue(charId) {
     const char = allCharacters.find(c => c.id === charId);
-    console.log('char:', char);
     if (!char) return { can: false, reason: 'Персонаж не найден' };
     if (char.status !== 'approved' && !char.approved) return { can: false, reason: 'Персонаж не подтверждён' };
     if (!attendedPlayerIds.includes(charId)) return { can: false, reason: 'Не участвовал в этом трае' };
 
     const itemSlot = rollState.itemSlot;
     const itemId   = rollState.itemId;
-    console.log('itemSlot:', itemSlot, 'itemId:', itemId);
 
     if (!itemSlot || !itemId) {
       return { can: false, reason: 'Данные предмета не загружены' };
     }
 
-    const winsInRaid = await getPlayerWinsInCurrentRaid(charId);
-    console.log('winsInRaid:', winsInRaid);
+    const winsInRaid = await getPlayerWinsInCurrentRaidCached(charId);
     if (winsInRaid.length > 0) {
       const lastWin = winsInRaid[0];
       const item = allItems.find(i => i.id === lastWin.item_id);
@@ -1680,13 +1673,11 @@ async function canJoinMainQueue(charId) {
     }
 
     const slotLock = await isSlotLocked(charId, itemSlot, itemId);
-    console.log('slotLock:', slotLock);
     if (slotLock.locked) {
       return { can: false, reason: slotLock.reason };
     }
 
     const desired = char.desired_loot || {};
-    console.log('desired:', desired, 'itemSlot:', itemSlot, 'itemId:', itemId);
     
     if (itemSlot === 'weapon') {
       const wantedInWeapon1 = desired.weapon1 === itemId;
@@ -2546,6 +2537,7 @@ async function canJoinMainQueue(charId) {
     
     rollHasResults = false;
     availablePlayersLoaded = false;
+    joinRollInProgress = false;
     
     const tries = await getRaidTries(raidId);
     const currentTry = tries.find(t => t.id === tryId);
@@ -2867,14 +2859,16 @@ async function canJoinMainQueue(charId) {
       return;
     }
 
+    const showWinner = rollState.isFinished && !rollState.isRolling;
+
     const sorted = [...active].sort((a, b) => {
-      if (rollState.winner?.playerId === a.playerId) return -1;
-      if (rollState.winner?.playerId === b.playerId) return 1;
+      if (showWinner && rollState.winner?.playerId === a.playerId) return -1;
+      if (showWinner && rollState.winner?.playerId === b.playerId) return 1;
       return (b.roll || 0) - (a.roll || 0);
     });
 
     sorted.forEach(p => {
-      const isWinner  = rollState.winner?.playerId === p.playerId;
+      const isWinner  = showWinner && rollState.winner?.playerId === p.playerId;
       const isMe      = p.playerId === rollState.currentPlayerId;
       const hasRoll   = p.roll !== null && p.roll !== undefined;
 
@@ -3064,14 +3058,18 @@ async function canJoinMainQueue(charId) {
 
   window.joinRoll = async (playerId, nickname) => {
     if (rollState.isRolling || rollState.isFinished) return;
+    if (joinRollInProgress) return;
+    joinRollInProgress = true;
     
     if (playerId !== rollState.currentPlayerId && !canStartRoll()) {
       showToast('Вы можете добавить только себя', 'error');
+      joinRollInProgress = false;
       return;
     }
     
     if (rollState.participants.some(p => p.playerId === playerId)) {
       showToast('Этот игрок уже в ролле', 'error');
+      joinRollInProgress = false;
       return;
     }
 
@@ -3079,7 +3077,8 @@ async function canJoinMainQueue(charId) {
 
     const check = await canJoinCurrentQueue(playerId);
     if (!check.can) { 
-      showToast(check.reason, 'error'); 
+      showToast(check.reason, 'error');
+      joinRollInProgress = false;
       return; 
     }
 
@@ -3093,7 +3092,11 @@ async function canJoinMainQueue(charId) {
       userId: char?.user_id || null
     });
     
-    await saveParticipants();
+    try {
+      await saveParticipants();
+    } finally {
+      joinRollInProgress = false;
+    }
     availablePlayersLoaded = false;
     renderAvailableVersion++;
     updateRollUI();
@@ -3287,6 +3290,7 @@ async function canJoinMainQueue(charId) {
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     rollState.isRolling = false;
     rollHasResults = false;
+    joinRollInProgress = false;
     invalidateWinsCache();
     closeDialog();
   }
