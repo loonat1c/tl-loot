@@ -760,6 +760,19 @@
   }
 
   // ============================================================
+  // POPULATE BOSS SELECT (ЗАПОЛНЕНИЕ ВЫПАДАЮЩЕГО СПИСКА БОССОВ)
+  // ============================================================
+  function populateBossSelect() {
+    const sel = document.getElementById("try-boss-select");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— без босса —</option>`;
+    allBosses.forEach(b => {
+      const icon = b.icon ? `<img src="/assets/img/bosses/${b.icon}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px;" />` : '';
+      sel.innerHTML += `<option value="${b.id}">${icon} ${b.name}</option>`;
+    });
+  }
+
+  // ============================================================
   // РЕНДЕР СПИСКА РЕЙДОВ
   // ============================================================
   function renderRaidList() {
