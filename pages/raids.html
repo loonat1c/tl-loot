@@ -1220,8 +1220,9 @@
     modal.classList.remove('open');
     modal.classList.add('hidden');
     if (dialogResolve) {
-      dialogResolve(false);
+      const resolve = dialogResolve;
       dialogResolve = null;
+      resolve(false);
     }
   }
 
@@ -1592,27 +1593,24 @@
                 reason: `Уже выиграл оружие типа «${weaponTypeLabel}» в другом рейде` 
             };
         }
-        
-        const charWeapons = char.weapons || [];
-        const weaponWins = wins.filter(w => {
+
+        const allWeaponWins = wins.filter(w => {
             const winItem = allItems.find(i => i.id === w.item_id);
-            if (!winItem || winItem.slot !== 'weapon') return false;
-            const wType = winItem.weapon_type || getWeaponType(w.item_id);
-            return charWeapons.includes(wType);
+            return winItem?.slot === 'weapon';
         });
-        
+
         const wonWeaponTypes = new Set();
-        weaponWins.forEach(w => {
+        allWeaponWins.forEach(w => {
             const winItem = allItems.find(i => i.id === w.item_id);
             const wType = winItem?.weapon_type || getWeaponType(w.item_id);
             if (wType) wonWeaponTypes.add(wType);
         });
-        
+
         if (wonWeaponTypes.size >= 2) {
             const wonLabels = Array.from(wonWeaponTypes).map(t => getWeaponTypeLabel(t));
             return { 
                 locked: true, 
-                reason: `Уже выиграл 2 оружия из своего спека (${wonLabels.join(', ')})` 
+                reason: `Уже выиграл 2 оружия (${wonLabels.join(', ')})` 
             };
         }
     }
@@ -1631,18 +1629,23 @@
         }
     }
     
-    const slotWins = wins.filter(w => {
-        const winItem = allItems.find(i => i.id === w.item_id);
-        return winItem?.slot === itemSlot;
-    });
-    
-    if (slotWins.length > 0) {
-        const slotLabel = getSlotLabel(itemSlot);
-        return { 
-            locked: true, 
-            reason: `Уже выиграл предмет в слоте «${slotLabel}» в другом рейде` 
-        };
+        if (itemSlot !== 'weapon' && itemSlot !== 'ring') {
+        const slotWins = wins.filter(w => {
+            const winItem = allItems.find(i => i.id === w.item_id);
+            return winItem?.slot === itemSlot;
+        });
+        
+        if (slotWins.length > 0) {
+            const slotLabel = getSlotLabel(itemSlot);
+            return { 
+                locked: true, 
+                reason: `Уже выиграл предмет в слоте «${slotLabel}» в другом рейде` 
+            };
+        }
     }
+    
+    return { locked: false, reason: '' };
+  }
     
     return { locked: false, reason: '' };
   }
@@ -1766,7 +1769,15 @@
 
   function renderRaidList() {
     const container = document.getElementById("raids-list");
-    const visible = allRaids.filter(r => showDeleted ? r.deleted : !r.deleted);
+    const visible = allRaids
+      .filter(r => showDeleted ? r.deleted : !r.deleted)
+      .sort((a, b) => {
+        const order = { open: 0, rolling: 0, closed: 1 };
+        const ao = order[a.status ?? 'open'] ?? 0;
+        const bo = order[b.status ?? 'open'] ?? 0;
+        if (ao !== bo) return ao - bo;
+        return (b.date || '').localeCompare(a.date || '');
+      });
 
     if (!visible.length) {
       container.innerHTML = `<div class="text-muted">Рейдов нет</div>`;
@@ -1853,7 +1864,7 @@
           </span>
         </div>
         <div class="try-actions">
-          ${canEdit ? `
+          ${canEdit && canStartRoll() ? `
             <button class="btn btn-ghost btn-sm" onclick="openAttendanceModalForTry('${raidId}','${t.id}')">Участники</button>
             <button class="btn btn-primary btn-sm" onclick="openDropModal('${raidId}','${t.id}','${t.boss_id||""}')">+ Дроп</button>
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteTry('${raidId}','${t.id}')">Удалить</button>
@@ -2773,6 +2784,7 @@
         const isMe = p.playerId === rollState.currentPlayerId;
         const row  = document.createElement('div');
         row.className = 'roll-player-row joined-row';
+        row.dataset.playerId = p.playerId;
         row.innerHTML = `
           <span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span>
           <span class="roll-player-status">В ролле</span>
@@ -2781,8 +2793,9 @@
         list.appendChild(row);
       });
     } else {
-      rows.forEach((row, index) => {
-        const p = activeParticipants[index];
+      rows.forEach((row) => {
+        const pid = row.dataset.playerId;
+        const p = activeParticipants.find(p => p.playerId === pid);
         if (p) {
           const diceElement = row.querySelector('.roll-dice-result');
           if (diceElement) {
@@ -3408,6 +3421,31 @@
         const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
         if (player) {
           rollState.currentPlayerId = player.id;
+        }
+
+        if (!isAdmin() && !isGuildLeader() && currentRole !== 'moderator') {
+          const hasApprovedChar = allCharacters.some(
+            p => p.user_id === rollState.currentUserId && 
+                 (p.status === 'approved' || p.approved === true)
+          );
+
+          if (!hasApprovedChar) {
+            if (raidUnsubscribe) { raidUnsubscribe(); raidUnsubscribe = null; }
+            document.querySelector('main').innerHTML = `
+              <div class="empty-raid" style="margin-top:3rem">
+                <div style="font-size:2.5rem">🔒</div>
+                <div style="font-size:1.1rem;font-weight:600;margin-top:0.5rem">Доступ закрыт</div>
+                <div class="text-muted mt-1" style="font-size:0.9rem;max-width:360px;margin:0.5rem auto 0">
+                  Страница доступна только участникам гильдии.<br>
+                  Дождитесь подтверждения вашего персонажа администратором.
+                </div>
+                <a href="/pages/profile.html" class="btn btn-primary btn-sm" style="margin-top:1.25rem">
+                  Мой профиль
+                </a>
+              </div>
+            `;
+            return;
+          }
         }
       }
       
