@@ -3376,7 +3376,7 @@
     finally { btn.disabled = false; btn.textContent = "Закрыть рейд"; }
   });
 
- async function init() {
+  async function init() {
     try {
       [allRaids, allCharacters, allBosses, allItems] = await Promise.all([
         getRaids(), 
@@ -3386,6 +3386,43 @@
       ]);
       
       await loadLockSettings();
+      
+      // Проверка доступа ДО отображения контента
+      rollState.currentUserId = currentUser?.uid || null;
+      
+      if (rollState.currentUserId) {
+        const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
+        if (player) {
+          rollState.currentPlayerId = player.id;
+        }
+
+        if (!isAdmin() && !isGuildLeader() && currentRole !== 'moderator') {
+          const hasApprovedChar = allCharacters.some(
+            p => p.user_id === rollState.currentUserId && 
+                 (p.status === 'approved' || p.approved === true)
+          );
+
+          if (!hasApprovedChar) {
+            const mainEl = document.querySelector('main');
+            if (mainEl) {
+              mainEl.innerHTML = `
+                <div class="empty-raid" style="margin-top:3rem">
+                  <div style="font-size:2.5rem">🔒</div>
+                  <div style="font-size:1.1rem;font-weight:600;margin-top:0.5rem">Доступ закрыт</div>
+                  <div class="text-muted mt-1" style="font-size:0.9rem;max-width:360px;margin:0.5rem auto 0">
+                    Страница доступна только участникам гильдии.<br>
+                    Дождитесь подтверждения вашего персонажа администратором.
+                  </div>
+                  <a href="/pages/profile.html" class="btn btn-primary btn-sm" style="margin-top:1.25rem">
+                    Мой профиль
+                  </a>
+                </div>
+              `;
+            }
+            return;
+          }
+        }
+      }
       
       populateBossSelect();
       renderRaidList();
@@ -3415,51 +3452,13 @@
         }
       }
       
-      rollState.currentUserId = currentUser?.uid || null;
-      
-      if (rollState.currentUserId) {
-        const player = allCharacters.find(p => p.user_id === rollState.currentUserId);
-        if (player) {
-          rollState.currentPlayerId = player.id;
-        }
-
-        // Проверка доступа
-        if (!isAdmin() && !isGuildLeader() && currentRole !== 'moderator') {
-          const hasApprovedChar = allCharacters.some(
-            p => p.user_id === rollState.currentUserId && 
-                 (p.status === 'approved' || p.approved === true)
-          );
-
-          if (!hasApprovedChar) {
-            if (raidUnsubscribe) { raidUnsubscribe(); raidUnsubscribe = null; }
-            const mainEl = document.querySelector('main');
-            if (mainEl) {
-              mainEl.innerHTML = `
-                <div class="empty-raid" style="margin-top:3rem">
-                  <div style="font-size:2.5rem">🔒</div>
-                  <div style="font-size:1.1rem;font-weight:600;margin-top:0.5rem">Доступ закрыт</div>
-                  <div class="text-muted mt-1" style="font-size:0.9rem;max-width:360px;margin:0.5rem auto 0">
-                    Страница доступна только участникам гильдии.<br>
-                    Дождитесь подтверждения вашего персонажа администратором.
-                  </div>
-                  <a href="/pages/profile.html" class="btn btn-primary btn-sm" style="margin-top:1.25rem">
-                    Мой профиль
-                  </a>
-                </div>
-              `;
-            }
-            return; // Этот return теперь внутри async function init()
-          }
-        }
-      }
-      
     } catch (e) {
       console.error('Ошибка инициализации:', e);
       showToast('Ошибка загрузки данных', 'error');
     }
-}
+  }
 
-init();
+  init();
 </script>
 </body>
 </html>
