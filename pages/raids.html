@@ -640,7 +640,24 @@
   function getWeaponTypeLabel(t) { const map = { staff: 'Посох', bow: 'Лук', greatsword: 'Двуручный меч', sword_shield: 'Щит и меч', wand: 'Жезл', spear: 'Копьё', crossbow: 'Арбалеты', daggers: 'Кинжалы' }; return map[t] || t; }
   function getSlotLabel(s) { const map = { weapon: 'Оружие', head: 'Шлем', chest: 'Нагрудник', legs: 'Поножи', feet: 'Сапоги', hands: 'Перчатки', neck: 'Ожерелье', ring: 'Кольцо', belt: 'Пояс', cloak: 'Плащ', bracelet: 'Браслет' }; return map[s] || s; }
   async function loadLockSettings() { try { const snap = await getDoc(doc(db, 'settings', 'locks')); if (snap.exists()) lockSettings = snap.data(); } catch (e) {} }
+  function shootConfetti() {
+  const colors = ['#a855f7', '#8b5cf6', '#c9a84c', '#22c55e', '#f59e0b', '#ec4899'];
+  const count = 120;
+  const defaults = { startVelocity: 35, spread: 55, ticks: 80, zIndex: 9999, colors };
 
+  function fire(x, angle, spread) {
+    confetti({ ...defaults, particleCount: count / 3, origin: { x, y: 1 }, angle, spread });
+  }
+
+  fire(0,   60, 70);
+  fire(1,  120, 70);
+  fire(0.5, 90, 120);
+
+  setTimeout(() => {
+    fire(0,   55, 60);
+    fire(1,  125, 60);
+  }, 300);
+}
   // ============================================================
   // ПРОВЕРКИ ДОСТУПА
   // ============================================================
@@ -1449,12 +1466,15 @@ function startLocalRollAnimation() {
     });
   }
 
-  function finishRoll() {
-    rollState.isRolling = false; rollState.isFinished = true;
-    rollState.hasPendingWinner = true; rollHasResults = true;
-    updateRollUI();
-    if (rollState.winner) showToast(`${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
+function finishRoll() {
+  rollState.isRolling = false; rollState.isFinished = true;
+  rollState.hasPendingWinner = true; rollHasResults = true;
+  updateRollUI();
+  if (rollState.winner) {
+    showToast(`${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
+    shootConfetti();
   }
+}
 
   let updateUITimeout = null;
   function updateRollUI() {
@@ -1832,5 +1852,6 @@ function startLocalRollAnimation() {
 
   init();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </body>
 </html>
