@@ -964,7 +964,6 @@
     showToast('Рейд открыт');
     allRaids = await getRaids();
     activeRaid = allRaids.find(r => r.id === activeRaid.id);
-    renderRaidList();
     selectRaid(activeRaid);
   }
 
@@ -1013,9 +1012,12 @@
 
   async function selectRaid(raid) {
     if (raid.deleted && !isAdmin()) return;
+    const isSameRaid = activeRaid?.id === raid.id;
     activeRaid = raid;
     renderRaidList();
-    document.getElementById('raid-detail').innerHTML = '<div class="text-muted">Загрузка...</div>';
+    if (!isSameRaid) {
+      document.getElementById('raid-detail').innerHTML = '<div class="text-muted">Загрузка...</div>';
+    }
     if (raidUnsubscribe) { raidUnsubscribe(); raidUnsubscribe = null; }
     raidUnsubscribe = onSnapshot(doc(db, 'raids', raid.id), async (snap) => {
       if (!snap.exists()) { raidUnsubscribe?.(); raidUnsubscribe = null; return; }
@@ -1382,9 +1384,12 @@
     if (rollState.isRolling) return;
     rollState.isRolling = true; rollHasResults = true;
     updateRollUI();
-    const totalDuration = 12000, tickRate = 90, startTime = Date.now();
+    const totalDuration = 12000, minTickRate = 130, maxTickRate = 550, startTime = Date.now();
     function tick() {
       const progress = Math.min((Date.now() - startTime) / totalDuration, 1);
+      // ease-out: тики стартуют быстро и заметно замедляются к концу — для драматизма
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const tickRate = minTickRate + eased * (maxTickRate - minTickRate);
       rollState.participants.forEach(p => { if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1; });
       renderRollParticipantsAnimating();
       if (progress < 1) {
@@ -1727,7 +1732,6 @@
       allRaids = await getRaids();
       allCharacters = await loadCharacters();
       activeRaid = allRaids.find(r => r.id === activeRaid.id);
-      renderRaidList();
       selectRaid(activeRaid);
       showToast('Рейд закрыт');
     } catch (e) { showToast('Ошибка: ' + e.message, 'error'); }
