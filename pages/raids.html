@@ -1305,6 +1305,7 @@ async function confirmDeleteDrop(raidId, tryId, dropId, name) {
         rollState.itemId = data.item_id || null;
         rollState.itemQuality = data.item_quality || itemQualityRaw || null;
         if (data.item_slot) rollState.itemSlot = data.item_slot;
+        if (data.active_queue) rollState.queue = data.active_queue;
         if (data.participants?.length) {
           rollState.participants = data.participants.map(p => ({
             playerId: p.playerId, nickname: p.nickname,
@@ -1365,8 +1366,13 @@ async function confirmDeleteDrop(raidId, tryId, dropId, name) {
     rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
       if (!snap.exists()) return;
       if (isFirst) { isFirst = false; return; }
-      const data = snap.data();
-      if (data.participants?.length !== rollState.participants.length) availablePlayersLoaded = false;
+const data = snap.data();
+if (data.active_queue && data.active_queue !== rollState.queue) {
+  rollState.queue = data.active_queue;
+  document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.toggle('active', b.dataset.queue === rollState.queue));
+  availablePlayersLoaded = false;
+}
+if (data.participants?.length !== rollState.participants.length) availablePlayersLoaded = false;
       if (data.participants?.length) {
         rollState.participants = data.participants.map(p => ({
           playerId: p.playerId, nickname: p.nickname,
@@ -1597,9 +1603,13 @@ function finishRoll() {
     document.getElementById('btn-join-roll').disabled = isParticipant || !canAct;
     document.getElementById('btn-leave-roll').disabled = !isParticipant || !canAct;
     const startBtn = document.getElementById('btn-start-roll');
-    const canStart = rollState.participants.filter(p => !p.isBlocked).length >= 2 && canAct && canStartRoll();
-    startBtn.disabled = !canStart;
-    startBtn.style.display = rollState.isFinished ? 'none' : 'flex';
+const activeCount = rollState.participants.filter(p => !p.isBlocked).length;
+const canStart = activeCount >= 1 && canAct && canStartRoll();
+startBtn.disabled = !canStart;
+startBtn.style.display = rollState.isFinished ? 'none' : 'flex';
+startBtn.innerHTML = activeCount === 1
+  ? '<i class="ti ti-check"></i> Присудить победу'
+  : '<i class="ti ti-dice"></i> Запустить ролл';
     const confirmBtn = document.getElementById('btn-confirm-roll');
     confirmBtn.style.display = (rollState.isFinished && rollState.winner && canStartRoll() && rollState.hasPendingWinner) ? 'flex' : 'none';
     document.querySelectorAll('.roll-queue-tab').forEach(b => b.disabled = rollState.isRolling || rollState.isFinished);
@@ -1655,34 +1665,68 @@ function finishRoll() {
     }
   }
 
-  document.querySelectorAll('.roll-queue-tab').forEach(btn => {
-    btn.addEventListener('click', function () {
-      if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
-      document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      rollState.queue = this.dataset.queue;
-      rollState.participants = [];
-      availablePlayersLoaded = false;
-      saveParticipants();
-      updateRollUI();
-      showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
-    });
+document.querySelectorAll('.roll-queue-tab').forEach(btn => {
+  btn.addEventListener('click', async function () {
+    if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
+    document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    rollState.queue = this.dataset.queue;
+    rollState.participants = [];
+    availablePlayersLoaded = false;
+    try {
+      await firestoreUpdate(doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId), {
+        active_queue: rollState.queue,
+        participants: [],
+      });
+    } catch (e) {
+      showToast(e.code === 'permission-denied' ? 'Недостаточно прав' : 'Ошибка: ' + e.message, 'error');
+    }
+    updateRollUI();
+    showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
   });
+});
 
-  document.getElementById('btn-start-roll').addEventListener('click', async () => {
-    const active = rollState.participants.filter(p => !p.isBlocked);
-    if (active.length < 2 || rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
-    const finalRolls = rollState.participants.map(p => ({ ...p, roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1 }));
-    const active2 = finalRolls.filter(p => !p.isBlocked);
-    const maxRoll = Math.max(...active2.map(p => p.roll));
-    const winner = active2.find(p => p.roll === maxRoll);
-    await firestoreUpdate(doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId), {
-      rolling: true,
-      roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
-      pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
-      participants: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
+function rollWithTiebreak(participants) {
+  let current = participants.map(p => ({ ...p, roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1 }));
+  let tiedGroup = [];
+  while (true) {
+    const active = current.filter(p => !p.isBlocked);
+    const maxRoll = Math.max(...active.map(p => p.roll));
+    const tied = active.filter(p => p.roll === maxRoll);
+    if (tied.length <= 1) return { finalRolls: current, winner: tied[0], hadTie: tiedGroup.length > 0, tiedGroup };
+    tiedGroup = tied.map(p => p.nickname);
+    const tiedIds = new Set(tied.map(p => p.playerId));
+    current = current.map(p => tiedIds.has(p.playerId) ? { ...p, roll: Math.floor(Math.random() * 100) + 1 } : p);
+  }
+}
+
+document.getElementById('btn-start-roll').addEventListener('click', async () => {
+  const active = rollState.participants.filter(p => !p.isBlocked);
+  if (active.length < 1 || rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
+  const dropRef = doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId);
+
+  // Один участник — победа сразу, без анимации ролла
+  if (active.length === 1) {
+    const onlyPlayer = active[0];
+    await firestoreUpdate(dropRef, {
+      rolling: false, // важно: false, а не true — иначе запустится анимация у всех клиентов
+      roll_results: [{ playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 }],
+      pending_winner: { playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 },
+      participants: rollState.participants.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.playerId === onlyPlayer.playerId ? 100 : null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
     });
+    return;
+  }
+
+  // Несколько участников — обычный ролл с автоматическим переролом при ничьей
+  const { finalRolls, winner, hadTie, tiedGroup } = rollWithTiebreak(rollState.participants);
+  if (hadTie) showToast(`Ничья между ${tiedGroup.join(', ')} — переролл!`);
+  await firestoreUpdate(dropRef, {
+    rolling: true,
+    roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
+    pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
+    participants: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
   });
+});
 
   async function confirmRollWinner() {
     if (!rollState.winner || !canStartRoll()) return;
