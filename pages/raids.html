@@ -1229,15 +1229,18 @@
     finally { btn.disabled = false; btn.textContent = 'Добавить дроп'; }
   });
 
-  async function confirmDeleteDrop(raidId, tryId, dropId, name) {
-    const ok = await openDialog('Удалить дроп?', `Удалить «${name}»?`, 'Удалить', 'Отмена');
-    if (!ok) return;
-    await deleteDrop(raidId, tryId, dropId);
-    allRaids = await getRaids();
-    activeRaid = allRaids.find(r => r.id === raidId);
-    selectRaid(activeRaid);
-    showToast('Дроп удалён');
-  }
+async function confirmDeleteDrop(raidId, tryId, dropId, name) {
+  const ok = await openDialog('Удалить дроп?', `Удалить «${name}»?`, 'Удалить', 'Отмена');
+  if (!ok) return;
+  await deleteDrop(raidId, tryId, dropId);
+  showToast('Дроп удалён');
+  // onSnapshot на рейд сам подхватит изменение drop_count и перерисует
+  // renderRaidDetail — не трогаем selectRaid, не пересоздаём подписку
+  allRaids = await getRaids();
+  activeRaid = allRaids.find(r => r.id === raidId) ?? activeRaid;
+  await renderRaidDetail(activeRaid);
+  renderRaidList();
+}
   window.confirmDeleteDrop = confirmDeleteDrop;
 
   // ============================================================
@@ -1380,33 +1383,54 @@
     });
   };
 
-  function startLocalRollAnimation() {
-    if (rollState.isRolling) return;
-    rollState.isRolling = true; rollHasResults = true;
-    updateRollUI();
-    const totalDuration = 12000, minTickRate = 130, maxTickRate = 550, startTime = Date.now();
-    function tick() {
-      const progress = Math.min((Date.now() - startTime) / totalDuration, 1);
-      // ease-out: тики стартуют быстро и заметно замедляются к концу — для драматизма
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const tickRate = minTickRate + eased * (maxTickRate - minTickRate);
-      rollState.participants.forEach(p => { if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1; });
-      renderRollParticipantsAnimating();
-      if (progress < 1) {
-        rollState.animationTimer = setTimeout(tick, tickRate);
+function startLocalRollAnimation() {
+  if (rollState.isRolling) return;
+  rollState.isRolling = true; rollHasResults = true;
+  updateRollUI();
+
+  const totalDuration = 10000;
+  const startTime = Date.now();
+
+  function tick() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / totalDuration, 1);
+
+    rollState.participants.forEach(p => {
+      if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
+    });
+    renderRollParticipantsAnimating();
+
+    if (progress < 1) {
+      let delay;
+      if (progress < 0.3) {
+        // Фаза 1: быстрые хаотичные тики
+        delay = 50 + Math.random() * 60;
+      } else if (progress < 0.7) {
+        // Фаза 2: случайные рывки — иногда быстро, иногда пауза
+        delay = Math.random() < 0.2
+          ? 30 + Math.random() * 40     // редкий быстрый «рывок»
+          : 120 + Math.random() * 180;  // обычный тик
       } else {
-        if (rollState.rollResults) {
-          rollState.participants = rollState.participants.map(p => {
-            const final = rollState.rollResults.find(r => r.playerId === p.playerId);
-            return { ...p, roll: final?.roll ?? p.roll };
-          });
-        }
-        rollState.animationTimer = null;
-        finishRoll();
+        // Фаза 3: замедление с джиттером, не линейное
+        const slowdown = (progress - 0.7) / 0.3; // 0→1
+        const base = 280 + slowdown * 520;        // 280→800ms
+        delay = base + (Math.random() - 0.5) * base * 0.4; // ±20% шум
       }
+      rollState.animationTimer = setTimeout(tick, Math.max(30, delay));
+    } else {
+      // Финал
+      if (rollState.rollResults) {
+        rollState.participants = rollState.participants.map(p => {
+          const final = rollState.rollResults.find(r => r.playerId === p.playerId);
+          return { ...p, roll: final?.roll ?? p.roll };
+        });
+      }
+      rollState.animationTimer = null;
+      finishRoll();
     }
-    tick();
   }
+  tick();
+}
 
   function renderRollParticipantsAnimating() {
     const list = document.getElementById('roll-players-list');
