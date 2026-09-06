@@ -488,15 +488,28 @@
   let playerWinsCacheRaidId = null;
   let winsPreloadPromise = null;
   let preloadAbortId = 0;
+  let globalWinsIndex = null;
   let globalWinsIndexPromise = null;
 
-  function invalidateWinsCache() {
-    playerWinsCache.clear();
-    playerWinsInRaidCache.clear();
-    playerWinsCacheRaidId = null;
-    winsPreloadPromise = null;
-    preloadAbortId++;
-    globalWinsIndexPromise = null;
+  // Точечно добавляет новую победу во все актуальные кэши,
+  // вместо того чтобы сбрасывать всё и пересканировать историю заново.
+  function patchWinIntoCaches(win) {
+    if (globalWinsIndex) {
+      if (!globalWinsIndex.has(win.player_id)) globalWinsIndex.set(win.player_id, []);
+      globalWinsIndex.get(win.player_id).push({
+        raid_id: win.raid_id,
+        item_id: win.item_id,
+        item_name: win.item_name,
+        item_slot: win.item_slot,
+        won_at: win.won_at || null,
+      });
+    }
+    if (playerWinsCache.has(win.player_id)) {
+      playerWinsCache.get(win.player_id).push(win);
+    }
+    if (playerWinsCacheRaidId === win.raid_id && playerWinsInRaidCache.has(win.player_id)) {
+      playerWinsInRaidCache.get(win.player_id).push(win);
+    }
   }
 
   async function buildGlobalWinsIndex() {
@@ -523,7 +536,12 @@
   }
 
   function getGlobalWinsIndex() {
-    if (!globalWinsIndexPromise) globalWinsIndexPromise = buildGlobalWinsIndex();
+    if (!globalWinsIndexPromise) {
+      globalWinsIndexPromise = buildGlobalWinsIndex().then(index => {
+        globalWinsIndex = index;
+        return index;
+      });
+    }
     return globalWinsIndexPromise;
   }
 
@@ -1387,28 +1405,19 @@
 
   function renderRollParticipantsAnimating() {
     const list = document.getElementById('roll-players-list');
-    const rows = list.querySelectorAll('.roll-player-row');
     const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
-    if (rows.length !== activeParticipants.length) {
-      list.innerHTML = '';
-      activeParticipants.forEach(p => {
-        const isMe = p.playerId === rollState.currentPlayerId;
-        const row = document.createElement('div');
-        row.className = 'roll-player-row joined-row';
-        row.dataset.playerId = p.playerId;
-        row.innerHTML = `<span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">В ролле</span><span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>`;
-        list.appendChild(row);
-      });
-    } else {
-      rows.forEach(row => {
-        const pid = row.dataset.playerId;
-        const p = activeParticipants.find(p => p.playerId === pid);
-        if (p) {
-          const dice = row.querySelector('.roll-dice-result');
-          if (dice) dice.innerHTML = `<span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}`;
-        }
-      });
-    }
+    // Всегда полностью перерисовываем список во время анимации,
+    // не пытаясь сопоставлять со старыми DOM-строками — это и было
+    // причиной того, что "кубик" не крутился и сразу показывал итог.
+    list.innerHTML = '';
+    if (!activeParticipants.length) { list.innerHTML = '<div class="roll-empty-msg">Пока никто не присоединился</div>'; return; }
+    activeParticipants.forEach(p => {
+      const isMe = p.playerId === rollState.currentPlayerId;
+      const row = document.createElement('div');
+      row.className = 'roll-player-row joined-row';
+      row.innerHTML = `<span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">В ролле</span><span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>`;
+      list.appendChild(row);
+    });
   }
 
   function finishRoll() {
@@ -1438,6 +1447,9 @@
   }
 
   function renderRollParticipants() {
+    // Пока идёт ролл — используем анимационный рендер со случайными
+    // числами, а не реальные броски, чтобы не показывать победителя раньше времени.
+    if (rollState.isRolling) { renderRollParticipantsAnimating(); return; }
     const list = document.getElementById('roll-players-list');
     const count = document.getElementById('roll-players-count');
     const active = rollState.participants.filter(p => !p.isBlocked);
@@ -1629,7 +1641,14 @@
     btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
       await updateDropWinner(rollState.raidId, rollState.tryId, rollState.dropId, rollState.winner.playerId, rollState.winner.nickname, rollState.queue);
-      invalidateWinsCache();
+      patchWinIntoCaches({
+        player_id: rollState.winner.playerId,
+        raid_id: rollState.raidId,
+        item_id: rollState.itemId,
+        item_name: rollState.itemName,
+        item_slot: rollState.itemSlot,
+        won_at: new Date().toISOString(),
+      });
       await firestoreUpdate(doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId), {
         roll_results: rollState.rollResults, roll_type: rollState.queue,
         participants: rollState.participants.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll, isBlocked: p.isBlocked || false, userId: p.userId || null })),
@@ -1670,7 +1689,6 @@
     if (rollState.animationTimer) { clearTimeout(rollState.animationTimer); rollState.animationTimer = null; }
     if (rollUnsubscribe) { rollUnsubscribe(); rollUnsubscribe = null; }
     rollState.isRolling = false; rollHasResults = false; joinRollInProgress = false;
-    invalidateWinsCache();
     closeDialog();
   }
   window.closeRollModalForce = closeRollModalForce;
