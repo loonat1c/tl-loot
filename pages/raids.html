@@ -142,7 +142,7 @@
     .roll-section-label { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
     .roll-count-badge { font-size: 0.8rem; font-weight: 700; background: var(--accent-glow); color: var(--accent-soft); padding: 0.1rem 0.6rem; border-radius: 12px; min-width: 28px; text-align: center; }
     .roll-players-list { min-height: 70px; max-height: 250px; overflow-y: auto; margin: 0.5rem 1rem 0.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card2); }
-    .roll-player-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.6rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; transition: background 0.1s; }
+    .roll-player-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 0.6rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; transition: background 0.1s; }
     .roll-player-row:last-child { border-bottom: none; }
     .roll-player-row:hover { background: rgba(255,255,255,0.03); }
     .roll-player-row.winner-row { background: rgba(34,197,94,0.08); border-left: 3px solid #22c55e; }
@@ -177,6 +177,8 @@
     .roll-available-reason.blocked { color: var(--danger, #ef4444); }
     .btn-add-to-roll { padding: 0.3rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card2); color: var(--text); font-size: 0.8rem; cursor: pointer; white-space: nowrap; transition: all 0.1s; }
     .btn-add-to-roll:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
+    .btn-remove-from-roll { padding: 0.2rem 0.55rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card2); color: var(--danger, #ef4444); font-size: 0.8rem; cursor: pointer; transition: all 0.1s; }
+    .btn-remove-from-roll:hover { border-color: var(--danger, #ef4444); background: rgba(239,68,68,0.1); }
     .roll-footer { padding: 0.9rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.15); }
     .roll-footer-user-actions, .roll-footer-admin-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .btn-roll-join, .btn-roll-leave, .btn-roll-start, .btn-roll-confirm { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 1.1rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid; transition: all 0.15s; }
@@ -367,23 +369,13 @@
 </div>
 
 <script type="module">
-  // ============================================================
-  // ЗАЩИТА
-  // ============================================================
   document.addEventListener('contextmenu', function(e) {
-    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-      e.preventDefault(); return false;
-    }
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') { e.preventDefault(); return false; }
   });
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) {
-      e.preventDefault(); return false;
-    }
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) { e.preventDefault(); return false; }
   });
 
-  // ============================================================
-  // ИМПОРТЫ
-  // ============================================================
   import { initNavbar } from "../js/modules/navbar.js";
   import { initAuth, authReady, canWrite, isAdmin, currentUser, currentRole, isGuildLeader } from "../js/modules/auth.js";
   import { getRaids, createRaid, updateRaid, softDeleteRaid, restoreRaid, hardDeleteRaid, getRaidTries, addTry, deleteTry, getTryDrops, addDrop, deleteDrop, closeRaid, updateRaidStatus, updateDropWinner, updateTryAttendance } from "../js/modules/raids.js";
@@ -443,15 +435,10 @@
     const modal = document.getElementById('modal-dialog');
     modal.classList.remove('open');
     modal.classList.add('hidden');
-    if (dialogResolve) {
-      dialogResolve(true);
-      dialogResolve = null;
-    }
+    if (dialogResolve) { dialogResolve(true); dialogResolve = null; }
   });
   document.getElementById('dialog-cancel')?.addEventListener('click', closeDialog);
-  document.getElementById('modal-dialog')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeDialog();
-  });
+  document.getElementById('modal-dialog')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeDialog(); });
 
   // ============================================================
   // СОСТОЯНИЕ
@@ -491,8 +478,6 @@
   let globalWinsIndex = null;
   let globalWinsIndexPromise = null;
 
-  // Точечно добавляет новую победу во все актуальные кэши,
-  // вместо того чтобы сбрасывать всё и пересканировать историю заново.
   function patchWinIntoCaches(win) {
     if (globalWinsIndex) {
       if (!globalWinsIndex.has(win.player_id)) globalWinsIndex.set(win.player_id, []);
@@ -638,26 +623,27 @@
   function canEditRaid() { return isAdmin() || currentRole === 'guild_leader' || canWrite(); }
   function getWeaponType(itemId) { const item = allItems.find(i => i.id === itemId); if (!item) return null; if (item.weapon_type) return item.weapon_type; if (item.slot === 'weapon') { const w = WEAPONS.find(w => w.label && item.name?.toLowerCase().includes(w.label.toLowerCase())); return w?.id || null; } return null; }
   function getWeaponTypeLabel(t) { const map = { staff: 'Посох', bow: 'Лук', greatsword: 'Двуручный меч', sword_shield: 'Щит и меч', wand: 'Жезл', spear: 'Копьё', crossbow: 'Арбалеты', daggers: 'Кинжалы' }; return map[t] || t; }
-  function getSlotLabel(s) { const map = { weapon: 'Оружие', head: 'Шлем', chest: 'Нагрудник', legs: 'Поножи', feet: 'Сапоги', hands: 'Перчатки', neck: 'Ожерелье', ring: 'Кольцо', belt: 'Пояс', cloak: 'Плащ', bracelet: 'Браслет' }; return map[s] || s; }
+  function getSlotLabel(s) { return SLOTS.find(x => x.id === s)?.label || s; }
   async function loadLockSettings() { try { const snap = await getDoc(doc(db, 'settings', 'locks')); if (snap.exists()) lockSettings = snap.data(); } catch (e) {} }
   function shootConfetti() {
-  const colors = ['#a855f7', '#8b5cf6', '#c9a84c', '#22c55e', '#f59e0b', '#ec4899'];
-  const count = 120;
-  const defaults = { startVelocity: 35, spread: 55, ticks: 80, zIndex: 9999, colors };
+    const colors = ['#a855f7', '#8b5cf6', '#c9a84c', '#22c55e', '#f59e0b', '#ec4899'];
+    const count = 120;
+    const defaults = { startVelocity: 35, spread: 55, ticks: 80, zIndex: 9999, colors };
 
-  function fire(x, angle, spread) {
-    confetti({ ...defaults, particleCount: count / 3, origin: { x, y: 1 }, angle, spread });
+    function fire(x, angle, spread) {
+      confetti({ ...defaults, particleCount: count / 3, origin: { x, y: 1 }, angle, spread });
+    }
+
+    fire(0,   60, 70);
+    fire(1,  120, 70);
+    fire(0.5, 90, 120);
+
+    setTimeout(() => {
+      fire(0,   55, 60);
+      fire(1,  125, 60);
+    }, 300);
   }
 
-  fire(0,   60, 70);
-  fire(1,  120, 70);
-  fire(0.5, 90, 120);
-
-  setTimeout(() => {
-    fire(0,   55, 60);
-    fire(1,  125, 60);
-  }, 300);
-}
   // ============================================================
   // ПРОВЕРКИ ДОСТУПА
   // ============================================================
@@ -794,9 +780,6 @@
     }
   }
 
-  // ============================================================
-  // POPULATE BOSS SELECT (ЗАПОЛНЕНИЕ ВЫПАДАЮЩЕГО СПИСКА БОССОВ)
-  // ============================================================
   function populateBossSelect() {
     const sel = document.getElementById("try-boss-select");
     if (!sel) return;
@@ -1246,18 +1229,16 @@
     finally { btn.disabled = false; btn.textContent = 'Добавить дроп'; }
   });
 
-async function confirmDeleteDrop(raidId, tryId, dropId, name) {
-  const ok = await openDialog('Удалить дроп?', `Удалить «${name}»?`, 'Удалить', 'Отмена');
-  if (!ok) return;
-  await deleteDrop(raidId, tryId, dropId);
-  showToast('Дроп удалён');
-  // onSnapshot на рейд сам подхватит изменение drop_count и перерисует
-  // renderRaidDetail — не трогаем selectRaid, не пересоздаём подписку
-  allRaids = await getRaids();
-  activeRaid = allRaids.find(r => r.id === raidId) ?? activeRaid;
-  await renderRaidDetail(activeRaid);
-  renderRaidList();
-}
+  async function confirmDeleteDrop(raidId, tryId, dropId, name) {
+    const ok = await openDialog('Удалить дроп?', `Удалить «${name}»?`, 'Удалить', 'Отмена');
+    if (!ok) return;
+    await deleteDrop(raidId, tryId, dropId);
+    showToast('Дроп удалён');
+    allRaids = await getRaids();
+    activeRaid = allRaids.find(r => r.id === raidId) ?? activeRaid;
+    await renderRaidDetail(activeRaid);
+    renderRaidList();
+  }
   window.confirmDeleteDrop = confirmDeleteDrop;
 
   // ============================================================
@@ -1366,13 +1347,13 @@ async function confirmDeleteDrop(raidId, tryId, dropId, name) {
     rollUnsubscribe = onSnapshot(dropRef2, (snap) => {
       if (!snap.exists()) return;
       if (isFirst) { isFirst = false; return; }
-const data = snap.data();
-if (data.active_queue && data.active_queue !== rollState.queue) {
-  rollState.queue = data.active_queue;
-  document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.toggle('active', b.dataset.queue === rollState.queue));
-  availablePlayersLoaded = false;
-}
-if (data.participants?.length !== rollState.participants.length) availablePlayersLoaded = false;
+      const data = snap.data();
+      if (data.active_queue && data.active_queue !== rollState.queue) {
+        rollState.queue = data.active_queue;
+        document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.toggle('active', b.dataset.queue === rollState.queue));
+        availablePlayersLoaded = false;
+      }
+      if (data.participants?.length !== rollState.participants.length) availablePlayersLoaded = false;
       if (data.participants?.length) {
         rollState.participants = data.participants.map(p => ({
           playerId: p.playerId, nickname: p.nickname,
@@ -1406,61 +1387,54 @@ if (data.participants?.length !== rollState.participants.length) availablePlayer
     });
   };
 
-function startLocalRollAnimation() {
-  if (rollState.isRolling) return;
-  rollState.isRolling = true; rollHasResults = true;
-  updateRollUI();
+  function startLocalRollAnimation() {
+    if (rollState.isRolling) return;
+    rollState.isRolling = true; rollHasResults = true;
+    updateRollUI();
 
-  const totalDuration = 10000;
-  const startTime = Date.now();
+    const totalDuration = 10000;
+    const startTime = Date.now();
 
-  function tick() {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / totalDuration, 1);
+    function tick() {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / totalDuration, 1);
 
-    rollState.participants.forEach(p => {
-      if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
-    });
-    renderRollParticipantsAnimating();
+      rollState.participants.forEach(p => {
+        if (!p.isBlocked) p._animRoll = Math.floor(Math.random() * 100) + 1;
+      });
+      renderRollParticipantsAnimating();
 
-    if (progress < 1) {
-      let delay;
-      if (progress < 0.3) {
-        // Фаза 1: быстрые хаотичные тики
-        delay = 50 + Math.random() * 60;
-      } else if (progress < 0.7) {
-        // Фаза 2: случайные рывки — иногда быстро, иногда пауза
-        delay = Math.random() < 0.2
-          ? 30 + Math.random() * 40     // редкий быстрый «рывок»
-          : 120 + Math.random() * 180;  // обычный тик
+      if (progress < 1) {
+        let delay;
+        if (progress < 0.3) {
+          delay = 50 + Math.random() * 60;
+        } else if (progress < 0.7) {
+          delay = Math.random() < 0.2
+            ? 30 + Math.random() * 40
+            : 120 + Math.random() * 180;
+        } else {
+          const slowdown = (progress - 0.7) / 0.3;
+          const base = 280 + slowdown * 520;
+          delay = base + (Math.random() - 0.5) * base * 0.4;
+        }
+        rollState.animationTimer = setTimeout(tick, Math.max(30, delay));
       } else {
-        // Фаза 3: замедление с джиттером, не линейное
-        const slowdown = (progress - 0.7) / 0.3; // 0→1
-        const base = 280 + slowdown * 520;        // 280→800ms
-        delay = base + (Math.random() - 0.5) * base * 0.4; // ±20% шум
+        if (rollState.rollResults) {
+          rollState.participants = rollState.participants.map(p => {
+            const final = rollState.rollResults.find(r => r.playerId === p.playerId);
+            return { ...p, roll: final?.roll ?? p.roll };
+          });
+        }
+        rollState.animationTimer = null;
+        finishRoll();
       }
-      rollState.animationTimer = setTimeout(tick, Math.max(30, delay));
-    } else {
-      // Финал
-      if (rollState.rollResults) {
-        rollState.participants = rollState.participants.map(p => {
-          const final = rollState.rollResults.find(r => r.playerId === p.playerId);
-          return { ...p, roll: final?.roll ?? p.roll };
-        });
-      }
-      rollState.animationTimer = null;
-      finishRoll();
     }
+    tick();
   }
-  tick();
-}
 
   function renderRollParticipantsAnimating() {
     const list = document.getElementById('roll-players-list');
     const activeParticipants = rollState.participants.filter(p => !p.isBlocked);
-    // Всегда полностью перерисовываем список во время анимации,
-    // не пытаясь сопоставлять со старыми DOM-строками — это и было
-    // причиной того, что "кубик" не крутился и сразу показывал итог.
     list.innerHTML = '';
     if (!activeParticipants.length) { list.innerHTML = '<div class="roll-empty-msg">Пока никто не присоединился</div>'; return; }
     activeParticipants.forEach(p => {
@@ -1472,15 +1446,15 @@ function startLocalRollAnimation() {
     });
   }
 
-function finishRoll() {
-  rollState.isRolling = false; rollState.isFinished = true;
-  rollState.hasPendingWinner = true; rollHasResults = true;
-  updateRollUI();
-  if (rollState.winner) {
-    showToast(`${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
-    shootConfetti();
+  function finishRoll() {
+    rollState.isRolling = false; rollState.isFinished = true;
+    rollState.hasPendingWinner = true; rollHasResults = true;
+    updateRollUI();
+    if (rollState.winner) {
+      showToast(`${rollState.winner.nickname} выиграл с ${rollState.winner.roll}!`);
+      shootConfetti();
+    }
   }
-}
 
   let updateUITimeout = null;
   function updateRollUI() {
@@ -1502,8 +1476,6 @@ function finishRoll() {
   }
 
   function renderRollParticipants() {
-    // Пока идёт ролл — используем анимационный рендер со случайными
-    // числами, а не реальные броски, чтобы не показывать победителя раньше времени.
     if (rollState.isRolling) { renderRollParticipantsAnimating(); return; }
     const list = document.getElementById('roll-players-list');
     const count = document.getElementById('roll-players-count');
@@ -1517,6 +1489,7 @@ function finishRoll() {
       if (showWinner && rollState.winner?.playerId === b.playerId) return 1;
       return (b.roll || 0) - (a.roll || 0);
     });
+    const canRemove = canStartRoll() && !rollState.isFinished && !rollState.isRolling;
     sorted.forEach(p => {
       const isWinner = showWinner && rollState.winner?.playerId === p.playerId;
       const isMe = p.playerId === rollState.currentPlayerId;
@@ -1527,7 +1500,8 @@ function finishRoll() {
       if (rollState.isRolling && !hasRoll) dice = '<span class="roll-dice-result pending-dice"><span class="dice-rolling">🎲</span></span>';
       else if (hasRoll) dice = `<span class="roll-dice-result ${isWinner ? 'winner-dice' : ''}">${p.roll}</span>`;
       else dice = '<span class="roll-dice-result pending-dice">—</span>';
-      row.innerHTML = `<span class="roll-player-name">${isWinner ? '🏆 ' : ''}${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">${isWinner ? 'Победитель' : (rollState.isFinished ? '' : 'В ролле')}</span>${dice}`;
+      const removeBtn = canRemove ? `<button class="btn-remove-from-roll" onclick="removeFromRoll('${p.playerId}')" title="Убрать из ролла">✕</button>` : '';
+      row.innerHTML = `<span class="roll-player-name">${isWinner ? '🏆 ' : ''}${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">${isWinner ? 'Победитель' : (rollState.isFinished ? '' : 'В ролле')}</span>${dice}${removeBtn}`;
       list.appendChild(row);
     });
   }
@@ -1558,6 +1532,7 @@ function finishRoll() {
         const filtered = results.filter(r => r !== null);
         const seen = new Set();
         const deduped = filtered.filter(({ char }) => { if (seen.has(char.id)) return false; seen.add(char.id); return true; });
+        deduped.sort((a, b) => (b.check.can ? 1 : 0) - (a.check.can ? 1 : 0));
         count.textContent = deduped.length;
         if (!deduped.length) { list.innerHTML = '<div class="roll-empty-msg">Нет доступных</div>'; renderAvailableTimeout = null; return; }
         const frag = document.createDocumentFragment();
@@ -1603,13 +1578,13 @@ function finishRoll() {
     document.getElementById('btn-join-roll').disabled = isParticipant || !canAct;
     document.getElementById('btn-leave-roll').disabled = !isParticipant || !canAct;
     const startBtn = document.getElementById('btn-start-roll');
-const activeCount = rollState.participants.filter(p => !p.isBlocked).length;
-const canStart = activeCount >= 1 && canAct && canStartRoll();
-startBtn.disabled = !canStart;
-startBtn.style.display = rollState.isFinished ? 'none' : 'flex';
-startBtn.innerHTML = activeCount === 1
-  ? '<i class="ti ti-check"></i> Присудить победу'
-  : '<i class="ti ti-dice"></i> Запустить ролл';
+    const activeCount = rollState.participants.filter(p => !p.isBlocked).length;
+    const canStart = activeCount >= 1 && canAct && canStartRoll();
+    startBtn.disabled = !canStart;
+    startBtn.style.display = rollState.isFinished ? 'none' : 'flex';
+    startBtn.innerHTML = activeCount === 1
+      ? '<i class="ti ti-check"></i> Присудить победу'
+      : '<i class="ti ti-dice"></i> Запустить ролл';
     const confirmBtn = document.getElementById('btn-confirm-roll');
     confirmBtn.style.display = (rollState.isFinished && rollState.winner && canStartRoll() && rollState.hasPendingWinner) ? 'flex' : 'none';
     document.querySelectorAll('.roll-queue-tab').forEach(b => b.disabled = rollState.isRolling || rollState.isFinished);
@@ -1633,6 +1608,15 @@ startBtn.innerHTML = activeCount === 1
     } finally {
       joinRollInProgress = false;
     }
+  };
+
+  window.removeFromRoll = async (playerId) => {
+    if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
+    rollState.participants = rollState.participants.filter(p => p.playerId !== playerId);
+    await saveParticipants();
+    availablePlayersLoaded = false;
+    renderAvailableVersion++;
+    updateRollUI();
   };
 
   document.getElementById('btn-join-roll').addEventListener('click', () => {
@@ -1665,68 +1649,66 @@ startBtn.innerHTML = activeCount === 1
     }
   }
 
-document.querySelectorAll('.roll-queue-tab').forEach(btn => {
-  btn.addEventListener('click', async function () {
-    if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
-    document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    rollState.queue = this.dataset.queue;
-    rollState.participants = [];
-    availablePlayersLoaded = false;
-    try {
-      await firestoreUpdate(doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId), {
-        active_queue: rollState.queue,
-        participants: [],
-      });
-    } catch (e) {
-      showToast(e.code === 'permission-denied' ? 'Недостаточно прав' : 'Ошибка: ' + e.message, 'error');
-    }
-    updateRollUI();
-    showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
-  });
-});
-
-function rollWithTiebreak(participants) {
-  let current = participants.map(p => ({ ...p, roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1 }));
-  let tiedGroup = [];
-  while (true) {
-    const active = current.filter(p => !p.isBlocked);
-    const maxRoll = Math.max(...active.map(p => p.roll));
-    const tied = active.filter(p => p.roll === maxRoll);
-    if (tied.length <= 1) return { finalRolls: current, winner: tied[0], hadTie: tiedGroup.length > 0, tiedGroup };
-    tiedGroup = tied.map(p => p.nickname);
-    const tiedIds = new Set(tied.map(p => p.playerId));
-    current = current.map(p => tiedIds.has(p.playerId) ? { ...p, roll: Math.floor(Math.random() * 100) + 1 } : p);
-  }
-}
-
-document.getElementById('btn-start-roll').addEventListener('click', async () => {
-  const active = rollState.participants.filter(p => !p.isBlocked);
-  if (active.length < 1 || rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
-  const dropRef = doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId);
-
-  // Один участник — победа сразу, без анимации ролла
-  if (active.length === 1) {
-    const onlyPlayer = active[0];
-    await firestoreUpdate(dropRef, {
-      rolling: false, // важно: false, а не true — иначе запустится анимация у всех клиентов
-      roll_results: [{ playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 }],
-      pending_winner: { playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 },
-      participants: rollState.participants.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.playerId === onlyPlayer.playerId ? 100 : null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
+  document.querySelectorAll('.roll-queue-tab').forEach(btn => {
+    btn.addEventListener('click', async function () {
+      if (rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
+      document.querySelectorAll('.roll-queue-tab').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      rollState.queue = this.dataset.queue;
+      rollState.participants = [];
+      availablePlayersLoaded = false;
+      try {
+        await firestoreUpdate(doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId), {
+          active_queue: rollState.queue,
+          participants: [],
+        });
+      } catch (e) {
+        showToast(e.code === 'permission-denied' ? 'Недостаточно прав' : 'Ошибка: ' + e.message, 'error');
+      }
+      updateRollUI();
+      showToast(`Очередь: ${this.querySelector('.queue-tab-title').textContent}`);
     });
-    return;
+  });
+
+  function rollWithTiebreak(participants) {
+    let current = participants.map(p => ({ ...p, roll: p.isBlocked ? null : Math.floor(Math.random() * 100) + 1 }));
+    let tiedGroup = [];
+    while (true) {
+      const active = current.filter(p => !p.isBlocked);
+      const maxRoll = Math.max(...active.map(p => p.roll));
+      const tied = active.filter(p => p.roll === maxRoll);
+      if (tied.length <= 1) return { finalRolls: current, winner: tied[0], hadTie: tiedGroup.length > 0, tiedGroup };
+      tiedGroup = tied.map(p => p.nickname);
+      const tiedIds = new Set(tied.map(p => p.playerId));
+      current = current.map(p => tiedIds.has(p.playerId) ? { ...p, roll: Math.floor(Math.random() * 100) + 1 } : p);
+    }
   }
 
-  // Несколько участников — обычный ролл с автоматическим переролом при ничьей
-  const { finalRolls, winner, hadTie, tiedGroup } = rollWithTiebreak(rollState.participants);
-  if (hadTie) showToast(`Ничья между ${tiedGroup.join(', ')} — переролл!`);
-  await firestoreUpdate(dropRef, {
-    rolling: true,
-    roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
-    pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
-    participants: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
+  document.getElementById('btn-start-roll').addEventListener('click', async () => {
+    const active = rollState.participants.filter(p => !p.isBlocked);
+    if (active.length < 1 || rollState.isRolling || rollState.isFinished || !canStartRoll()) return;
+    const dropRef = doc(db, 'raids', rollState.raidId, 'tries', rollState.tryId, 'drops', rollState.dropId);
+
+    if (active.length === 1) {
+      const onlyPlayer = active[0];
+      await firestoreUpdate(dropRef, {
+        rolling: false,
+        roll_results: [{ playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 }],
+        pending_winner: { playerId: onlyPlayer.playerId, nickname: onlyPlayer.nickname, roll: 100 },
+        participants: rollState.participants.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.playerId === onlyPlayer.playerId ? 100 : null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
+      });
+      return;
+    }
+
+    const { finalRolls, winner, hadTie, tiedGroup } = rollWithTiebreak(rollState.participants);
+    if (hadTie) showToast(`Ничья между ${tiedGroup.join(', ')} — переролл!`);
+    await firestoreUpdate(dropRef, {
+      rolling: true,
+      roll_results: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll })),
+      pending_winner: { playerId: winner.playerId, nickname: winner.nickname, roll: winner.roll },
+      participants: finalRolls.map(p => ({ playerId: p.playerId, nickname: p.nickname, roll: p.roll ?? null, isBlocked: p.isBlocked || false, userId: p.userId || null })),
+    });
   });
-});
 
   async function confirmRollWinner() {
     if (!rollState.winner || !canStartRoll()) return;
