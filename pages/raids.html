@@ -1710,12 +1710,34 @@
     });
   });
 
-  async function confirmRollWinner() {
+   async function confirmRollWinner() {
     if (!rollState.winner || !canStartRoll()) return;
     const btn = document.getElementById('btn-confirm-roll');
     btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
       await updateDropWinner(rollState.raidId, rollState.tryId, rollState.dropId, rollState.winner.playerId, rollState.winner.nickname, rollState.queue);
+
+      // ── Записываем won_items на персонажа ──────────────────────────
+      // Находим конкретный ключ слота в desired_loot победителя
+      // (weapon1/weapon2, ring1/ring2 или обычный слот)
+      try {
+        const winnerChar = allCharacters.find(c => c.id === rollState.winner.playerId);
+        if (winnerChar && rollState.itemId && rollState.itemSlot) {
+          const desired = winnerChar.desired_loot || {};
+          // Ищем ключ в desired_loot где значение совпадает с выигранным itemId
+          let wonKey = Object.keys(desired).find(k => desired[k] === rollState.itemId);
+          // Fallback: если предмета нет в desired_loot — пишем по базовому слоту
+          if (!wonKey) wonKey = rollState.itemSlot;
+          await firestoreUpdate(doc(db, 'characters', rollState.winner.playerId), {
+            [`won_items.${wonKey}`]: rollState.itemId,
+          });
+        }
+      } catch(e) {
+        console.warn('Не удалось обновить won_items:', e);
+        // Не критично — не прерываем основной флоу
+      }
+      // ───────────────────────────────────────────────────────────────
+
       patchWinIntoCaches({
         player_id: rollState.winner.playerId,
         raid_id: rollState.raidId,
