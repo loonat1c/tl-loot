@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Миграция won_items — разовый скрипт</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body { padding: 2rem; max-width: 720px; margin: 0 auto; }
+    #log { white-space: pre-wrap; font-family: monospace; font-size: 0.82rem;
+           background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px;
+           padding: 1rem; margin-top: 1rem; max-height: 60vh; overflow-y: auto; }
+    .warn { color: var(--warning); }
+    .ok { color: var(--success); }
+    .err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <h2>Миграция: won_items из истории рейдов</h2>
+  <p class="text-muted">
+    Разово проходит по всем не удалённым рейдам → траям → дропам, находит дропы
+    с назначенным победителем и дописывает <code>won_items.&lt;slot&gt;</code>
+    на карточку персонажа — так же, как это теперь делает подтверждение ролла.
+    Ничего не удаляет и не трогает уже существующие ключи won_items, кроме
+    их дозаполнения.
+  </p>
+  <p><strong>Доступ только для админа.</strong> После успешного запуска удалите этот файл.</p>
+  <button class="btn btn-primary" id="btn-run">Запустить миграцию</button>
+  <button class="btn btn-ghost" id="btn-dry-run">Проверить (без записи)</button>
+  <div id="log"></div>
+
+  <script type="module">
+    import { initAuth, authReady, isAdmin, currentUser } from "../js/modules/auth.js";
+    import { getRaids, getRaidTries, getTryDrops } from "../js/modules/raids.js";
+    import { collection, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { db } from "../js/firebase.js";
+
+    await initAuth();
+    await authReady;
+
+    const logEl = document.getElementById('log');
+    function log(msg, cls) {
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    if (!currentUser || !isAdmin()) {
+      document.getElementById('btn-run').disabled = true;
+      document.getElementById('btn-dry-run').disabled = true;
+      log('Доступ запрещён: нужен админ-аккаунт.', 'err');
+    }
+
+    async function loadCharacters() {
+      const snap = await getDocs(collection(db, 'characters'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    // Та же логика подбора ключа слота, что и в confirmRollWinner() (raids.html)
+    function resolveWonKey(char, itemId, itemSlot) {
+      const desired = char.desired_loot || {};
+      const key = Object.keys(desired).find(k => desired[k] === itemId);
+      return key || itemSlot;
+    }
+
+    async function run(dryRun) {
+      document.getElementById('btn-run').disabled = true;
+      document.getElementById('btn-dry-run').disabled = true;
+      logEl.innerHTML = '';
+      log(dryRun ? 'Проверка (без записи)…' : 'Запуск миграции…');
+
+      const characters = await loadCharacters();
+      const charById = new Map(characters.map(c => [c.id, c]));
+
+      const raids = (await getRaids()).filter(r => !r.deleted);
+      log(`Рейдов (не удалённых): ${raids.length}`);
+
+      // Собираем все обновления в памяти: player_id -> { key: item_id }
+      const updates = new Map();
+      let dropsWithWinner = 0;
+      let alreadySet = 0;
+      let willWrite = 0;
+
+      for (const raid of raids) {
+        const tries = await getRaidTries(raid.id);
+        for (const t of tries) {
+          const drops = await getTryDrops(raid.id, t.id);
+          for (const d of drops) {
+            if (!d.winner_player_id || !d.item_id) continue;
+            dropsWithWinner++;
+            const char = charById.get(d.winner_player_id);
+            if (!char) {
+              log(`  ⚠ Персонаж ${d.winner_player_id} не найден (предмет "${d.item_name}")`, 'warn');
+              continue;
+            }
+            const key = resolveWonKey(char, d.item_id, d.item_slot);
+            const already = (char.won_items || {})[key];
+            if (already === d.item_id) { alreadySet++; continue; }
+
+            if (!updates.has(char.id)) updates.set(char.id, {});
+            updates.get(char.id)[key] = d.item_id;
+            willWrite++;
+            log(`  → ${char.name}: won_items.${key} = ${d.item_name} (${raid.date || raid.id})`);
+          }
+        }
+      }
+
+      log(`\nДропов с победителем: ${dropsWithWinner}`);
+      log(`Уже были проставлены: ${alreadySet}`);
+      log(`Будет записано полей: ${willWrite} на ${updates.size} персонажей`, 'ok');
+
+      if (dryRun) {
+        log('\nЭто был dry-run — ничего не записано. Нажмите "Запустить миграцию" чтобы применить.', 'warn');
+        document.getElementById('btn-run').disabled = false;
+        document.getElementById('btn-dry-run').disabled = false;
+        return;
+      }
+
+      if (!updates.size) {
+        log('Нечего обновлять.', 'ok');
+        document.getElementById('btn-run').disabled = false;
+        document.getElementById('btn-dry-run').disabled = false;
+        return;
+      }
+
+      // Firestore batch limit — 500 операций; бьём на партии по 400 на всякий случай
+      const entries = [...updates.entries()];
+      const CHUNK = 400;
+      for (let i = 0; i < entries.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        for (const [charId, fields] of entries.slice(i, i + CHUNK)) {
+          const flat = {};
+          for (const [k, v] of Object.entries(fields)) flat[`won_items.${k}`] = v;
+          batch.update(doc(db, 'characters', charId), flat);
+        }
+        await batch.commit();
+        log(`Записана партия ${i / CHUNK + 1}`, 'ok');
+      }
+
+      log('\nГотово. Обновите страницу профиля — слоты прошлых побед должны заблокироваться.', 'ok');
+      document.getElementById('btn-run').disabled = false;
+      document.getElementById('btn-dry-run').disabled = false;
+    }
+
+    document.getElementById('btn-run').addEventListener('click', () => run(false));
+    document.getElementById('btn-dry-run').addEventListener('click', () => run(true));
+  </script>
+</body>
+</html>
