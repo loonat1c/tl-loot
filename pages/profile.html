@@ -111,6 +111,13 @@
       color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-size: 0.85rem;
     }
     .btn-loot-edit-top:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
+    .draft-name-input {
+      font-size: 1.05rem; font-weight: 700; color: var(--text); font-family: inherit;
+      background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.35rem 0.6rem; margin-bottom: 0.35rem; width: 240px; max-width: 100%;
+    }
+    .draft-name-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+    .draft-name-input::placeholder { color: var(--text-muted); font-weight: 400; }
 
     /* ── Loot layout: slots + silhouette + card ── */
     .clb-body {
@@ -699,6 +706,89 @@
     return `<i class="fa-solid ${cfg?.fa || 'fa-khanda'}"></i>`;
   }
 
+  // ── Shared item detail-card renderer (used both for the per-character
+  // loot grid and the new-character creation draft) ──
+  function buildItemCardHtml(item, obtained, slotLabel) {
+    const boss    = allBosses.find(b => b.id === item.boss_id);
+    const quality = item.quality || '';
+    const stats   = item.stats || [];
+    const effect  = item.effect || {};
+    const setBonus = item.set_bonus || {};
+    const props   = item.properties || [];
+    const runes   = item.runes || [];
+    const runesMax = item.runes_max || (runes.length ? runes.length : 3);
+    const isWeapon = item.slot === 'weapon';
+    const weaponTypeLabel = item.weapon_type ? getWeaponLabel(item.weapon_type) : null;
+
+    // properties may be plain strings (legacy) or {label,value,level} objects
+    const richProps = props.filter(p => typeof p === 'object' && p !== null);
+    const plainProps = props.filter(p => typeof p === 'string');
+
+    return `
+      ${obtained ? `<div class="lic-obtained-banner"><i class="fa-solid fa-circle-check"></i> Получено — слот закрыт</div>` : ''}
+      <div class="lic-topbar">
+        <div class="lic-img-wrap ${quality ? `quality-${quality}` : ''}">
+          ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : slotIconHtml(item.slot)}
+        </div>
+        <div class="lic-topbar-right">
+          <div class="lic-meta">
+            ${quality ? `<span class="lic-badge qual">${qualityLabel(quality)}</span>` : ''}
+            ${item.level ? `<span class="lic-badge level">Ур. ${item.level}</span>` : ''}
+            ${weaponTypeLabel ? `<span class="lic-badge slot">${weaponTypeLabel}</span>` : `<span class="lic-badge slot">${slotLabel}</span>`}
+          </div>
+          ${item.wiki_url ? `<a class="lic-wiki-link" href="${item.wiki_url}" target="_blank" rel="noopener"><i class="fa-solid fa-book"></i> Где добыть — Вики</a>` : ''}
+        </div>
+      </div>
+      <div class="lic-name">${item.name}${item.level ? ` · ур. ${item.level}` : ''}</div>
+      ${(item.damage_min || item.damage_max) ? `
+        <div class="lic-damage-box">
+          ${item.damage_max ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Макс. ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_max}</div></div>` : ''}
+          ${item.damage_min ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Базовый ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_min}</div></div>` : ''}
+        </div>` : ''}
+      ${isWeapon && (effect.name || effect.desc) ? `
+        <div class="lic-effect">
+          ${effect.image ? `<img src="${effect.image}" alt="effect" />` : `<div class="lic-effect-icon"><i class="fa-solid fa-bolt"></i></div>`}
+          <div>
+            ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
+            ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
+          </div>
+        </div>` : ''}
+      ${stats.length ? `
+        <div class="lic-stats">
+          ${stats.map(s => `<div class="lic-stat"><span class="lic-stat-label">${s.label||s}</span><span class="lic-stat-value">${s.value||''}</span></div>`).join('')}
+        </div>` : ''}
+      ${!isWeapon && setBonus.name ? `
+        <div class="lic-set-bonus">
+          <div class="lic-set-name">${setBonus.name}</div>
+          ${setBonus.piece2 ? `<div class="lic-set-piece"><span>(2):</span>${setBonus.piece2}</div>` : ''}
+          ${setBonus.piece4 ? `<div class="lic-set-piece"><span>(4):</span>${setBonus.piece4}</div>` : ''}
+        </div>` : ''}
+      ${richProps.length ? `
+        <div class="lic-section-title">Свойства снаряжения</div>
+        <div class="lic-props-list">
+          ${richProps.map(p => `<div class="lic-prop-row"><span class="lic-prop-dot"><i class="fa-solid fa-diamond"></i></span><span class="lic-prop-label">${p.label}</span><span class="lic-prop-value">${p.value ?? ''}</span>${p.level ? `<span class="lic-prop-lvl">ур.${p.level}</span>` : ''}</div>`).join('')}
+        </div>` : ''}
+      ${plainProps.length ? `<div class="lic-props">${plainProps.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}</div>` : ''}
+      ${runes.length ? `
+        <div class="lic-section-title">Руны (${runes.length}/${runesMax})</div>
+        <div class="lic-runes-list">
+          ${runes.map(r => `<div class="lic-rune-row"><span class="lic-rune-icon"><i class="fa-solid fa-gem"></i></span><span class="lic-rune-name">${r.name}</span>${r.tier ? `<span class="lic-rune-tier">${r.tier}</span>` : ''}</div>`).join('')}
+        </div>` : ''}
+      ${item.description ? `<div class="lic-flavor">${item.description}</div>` : ''}
+      ${boss ? `
+        <div class="lic-boss">
+          ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '<i class="fa-solid fa-skull"></i>'}
+          <span>${boss.name}</span>
+        </div>` : ''}
+      ${(item.has_synergy || item.perception || item.shield_penetration) ? `
+        <div class="lic-footer">
+          ${item.has_synergy ? `<span class="lic-footer-badge">Синергия</span>` : ''}
+          ${item.perception ? `<span>Восприятие ${item.perception}</span>` : ''}
+          ${item.shield_penetration ? `<span>Пробивание щита ${item.shield_penetration}%</span>` : ''}
+        </div>` : ''}
+    `;
+  }
+
   // ── Load ──────────────────────────────────────────
   async function loadData() {
     try { allItems  = await getItems();  } catch(e) { allItems  = []; }
@@ -1031,85 +1121,8 @@
 
     // Item card renderer
     function renderItemCard(item, obtained, slotLabel) {
-      const boss    = allBosses.find(b => b.id === item.boss_id);
-      const quality = item.quality || '';
-      const stats   = item.stats || [];
-      const effect  = item.effect || {};
-      const setBonus = item.set_bonus || {};
-      const props   = item.properties || [];
-      const runes   = item.runes || [];
-      const runesMax = item.runes_max || (runes.length ? runes.length : 3);
-      const isWeapon = item.slot === 'weapon';
-      const weaponTypeLabel = item.weapon_type ? getWeaponLabel(item.weapon_type) : null;
-
-      // properties may be plain strings (legacy) or {label,value,level} objects
-      const richProps = props.filter(p => typeof p === 'object' && p !== null);
-      const plainProps = props.filter(p => typeof p === 'string');
-
       cardEl.className = 'clb-item-card';
-      cardEl.innerHTML = `
-        ${obtained ? `<div class="lic-obtained-banner"><i class="fa-solid fa-circle-check"></i> Получено — слот закрыт</div>` : ''}
-        <div class="lic-topbar">
-          <div class="lic-img-wrap ${quality ? `quality-${quality}` : ''}">
-            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : slotIconHtml(item.slot)}
-          </div>
-          <div class="lic-topbar-right">
-            <div class="lic-meta">
-              ${quality ? `<span class="lic-badge qual">${qualityLabel(quality)}</span>` : ''}
-              ${item.level ? `<span class="lic-badge level">Ур. ${item.level}</span>` : ''}
-              ${weaponTypeLabel ? `<span class="lic-badge slot">${weaponTypeLabel}</span>` : `<span class="lic-badge slot">${slotLabel}</span>`}
-            </div>
-            ${item.wiki_url ? `<a class="lic-wiki-link" href="${item.wiki_url}" target="_blank" rel="noopener"><i class="fa-solid fa-book"></i> Где добыть — Вики</a>` : ''}
-          </div>
-        </div>
-        <div class="lic-name">${item.name}${item.level ? ` · ур. ${item.level}` : ''}</div>
-        ${(item.damage_min || item.damage_max) ? `
-          <div class="lic-damage-box">
-            ${item.damage_max ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Макс. ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_max}</div></div>` : ''}
-            ${item.damage_min ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Базовый ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_min}</div></div>` : ''}
-          </div>` : ''}
-        ${isWeapon && (effect.name || effect.desc) ? `
-          <div class="lic-effect">
-            ${effect.image ? `<img src="${effect.image}" alt="effect" />` : `<div class="lic-effect-icon"><i class="fa-solid fa-bolt"></i></div>`}
-            <div>
-              ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
-              ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
-            </div>
-          </div>` : ''}
-        ${stats.length ? `
-          <div class="lic-stats">
-            ${stats.map(s => `<div class="lic-stat"><span class="lic-stat-label">${s.label||s}</span><span class="lic-stat-value">${s.value||''}</span></div>`).join('')}
-          </div>` : ''}
-        ${!isWeapon && setBonus.name ? `
-          <div class="lic-set-bonus">
-            <div class="lic-set-name">${setBonus.name}</div>
-            ${setBonus.piece2 ? `<div class="lic-set-piece"><span>(2):</span>${setBonus.piece2}</div>` : ''}
-            ${setBonus.piece4 ? `<div class="lic-set-piece"><span>(4):</span>${setBonus.piece4}</div>` : ''}
-          </div>` : ''}
-        ${richProps.length ? `
-          <div class="lic-section-title">Свойства снаряжения</div>
-          <div class="lic-props-list">
-            ${richProps.map(p => `<div class="lic-prop-row"><span class="lic-prop-dot"><i class="fa-solid fa-diamond"></i></span><span class="lic-prop-label">${p.label}</span><span class="lic-prop-value">${p.value ?? ''}</span>${p.level ? `<span class="lic-prop-lvl">ур.${p.level}</span>` : ''}</div>`).join('')}
-          </div>` : ''}
-        ${plainProps.length ? `<div class="lic-props">${plainProps.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}</div>` : ''}
-        ${runes.length ? `
-          <div class="lic-section-title">Руны (${runes.length}/${runesMax})</div>
-          <div class="lic-runes-list">
-            ${runes.map(r => `<div class="lic-rune-row"><span class="lic-rune-icon"><i class="fa-solid fa-gem"></i></span><span class="lic-rune-name">${r.name}</span>${r.tier ? `<span class="lic-rune-tier">${r.tier}</span>` : ''}</div>`).join('')}
-          </div>` : ''}
-        ${item.description ? `<div class="lic-flavor">${item.description}</div>` : ''}
-        ${boss ? `
-          <div class="lic-boss">
-            ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '<i class="fa-solid fa-skull"></i>'}
-            <span>${boss.name}</span>
-          </div>` : ''}
-        ${(item.has_synergy || item.perception || item.shield_penetration) ? `
-          <div class="lic-footer">
-            ${item.has_synergy ? `<span class="lic-footer-badge">Синергия</span>` : ''}
-            ${item.perception ? `<span>Восприятие ${item.perception}</span>` : ''}
-            ${item.shield_penetration ? `<span>Пробивание щита ${item.shield_penetration}%</span>` : ''}
-          </div>` : ''}
-      `;
+      cardEl.innerHTML = buildItemCardHtml(item, obtained, slotLabel);
     }
 
     // Derived weapons update
@@ -1463,8 +1476,226 @@
 
   document.getElementById('btn-add-character').addEventListener('click', () => {
     if (characters.length > 0) { showToast('У вас уже есть персонаж', 'error'); return; }
-    openEditModal(null);
+    renderCreateCharacterCard();
   });
+
+  // ── Inline "create character" card ─────────────────
+  // Same look & interaction as editing an approved character's loot,
+  // but with an editable name field and every slot starting empty —
+  // so it's obvious exactly what's being sent to moderation.
+  function renderCreateCharacterCard() {
+    const addBtnEl = document.getElementById('btn-add-character');
+    if (addBtnEl) addBtnEl.style.display = 'none';
+
+    const list = document.getElementById('characters-list');
+    list.innerHTML = '';
+
+    const block = document.createElement('div');
+    block.className = 'char-loot-block pending';
+    block.id = 'char-block-draft';
+
+    // Header — editable name instead of a static title
+    const headerEl = document.createElement('div');
+    headerEl.className = 'clb-header';
+    headerEl.innerHTML = `
+      <div class="clb-header-left">
+        <div class="clb-char-icon" id="draft-char-icon"><i class="fa-solid fa-khanda"></i></div>
+        <div>
+          <input type="text" class="draft-name-input" id="draft-char-name" placeholder="Имя персонажа" maxlength="50" />
+          <div class="clb-char-meta">
+            <span class="char-status pending"><span class="dot"></span><i class="fa-solid fa-pen-to-square"></i> Новый персонаж — заполните лут</span>
+          </div>
+        </div>
+      </div>
+      <div class="clb-header-right"></div>
+    `;
+    block.appendChild(headerEl);
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'clb-body';
+
+    let pendingLoot = {};
+    let activeSlotId = null;
+
+    const colLeft = document.createElement('div');
+    colLeft.className = 'loot-col loot-col-left';
+    const silhouette = document.createElement('div');
+    silhouette.className = 'loot-silhouette';
+    silhouette.innerHTML = `<img src="/assets/img/profileimgwarrior.png" alt=""
+      onerror="this.remove(); this.parentElement.insertAdjacentHTML('beforeend', '&lt;div class=&quot;loot-silhouette-placeholder&quot;&gt;&lt;i class=&quot;fa-solid fa-user-large&quot;&gt;&lt;/i&gt;&lt;/div&gt;')" />`;
+    const rightCol = document.createElement('div');
+    rightCol.className = 'loot-col loot-col-right';
+    const cardEl = document.createElement('div');
+    cardEl.className = 'clb-item-card empty-card';
+    const emptyCardHtml = `<div style="opacity:0.4;font-size:2rem;margin-bottom:0.5rem"><i class="fa-solid fa-crosshairs"></i></div><div>Нажмите на слот, чтобы выбрать желаемый предмет</div>`;
+    cardEl.innerHTML = emptyCardHtml;
+
+    bodyEl.appendChild(colLeft);
+    bodyEl.appendChild(silhouette);
+    bodyEl.appendChild(rightCol);
+    bodyEl.appendChild(cardEl);
+    block.appendChild(bodyEl);
+
+    function updateDerivedWeaponsDraft() {
+      const w1 = pendingLoot.weapon1 ? allItems.find(i => i.id === pendingLoot.weapon1) : null;
+      const iconEl = document.getElementById('draft-char-icon');
+      if (iconEl) iconEl.innerHTML = getWeaponIconHtml(w1?.weapon_type || '');
+    }
+
+    function buildDraftCell(slotDef) {
+      const cell = document.createElement('div');
+      cell.dataset.slotId = slotDef.id;
+
+      function refresh() {
+        const itemId  = pendingLoot[slotDef.id];
+        const item    = itemId ? allItems.find(i => i.id === itemId) : null;
+        const quality = item?.quality || '';
+
+        cell.className = 'loot-slot-cell has-item' + (cell.dataset.slotId === activeSlotId ? ' active-slot' : '');
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'slot-cell-icon editable-slot';
+        const iconInner = document.createElement('div');
+        iconInner.className = 'slot-cell-icon-inner' + (quality ? ` quality-${quality}` : '') + (!item ? ' empty-slot' : '');
+        if (item?.image) {
+          const img = document.createElement('img');
+          img.src = item.image; img.alt = item.name;
+          img.style.cssText = 'position:relative;z-index:1;';
+          iconInner.appendChild(img);
+        } else {
+          iconInner.innerHTML = slotIconHtml(slotDef.id);
+        }
+        const hint = document.createElement('div');
+        hint.className = 'slot-edit-hint';
+        hint.innerHTML = item ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
+        iconInner.appendChild(hint);
+        iconWrap.appendChild(iconInner);
+
+        const info = document.createElement('div');
+        info.className = 'slot-cell-info';
+        const labelEl = document.createElement('div');
+        labelEl.className = 'slot-cell-label';
+        labelEl.textContent = slotDef.label;
+        const nameEl = document.createElement('div');
+        nameEl.className = 'slot-cell-name' + (!item ? ' empty-name' : quality === 'epic_ii' ? ' epic2-name' : quality === 'epic' ? ' epic-name' : '');
+        nameEl.textContent = !item ? 'нажмите чтобы выбрать' : item.name;
+        info.appendChild(labelEl);
+        info.appendChild(nameEl);
+
+        cell.innerHTML = '';
+        cell.appendChild(iconWrap);
+        cell.appendChild(info);
+
+        cell.addEventListener('mouseenter', () => {
+          block.querySelectorAll('.loot-slot-cell').forEach(c => c.classList.remove('active-slot'));
+          cell.classList.add('active-slot');
+          activeSlotId = slotDef.id;
+          if (item) { cardEl.className = 'clb-item-card'; cardEl.innerHTML = buildItemCardHtml(item, false, slotDef.label); }
+        });
+
+        iconWrap.addEventListener('click', () => openSlotPicker(slotDef, null, pendingLoot, {}, (newItemId) => {
+          pendingLoot[slotDef.id] = newItemId;
+          refresh();
+          updateDerivedWeaponsDraft();
+          if (activeSlotId === slotDef.id) {
+            const newItem = newItemId ? allItems.find(i => i.id === newItemId) : null;
+            if (newItem) { cardEl.className = 'clb-item-card'; cardEl.innerHTML = buildItemCardHtml(newItem, false, slotDef.label); }
+            else { cardEl.className = 'clb-item-card empty-card'; cardEl.innerHTML = emptyCardHtml; }
+          }
+        }));
+      }
+
+      refresh();
+      cell._refresh = refresh;
+      return cell;
+    }
+
+    LOOT_SLOTS_LEFT.forEach(s => colLeft.appendChild(buildDraftCell(s)));
+    LOOT_SLOTS_RIGHT.forEach(s => rightCol.appendChild(buildDraftCell(s)));
+
+    // Footer — moderation note + actions, so it's crystal clear what's sent
+    const editNoteEl = document.createElement('div');
+    editNoteEl.className = 'clb-edit-note';
+    editNoteEl.innerHTML = `
+      <label>Сообщение модератору (необязательно)</label>
+      <textarea id="draft-mod-note" placeholder="Например: играю на арбалетах, ранее состоял в..." rows="2"></textarea>
+    `;
+    block.appendChild(editNoteEl);
+
+    const footer = document.createElement('div');
+    footer.className = 'clb-footer';
+    const note = document.createElement('span');
+    note.className = 'clb-footer-note';
+    note.textContent = 'Имя и выбранный лут уйдут на модерацию';
+    const actions = document.createElement('div');
+    actions.className = 'clb-footer-actions';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-ghost btn-sm';
+    cancelBtn.textContent = 'Отмена';
+    cancelBtn.addEventListener('click', () => {
+      if (addBtnEl) addBtnEl.style.display = '';
+      renderCharacters();
+    });
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary btn-sm';
+    saveBtn.textContent = userIsModerator ? 'Создать персонажа' : 'Отправить на модерацию';
+    saveBtn.addEventListener('click', () => submitDraftCharacter(saveBtn, pendingLoot));
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    footer.appendChild(note);
+    footer.appendChild(actions);
+    block.appendChild(footer);
+
+    list.appendChild(block);
+    document.getElementById('draft-char-name').focus();
+  }
+
+  async function submitDraftCharacter(saveBtn, pendingLoot) {
+    const nameInput = document.getElementById('draft-char-name');
+    const name = nameInput.value.trim();
+    if (!name) { showToast('Введите имя персонажа', 'error'); nameInput.focus(); return; }
+    const note = document.getElementById('draft-mod-note').value.trim();
+
+    const weaponTypes = [];
+    ['weapon1', 'weapon2'].forEach(slot => {
+      if (pendingLoot[slot]) {
+        const item = allItems.find(i => i.id === pendingLoot[slot]);
+        if (item?.weapon_type && !weaponTypes.includes(item.weapon_type)) weaponTypes.push(item.weapon_type);
+      }
+    });
+
+    const data = {
+      name,
+      user_id: user.uid,
+      user_email: user.email,
+      status: userIsModerator ? 'approved' : 'pending',
+      previous_status: null,
+      edit_note: null,
+      moderation_note: note || null,
+      moderation_feedback: null,
+      moderated_by: userIsModerator ? user.uid : null,
+      moderated_at: userIsModerator ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+      weapons: weaponTypes,
+      desired_loot: pendingLoot,
+      won_items: {},
+      created_at: new Date().toISOString(),
+    };
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Сохранение...';
+    try {
+      await addDoc(collection(db, 'characters'), data);
+      showToast(userIsModerator ? 'Персонаж создан!' : 'Персонаж отправлен на модерацию!');
+      const addBtnEl = document.getElementById('btn-add-character');
+      if (addBtnEl) addBtnEl.style.display = '';
+      await loadCharacters();
+      renderCharacters();
+    } catch (e) {
+      showToast('Ошибка: ' + e.message, 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = userIsModerator ? 'Создать персонажа' : 'Отправить на модерацию';
+    }
+  }
 
   // ── Toast ─────────────────────────────────────────
   function showToast(msg, type = 'success') {
