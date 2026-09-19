@@ -1730,11 +1730,13 @@
       await updateDropWinner(rollState.raidId, rollState.tryId, rollState.dropId, rollState.winner.playerId, rollState.winner.nickname, rollState.queue);
 
       // ── Записываем won_items на персонажа ──────────────────────────
+      // Блокируем слот только за победу в ОСНОВНОЙ очереди — выигрыш в
+      // дополнительной не должен закрывать желаемый слот персонажа.
       // Находим конкретный ключ слота в desired_loot победителя
       // (weapon1/weapon2, ring1/ring2 или обычный слот)
       try {
         const winnerChar = allCharacters.find(c => c.id === rollState.winner.playerId);
-        if (winnerChar && rollState.itemId && rollState.itemSlot) {
+        if (winnerChar && rollState.itemId && rollState.itemSlot && rollState.queue === 'main') {
           const desired = winnerChar.desired_loot || {};
           // Ищем ключ в desired_loot где значение совпадает с выигранным itemId
           let wonKey = Object.keys(desired).find(k => desired[k] === rollState.itemId);
