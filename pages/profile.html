@@ -1058,7 +1058,8 @@
         }
 
         if (editable) {
-          iconWrap.addEventListener('click', () => openSlotPicker(slotDef, char, pendingLoot, wonItems, (newItemId) => {
+          // Клик по всей ячейке (иконка И подпись рядом), не только по иконке
+          cell.addEventListener('click', () => openSlotPicker(slotDef, char, pendingLoot, wonItems, (newItemId) => {
             pendingLoot[slotDef.id] = newItemId;
             refresh();
             // Update confirm button label
@@ -1511,13 +1512,12 @@
       <div class="clb-header-left">
         <div class="clb-char-icon" id="draft-char-icon"><i class="fa-solid fa-khanda"></i></div>
         <div>
-          <input type="text" class="draft-name-input" id="draft-char-name" placeholder="Имя персонажа" maxlength="50" />
-          <div class="clb-char-meta">
-            <span class="char-status pending"><span class="dot"></span><i class="fa-solid fa-pen-to-square"></i> Новый персонаж — заполните лут</span>
-          </div>
+          <input type="text" class="draft-name-input" id="draft-char-name" placeholder="Имя персонажа (как в гильдии)" maxlength="50" />
         </div>
       </div>
-      <div class="clb-header-right"></div>
+      <div class="clb-header-right">
+        <span class="char-status pending"><span class="dot"></span><i class="fa-solid fa-pen-to-square"></i> Новый персонаж — заполните лут</span>
+      </div>
     `;
     block.appendChild(headerEl);
 
@@ -1603,7 +1603,7 @@
           if (item) { cardEl.className = 'clb-item-card'; cardEl.innerHTML = buildItemCardHtml(item, false, slotDef.label); }
         });
 
-        iconWrap.addEventListener('click', () => openSlotPicker(slotDef, null, pendingLoot, {}, (newItemId) => {
+        cell.addEventListener('click', () => openSlotPicker(slotDef, null, pendingLoot, {}, (newItemId) => {
           pendingLoot[slotDef.id] = newItemId;
           refresh();
           updateDerivedWeaponsDraft();
