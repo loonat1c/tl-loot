@@ -316,12 +316,12 @@
     .lic-section-title { font-size: 0.68rem; font-weight: 700; color: var(--text-faint, var(--text-muted)); text-transform: uppercase; letter-spacing: 0.5px; margin: 0.7rem 0 0.45rem; }
 
     /* Equipment properties (СВОЙСТВА СНАРЯЖЕНИЯ) */
-    .lic-props-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.3rem; }
-    .lic-prop-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
-    .lic-prop-dot { color: var(--accent-soft); font-size: 0.6rem; }
+    .lic-props-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.3rem; }
+    .lic-prop-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.94rem; }
+    .lic-prop-dot { color: var(--accent-soft); font-size: 0.65rem; }
     .lic-prop-label { flex: 1; color: var(--text); }
     .lic-prop-value { color: #e2c98a; font-weight: 700; }
-    .lic-prop-lvl { font-size: 0.68rem; color: var(--text-muted); min-width: 32px; text-align: right; }
+    .lic-prop-lvl { font-size: 0.76rem; color: var(--text-muted); min-width: 32px; text-align: right; }
     .lic-props { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
     .lic-prop-tag { background: var(--bg-card); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-muted); }
 
@@ -739,11 +739,15 @@
           ${item.wiki_url ? `<a class="lic-wiki-link" href="${item.wiki_url}" target="_blank" rel="noopener"><i class="fa-solid fa-book"></i> Где добыть — Вики</a>` : ''}
         </div>
       </div>
-      <div class="lic-name">${item.name}${item.level ? ` · ур. ${item.level}` : ''}</div>
+      <div class="lic-name">${item.name}</div>
       ${(item.damage_min || item.damage_max) ? `
         <div class="lic-damage-box">
           ${item.damage_max ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Макс. ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_max}</div></div>` : ''}
           ${item.damage_min ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Базовый ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_min}</div></div>` : ''}
+        </div>` : ''}
+      ${stats.length ? `
+        <div class="lic-stats">
+          ${stats.map(s => `<div class="lic-stat"><span class="lic-stat-label">${s.label||s}</span><span class="lic-stat-value">${s.value||''}</span></div>`).join('')}
         </div>` : ''}
       ${isWeapon && (effect.name || effect.desc) ? `
         <div class="lic-effect">
@@ -752,10 +756,6 @@
             ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
             ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
           </div>
-        </div>` : ''}
-      ${stats.length ? `
-        <div class="lic-stats">
-          ${stats.map(s => `<div class="lic-stat"><span class="lic-stat-label">${s.label||s}</span><span class="lic-stat-value">${s.value||''}</span></div>`).join('')}
         </div>` : ''}
       ${!isWeapon && setBonus.name ? `
         <div class="lic-set-bonus">
@@ -1306,6 +1306,16 @@
     // Filter items by base slot + weapon type if applicable
     function getSlotItems() {
       let pool = allItems.filter(i => i.slot === slotDef.baseSlot);
+
+      // Правило гильдии: один и тот же предмет нельзя выбрать в двух слотах
+      // одновременно (например, два одинаковых кольца в ring1 и ring2).
+      const usedElsewhere = new Set(
+        Object.entries(pendingLoot)
+          .filter(([slotKey, itemId]) => slotKey !== slotDef.id && itemId)
+          .map(([, itemId]) => itemId)
+      );
+      pool = pool.filter(i => !usedElsewhere.has(i.id));
+
       if (slotDef.baseSlot === 'weapon') {
         // Determine allowed weapon types from the OTHER weapon slot
         const otherSlot = slotDef.id === 'weapon1' ? 'weapon2' : 'weapon1';
