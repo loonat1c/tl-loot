@@ -11,6 +11,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   query,
   orderBy,
   where,
@@ -224,16 +225,68 @@ export async function addTry(raidId, data) {
 }
 
 // ====================================================
+// ОЧИСТКА СЛЕДОВ ПОБЕДЫ ПРИ УДАЛЕНИИ ДРОПА/ТРАЯ
+// ====================================================
+// Удаление дропа/трая раньше не трогало:
+//   - won_items на карточке персонажа (слот оставался залоченным навсегда)
+//   - записи в loot_history (drop продолжал считаться выигранным в этом рейде)
+// Эта функция подчищает оба места ПЕРЕД тем, как сам дроп будет удалён.
+
+async function cleanupWinnerRecords(raidId, tryId, dropId, drop) {
+  if (!drop || !drop.winner_player_id) return;
+
+  // 1. Удаляем записи в loot_history, относящиеся именно к этому дропу
+  try {
+    const historyRef = collection(db, "loot_history");
+    const hq = query(
+      historyRef,
+      where("raid_id", "==", raidId),
+      where("try_id", "==", tryId),
+      where("drop_id", "==", dropId)
+    );
+    const hSnap = await getDocs(hq);
+    if (hSnap.docs.length > 0) {
+      const batch = writeBatch(db);
+      hSnap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (e) {
+    console.warn("Не удалось очистить loot_history для дропа:", e);
+  }
+
+  // 2. Снимаем блокировку слота у персонажа — удаляем ключ(и) won_items,
+  // указывающие на этот предмет
+  if (drop.item_id) {
+    try {
+      const charRef = doc(db, "characters", drop.winner_player_id);
+      const charSnap = await getDoc(charRef);
+      if (charSnap.exists()) {
+        const won = charSnap.data().won_items || {};
+        const keysToClear = Object.keys(won).filter(k => won[k] === drop.item_id);
+        if (keysToClear.length) {
+          const updates = {};
+          keysToClear.forEach(k => { updates[`won_items.${k}`] = deleteField(); });
+          await updateDoc(charRef, updates);
+        }
+      }
+    } catch (e) {
+      console.warn("Не удалось очистить won_items у персонажа:", e);
+    }
+  }
+}
+
+// ====================================================
 // УДАЛЕНИЕ ТРАЯ
 // ====================================================
 
 export async function deleteTry(raidId, tryId) {
   try {
-    // Удаляем все дропы трая
+    // Удаляем все дропы трая (с подчисткой следов победы у каждого)
     const dropsRef = collection(db, "raids", raidId, "tries", tryId, "drops");
     const dropsSnap = await getDocs(dropsRef);
     
     for (const dropDoc of dropsSnap.docs) {
+      await cleanupWinnerRecords(raidId, tryId, dropDoc.id, dropDoc.data());
       await deleteDoc(dropDoc.ref);
     }
     
@@ -296,12 +349,19 @@ export async function addDrop(raidId, tryId, data) {
 }
 
 // ====================================================
-// УДАЛЕНИЕ ДРОПА
+// УДАЛЕНИЕ ДРОПА (с подчисткой won_items / loot_history)
 // ====================================================
 
 export async function deleteDrop(raidId, tryId, dropId) {
   try {
     const dropRef = doc(db, "raids", raidId, "tries", tryId, "drops", dropId);
+
+    // Подтягиваем сам дроп, чтобы знать, был ли у него победитель
+    const dropSnap = await getDoc(dropRef);
+    if (dropSnap.exists()) {
+      await cleanupWinnerRecords(raidId, tryId, dropId, dropSnap.data());
+    }
+
     await deleteDoc(dropRef);
     
     await updateRaidDropCount(raidId);
