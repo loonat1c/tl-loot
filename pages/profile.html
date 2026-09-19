@@ -4,1075 +4,434 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Профиль — TL Loot</title>
-
   <link rel="stylesheet" href="../css/main.css" />
-  
-  <!-- Font Awesome для иконок -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-
   <style>
-    /* ── SLOT MAP: constants.js → profile loot slots ── */
-    /*
-      constants.js slot ids:  helmet, gloves, pants, boots, necklace, ring, belt, cloak, bracelet, weapon
-      loot slot ids used here: helmet, gloves, pants, boots, necklace, ring1, ring2, belt, cloak, bracelet, weapon1, weapon2
-    */
+    .profile-container { max-width: 1200px; margin: 0 auto; }
 
-    /* ── Layout ──────────────────────────────────────── */
-    .profile-container { max-width: 860px; margin: 0 auto; }
-
-    /* ── Profile header ───────────────────────────────── */
+    /* ── Profile header ── */
     .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
+      display: flex; align-items: center; gap: 1.5rem;
       padding: 1.75rem 2rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      margin-bottom: 2rem;
-      position: relative;
-      overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; margin-bottom: 2rem;
+      position: relative; overflow: hidden;
     }
-
     .profile-header::after {
-      content: '';
-      position: absolute;
-      inset: 0;
+      content: ''; position: absolute; inset: 0;
       background: radial-gradient(ellipse at top left, var(--accent-glow) 0%, transparent 60%);
       pointer-events: none;
     }
-
     .profile-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       background: linear-gradient(135deg, var(--accent), #4f2fcf);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: #fff; flex-shrink: 0;
       box-shadow: 0 0 0 3px var(--bg-card), 0 0 0 5px var(--accent);
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
     }
-
     .profile-info { position: relative; z-index: 1; flex: 1; }
-
-    .profile-name-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .profile-info h2 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin: 0;
-      color: var(--text);
-    }
-
+    .profile-name-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; }
+    .profile-info h2 { font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--text); }
     .btn-edit-profile {
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text-muted); width: 32px; height: 32px;
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
     }
-
-    .btn-edit-profile:hover {
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-      border-color: var(--accent);
-    }
-
+    .btn-edit-profile:hover { background: var(--accent-glow); color: var(--accent-soft); border-color: var(--accent); }
     .profile-info .username {
-      color: var(--text-muted);
-      font-size: 0.83rem;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      color: var(--text-muted); font-size: 0.83rem; margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.4rem;
     }
-
-    .profile-info .username i {
-      font-size: 0.75rem;
-      opacity: 0.7;
-    }
-
     .profile-role {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-      border: 1px solid var(--accent);
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: var(--accent-glow); color: var(--accent-soft); border: 1px solid var(--accent);
     }
+    .edit-profile-form { display: none; margin-top: 0.75rem; padding: 1rem; background: var(--bg-card2); border-radius: 10px; border: 1px solid var(--border); }
+    .edit-profile-form.active { display: block; }
+    .edit-profile-form .form-group { margin-bottom: 0.75rem; }
+    .edit-profile-form label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .edit-profile-form input { width: 100%; padding: 0.6rem 0.75rem; font-size: 0.9rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); }
+    .edit-profile-form input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+    .btn-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .btn-group .btn { flex: 1; padding: 0.5rem; font-size: 0.85rem; }
 
-    /* ── Edit profile modal ──────────────────────────── */
-    .edit-profile-form {
-      display: none;
-      margin-top: 0.75rem;
-      padding: 1rem;
-      background: var(--bg-card2);
-      border-radius: 10px;
-      border: 1px solid var(--border);
+    /* ══════════════════════════════════════════════════
+       CHARACTER LOOT BLOCK
+    ══════════════════════════════════════════════════ */
+    .char-loot-block {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;
     }
+    .char-loot-block.pending  { border-left: 3px solid var(--warning); }
+    .char-loot-block.approved { border-left: 3px solid var(--success); }
+    .char-loot-block.rejected { border-left: 3px solid var(--danger); opacity: 0.72; }
 
-    .edit-profile-form.active {
-      display: block;
+    /* Header */
+    .clb-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 1.5rem; gap: 1rem; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
     }
-
-    .edit-profile-form .form-group {
-      margin-bottom: 0.75rem;
+    .clb-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .clb-char-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem; flex-shrink: 0;
     }
-
-    .edit-profile-form label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 0.4rem;
-    }
-
-    .edit-profile-form input {
-      width: 100%;
-      padding: 0.6rem 0.75rem;
-      font-size: 0.9rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      transition: border-color 0.15s;
-    }
-
-    .edit-profile-form input:focus {
-      border-color: var(--accent);
-      outline: none;
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .btn-group .btn {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 0.85rem;
-    }
-
-    /* ── Section header ───────────────────────────────── */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .section-title {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    /* ── Character card ───────────────────────────────── */
-    .character-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      margin-bottom: 0.75rem;
-      overflow: hidden;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .character-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 28px var(--accent-glow);
-    }
-
-    .character-card.pending  { border-left: 3px solid var(--warning); }
-    .character-card.approved { border-left: 3px solid var(--success); }
-    .character-card.rejected { border-left: 3px solid var(--danger); opacity: 0.72; }
-
-    .char-card-inner { padding: 1.25rem 1.5rem; }
-
-    .char-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .char-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .char-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.35rem;
-      flex-shrink: 0;
-    }
-
-    .char-name {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 0.3rem;
-    }
-
+    .clb-char-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .clb-char-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
     .char-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
       border: 1px solid;
     }
-
-    .char-status .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-      flex-shrink: 0;
-    }
-
+    .char-status .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
     .char-status.pending  { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.35); }
     .char-status.approved { background: rgba(34,197,94,0.12);  color: var(--success); border-color: rgba(34,197,94,0.35); }
     .char-status.rejected { background: rgba(239,68,68,0.12);  color: var(--danger);  border-color: rgba(239,68,68,0.35); }
+    .weapon-tag { background: var(--bg-card2); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border); }
+    .clb-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .clb-progress {
+      font-size: 0.75rem; color: var(--text-muted);
+      background: var(--bg-card2); padding: 0.25rem 0.75rem;
+      border-radius: 20px; border: 1px solid var(--border);
+    }
+    .clb-progress span { color: var(--success); font-weight: 700; }
 
-    .char-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-
-    .char-info-grid {
+    /* ── Loot layout: slots + silhouette + card ── */
+    .clb-body {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      background: var(--bg-card2);
-      border-radius: 10px;
-      padding: 0.85rem 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .char-info-block .label {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 0.4rem;
-    }
-
-    .char-weapons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-
-    .weapon-tag {
-      background: var(--bg-card);
-      padding: 0.25rem 0.7rem;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      border: 1px solid var(--border);
-    }
-
-    .date-val { font-size: 0.85rem; color: var(--text-muted); }
-
-    .char-loot {
-      border-top: 1px solid var(--border);
-      padding-top: 0.75rem;
-      margin-top: 0.25rem;
-    }
-
-    .char-loot .label {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 0.4rem;
-    }
-
-    .char-loot-items { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-
-    .loot-tag {
-      background: var(--accent-glow);
-      padding: 0.25rem 0.7rem;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      border: 1px solid var(--accent);
-      color: var(--accent-soft);
-    }
-
-    .char-moderation-note,
-    .char-moderation-feedback {
-      margin-top: 0.75rem;
-      padding: 0.65rem 0.85rem;
-      background: var(--bg-card2);
-      border-radius: 8px;
-      font-size: 0.83rem;
-      color: var(--text-muted);
-    }
-
-    .char-moderation-note     { border-left: 3px solid var(--warning); }
-    .char-moderation-feedback { border-left: 3px solid var(--danger); }
-
-    /* Buttons */
-    .btn-edit-char {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.3rem 0.75rem;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--bg-card2);
-      color: var(--text);
-      transition: border-color 0.15s;
-    }
-
-    .btn-edit-char:hover { border-color: var(--accent); }
-    .btn-edit-char:active { transform: scale(0.96); }
-
-    .btn-edit-approved {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.3rem 0.75rem;
-      border-radius: 7px;
-      border: 1px solid var(--accent);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--accent-glow);
-      color: var(--accent-soft);
-      transition: all 0.15s;
-    }
-
-    .btn-edit-approved:hover { background: var(--accent); color: #fff; }
-    .btn-edit-approved:active { transform: scale(0.96); }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 3rem 2rem;
-      border: 1.5px dashed rgba(255,255,255,0.08);
-      border-radius: 14px;
-      color: var(--text-muted);
-    }
-
-    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
-    .empty-state p    { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; font-weight: 500; }
-    .empty-state small { font-size: 0.82rem; }
-
-    /* ══════════════════════════════════════════════════
-       MODAL — redesigned
-       ══════════════════════════════════════════════════ */
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.25s, visibility 0.25s;
-    }
-
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 560px;
-      max-height: 92vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transform: scale(0.95) translateY(12px);
-      transition: transform 0.25s ease;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.55);
-    }
-
-    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
-
-    /* Modal top accent bar */
-    .modal-accent-bar {
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-soft), transparent);
-      flex-shrink: 0;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.25rem 1.5rem 0;
-      flex-shrink: 0;
-    }
-
-    .modal-header-left { display: flex; align-items: center; gap: 0.75rem; }
-
-    .modal-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 9px;
-      background: var(--accent-glow);
-      border: 1px solid var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    .modal-header h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .modal-header .modal-subtitle {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 0.1rem;
-    }
-
-    .btn-close {
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 1rem;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      flex-shrink: 0;
-    }
-
-    .btn-close:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
-
-    /* Scrollable body */
-    .modal-body {
-      padding: 1.25rem 1.5rem;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    /* Field label */
-    .field-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 0.3px;
-      margin-bottom: 0.4rem;
-      display: block;
-    }
-
-    .field-required { color: var(--accent-soft); margin-left: 2px; }
-
-    /* Section divider inside modal */
-    .modal-section {
-      margin-bottom: 1.25rem;
-    }
-
-    .modal-section-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-faint);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border-soft);
-    }
-
-    /* Weapon grid */
-    .weapon-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    /* Loot slots */
-    .loot-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-    }
-
-    /* ── Searchable select ──────────────────────────── */
-    .loot-slot { display: flex; flex-direction: column; gap: 0.3rem; }
-
-    .loot-slot-label {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 0.2px;
-    }
-
-    .loot-select-wrap { position: relative; }
-
-    .select-display {
-      width: 100%;
-      padding: 0.4rem 0.75rem;
-      font-size: 0.82rem;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      cursor: pointer;
-      user-select: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.4rem;
-    }
-
-    .select-display:hover { border-color: var(--accent); }
-    .select-display.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-
-    .select-display .select-arrow {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      flex-shrink: 0;
-      transition: transform 0.15s;
-    }
-
-    .select-display.active .select-arrow { transform: rotate(180deg); }
-
-    .select-display .select-val {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-    }
-
-    .select-display .select-val.empty { color: var(--text-muted); font-style: italic; font-size: 0.78rem; }
-
-    .dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0; right: 0;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      z-index: 60;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-      overflow: hidden;
-    }
-
-    .dropdown.open { display: block; }
-
-    .search-input {
-      width: 100%;
-      padding: 0.45rem 0.75rem;
-      font-size: 0.82rem;
-      background: var(--bg-card2);
-      border: none;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      outline: none;
-    }
-
-    .search-input:focus { border-color: var(--accent); }
-
-    .items-wrap { max-height: 180px; overflow-y: auto; }
-
-    .dropdown .item {
-      padding: 0.4rem 0.75rem;
-      cursor: pointer;
-      font-size: 0.82rem;
-      color: var(--text);
-      transition: background 0.1s;
-    }
-
-    .dropdown .item:hover { background: var(--bg-hover); }
-    .dropdown .item.selected { background: var(--accent-glow); color: var(--accent-soft); }
-
-    .dropdown .item.empty-item {
-      color: var(--text-muted);
-      font-style: italic;
-      font-size: 0.78rem;
-    }
-
-    .dropdown .item.empty-item:hover { background: transparent; cursor: default; }
-
-    /* Footer */
-    .modal-footer {
-      padding: 1rem 1.5rem 1.25rem;
-      display: flex;
-      gap: 0.5rem;
-      flex-shrink: 0;
-      border-top: 1px solid var(--border-soft);
-      background: var(--bg-card);
-    }
-
-    .modal-footer .btn-primary { flex: 1; }
-
-    /* Error */
-    .field-error {
-      display: none;
-      font-size: 0.8rem;
-      color: var(--danger);
-      margin-top: 0.25rem;
-      padding: 0.5rem 0.75rem;
-      background: var(--danger-bg);
-      border-radius: 6px;
-      border: 1px solid rgba(239,68,68,0.2);
-    }
-
-    /* ══════════════════════════════════════════════════
-       LOOT DISPLAY
-    ══════════════════════════════════════════════════ */
-    .loot-display {
-      margin-top: 2rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .loot-display-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .loot-display-body {
-      display: grid;
-      grid-template-columns: 1fr 200px 1fr;
-      min-height: 500px;
-    }
-
-    .loot-col {
-      padding: 1.25rem 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .loot-col-left  { align-items: flex-end; }
-    .loot-col-right { align-items: flex-start; }
-
-    .loot-silhouette {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
+      grid-template-columns: 260px 1fr 360px;
+      min-height: 480px;
       position: relative;
     }
 
+    /* Columns */
+    .loot-col {
+      padding: 1.25rem 0.75rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      position: relative; z-index: 2;
+    }
+    .loot-col-left  { align-items: flex-end; }
+    .loot-col-right { align-items: flex-start; }
+
+    /* Silhouette center */
+    .loot-silhouette {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
     .loot-silhouette img {
-      height: 480px;
-      width: auto;
-      object-fit: contain;
-      opacity: 0.9;
-      filter: drop-shadow(0 0 24px rgba(124,58,237,0.2));
+      position: absolute;
+      height: 100%; max-height: 520px;
+      width: auto; object-fit: contain;
+      opacity: 0.08;
+      filter: drop-shadow(0 0 40px rgba(124,58,237,0.15));
+      pointer-events: none; user-select: none;
     }
-
     .loot-silhouette-placeholder {
-      height: 480px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.04);
-      font-size: 6rem;
-      user-select: none;
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7rem; opacity: 0.03;
+      pointer-events: none; user-select: none;
     }
 
-    /* ── Ячейка слота ── */
+    /* Slot cell */
     .loot-slot-cell {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      padding: 0.3rem 0.5rem;
-      border-radius: 10px;
-      cursor: default;
+      display: flex; align-items: center; gap: 0.55rem;
+      padding: 0.3rem 0.5rem; border-radius: 10px;
       transition: background 0.15s;
-      max-width: 210px;
-      width: 100%;
+      max-width: 240px; width: 100%;
     }
-
     .loot-slot-cell.has-item { cursor: pointer; }
     .loot-slot-cell.has-item:hover { background: rgba(255,255,255,0.04); }
     .loot-slot-cell.active-slot { background: var(--accent-glow); }
     .loot-col-left .loot-slot-cell { flex-direction: row-reverse; }
 
+    /* Slot icon */
     .slot-cell-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 10px;
-      flex-shrink: 0;
-      position: relative;
-      overflow: hidden;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 54px; height: 54px; border-radius: 10px; flex-shrink: 0;
+      position: relative; overflow: hidden;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; transition: border-color 0.2s, box-shadow 0.2s;
     }
-
-    .slot-cell-icon img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
-
-    .slot-cell-icon.quality-epic {
-      background: #1a0a2e;
-      border-color: rgba(168,85,247,0.45);
-      box-shadow: inset 0 0 10px rgba(168,85,247,0.12);
-    }
-
-    .slot-cell-icon.quality-epic_ii {
-      background: #1a0a2e;
-      border-color: rgba(139,92,246,0.55);
-      box-shadow: inset 0 0 14px rgba(139,92,246,0.18);
-    }
-
+    .slot-cell-icon img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+    .slot-cell-icon.quality-epic { background: #1a0a2e; border-color: rgba(168,85,247,0.45); box-shadow: inset 0 0 10px rgba(168,85,247,0.12); }
+    .slot-cell-icon.quality-epic_ii { background: #1a0a2e; border-color: rgba(139,92,246,0.55); box-shadow: inset 0 0 14px rgba(139,92,246,0.18); }
     .slot-cell-icon.quality-epic_ii::before {
-      content: '';
-      position: absolute;
-      inset: -40%;
-      background:
-        radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
-        radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4)  0%, transparent 60%);
+      content: ''; position: absolute; inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
       animation: epic-fog 4s ease-in-out infinite alternate;
-      z-index: 0;
-      pointer-events: none;
+      z-index: 0; pointer-events: none;
     }
-
     @keyframes epic-fog {
       0%   { transform: translate(0%,0%)   scale(1);    opacity: 0.85; }
       33%  { transform: translate(8%,-5%)  scale(1.08); opacity: 1;    }
       66%  { transform: translate(-6%,8%)  scale(1.05); opacity: 0.9;  }
       100% { transform: translate(5%,5%)   scale(1.1);  opacity: 1;    }
     }
-
     .slot-cell-icon.obtained {
       border-color: rgba(34,197,94,0.6) !important;
       box-shadow: 0 0 10px rgba(34,197,94,0.18), inset 0 0 6px rgba(34,197,94,0.08) !important;
     }
-
-    .slot-cell-icon.empty-slot {
-      opacity: 0.25;
-      border-style: dashed;
-      font-size: 1.2rem;
-    }
-
+    .slot-cell-icon.empty-slot { opacity: 0.2; border-style: dashed; font-size: 1.2rem; }
+    .slot-cell-icon.editable-slot { cursor: pointer; }
+    .slot-cell-icon.editable-slot:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
     .slot-obtained-badge {
-      position: absolute;
-      top: -4px; right: -4px;
-      width: 17px; height: 17px;
-      background: #22c55e;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.55rem;
-      color: #fff;
-      font-weight: 700;
-      z-index: 10;
-      border: 2px solid var(--bg-card);
+      position: absolute; top: -4px; right: -4px;
+      width: 17px; height: 17px; background: #22c55e;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.55rem; color: #fff; font-weight: 700;
+      z-index: 10; border: 2px solid var(--bg-card);
     }
+    .slot-edit-hint {
+      position: absolute; inset: 0;
+      background: rgba(124,58,237,0.35);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; opacity: 0;
+      transition: opacity 0.15s; z-index: 5; border-radius: 9px;
+    }
+    .slot-cell-icon.editable-slot:hover .slot-edit-hint { opacity: 1; }
 
+    /* Slot text */
     .slot-cell-info { flex: 1; min-width: 0; }
-
-    .slot-cell-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-      margin-bottom: 0.15rem;
-    }
-
-    .slot-cell-name {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 130px;
-    }
-
-    .loot-col-left .slot-cell-name { text-align: right; }
+    .slot-cell-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.15rem; }
+    .slot-cell-name { font-size: 0.78rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .loot-col-left .slot-cell-name  { text-align: right; }
     .loot-col-left .slot-cell-label { text-align: right; }
-
     .slot-cell-name.epic-name    { color: #c4b5fd; }
     .slot-cell-name.epic2-name   { color: #a78bfa; }
     .slot-cell-name.empty-name   { color: var(--text-muted); font-style: italic; font-weight: 400; font-size: 0.72rem; }
     .slot-cell-name.obtained-name { color: #4ade80; }
 
-    /* ── Карточка предмета ── */
-    .loot-item-card {
-      border-top: 1px solid var(--border);
-      padding: 1rem 1.5rem;
+    /* ── Item detail card (right panel) ── */
+    .clb-item-card {
+      border-left: 1px solid var(--border);
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 0;
     }
-
-    .loot-item-card.hidden { display: none; }
+    .clb-item-card.empty-card {
+      align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 0.85rem; text-align: center;
+    }
 
     .lic-obtained-banner {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: flex; align-items: center; gap: 0.5rem;
       padding: 0.45rem 0.75rem;
-      background: rgba(34,197,94,0.08);
-      border: 1px solid rgba(34,197,94,0.25);
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
-      font-size: 0.78rem;
-      color: #4ade80;
-      font-weight: 600;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 8px; margin-bottom: 0.75rem;
+      font-size: 0.78rem; color: #4ade80; font-weight: 600;
     }
-
     .lic-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
-
     .lic-img-wrap {
-      width: 60px; height: 60px;
-      border-radius: 10px;
-      flex-shrink: 0;
-      position: relative;
-      overflow: hidden;
-      background: #1a0a2e;
-      border: 1px solid rgba(201,170,113,0.3);
+      width: 60px; height: 60px; border-radius: 10px; flex-shrink: 0;
+      position: relative; overflow: hidden;
+      background: #1a0a2e; border: 1px solid rgba(201,170,113,0.3);
     }
-
-    .lic-img-wrap img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      position: relative; z-index: 1;
-    }
-
+    .lic-img-wrap img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
     .lic-img-wrap.quality-epic    { border-color: rgba(168,85,247,0.4); }
     .lic-img-wrap.quality-epic_ii { border-color: rgba(139,92,246,0.5); }
-
     .lic-img-wrap.quality-epic_ii::before {
-      content: '';
-      position: absolute;
-      inset: -40%;
-      background:
-        radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
-        radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4)  0%, transparent 60%);
-      animation: epic-fog 4s ease-in-out infinite alternate;
-      z-index: 0;
+      content: ''; position: absolute; inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate; z-index: 0;
     }
-
-    .lic-name {
-      font-size: 0.98rem;
-      font-weight: 700;
-      color: #e2c98a;
-      font-family: 'HeaderFont', var(--font);
-      margin-bottom: 0.3rem;
-    }
-
+    .lic-name { font-size: 0.98rem; font-weight: 700; color: #e2c98a; font-family: 'HeaderFont', var(--font); margin-bottom: 0.3rem; line-height: 1.3; }
     .lic-meta { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-
-    .lic-badge {
-      font-size: 0.65rem;
-      padding: 0.12rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 600;
-    }
-
+    .lic-badge { font-size: 0.65rem; padding: 0.12rem 0.5rem; border-radius: 4px; font-weight: 600; }
     .lic-badge.slot  { color: #c9aa71; background: rgba(201,170,113,0.1); border: 1px solid rgba(201,170,113,0.25); }
     .lic-badge.qual  { color: #c4b5fd; background: rgba(168,85,247,0.1);  border: 1px solid rgba(168,85,247,0.22); }
     .lic-badge.level { color: var(--text-muted); background: var(--bg-card2); border: 1px solid var(--border); }
-
-    .lic-damage {
-      font-size: 0.88rem; font-weight: 700; color: #e2c98a;
-      padding: 0.38rem 0.6rem;
-      background: rgba(201,170,113,0.07);
-      border-radius: 8px;
-      border: 1px solid rgba(201,170,113,0.18);
-      margin-bottom: 0.5rem;
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-
+    .lic-damage { font-size: 0.88rem; font-weight: 700; color: #e2c98a; padding: 0.38rem 0.6rem; background: rgba(201,170,113,0.07); border-radius: 8px; border: 1px solid rgba(201,170,113,0.18); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
     .lic-damage-label { font-weight: 400; color: var(--text-muted); font-size: 0.72rem; }
-
-    .lic-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.15rem 1rem;
-      padding: 0.45rem 0.6rem;
-      background: var(--bg-card);
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      margin-bottom: 0.5rem;
-    }
-
+    .lic-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem 1rem; padding: 0.45rem 0.6rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
     .lic-stat { font-size: 0.76rem; display: flex; justify-content: space-between; gap: 0.4rem; }
     .lic-stat-label { color: var(--text-muted); }
     .lic-stat-value { color: #e2c98a; font-weight: 600; }
-
-    .lic-set-bonus {
-      padding: 0.45rem 0.65rem;
-      background: rgba(201,170,113,0.05);
-      border-radius: 8px;
-      border: 1px solid rgba(201,170,113,0.18);
-      margin-bottom: 0.5rem;
-    }
-
+    .lic-set-bonus { padding: 0.45rem 0.65rem; background: rgba(201,170,113,0.05); border-radius: 8px; border: 1px solid rgba(201,170,113,0.18); margin-bottom: 0.5rem; }
     .lic-set-name  { font-weight: 700; color: #c9aa71; font-size: 0.82rem; margin-bottom: 0.2rem; }
     .lic-set-piece { font-size: 0.73rem; color: var(--text-muted); }
     .lic-set-piece span { color: #8a6f3e; font-weight: 600; margin-right: 0.25rem; }
-
-    .lic-effect {
-      display: flex; gap: 0.6rem;
-      padding: 0.5rem 0.65rem;
-      background: rgba(168,85,247,0.06);
-      border-radius: 8px;
-      border: 1px solid rgba(168,85,247,0.18);
-      margin-bottom: 0.5rem;
-    }
-
+    .lic-effect { display: flex; gap: 0.6rem; padding: 0.5rem 0.65rem; background: rgba(168,85,247,0.06); border-radius: 8px; border: 1px solid rgba(168,85,247,0.18); margin-bottom: 0.5rem; }
     .lic-effect img { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
     .lic-effect-name { font-size: 0.76rem; font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
     .lic-effect-desc { font-size: 0.73rem; color: var(--text-muted); }
-
     .lic-props { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
-    .lic-prop-tag {
-      background: var(--bg-card);
-      padding: 0.1rem 0.45rem;
-      border-radius: 4px;
-      font-size: 0.65rem;
+    .lic-prop-tag { background: var(--bg-card); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-muted); }
+    .lic-flavor { margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); font-style: italic; line-height: 1.5; }
+    .lic-boss { margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); }
+    .lic-boss img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(201,170,113,0.25); }
+
+    /* ── Footer actions ── */
+    .clb-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .clb-footer-note { font-size: 0.78rem; color: var(--text-muted); }
+    .clb-footer-actions { display: flex; gap: 0.5rem; }
+
+    /* ── Edit mode ── */
+    .clb-edit-note {
+      margin: 0 1.5rem 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card2); border-radius: 10px; border: 1px solid var(--border);
+    }
+    .clb-edit-note label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .clb-edit-note textarea { width: 100%; padding: 0.5rem 0.7rem; font-size: 0.85rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); resize: vertical; min-height: 52px; }
+    .clb-edit-note textarea:focus { border-color: var(--accent); outline: none; }
+
+    /* ── Pending section (no loot yet) ── */
+    .clb-pending-body {
+      padding: 1.5rem;
+    }
+    .clb-info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.75rem; background: var(--bg-card2);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;
+    }
+    .clb-info-block .label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+    .date-val { font-size: 0.85rem; color: var(--text-muted); }
+    .char-moderation-note, .char-moderation-feedback {
+      margin-top: 0.75rem; padding: 0.65rem 0.85rem;
+      background: var(--bg-card2); border-radius: 8px; font-size: 0.83rem; color: var(--text-muted);
+    }
+    .char-moderation-note     { border-left: 3px solid var(--warning); }
+    .char-moderation-feedback { border-left: 3px solid var(--danger); }
+
+    /* ── Buttons ── */
+    .btn-edit-char {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.75rem; border-radius: 7px; border: 1px solid var(--border);
+      font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      background: var(--bg-card2); color: var(--text); transition: border-color 0.15s;
+    }
+    .btn-edit-char:hover { border-color: var(--accent); }
+    .btn-edit-approved {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.75rem; border-radius: 7px; border: 1px solid var(--accent);
+      font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      background: var(--accent-glow); color: var(--accent-soft); transition: all 0.15s;
+    }
+    .btn-edit-approved:hover { background: var(--accent); color: #fff; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 3rem 2rem; border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 14px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; font-weight: 500; }
+
+    /* ══════════════════════════════════════════════════
+       MODAL — character edit
+    ══════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      opacity: 0; visibility: hidden; transition: opacity 0.25s, visibility 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      width: 100%; max-width: 480px; max-height: 92vh; overflow: hidden;
+      display: flex; flex-direction: column;
+      transform: scale(0.95) translateY(12px); transition: transform 0.25s ease;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-accent-bar { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-soft), transparent); flex-shrink: 0; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem 0; flex-shrink: 0; }
+    .modal-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .modal-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--accent-glow); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .modal-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .modal-header .modal-subtitle { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .btn-close { background: var(--bg-card2); border: 1px solid var(--border); color: var(--text-muted); font-size: 1rem; cursor: pointer; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    .btn-close:hover { background: rgba(239,68,68,0.1); color: var(--danger); border-color: var(--danger); }
+    .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
+    .field-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.3px; margin-bottom: 0.4rem; display: block; }
+    .field-required { color: var(--accent-soft); margin-left: 2px; }
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-section-title { font-size: 0.7rem; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-soft); }
+    .field-error { display: none; font-size: 0.8rem; color: var(--danger); margin-top: 0.25rem; padding: 0.5rem 0.75rem; background: var(--danger-bg); border-radius: 6px; border: 1px solid rgba(239,68,68,0.2); }
+    .modal-footer { padding: 1rem 1.5rem 1.25rem; display: flex; gap: 0.5rem; flex-shrink: 0; border-top: 1px solid var(--border-soft); background: var(--bg-card); }
+    .modal-footer .btn-primary { flex: 1; }
+
+    /* ══════════════════════════════════════════════════
+       MODAL — slot item picker
+    ══════════════════════════════════════════════════ */
+    .slot-picker-modal { max-width: 440px; }
+    .slot-picker-search { padding: 0.5rem 0.75rem; font-size: 0.88rem; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%; margin-bottom: 0.75rem; }
+    .slot-picker-search:focus { border-color: var(--accent); outline: none; }
+    .slot-picker-list { max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; }
+    .slot-picker-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 0.85rem; cursor: pointer;
+      border-bottom: 1px solid var(--border); font-size: 0.85rem;
+      transition: background 0.12s;
+    }
+    .slot-picker-row:last-child { border-bottom: none; }
+    .slot-picker-row:hover { background: var(--bg-card2); }
+    .slot-picker-row.selected { background: var(--accent-glow); border-left: 2px solid var(--accent); }
+    .slot-picker-row.clear-row { color: var(--text-muted); font-style: italic; }
+    .slot-picker-img {
+      width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
+      position: relative; overflow: hidden; background: var(--bg-card2);
       border: 1px solid var(--border);
-      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
     }
-
-    .lic-flavor {
-      margin-top: 0.45rem;
-      padding-top: 0.45rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-style: italic;
-      line-height: 1.5;
+    .slot-picker-img img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+    .slot-picker-img.quality-epic    { background: #1a0a2e; border-color: rgba(168,85,247,0.4); }
+    .slot-picker-img.quality-epic_ii { background: #1a0a2e; border-color: rgba(139,92,246,0.5); }
+    .slot-picker-img.quality-epic_ii::before {
+      content: ''; position: absolute; inset: -40%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+                  radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate; z-index: 0;
     }
+    .slot-picker-name { font-weight: 600; }
+    .slot-picker-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
 
-    .lic-boss {
-      margin-top: 0.45rem;
-      padding-top: 0.45rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .lic-boss img {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1px solid rgba(201,170,113,0.25);
-    }
-
-    .lic-empty {
-      text-align: center;
-      padding: 1.25rem;
-      color: var(--text-muted);
-      font-size: 0.82rem;
-    }
-
-    /* ── Responsive ───────────────────────────────────── */
-    @media (max-width: 720px) {
-      .loot-display-body { grid-template-columns: 1fr 70px 1fr; }
-      .loot-silhouette img { height: 360px; }
-      .loot-silhouette-placeholder { height: 360px; }
-      .slot-cell-icon { width: 42px; height: 42px; font-size: 1.1rem; }
-      .slot-cell-name { font-size: 0.7rem; max-width: 90px; }
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .clb-body { grid-template-columns: 220px 1fr 300px; }
+      .slot-cell-icon { width: 46px; height: 46px; }
+      .slot-cell-name { max-width: 120px; }
       .lic-stats { grid-template-columns: 1fr; }
     }
-
-    @media (max-width: 640px) {
-      .profile-header { flex-direction: column; text-align: center; }
-      .profile-name-row { justify-content: center; }
-      .weapon-grid { grid-template-columns: 1fr; }
-      .loot-grid   { grid-template-columns: 1fr; }
-      .char-info-grid  { grid-template-columns: 1fr; }
-      .char-top        { flex-direction: column; }
-      .char-actions    { justify-content: flex-start; }
-    }
-
-    @media (max-width: 480px) {
-      .loot-display-body { grid-template-columns: 1fr; }
+    @media (max-width: 700px) {
+      .clb-body { grid-template-columns: 1fr; min-height: auto; }
       .loot-silhouette { display: none; }
+      .clb-item-card { border-left: none; border-top: 1px solid var(--border); }
       .loot-col-left { align-items: flex-start; }
       .loot-col-left .loot-slot-cell { flex-direction: row; }
-      .loot-col-left .slot-cell-name { text-align: left; }
+      .loot-col-left .slot-cell-name  { text-align: left; }
       .loot-col-left .slot-cell-label { text-align: left; }
+      .clb-info-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .profile-header { flex-direction: column; text-align: center; }
+      .profile-name-row { justify-content: center; }
     }
   </style>
 </head>
-
 <body>
 
 <nav class="navbar" id="main-nav"></nav>
 
 <main class="container profile-container">
 
+  <!-- Profile header -->
   <div class="profile-header" id="profile-header">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
@@ -1087,8 +446,6 @@
         <span id="username-text">—</span>
       </div>
       <span class="profile-role" id="profile-role">guest</span>
-      
-      <!-- Форма редактирования -->
       <div class="edit-profile-form" id="edit-profile-form">
         <div class="form-group">
           <label for="edit-display-name">Имя пользователя</label>
@@ -1102,88 +459,49 @@
     </div>
   </div>
 
-  <div class="characters-section">
-    <div class="section-header">
-      <span class="section-title">Персонаж</span>
-      <button class="btn btn-primary btn-sm" id="btn-add-character">+ Добавить персонажа</button>
-    </div>
+  <!-- Characters -->
+  <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <span class="section-title" style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;">Персонаж</span>
+    <button class="btn btn-primary btn-sm" id="btn-add-character">+ Добавить персонажа</button>
+  </div>
 
-    <div id="characters-list">
-      <div class="empty-state">
-        <span class="icon">🎮</span>
-        <p>У вас пока нет персонажа</p>
-        <small>Создайте персонажа, чтобы участвовать в рейдах</small>
-      </div>
+  <div id="characters-list">
+    <div class="empty-state">
+      <span class="icon">🎮</span>
+      <p>У вас пока нет персонажа</p>
+      <small>Создайте персонажа, чтобы участвовать в рейдах</small>
     </div>
   </div>
 
 </main>
 
-
-<!-- ── MODAL ─────────────────────────────────────────── -->
+<!-- ── MODAL: character name edit ── -->
 <div class="modal-overlay hidden" id="modal-character">
   <div class="modal">
     <div class="modal-accent-bar"></div>
-
     <div class="modal-header">
       <div class="modal-header-left">
         <div class="modal-icon" id="modal-char-icon">⚔️</div>
         <div>
-          <h3 id="modal-char-title">Добавить персонажа</h3>
-          <div class="modal-subtitle" id="modal-char-subtitle">Заполните данные и отправьте на модерацию</div>
+          <h3 id="modal-char-title">Редактировать персонажа</h3>
+          <div class="modal-subtitle" id="modal-char-subtitle">Изменения уйдут на модерацию</div>
         </div>
       </div>
       <button class="btn-close" id="btn-char-close">✕</button>
     </div>
-
     <div class="modal-body">
       <input type="hidden" id="edit-char-id" />
       <input type="hidden" id="edit-char-status" />
-
-      <!-- Имя -->
       <div class="modal-section">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="field-label">Имя персонажа <span class="field-required">*</span></label>
-          <input type="text" id="f-char-name" placeholder="Как вас знают в гильдии" />
-        </div>
+        <label class="field-label">Имя персонажа <span class="field-required">*</span></label>
+        <input type="text" id="f-char-name" placeholder="Как вас знают в гильдии" />
       </div>
-
-      <!-- Оружие -->
-      <div class="modal-section">
-        <div class="modal-section-title">Оружие</div>
-        <div class="weapon-grid">
-          <div class="form-group" style="margin-bottom:0">
-            <label class="field-label">Основное <span class="field-required">*</span></label>
-            <select id="f-char-weapon1">
-              <option value="">— выбери —</option>
-            </select>
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="field-label">Дополнительное</label>
-            <select id="f-char-weapon2">
-              <option value="">— не выбрано —</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Желаемый лут -->
-      <div class="modal-section">
-        <div class="modal-section-title">Желаемый лут</div>
-        <div class="loot-grid" id="loot-selection"></div>
-      </div>
-
-      <!-- Заметка -->
       <div class="modal-section" style="margin-bottom:0">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="field-label">Сообщение модератору</label>
-          <textarea id="f-moderation-note" placeholder="Дополнительная информация..." rows="2" style="resize:vertical; min-height:52px;"></textarea>
-        </div>
+        <label class="field-label">Сообщение модератору</label>
+        <textarea id="f-moderation-note" placeholder="Дополнительная информация..." rows="2" style="resize:vertical;min-height:52px;width:100%;padding:0.5rem 0.7rem;font-size:0.85rem;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;color:var(--text);"></textarea>
       </div>
-
       <div id="char-error" class="field-error"></div>
     </div>
-
     <div class="modal-footer">
       <button class="btn btn-primary" id="btn-char-save">Отправить на модерацию</button>
       <button class="btn btn-ghost" id="btn-char-cancel">Отмена</button>
@@ -1191,22 +509,46 @@
   </div>
 </div>
 
+<!-- ── MODAL: slot item picker ── -->
+<div class="modal-overlay hidden" id="modal-slot-picker">
+  <div class="modal slot-picker-modal">
+    <div class="modal-accent-bar"></div>
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon" id="picker-slot-icon">🎒</div>
+        <div>
+          <h3 id="picker-slot-title">Выбор предмета</h3>
+          <div class="modal-subtitle" id="picker-slot-subtitle">Слот</div>
+        </div>
+      </div>
+      <button class="btn-close" id="btn-picker-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="slot-picker-search" id="picker-search" placeholder="🔍 Поиск по названию..." autocomplete="off" />
+      <div class="slot-picker-list" id="picker-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btn-picker-confirm" disabled>Добавить</button>
+      <button class="btn btn-ghost" id="btn-picker-cancel">Отмена</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
   import { initNavbar } from "../js/modules/navbar.js";
   import { getUser, getRole, isModerator, isAdmin, getUserData, updateUserProfile } from "../js/modules/auth.js";
   import { getItems } from "../js/modules/items.js";
   import { getBosses } from "../js/modules/bosses.js";
-  import { WEAPONS } from "../js/constants.js";
+  import { WEAPONS, SLOTS } from "../js/constants.js";
   import {
-    collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where
+    collection, doc, getDocs, addDoc, updateDoc, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { db } from "../js/firebase.js";
 
   await initNavbar();
 
-  const user        = getUser();
-  const userRole    = getRole();
+  const user     = getUser();
+  const userRole = getRole();
 
   if (!user) {
     sessionStorage.setItem('redirect_after_login', window.location.pathname);
@@ -1214,52 +556,59 @@
     throw new Error('Not authenticated');
   }
 
-  let allItems   = [];
-  let allBosses  = [];
+  let allItems  = [];
+  let allBosses = [];
   let characters = [];
-  let editingCharId = null;
   let userProfileData = null;
-
-  const userId          = user.uid;
+  const userId = user.uid;
   const userIsModerator = isModerator() || isAdmin();
 
-  // ─────────────────────────────────────────────────
-  // SLOT MAP
-  // constants.js uses: helmet, gloves, pants, boots, necklace, ring, belt, cloak, bracelet, weapon
-  // We expose ring1/ring2 and weapon1/weapon2 as separate UI slots → map both to the same base slot id
-  // ─────────────────────────────────────────────────
-  const LOOT_SLOTS = [
-    { id: 'weapon1',   label: 'Оружие 1',   baseSlot: 'weapon'   },
-    { id: 'weapon2',   label: 'Оружие 2',   baseSlot: 'weapon'   },
-    { id: 'helmet',    label: 'Шлем',       baseSlot: 'helmet'   },
-    { id: 'chest',     label: 'Нагрудник',  baseSlot: 'chest'    },
-    { id: 'pants',     label: 'Поножи',     baseSlot: 'pants'    },
-    { id: 'boots',     label: 'Сапоги',     baseSlot: 'boots'    },
-    { id: 'gloves',    label: 'Перчатки',   baseSlot: 'gloves'   },
-    { id: 'necklace',  label: 'Ожерелье',   baseSlot: 'necklace' },
-    { id: 'ring1',     label: 'Кольцо 1',   baseSlot: 'ring'     },
-    { id: 'ring2',     label: 'Кольцо 2',   baseSlot: 'ring'     },
-    { id: 'belt',      label: 'Пояс',       baseSlot: 'belt'     },
-    { id: 'cloak',     label: 'Плащ',       baseSlot: 'cloak'    },
-    { id: 'bracelet',  label: 'Браслет',    baseSlot: 'bracelet' },
+  // ── Slot definitions ──────────────────────────────
+  const LOOT_SLOTS_LEFT = [
+    { id: 'weapon1',  label: 'Оружие 1',  baseSlot: 'weapon'   },
+    { id: 'weapon2',  label: 'Оружие 2',  baseSlot: 'weapon'   },
+    { id: 'helmet',   label: 'Шлем',      baseSlot: 'helmet'   },
+    { id: 'chest',    label: 'Нагрудник', baseSlot: 'chest'    },
+    { id: 'gloves',   label: 'Перчатки',  baseSlot: 'gloves'   },
+    { id: 'pants',    label: 'Поножи',    baseSlot: 'pants'    },
+    { id: 'boots',    label: 'Сапоги',    baseSlot: 'boots'    },
   ];
+  const LOOT_SLOTS_RIGHT = [
+    { id: 'cloak',    label: 'Плащ',      baseSlot: 'cloak'    },
+    { id: 'necklace', label: 'Ожерелье',  baseSlot: 'necklace' },
+    { id: 'ring1',    label: 'Кольцо 1',  baseSlot: 'ring'     },
+    { id: 'ring2',    label: 'Кольцо 2',  baseSlot: 'ring'     },
+    { id: 'bracelet', label: 'Браслет',   baseSlot: 'bracelet' },
+    { id: 'belt',     label: 'Пояс',      baseSlot: 'belt'     },
+  ];
+  const ALL_LOOT_SLOTS = [...LOOT_SLOTS_LEFT, ...LOOT_SLOTS_RIGHT];
 
-  const PAIRED_SLOTS = {
-    weapon1: 'weapon2', weapon2: 'weapon1',
-    ring1:   'ring2',   ring2:   'ring1',
+  const SLOT_EMOJI = {
+    weapon1:'⚔️', weapon2:'🗡️', helmet:'🪖', chest:'🛡️',
+    gloves:'🧤', pants:'👖', boots:'👢', cloak:'🧥',
+    necklace:'📿', ring1:'💍', ring2:'💍', bracelet:'⌚', belt:'🔗',
   };
+
+  const ARMOR_SLOTS = ['helmet','cloak','chest','gloves','pants','boots'];
+  function dmgLabel(slot) {
+    if (slot === 'weapon') return '🗡️ Урон';
+    if (ARMOR_SLOTS.includes(slot)) return '🛡️ Защита';
+    return '🛡️ Защ. (магия)';
+  }
+  function qualityLabel(q) { return q === 'epic_ii' ? 'Эпическое II' : q === 'epic' ? 'Эпическое' : q || ''; }
+  function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
+  function getWeaponIcon(id) {
+    return { bow:'🏹', staff:'🪄', wand:'✨', greatsword:'⚔️', sword_shield:'🛡️', spear:'🔱', crossbow:'🎯', daggers:'🗡️' }[id] || '⚔️';
+  }
 
   // ── Load ──────────────────────────────────────────
   async function loadData() {
-    try { allItems  = await getItems();   } catch(e) { allItems  = []; }
-    try { allBosses = await getBosses();  } catch(e) { allBosses = []; }
-    try { await loadCharacters();         } catch(e) { characters = []; }
+    try { allItems  = await getItems();  } catch(e) { allItems  = []; }
+    try { allBosses = await getBosses(); } catch(e) { allBosses = []; }
+    try { await loadCharacters();        } catch(e) { characters = []; }
     try { userProfileData = await getUserData(userId); } catch(e) { userProfileData = null; }
-
     renderProfile();
     renderCharacters();
-    populateWeaponSelects();
-    renderLootDisplay();
   }
 
   async function loadCharacters() {
@@ -1272,68 +621,40 @@
   // ── Profile ───────────────────────────────────────
   function renderProfile() {
     const displayName = userProfileData?.displayName || userProfileData?.username || user.email?.split('@')[0] || 'Пользователь';
-    const username = userProfileData?.username || user.email?.split('@')[0] || 'user';
-    
-    document.getElementById('profile-name').textContent = displayName;
-    document.getElementById('username-text').textContent = username;
-    document.getElementById('profile-role').textContent = userRole || 'guest';
-    document.getElementById('profile-avatar').textContent = displayName.charAt(0).toUpperCase();
+    const username    = userProfileData?.username || user.email?.split('@')[0] || 'user';
+    document.getElementById('profile-name').textContent    = displayName;
+    document.getElementById('username-text').textContent   = username;
+    document.getElementById('profile-role').textContent    = userRole || 'guest';
+    document.getElementById('profile-avatar').textContent  = displayName.charAt(0).toUpperCase();
   }
 
-  // ── Edit Profile ──────────────────────────────────
-  const btnEditProfile = document.getElementById('btn-edit-profile');
-  const editProfileForm = document.getElementById('edit-profile-form');
-  const editDisplayName = document.getElementById('edit-display-name');
-  const btnSaveProfile = document.getElementById('btn-save-profile');
-  const btnCancelEdit = document.getElementById('btn-cancel-edit');
-
-  btnEditProfile.addEventListener('click', () => {
+  // Profile name edit
+  document.getElementById('btn-edit-profile').addEventListener('click', () => {
     const currentName = document.getElementById('profile-name').textContent;
-    editDisplayName.value = currentName;
-    editProfileForm.classList.toggle('active');
-    if (editProfileForm.classList.contains('active')) {
-      editDisplayName.focus();
-    }
+    document.getElementById('edit-display-name').value = currentName;
+    document.getElementById('edit-profile-form').classList.toggle('active');
+    if (document.getElementById('edit-profile-form').classList.contains('active'))
+      document.getElementById('edit-display-name').focus();
   });
-
-  btnCancelEdit.addEventListener('click', () => {
-    editProfileForm.classList.remove('active');
+  document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+    document.getElementById('edit-profile-form').classList.remove('active');
   });
-
-  btnSaveProfile.addEventListener('click', async () => {
-    const newName = editDisplayName.value.trim();
-    if (!newName) {
-      showToast('Введите имя пользователя', 'error');
-      return;
-    }
-
-    btnSaveProfile.disabled = true;
-    btnSaveProfile.textContent = 'Сохранение...';
-
+  document.getElementById('btn-save-profile').addEventListener('click', async () => {
+    const newName = document.getElementById('edit-display-name').value.trim();
+    if (!newName) { showToast('Введите имя', 'error'); return; }
+    const btn = document.getElementById('btn-save-profile');
+    btn.disabled = true; btn.textContent = 'Сохранение...';
     try {
       const result = await updateUserProfile({ displayName: newName });
-      
       if (result.success) {
         userProfileData = await getUserData(userId);
         renderProfile();
-        editProfileForm.classList.remove('active');
+        document.getElementById('edit-profile-form').classList.remove('active');
         showToast('Имя обновлено!');
-      } else {
-        showToast(result.error || 'Ошибка обновления', 'error');
-      }
-    } catch (error) {
-      showToast('Ошибка: ' + error.message, 'error');
-    } finally {
-      btnSaveProfile.disabled = false;
-      btnSaveProfile.textContent = 'Сохранить';
-    }
+      } else { showToast(result.error || 'Ошибка', 'error'); }
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
   });
-
-  // ── Helpers ───────────────────────────────────────
-  function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
-  function getWeaponIcon(id) {
-    return { bow:'🏹', staff:'🪄', wand:'✨', greatsword:'⚔️', sword_shield:'🛡️', spear:'🔱', crossbow:'🎯', daggers:'🗡️' }[id] || '⚔️';
-  }
 
   // ── Render characters ─────────────────────────────
   function renderCharacters() {
@@ -1351,665 +672,265 @@
       return;
     }
 
-    container.innerHTML = characters.map(char => {
-      const status        = char.status || 'pending';
-      const isEditPending = char.previous_status === 'approved';
-      const displayStatus = isEditPending ? 'pending' : status;
+    container.innerHTML = '';
+    characters.forEach(char => renderCharBlock(char, container));
+  }
 
-      const statusLabel = {
-        pending:  isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
-        approved: '✅ Одобрен',
-        rejected: '❌ Отклонён',
-      }[displayStatus] || '⏳ На модерации';
+  function renderCharBlock(char, container) {
+    const status        = char.status || 'pending';
+    const isEditPending = char.previous_status === 'approved';
+    const displayStatus = isEditPending ? 'pending' : status;
+    const isApproved    = status === 'approved' && !isEditPending;
+    const canEdit       = status !== 'approved' || isEditPending;
 
-      const canEdit    = status !== 'approved';
-      const isApproved = status === 'approved' && !isEditPending;
-      const icon       = getWeaponIcon(char.weapons?.[0]);
+    const statusLabel = {
+      pending:  isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
+      approved: '✅ Одобрен',
+      rejected: '❌ Отклонён',
+    }[displayStatus] || '⏳ На модерации';
 
-      const weaponsHtml = char.weapons?.length
+    const block = document.createElement('div');
+    block.className = `char-loot-block ${displayStatus}`;
+    block.id = `char-block-${char.id}`;
+
+    // Weapons from desired_loot (derived from item weapon_type)
+    const desired  = char.desired_loot || {};
+    const wonItems = char.won_items || {};
+
+    // Derive weapon types from weapon slot items
+    const weaponTypes = [];
+    ['weapon1','weapon2'].forEach(slot => {
+      if (desired[slot]) {
+        const item = allItems.find(i => i.id === desired[slot]);
+        if (item?.weapon_type && !weaponTypes.includes(item.weapon_type))
+          weaponTypes.push(item.weapon_type);
+      }
+    });
+
+    const date = char.created_at
+      ? new Date(char.created_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })
+      : '—';
+
+    const desiredCount  = Object.values(desired).filter(Boolean).length;
+    const obtainedCount = ALL_LOOT_SLOTS.filter(s => desired[s.id] && wonItems[s.id] === desired[s.id]).length;
+
+    // Header
+    const headerEl = document.createElement('div');
+    headerEl.className = 'clb-header';
+    headerEl.innerHTML = `
+      <div class="clb-header-left">
+        <div class="clb-char-icon">${getWeaponIcon(weaponTypes[0] || char.weapons?.[0] || '')}</div>
+        <div>
+          <div class="clb-char-name">${char.name}</div>
+          <div class="clb-char-meta">
+            <span class="char-status ${displayStatus}">
+              <span class="dot"></span>${statusLabel}
+            </span>
+            ${weaponTypes.map(w => `<span class="weapon-tag">${getWeaponLabel(w)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="clb-header-right">
+        ${desiredCount ? `<span class="clb-progress"><span>${obtainedCount}</span> / ${desiredCount} получено</span>` : ''}
+      </div>
+    `;
+    block.appendChild(headerEl);
+
+    // If pending/rejected and no loot yet — simple view
+    if (!isApproved && !Object.keys(desired).length) {
+      const pendingBody = document.createElement('div');
+      pendingBody.className = 'clb-pending-body';
+      const weapons = char.weapons?.length
         ? char.weapons.map(w => `<span class="weapon-tag">${getWeaponLabel(w)}</span>`).join('')
-        : '<span class="weapon-tag" style="color:var(--text-muted)">Нет</span>';
-
-      const lootEntries = char.desired_loot
-        ? Object.entries(char.desired_loot).filter(([, v]) => v)
-        : [];
-
-      const lootHtml = lootEntries.length ? `
-        <div class="char-loot">
-          <span class="label">🎯 Желаемый лут</span>
-          <div class="char-loot-items">
-            ${lootEntries.map(([slotId, itemId]) => {
-              const item      = allItems.find(i => i.id === itemId);
-              const slotDef   = LOOT_SLOTS.find(s => s.id === slotId);
-              const slotLabel = slotDef?.label || slotId;
-              return item ? `<span class="loot-tag">${slotLabel}: ${item.name}</span>` : '';
-            }).filter(Boolean).join('')}
+        : '<span style="color:var(--text-muted)">Нет</span>';
+      pendingBody.innerHTML = `
+        <div class="clb-info-grid">
+          <div class="clb-info-block">
+            <span class="label">⚔️ Оружие</span>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem">${weapons}</div>
           </div>
-        </div>` : '';
-
-      const noteHtml     = char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : '';
-      const feedbackHtml = char.moderation_feedback  ? `<div class="char-moderation-feedback">📝 Ответ модератора: ${char.moderation_feedback}</div>` : '';
-      const editInfoHtml = (isEditPending && char.edit_note) ? `<div class="char-moderation-note">✏️ Изменения на модерации: ${char.edit_note}</div>` : '';
-
-      const date = char.created_at
-        ? new Date(char.created_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })
-        : '—';
-
-      return `
-        <div class="character-card ${displayStatus}">
-          <div class="char-card-inner">
-            <div class="char-top">
-              <div class="char-left">
-                <div class="char-icon">${icon}</div>
-                <div>
-                  <div class="char-name">${char.name}</div>
-                  <span class="char-status ${displayStatus}">
-                    <span class="dot"></span>${statusLabel}
-                  </span>
-                </div>
-              </div>
-              <div class="char-actions">
-                ${canEdit    ? `<button class="btn-edit-char"     data-id="${char.id}">✏️ Редактировать</button>` : ''}
-                ${isApproved ? `<button class="btn-edit-approved" data-id="${char.id}">📝 Внести изменения</button>` : ''}
-              </div>
-            </div>
-            <div class="char-info-grid">
-              <div class="char-info-block">
-                <span class="label">⚔️ Оружие</span>
-                <div class="char-weapons">${weaponsHtml}</div>
-              </div>
-              <div class="char-info-block">
-                <span class="label">📅 Создан</span>
-                <div class="date-val">${date}</div>
-              </div>
-            </div>
-            ${lootHtml}
-            ${noteHtml}
-            ${feedbackHtml}
-            ${editInfoHtml}
+          <div class="clb-info-block">
+            <span class="label">📅 Создан</span>
+            <div class="date-val">${date}</div>
           </div>
-        </div>`;
-    }).join('');
+        </div>
+        ${char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : ''}
+        ${char.moderation_feedback ? `<div class="char-moderation-feedback">📝 Ответ: ${char.moderation_feedback}</div>` : ''}
+        ${isEditPending && char.edit_note ? `<div class="char-moderation-note">✏️ На модерации: ${char.edit_note}</div>` : ''}
+      `;
+      block.appendChild(pendingBody);
 
-    container.querySelectorAll('.btn-edit-char').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const char = characters.find(c => c.id === btn.dataset.id);
-        if (char) openEditCharacter(char);
-      });
-    });
-
-    container.querySelectorAll('.btn-edit-approved').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const char = characters.find(c => c.id === btn.dataset.id);
-        if (char) openEditApprovedCharacter(char);
-      });
-    });
-  }
-
-  // ── Weapon selects ────────────────────────────────
-  function populateWeaponSelects() {
-    ['f-char-weapon1', 'f-char-weapon2'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (!sel) return;
-      const cur = sel.value;
-      sel.innerHTML = `<option value="">${id === 'f-char-weapon1' ? '— выбери —' : '— не выбрано —'}</option>`;
-      WEAPONS.forEach(w => {
-        const opt = document.createElement('option');
-        opt.value = w.id;
-        opt.textContent = w.label;
-        sel.appendChild(opt);
-      });
-      if (cur) sel.value = cur;
-    });
-  }
-
-  function setupWeaponSync() {
-    const w1 = document.getElementById('f-char-weapon1');
-    const w2 = document.getElementById('f-char-weapon2');
-    if (!w1 || !w2) return;
-
-    // Remove previous listeners before re-adding to avoid duplicates
-    if (w1._syncHandler) w1.removeEventListener('change', w1._syncHandler);
-    if (w2._syncHandler) w2.removeEventListener('change', w2._syncHandler);
-
-    const sync = () => {
-      Array.from(w2.options).forEach(o => { o.disabled = !!(o.value && o.value === w1.value); });
-      if (w2.value && w2.value === w1.value) w2.value = '';
-      // Rebuild loot grid preserving current selections, with updated weapon-type filter
-      const preserved = getSelectedLoot();
-      buildLootSlots(preserved, preserved);
-    };
-
-    w1._syncHandler = sync;
-    w2._syncHandler = sync;
-    w1.addEventListener('change', sync);
-    w2.addEventListener('change', sync);
-  }
-
-  // ── Searchable select ─────────────────────────────
-  // Returns a DOM element with a .getSelected() method.
-  // NO cloneNode tricks — closures are kept intact.
-  function createSearchableSelect(slotId, slotLabel, items, selectedValue = '') {
-    const wrap = document.createElement('div');
-    wrap.className = 'loot-slot';
-    wrap.dataset.slotId = slotId;
-
-    const selected    = items.find(i => i.id === selectedValue);
-    let   currentVal  = selectedValue;
-
-    // Build HTML
-    const labelEl = document.createElement('span');
-    labelEl.className = 'loot-slot-label';
-    labelEl.textContent = slotLabel;
-
-    const selectWrap = document.createElement('div');
-    selectWrap.className = 'loot-select-wrap';
-
-    const display = document.createElement('div');
-    display.className = 'select-display' + (selectedValue ? '' : '');
-    display.tabIndex = 0;
-    display.innerHTML = `
-      <span class="select-val ${selectedValue ? '' : 'empty'}">${selected ? selected.name : 'не выбрано'}</span>
-      <span class="select-arrow">▼</span>`;
-
-    const dropdown = document.createElement('div');
-    dropdown.className = 'dropdown';
-    dropdown.innerHTML = `
-      <input type="text" class="search-input" placeholder="🔍 Поиск..." autocomplete="off" />
-      <div class="items-wrap"></div>`;
-
-    selectWrap.appendChild(display);
-    selectWrap.appendChild(dropdown);
-    wrap.appendChild(labelEl);
-    wrap.appendChild(selectWrap);
-
-    const searchInput = dropdown.querySelector('.search-input');
-    const itemsWrap   = dropdown.querySelector('.items-wrap');
-
-    const renderItems = (filter = '') => {
-      const q        = filter.toLowerCase();
-      const filtered = q ? items.filter(i => i.name.toLowerCase().includes(q)) : items;
-      itemsWrap.innerHTML = '';
-
-      // "Не выбрано" option at top
-      const noneEl = document.createElement('div');
-      noneEl.className = 'item' + (currentVal === '' ? ' selected' : '');
-      noneEl.textContent = '— не выбрано —';
-      noneEl.addEventListener('click', () => selectItem('', '— не выбрано —', true));
-      itemsWrap.appendChild(noneEl);
-
-      if (!filtered.length) {
-        const emptyEl = document.createElement('div');
-        emptyEl.className = 'item empty-item';
-        emptyEl.textContent = 'Ничего не найдено';
-        itemsWrap.appendChild(emptyEl);
-        return;
+      // Footer
+      if (canEdit) {
+        const footer = document.createElement('div');
+        footer.className = 'clb-footer';
+        footer.innerHTML = `<span></span><div class="clb-footer-actions"><button class="btn-edit-char" data-char-id="${char.id}">✏️ Редактировать</button></div>`;
+        block.appendChild(footer);
+        footer.querySelector('.btn-edit-char').addEventListener('click', () => openEditModal(char));
       }
 
-      filtered.forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'item' + (item.id === currentVal ? ' selected' : '');
-        el.textContent = item.name;
-        el.addEventListener('click', () => selectItem(item.id, item.name, false));
-        itemsWrap.appendChild(el);
-      });
-    };
-
-    const selectItem = (id, name, isEmpty) => {
-      currentVal = id;
-      const valEl = display.querySelector('.select-val');
-      valEl.textContent = isEmpty ? 'не выбрано' : name;
-      valEl.className   = 'select-val' + (isEmpty ? ' empty' : '');
-      closeDropdown();
-    };
-
-    const openDropdown = () => {
-      // Close any other open dropdowns
-      document.querySelectorAll('.dropdown.open').forEach(d => {
-        if (d !== dropdown) {
-          d.classList.remove('open');
-          d.closest('.loot-select-wrap')?.querySelector('.select-display')?.classList.remove('active');
-        }
-      });
-      dropdown.classList.add('open');
-      display.classList.add('active');
-      searchInput.value = '';
-      renderItems();
-      setTimeout(() => searchInput.focus(), 60);
-    };
-
-    const closeDropdown = () => {
-      dropdown.classList.remove('open');
-      display.classList.remove('active');
-      renderItems(); // refresh selected highlight
-    };
-
-    display.addEventListener('click', e => {
-      e.stopPropagation();
-      dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
-    });
-
-    display.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); display.click(); }
-      if (e.key === 'Escape') closeDropdown();
-    });
-
-    searchInput.addEventListener('input', () => renderItems(searchInput.value));
-    searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
-
-    document.addEventListener('click', e => {
-      if (!wrap.contains(e.target)) closeDropdown();
-    });
-
-    // Public API
-    wrap.getSelected   = () => currentVal;
-    wrap.setSelected   = (id) => {
-      const item = items.find(i => i.id === id);
-      selectItem(id, item?.name || '', !id);
-    };
-
-    return wrap;
-  }
-
-  // ── Build loot UI ─────────────────────────────────
-  // currentValues: what's currently selected in the loot grid (preserved across rebuilds)
-  function buildLootSlots(initialValues = {}, currentValues = null) {
-    const container = document.getElementById('loot-selection');
-
-    // Preserve currently selected values across rebuilds (weapon select change triggers rebuild)
-    const preserved = currentValues ?? getSelectedLoot();
-    const values = Object.keys(preserved).length ? preserved : initialValues;
-
-    container.innerHTML = '';
-
-    if (!allItems || !allItems.length) {
-      container.innerHTML = `<div style="grid-column:1/-1;padding:0.5rem;color:var(--text-muted);font-size:0.85rem;">⏳ Загрузка предметов...</div>`;
+      container.appendChild(block);
       return;
     }
 
-    // Weapon types the character currently uses → used to filter weapon loot slots
-    const charWeapon1 = document.getElementById('f-char-weapon1')?.value || '';
-    const charWeapon2 = document.getElementById('f-char-weapon2')?.value || '';
-    const allowedWeaponTypes = [charWeapon1, charWeapon2].filter(Boolean);
+    // ── Loot display ──────────────────────────────
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'clb-body';
 
-    LOOT_SLOTS.forEach(slotDef => {
-      let slotItems = allItems.filter(i => i.slot === slotDef.baseSlot);
+    // Edit state
+    let isEditing    = false;
+    let pendingLoot  = { ...desired }; // local changes before save
+    let activeSlotId = null;
 
-      // ── Weapon slots: only show items matching the character's weapon types
-      if (slotDef.baseSlot === 'weapon' && allowedWeaponTypes.length) {
-        slotItems = slotItems.filter(i => allowedWeaponTypes.includes(i.weapon_type));
-      }
+    // Left column
+    const colLeft = document.createElement('div');
+    colLeft.className = 'loot-col loot-col-left';
 
-      const selectedVal = values[slotDef.id] || '';
-      // If previously selected item is no longer in the filtered list, clear it
-      const validSelected = slotItems.find(i => i.id === selectedVal) ? selectedVal : '';
+    // Center silhouette
+    const silhouette = document.createElement('div');
+    silhouette.className = 'loot-silhouette';
+    // Вставь путь к силуэту:
+    // silhouette.innerHTML = `<img src="/assets/img/silhouette.png" alt="" />`;
+    silhouette.innerHTML = `<div class="loot-silhouette-placeholder">👤</div>`;
 
-      const el = createSearchableSelect(slotDef.id, slotDef.label, slotItems, validSelected);
-      container.appendChild(el);
-    });
-  }
+    // Right item card
+    const cardEl = document.createElement('div');
+    cardEl.className = 'clb-item-card empty-card';
+    cardEl.innerHTML = `<div style="opacity:0.4;font-size:2rem;margin-bottom:0.5rem">🎯</div><div>Наведите на слот</div>`;
 
-  function getSelectedLoot() {
-    const result = {};
-    document.querySelectorAll('#loot-selection .loot-slot').forEach(slot => {
-      const slotId = slot.dataset.slotId;
-      const val    = slot.getSelected ? slot.getSelected() : '';
-      if (slotId && val) result[slotId] = val;
-    });
-    return result;
-  }
+    bodyEl.appendChild(colLeft);
+    bodyEl.appendChild(silhouette);
+    bodyEl.appendChild(cardEl);
+    block.appendChild(bodyEl);
 
-  // ── Modal open/close ──────────────────────────────
-  function openModal() {
-    document.getElementById('modal-character').classList.remove('hidden');
-    requestAnimationFrame(() => document.getElementById('modal-character').classList.add('open'));
-  }
-
-  function closeModal() {
-    const overlay = document.getElementById('modal-character');
-    overlay.classList.remove('open');
-    setTimeout(() => overlay.classList.add('hidden'), 250);
-    editingCharId = null;
-  }
-
-  function fillModal(char, title, subtitle, icon) {
-    document.getElementById('modal-char-title').textContent    = title;
-    document.getElementById('modal-char-subtitle').textContent = subtitle;
-    document.getElementById('modal-char-icon').textContent     = icon;
-    document.getElementById('edit-char-id').value             = char?.id     || '';
-    document.getElementById('edit-char-status').value         = char?.status || '';
-    document.getElementById('f-char-name').value              = char?.name   || '';
-    document.getElementById('f-moderation-note').value        = char?.moderation_note || '';
-    document.getElementById('char-error').style.display       = 'none';
-
-    // 1. Set weapon values FIRST — buildLootSlots reads them for weapon_type filtering
-    document.getElementById('f-char-weapon1').value = char?.weapons?.[0] || '';
-    document.getElementById('f-char-weapon2').value = char?.weapons?.[1] || '';
-
-    // 2. Setup sync listeners (no cloneNode — values stay intact)
-    setupWeaponSync();
-
-    // 3. Build loot grid — now weapon selects already have correct values
-    const initialLoot = char?.desired_loot || {};
-    buildLootSlots(initialLoot, initialLoot);
-
-    // 4. Блокируем слоты где дроп уже получен (won_items)
-    const wonItems = char?.won_items || {};
-    if (Object.keys(wonItems).length) {
-      // Небольшая задержка — ждём пока DOM отрисует слоты
-      setTimeout(() => {
-        document.querySelectorAll('#loot-selection .loot-slot').forEach(slot => {
-          const slotId = slot.dataset.slotId;
-          const itemId = initialLoot[slotId];
-          if (itemId && wonItems[slotId] === itemId) {
-            const display = slot.querySelector('.select-display');
-            if (display) {
-              display.style.cssText = `
-                pointer-events: none;
-                border-color: rgba(34,197,94,0.5);
-                background: rgba(34,197,94,0.05);
-                opacity: 0.75;
-              `;
-              const valEl = display.querySelector('.select-val');
-              if (valEl) valEl.style.color = '#4ade80';
-            }
-            const note = document.createElement('div');
-            note.style.cssText = 'font-size:0.62rem;color:#4ade80;margin-top:3px;padding-left:2px;';
-            note.textContent = '✅ Получено — слот закрыт';
-            slot.appendChild(note);
-          }
-        });
-      }, 50);
-    }
-  }
-
-  function openAddCharacter() {
-    if (characters.length > 0) { showToast('У вас уже есть персонаж.', 'error'); return; }
-    editingCharId = null;
-    fillModal(null, 'Добавить персонажа', 'Заполните данные и отправьте на модерацию', '⚔️');
-    openModal();
-  }
-
-  function openEditCharacter(char) {
-    editingCharId = char.id;
-    fillModal(char, 'Редактировать персонажа', 'Изменения будут отправлены на проверку', '✏️');
-    openModal();
-  }
-
-  function openEditApprovedCharacter(char) {
-    editingCharId = char.id;
-    fillModal(char, 'Внести изменения', 'Текущий персонаж одобрен — изменения уйдут на модерацию', '📝');
-    openModal();
-  }
-
-  // ── Save ──────────────────────────────────────────
-  async function saveCharacter() {
-    const name    = document.getElementById('f-char-name').value.trim();
-    const weapon1 = document.getElementById('f-char-weapon1').value;
-    const weapon2 = document.getElementById('f-char-weapon2').value;
-    const note    = document.getElementById('f-moderation-note').value.trim();
-    const errorEl = document.getElementById('char-error');
-
-    const showErr = msg => { errorEl.textContent = msg; errorEl.style.display = 'block'; };
-
-    if (!name)    return showErr('Введите имя персонажа');
-    if (!weapon1) return showErr('Выберите основное оружие');
-    if (weapon1 && weapon2 && weapon1 === weapon2) return showErr('Основное и дополнительное оружие не могут совпадать');
-
-    const lootCheck = getSelectedLoot();
-    if (lootCheck.weapon1 && lootCheck.weapon1 === lootCheck.weapon2)
-      return showErr('Оружие 1 и Оружие 2 в желаемом луте не могут быть одинаковыми');
-    if (lootCheck.ring1 && lootCheck.ring1 === lootCheck.ring2)
-      return showErr('Кольцо 1 и Кольцо 2 в желаемом луте не могут быть одинаковыми');
-
-    errorEl.style.display = 'none';
-
-    const id            = document.getElementById('edit-char-id').value;
-    const currentStatus = document.getElementById('edit-char-status').value;
-    const isEdit        = !!id;
-
-    let status   = userIsModerator ? 'approved' : 'pending';
-    let oldStatus = null;
-    let editNote  = null;
-
-    if (isEdit && currentStatus === 'approved' && !userIsModerator) {
-      status    = 'pending';
-      oldStatus = 'approved';
-      editNote  = note || 'Изменение персонажа';
-    }
-
-    const desiredLoot = getSelectedLoot();
-
-    const data = {
-      name,
-      weapons:              [weapon1, weapon2].filter(Boolean),
-      desired_loot:         desiredLoot,
-      user_id:              user.uid,
-      user_email:           user.email,
-      status,
-      previous_status:      oldStatus || null,
-      edit_note:            editNote  || null,
-      moderation_note:      note      || null,
-      moderation_feedback:  null,
-      moderated_by:         userIsModerator ? user.uid : null,
-      moderated_at:         userIsModerator ? new Date().toISOString() : null,
-      updated_at:           new Date().toISOString(),
-    };
-
-    const saveBtn = document.getElementById('btn-char-save');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Сохранение...';
-
-    try {
-      if (isEdit) {
-        await updateDoc(doc(db, 'characters', id), data);
-        showToast(oldStatus === 'approved' ? 'Изменения отправлены на модерацию!' : (userIsModerator ? 'Персонаж обновлён и одобрен!' : 'Персонаж обновлён!'));
-      } else {
-        await addDoc(collection(db, 'characters'), { ...data, created_at: new Date().toISOString() });
-        showToast(userIsModerator ? 'Персонаж создан и одобрен!' : 'Персонаж отправлен на модерацию!');
-      }
-      closeModal();
-      await loadCharacters();
-      renderCharacters();
-      renderLootDisplay();
-    } catch(e) {
-      showErr('Ошибка сохранения: ' + e.message);
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Отправить на модерацию';
-    }
-  }
-
-  // ── Loot Display ──────────────────────────────────
-  const LD_SLOTS_LEFT = [
-    { id: 'weapon1',  label: 'Оружие 1'  },
-    { id: 'weapon2',  label: 'Оружие 2'  },
-    { id: 'helmet',   label: 'Шлем'      },
-    { id: 'chest',    label: 'Нагрудник' },
-    { id: 'gloves',   label: 'Перчатки'  },
-    { id: 'pants',    label: 'Поножи'    },
-    { id: 'boots',    label: 'Сапоги'    },
-  ];
-  const LD_SLOTS_RIGHT = [
-    { id: 'cloak',    label: 'Плащ'      },
-    { id: 'necklace', label: 'Ожерелье'  },
-    { id: 'ring1',    label: 'Кольцо 1'  },
-    { id: 'ring2',    label: 'Кольцо 2'  },
-    { id: 'bracelet', label: 'Браслет'   },
-    { id: 'belt',     label: 'Пояс'      },
-  ];
-
-  const LD_EMOJI = {
-    weapon1:'⚔️', weapon2:'🗡️', helmet:'🪖', chest:'🛡️',
-    gloves:'🧤', pants:'👖', boots:'👢', cloak:'🧥',
-    necklace:'📿', ring1:'💍', ring2:'💍', bracelet:'⌚', belt:'🔗',
-  };
-
-  const LD_ARMOR = ['helmet','cloak','chest','gloves','pants','boots'];
-
-  function ldDmgLabel(slot) {
-    if (slot === 'weapon') return '🗡️ Урон';
-    if (LD_ARMOR.includes(slot)) return '🛡️ Защита';
-    return '🛡️ Защ. (магия)';
-  }
-
-  function ldQualityLabel(q) {
-    return q === 'epic_ii' ? 'Эпическое II' : q === 'epic' ? 'Эпическое' : q || '';
-  }
-
-  function renderLootDisplay() {
-    // Берём одобренного персонажа
-    const char = characters.find(c => c.status === 'approved');
-    const existing = document.getElementById('ld-section');
-    if (existing) existing.remove();
-
-    if (!char) return;
-
-    const desired = char.desired_loot || {};
-    const wonItems = char.won_items || {};  // { weapon1: itemId, helmet: itemId, ... }
-
-    // Считаем статистику
-    const desiredCount = Object.values(desired).filter(Boolean).length;
-    const obtainedCount = Object.keys(desired).filter(k =>
-      desired[k] && wonItems[k] === desired[k]
-    ).length;
-
-    if (!desiredCount) return;
-
-    // ── Строим секцию ──
-    const wrap = document.createElement('div');
-    wrap.id = 'ld-section';
-    wrap.className = 'loot-display';
-
-    wrap.innerHTML = `
-      <div class="loot-display-header">
-        <span class="section-title">🎯 Желаемый лут</span>
-        <span style="font-size:0.75rem;color:var(--text-muted)">
-          ${obtainedCount} / ${desiredCount} получено
-        </span>
-      </div>
-      <div class="loot-display-body">
-        <div class="loot-col loot-col-left"  id="ld-col-left"></div>
-        <div class="loot-silhouette" id="ld-silhouette">
-          <div class="loot-silhouette-placeholder">👤</div>
-        </div>
-        <div class="loot-col loot-col-right" id="ld-col-right"></div>
-      </div>
-      <div class="loot-item-card hidden" id="ld-item-card">
-        <div class="lic-empty">Наведите на слот чтобы увидеть детали</div>
-      </div>
-    `;
-
-    // Вставляем после .characters-section
-    document.querySelector('.characters-section').after(wrap);
-
-    // Силуэт — раскомментируй и вставь путь:
-    wrap.querySelector('#ld-silhouette').innerHTML =
-       `<img src="/assets/img/profileimgwarrior.png" alt="" />`;
-
+    // Build slot cells
     function buildCell(slotDef) {
-      const itemId   = desired[slotDef.id];
-      const item     = itemId ? allItems.find(i => i.id === itemId) : null;
-      const obtained = !!(item && wonItems[slotDef.id] === itemId);
-      const quality  = item?.quality || '';
-
       const cell = document.createElement('div');
-      cell.className = 'loot-slot-cell' + (item ? ' has-item' : '');
       cell.dataset.slotId = slotDef.id;
 
-      // ── Иконка ──
-      const icon = document.createElement('div');
-      icon.className = 'slot-cell-icon';
+      function refresh() {
+        const itemId   = pendingLoot[slotDef.id];
+        const item     = itemId ? allItems.find(i => i.id === itemId) : null;
+        const obtained = !!(item && wonItems[slotDef.id] === itemId);
+        const quality  = item?.quality || '';
+        const editable = isEditing && !obtained;
 
-      if (!item) {
-        icon.classList.add('empty-slot');
-        icon.textContent = LD_EMOJI[slotDef.id] || '?';
-      } else {
-        if (quality) icon.classList.add(`quality-${quality}`);
-        if (obtained) icon.classList.add('obtained');
+        cell.className = 'loot-slot-cell' + (item ? ' has-item' : '') + (cell.dataset.slotId === activeSlotId ? ' active-slot' : '');
 
-        if (item.image) {
+        // Icon
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'slot-cell-icon' + (quality ? ` quality-${quality}` : '') + (obtained ? ' obtained' : '') + (!item ? ' empty-slot' : '') + (editable ? ' editable-slot' : '');
+
+        if (item?.image) {
           const img = document.createElement('img');
-          img.src = item.image;
-          img.alt = item.name;
+          img.src = item.image; img.alt = item.name;
           img.style.cssText = 'position:relative;z-index:1;';
-          icon.appendChild(img);
+          iconWrap.appendChild(img);
         } else {
-          icon.textContent = LD_EMOJI[slotDef.id] || '?';
+          iconWrap.textContent = SLOT_EMOJI[slotDef.id] || '?';
         }
 
         if (obtained) {
           const badge = document.createElement('div');
           badge.className = 'slot-obtained-badge';
           badge.textContent = '✓';
-          icon.appendChild(badge);
+          iconWrap.appendChild(badge);
+        }
+
+        if (editable) {
+          const hint = document.createElement('div');
+          hint.className = 'slot-edit-hint';
+          hint.textContent = item ? '✏️' : '+';
+          iconWrap.appendChild(hint);
+        }
+
+        // Text
+        const info = document.createElement('div');
+        info.className = 'slot-cell-info';
+        const labelEl = document.createElement('div');
+        labelEl.className = 'slot-cell-label';
+        labelEl.textContent = slotDef.label;
+        const nameEl = document.createElement('div');
+        nameEl.className = 'slot-cell-name' + (obtained ? ' obtained-name' : !item ? ' empty-name' : quality === 'epic_ii' ? ' epic2-name' : quality === 'epic' ? ' epic-name' : '');
+        nameEl.textContent = !item ? (isEditing && !obtained ? 'нажмите чтобы выбрать' : 'не выбрано') : item.name;
+
+        info.appendChild(labelEl);
+        info.appendChild(nameEl);
+        cell.innerHTML = '';
+        cell.appendChild(iconWrap);
+        cell.appendChild(info);
+
+        // Events
+        if (item) {
+          cell.addEventListener('mouseenter', () => {
+            block.querySelectorAll('.loot-slot-cell').forEach(c => c.classList.remove('active-slot'));
+            cell.classList.add('active-slot');
+            activeSlotId = slotDef.id;
+            renderItemCard(item, obtained, slotDef.label);
+          });
+        }
+
+        if (editable) {
+          iconWrap.addEventListener('click', () => openSlotPicker(slotDef, char, pendingLoot, wonItems, (newItemId) => {
+            pendingLoot[slotDef.id] = newItemId;
+            refresh();
+            // Update confirm button label
+            const confirmBtn = block.querySelector('.btn-confirm-edit');
+            if (confirmBtn) confirmBtn.textContent = newItemId ? 'Изменить' : 'Добавить';
+            // Update card if active
+            if (activeSlotId === slotDef.id && newItemId) {
+              const newItem = allItems.find(i => i.id === newItemId);
+              if (newItem) renderItemCard(newItem, false, slotDef.label);
+            }
+            // Recheck weapons derived
+            updateDerivedWeapons();
+          }));
+        }
+
+        if (!item && isEditing && !obtained) {
+          cell.classList.add('has-item');
+          cell.addEventListener('mouseenter', () => {
+            block.querySelectorAll('.loot-slot-cell').forEach(c => c.classList.remove('active-slot'));
+            cell.classList.add('active-slot');
+            activeSlotId = slotDef.id;
+          });
         }
       }
 
-      // ── Текст ──
-      const info = document.createElement('div');
-      info.className = 'slot-cell-info';
-
-      const label = document.createElement('div');
-      label.className = 'slot-cell-label';
-      label.textContent = slotDef.label;
-
-      const name = document.createElement('div');
-      name.className = 'slot-cell-name';
-      if (!item) {
-        name.classList.add('empty-name');
-        name.textContent = 'не выбрано';
-      } else if (obtained) {
-        name.classList.add('obtained-name');
-        name.textContent = item.name;
-      } else if (quality === 'epic_ii') {
-        name.classList.add('epic2-name');
-        name.textContent = item.name;
-      } else if (quality === 'epic') {
-        name.classList.add('epic-name');
-        name.textContent = item.name;
-      } else {
-        name.textContent = item.name;
-      }
-
-      info.appendChild(label);
-      info.appendChild(name);
-      cell.appendChild(icon);
-      cell.appendChild(info);
-
-      // ── Hover — показать карточку (не исчезает при уходе мыши) ──
-      if (item) {
-        cell.addEventListener('mouseenter', () => {
-          wrap.querySelectorAll('.loot-slot-cell').forEach(c => c.classList.remove('active-slot'));
-          cell.classList.add('active-slot');
-          renderItemCard(item, obtained, slotDef.label);
-        });
-      }
-
+      refresh();
+      cell._refresh = refresh;
       return cell;
     }
 
-    const colLeft  = wrap.querySelector('#ld-col-left');
-    const colRight = wrap.querySelector('#ld-col-right');
-    LD_SLOTS_LEFT.forEach(s  => colLeft.appendChild(buildCell(s)));
-    LD_SLOTS_RIGHT.forEach(s => colRight.appendChild(buildCell(s)));
+    const rightCol = document.createElement('div');
+    rightCol.className = 'loot-col loot-col-right';
 
-    // Показать первый заполненный слот сразу
-    const firstSlot = [...LD_SLOTS_LEFT, ...LD_SLOTS_RIGHT]
-      .find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
-    if (firstSlot) {
-      const firstCell = wrap.querySelector(`[data-slot-id="${firstSlot.id}"]`);
-      if (firstCell) {
-        firstCell.classList.add('active-slot');
-        const item = allItems.find(i => i.id === desired[firstSlot.id]);
-        if (item) renderItemCard(item, wonItems[firstSlot.id] === desired[firstSlot.id], firstSlot.label);
+    LOOT_SLOTS_LEFT.forEach(s => {
+      const cell = buildCell(s);
+      colLeft.appendChild(cell);
+    });
+    LOOT_SLOTS_RIGHT.forEach(s => {
+      const cell = buildCell(s);
+      rightCol.appendChild(cell);
+    });
+    bodyEl.insertBefore(rightCol, cardEl);
+
+    // Show first item card
+    const firstFilled = ALL_LOOT_SLOTS.find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
+    if (firstFilled) {
+      const item = allItems.find(i => i.id === desired[firstFilled.id]);
+      if (item) {
+        const obtained = wonItems[firstFilled.id] === desired[firstFilled.id];
+        setTimeout(() => {
+          const cell = block.querySelector(`[data-slot-id="${firstFilled.id}"]`);
+          if (cell) { cell.classList.add('active-slot'); activeSlotId = firstFilled.id; }
+          renderItemCard(item, obtained, firstFilled.label);
+        }, 0);
       }
     }
 
+    // Item card renderer
     function renderItemCard(item, obtained, slotLabel) {
-      const card = wrap.querySelector('#ld-item-card');
-      card.classList.remove('hidden');
-
       const boss    = allBosses.find(b => b.id === item.boss_id);
       const quality = item.quality || '';
       const stats   = item.stats || [];
@@ -2018,10 +939,9 @@
       const props   = item.properties || [];
       const isWeapon = item.slot === 'weapon';
 
-      card.innerHTML = `
-        ${obtained ? `
-          <div class="lic-obtained-banner">✅ Получено — этот слот закрыт</div>
-        ` : ''}
+      cardEl.className = 'clb-item-card';
+      cardEl.innerHTML = `
+        ${obtained ? `<div class="lic-obtained-banner">✅ Получено — слот закрыт</div>` : ''}
         <div class="lic-header">
           <div class="lic-img-wrap ${quality ? `quality-${quality}` : ''}">
             ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : ''}
@@ -2030,34 +950,26 @@
             <div class="lic-name">${item.name}</div>
             <div class="lic-meta">
               <span class="lic-badge slot">${slotLabel}</span>
-              ${quality ? `<span class="lic-badge qual">${ldQualityLabel(quality)}</span>` : ''}
+              ${quality ? `<span class="lic-badge qual">${qualityLabel(quality)}</span>` : ''}
               ${item.level ? `<span class="lic-badge level">Ур. ${item.level}</span>` : ''}
             </div>
           </div>
         </div>
-
         ${(item.damage_min || item.damage_max) ? `
           <div class="lic-damage">
-            <span class="lic-damage-label">${ldDmgLabel(item.slot)}</span>
+            <span class="lic-damage-label">${dmgLabel(item.slot)}</span>
             ${item.damage_min || ''}${item.damage_max ? ` — ${item.damage_max}` : ''}
           </div>` : ''}
-
         ${stats.length ? `
           <div class="lic-stats">
-            ${stats.map(s => `
-              <div class="lic-stat">
-                <span class="lic-stat-label">${s.label || s}</span>
-                <span class="lic-stat-value">${s.value || ''}</span>
-              </div>`).join('')}
+            ${stats.map(s => `<div class="lic-stat"><span class="lic-stat-label">${s.label||s}</span><span class="lic-stat-value">${s.value||''}</span></div>`).join('')}
           </div>` : ''}
-
         ${!isWeapon && setBonus.name ? `
           <div class="lic-set-bonus">
             <div class="lic-set-name">${setBonus.name}</div>
             ${setBonus.piece2 ? `<div class="lic-set-piece"><span>(2):</span>${setBonus.piece2}</div>` : ''}
             ${setBonus.piece4 ? `<div class="lic-set-piece"><span>(4):</span>${setBonus.piece4}</div>` : ''}
           </div>` : ''}
-
         ${isWeapon && (effect.name || effect.desc) ? `
           <div class="lic-effect">
             ${effect.image ? `<img src="${effect.image}" alt="effect" />` : ''}
@@ -2066,14 +978,8 @@
               ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
             </div>
           </div>` : ''}
-
-        ${props.length ? `
-          <div class="lic-props">
-            ${props.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}
-          </div>` : ''}
-
+        ${props.length ? `<div class="lic-props">${props.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}</div>` : ''}
         ${item.description ? `<div class="lic-flavor">${item.description}</div>` : ''}
-
         ${boss ? `
           <div class="lic-boss">
             ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '👹'}
@@ -2081,25 +987,379 @@
           </div>` : ''}
       `;
     }
+
+    // Derived weapons update
+    function updateDerivedWeapons() {
+      const types = [];
+      ['weapon1','weapon2'].forEach(slot => {
+        if (pendingLoot[slot]) {
+          const item = allItems.find(i => i.id === pendingLoot[slot]);
+          if (item?.weapon_type && !types.includes(item.weapon_type)) types.push(item.weapon_type);
+        }
+      });
+      const metaEl = block.querySelector('.clb-char-meta');
+      if (metaEl) {
+        // Keep status pill, update weapon tags
+        const statusEl = metaEl.querySelector('.char-status');
+        metaEl.innerHTML = '';
+        if (statusEl) metaEl.appendChild(statusEl);
+        types.forEach(w => {
+          const tag = document.createElement('span');
+          tag.className = 'weapon-tag';
+          tag.textContent = getWeaponLabel(w);
+          metaEl.appendChild(tag);
+        });
+      }
+    }
+
+    // Edit note section (hidden until edit mode)
+    const editNoteEl = document.createElement('div');
+    editNoteEl.className = 'clb-edit-note';
+    editNoteEl.style.display = 'none';
+    editNoteEl.innerHTML = `
+      <label>Сообщение модератору</label>
+      <textarea placeholder="Опишите что изменили..." rows="2"></textarea>
+    `;
+    block.appendChild(editNoteEl);
+
+    // Moderation notes
+    if (char.moderation_note || char.moderation_feedback) {
+      const notesEl = document.createElement('div');
+      notesEl.style.cssText = 'padding:0 1.5rem 1rem;';
+      notesEl.innerHTML = `
+        ${char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : ''}
+        ${char.moderation_feedback ? `<div class="char-moderation-feedback">📝 Ответ: ${char.moderation_feedback}</div>` : ''}
+        ${isEditPending && char.edit_note ? `<div class="char-moderation-note">✏️ На модерации: ${char.edit_note}</div>` : ''}
+      `;
+      block.appendChild(notesEl);
+    }
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'clb-footer';
+    block.appendChild(footer);
+
+    function renderFooter() {
+      footer.innerHTML = '';
+      if (isEditing) {
+        const note = document.createElement('span');
+        note.className = 'clb-footer-note';
+        note.textContent = 'Изменения отправятся на модерацию';
+        const actions = document.createElement('div');
+        actions.className = 'clb-footer-actions';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-ghost btn-sm';
+        cancelBtn.textContent = 'Отмена';
+        cancelBtn.addEventListener('click', cancelEdit);
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-primary btn-sm btn-confirm-edit';
+        saveBtn.textContent = 'Сохранить изменения';
+        saveBtn.addEventListener('click', () => saveLoot(char, pendingLoot, editNoteEl.querySelector('textarea').value.trim()));
+        actions.appendChild(cancelBtn);
+        actions.appendChild(saveBtn);
+        footer.appendChild(note);
+        footer.appendChild(actions);
+      } else {
+        const emptySpan = document.createElement('span');
+        const actions = document.createElement('div');
+        actions.className = 'clb-footer-actions';
+        if (canEdit || isApproved) {
+          const editBtn = document.createElement('button');
+          editBtn.className = isApproved ? 'btn-edit-approved' : 'btn-edit-char';
+          editBtn.textContent = isApproved ? '📝 Редактировать лут' : '✏️ Редактировать';
+          editBtn.addEventListener('click', () => {
+            if (!isApproved) { openEditModal(char); return; }
+            enterEditMode();
+          });
+          actions.appendChild(editBtn);
+
+          if (!isApproved) {
+            const nameBtn = document.createElement('button');
+            nameBtn.className = 'btn-edit-char';
+            nameBtn.textContent = '✏️ Редактировать';
+            actions.innerHTML = '';
+            nameBtn.addEventListener('click', () => openEditModal(char));
+            actions.appendChild(nameBtn);
+          }
+        }
+        footer.appendChild(emptySpan);
+        footer.appendChild(actions);
+      }
+    }
+
+    function enterEditMode() {
+      isEditing = true;
+      pendingLoot = { ...desired };
+      editNoteEl.style.display = 'block';
+      editNoteEl.querySelector('textarea').value = '';
+      block.querySelectorAll('.loot-slot-cell').forEach(cell => {
+        if (cell._refresh) cell._refresh();
+      });
+      renderFooter();
+    }
+
+    function cancelEdit() {
+      isEditing = false;
+      pendingLoot = { ...desired };
+      editNoteEl.style.display = 'none';
+      block.querySelectorAll('.loot-slot-cell').forEach(cell => {
+        if (cell._refresh) cell._refresh();
+      });
+      renderFooter();
+    }
+
+    renderFooter();
+    container.appendChild(block);
   }
+
+  // ── Save loot changes ─────────────────────────────
+  async function saveLoot(char, pendingLoot, note) {
+    // Derive weapons from weapon slots
+    const weaponTypes = [];
+    ['weapon1','weapon2'].forEach(slot => {
+      if (pendingLoot[slot]) {
+        const item = allItems.find(i => i.id === pendingLoot[slot]);
+        if (item?.weapon_type && !weaponTypes.includes(item.weapon_type))
+          weaponTypes.push(item.weapon_type);
+      }
+    });
+
+    const data = {
+      desired_loot:        pendingLoot,
+      weapons:             weaponTypes,
+      status:              userIsModerator ? 'approved' : 'pending',
+      previous_status:     userIsModerator ? null : 'approved',
+      edit_note:           note || 'Изменение желаемого лута',
+      moderation_note:     note || null,
+      moderation_feedback: null,
+      moderated_by:        userIsModerator ? user.uid : null,
+      moderated_at:        userIsModerator ? new Date().toISOString() : null,
+      updated_at:          new Date().toISOString(),
+    };
+
+    const block   = document.getElementById(`char-block-${char.id}`);
+    const saveBtn = block?.querySelector('.btn-confirm-edit');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохранение...'; }
+
+    try {
+      await updateDoc(doc(db, 'characters', char.id), data);
+      showToast(userIsModerator ? 'Лут обновлён!' : 'Изменения отправлены на модерацию!');
+      await loadCharacters();
+      renderCharacters();
+    } catch(e) {
+      showToast('Ошибка: ' + e.message, 'error');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Сохранить изменения'; }
+    }
+  }
+
+  // ── Slot picker modal ────────────────────────────
+  let _pickerResolve = null;
+
+  function openSlotPicker(slotDef, char, pendingLoot, wonItems, onSelect) {
+    const modal     = document.getElementById('modal-slot-picker');
+    const titleEl   = document.getElementById('picker-slot-title');
+    const subtitleEl = document.getElementById('picker-slot-subtitle');
+    const iconEl    = document.getElementById('picker-slot-icon');
+    const searchEl  = document.getElementById('picker-search');
+    const listEl    = document.getElementById('picker-list');
+    const confirmEl = document.getElementById('btn-picker-confirm');
+
+    titleEl.textContent    = slotDef.label;
+    subtitleEl.textContent = slotDef.label;
+    iconEl.textContent     = SLOT_EMOJI[slotDef.id] || '🎒';
+    searchEl.value         = '';
+    confirmEl.disabled     = true;
+    confirmEl.textContent  = 'Добавить';
+
+    let selectedItemId = pendingLoot[slotDef.id] || null;
+    if (selectedItemId) {
+      const cur = allItems.find(i => i.id === selectedItemId);
+      confirmEl.disabled    = false;
+      confirmEl.textContent = cur ? 'Изменить' : 'Добавить';
+    }
+
+    // Filter items by base slot + weapon type if applicable
+    function getSlotItems() {
+      let pool = allItems.filter(i => i.slot === slotDef.baseSlot);
+      if (slotDef.baseSlot === 'weapon') {
+        // Determine allowed weapon types from the OTHER weapon slot
+        const otherSlot = slotDef.id === 'weapon1' ? 'weapon2' : 'weapon1';
+        const otherItemId = pendingLoot[otherSlot];
+        const otherItem   = otherItemId ? allItems.find(i => i.id === otherItemId) : null;
+        // Both weapon slots can have any weapon type, but different ones
+        if (otherItem?.weapon_type) {
+          pool = pool.filter(i => i.weapon_type !== otherItem.weapon_type);
+        }
+      }
+      return pool;
+    }
+
+    function renderList(filter) {
+      listEl.innerHTML = '';
+      const pool = getSlotItems().filter(i => !filter || i.name?.toLowerCase().includes(filter.toLowerCase()));
+
+      // Clear row
+      const clearRow = document.createElement('div');
+      clearRow.className = 'slot-picker-row clear-row' + (selectedItemId === null ? ' selected' : '');
+      clearRow.innerHTML = `<div style="font-size:1.2rem">✕</div><div><div class="slot-picker-name">Не выбрано</div><div class="slot-picker-sub">Очистить слот</div></div>`;
+      clearRow.addEventListener('click', () => {
+        selectedItemId = null;
+        confirmEl.disabled    = false;
+        confirmEl.textContent = 'Удалить';
+        renderList(searchEl.value);
+      });
+      listEl.appendChild(clearRow);
+
+      if (!pool.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;';
+        empty.textContent = 'Нет предметов';
+        listEl.appendChild(empty);
+        return;
+      }
+
+      pool.forEach(item => {
+        const row = document.createElement('div');
+        const q   = item.quality || '';
+        row.className = 'slot-picker-row' + (item.id === selectedItemId ? ' selected' : '');
+        const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
+        row.innerHTML = `
+          <div class="slot-picker-img ${q ? `quality-${q}` : ''}">
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : SLOT_EMOJI[slotDef.id] || '?'}
+          </div>
+          <div>
+            <div class="slot-picker-name ${q === 'epic_ii' ? 'epic2-name' : q === 'epic' ? 'epic-name' : ''}">${item.name}</div>
+            <div class="slot-picker-sub">${slotLabel}${item.level ? ` · Ур. ${item.level}` : ''}${q ? ` · ${qualityLabel(q)}` : ''}</div>
+          </div>
+        `;
+        row.addEventListener('click', () => {
+          selectedItemId = item.id;
+          confirmEl.disabled    = false;
+          confirmEl.textContent = pendingLoot[slotDef.id] ? 'Изменить' : 'Добавить';
+          renderList(searchEl.value);
+        });
+        listEl.appendChild(row);
+      });
+    }
+
+    renderList('');
+    searchEl.addEventListener('input', () => renderList(searchEl.value));
+
+    confirmEl.onclick = () => {
+      onSelect(selectedItemId);
+      closePicker();
+    };
+
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => modal.classList.add('open'));
+    setTimeout(() => searchEl.focus(), 100);
+  }
+
+  function closePicker() {
+    const modal = document.getElementById('modal-slot-picker');
+    modal.classList.remove('open');
+    setTimeout(() => modal.classList.add('hidden'), 250);
+    document.getElementById('picker-search').removeEventListener('input', () => {});
+  }
+
+  document.getElementById('btn-picker-close').addEventListener('click', closePicker);
+  document.getElementById('btn-picker-cancel').addEventListener('click', closePicker);
+  document.getElementById('modal-slot-picker').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-slot-picker')) closePicker();
+  });
+
+  // ── Character name/note modal ────────────────────
+  function openEditModal(char) {
+    document.getElementById('edit-char-id').value     = char?.id     || '';
+    document.getElementById('edit-char-status').value = char?.status || '';
+    document.getElementById('f-char-name').value      = char?.name   || '';
+    document.getElementById('f-moderation-note').value = '';
+    document.getElementById('char-error').style.display = 'none';
+    document.getElementById('modal-char-title').textContent    = char ? 'Редактировать персонажа' : 'Добавить персонажа';
+    document.getElementById('modal-char-subtitle').textContent = char ? 'Изменения уйдут на модерацию' : 'Заполните данные';
+    document.getElementById('modal-char-icon').textContent     = char ? '✏️' : '⚔️';
+    document.getElementById('btn-char-save').textContent       = char ? 'Отправить на модерацию' : 'Создать персонажа';
+    document.getElementById('modal-character').classList.remove('hidden');
+    requestAnimationFrame(() => document.getElementById('modal-character').classList.add('open'));
+  }
+
+  function closeModal() {
+    const overlay = document.getElementById('modal-character');
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.classList.add('hidden'), 250);
+  }
+
+  document.getElementById('btn-char-close').addEventListener('click', closeModal);
+  document.getElementById('btn-char-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-character').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-character')) closeModal();
+  });
+
+  document.getElementById('btn-char-save').addEventListener('click', async () => {
+    const name    = document.getElementById('f-char-name').value.trim();
+    const note    = document.getElementById('f-moderation-note').value.trim();
+    const id      = document.getElementById('edit-char-id').value;
+    const curStatus = document.getElementById('edit-char-status').value;
+    const errorEl = document.getElementById('char-error');
+
+    if (!name) { errorEl.textContent = 'Введите имя персонажа'; errorEl.style.display = 'block'; return; }
+    errorEl.style.display = 'none';
+
+    const isEdit = !!id;
+    const char   = characters.find(c => c.id === id);
+
+    const data = {
+      name,
+      user_id:             user.uid,
+      user_email:          user.email,
+      status:              userIsModerator ? 'approved' : 'pending',
+      previous_status:     (isEdit && curStatus === 'approved' && !userIsModerator) ? 'approved' : null,
+      edit_note:           (isEdit && curStatus === 'approved' && !userIsModerator) ? (note || 'Изменение имени') : null,
+      moderation_note:     note || null,
+      moderation_feedback: null,
+      moderated_by:        userIsModerator ? user.uid : null,
+      moderated_at:        userIsModerator ? new Date().toISOString() : null,
+      updated_at:          new Date().toISOString(),
+    };
+
+    // Preserve existing fields on edit
+    if (isEdit && char) {
+      data.weapons     = char.weapons     || [];
+      data.desired_loot = char.desired_loot || {};
+      data.won_items   = char.won_items   || {};
+    }
+
+    const saveBtn = document.getElementById('btn-char-save');
+    saveBtn.disabled = true; saveBtn.textContent = 'Сохранение...';
+    try {
+      if (isEdit) {
+        await updateDoc(doc(db, 'characters', id), data);
+        showToast(userIsModerator ? 'Персонаж обновлён!' : 'Изменения отправлены на модерацию!');
+      } else {
+        await addDoc(collection(db, 'characters'), { ...data, weapons: [], desired_loot: {}, won_items: {}, created_at: new Date().toISOString() });
+        showToast(userIsModerator ? 'Персонаж создан!' : 'Персонаж отправлен на модерацию!');
+      }
+      closeModal();
+      await loadCharacters();
+      renderCharacters();
+    } catch(e) {
+      errorEl.textContent = 'Ошибка: ' + e.message; errorEl.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = isEdit ? 'Отправить на модерацию' : 'Создать персонажа';
+    }
+  });
+
+  document.getElementById('btn-add-character').addEventListener('click', () => {
+    if (characters.length > 0) { showToast('У вас уже есть персонаж', 'error'); return; }
+    openEditModal(null);
+  });
 
   // ── Toast ─────────────────────────────────────────
   function showToast(msg, type = 'success') {
     const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
   }
-
-  // ── Events ────────────────────────────────────────
-  document.getElementById('btn-add-character').addEventListener('click', openAddCharacter);
-  document.getElementById('btn-char-close').addEventListener('click', closeModal);
-  document.getElementById('btn-char-cancel').addEventListener('click', closeModal);
-  document.getElementById('btn-char-save').addEventListener('click', saveCharacter);
-  document.getElementById('modal-character').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-character')) closeModal();
-  });
 
   // ── Run ───────────────────────────────────────────
   await loadData();
