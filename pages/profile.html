@@ -116,7 +116,8 @@
     .clb-body {
       display: grid;
       grid-template-columns: 280px 1fr 280px 380px;
-      min-height: 480px;
+      gap: 0 0.5rem;
+      height: 640px;
       position: relative;
     }
 
@@ -125,21 +126,23 @@
       padding: 1.25rem 0.75rem;
       display: flex; flex-direction: column; gap: 0.5rem;
       position: relative; z-index: 2;
+      overflow-y: auto;
     }
     .loot-col-left  { align-items: flex-end; }
     .loot-col-right { align-items: flex-start; }
 
-    /* Silhouette center */
+    /* Silhouette center — fixed frame so it never shifts with card height */
     .loot-silhouette {
       position: relative;
       display: flex; align-items: center; justify-content: center;
+      height: 100%;
     }
     .loot-silhouette img {
       position: absolute;
-      height: 100%; max-height: 520px;
+      height: 100%; max-height: 100%;
       width: auto; object-fit: contain;
-      opacity: 0.9;
-      filter: drop-shadow(0 0 40px rgba(124,58,237,0.25));
+      opacity: 0.35;
+      filter: drop-shadow(0 0 40px rgba(124,58,237,0.2));
       pointer-events: none; user-select: none;
     }
     .loot-silhouette-placeholder {
@@ -162,18 +165,23 @@
     .loot-slot-cell.active-slot { background: var(--accent-glow); }
     .loot-col-left .loot-slot-cell { flex-direction: row-reverse; }
 
-    /* Slot icon */
+    /* Slot icon — outer wrapper stays unclipped so the "obtained" badge can
+       overflow its corner; the rounded/clipped visuals live on the inner box */
     .slot-cell-icon {
-      width: 54px; height: 54px; border-radius: 10px; flex-shrink: 0;
-      position: relative; overflow: hidden;
+      width: 54px; height: 54px; flex-shrink: 0;
+      position: relative;
+      font-size: 1.4rem;
+    }
+    .slot-cell-icon-inner {
+      position: absolute; inset: 0; border-radius: 10px; overflow: hidden;
       background: var(--bg-card2); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem; transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .slot-cell-icon img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
-    .slot-cell-icon.quality-epic { background: #1a0a2e; border-color: rgba(168,85,247,0.45); box-shadow: inset 0 0 10px rgba(168,85,247,0.12); }
-    .slot-cell-icon.quality-epic_ii { background: #1a0a2e; border-color: rgba(139,92,246,0.55); box-shadow: inset 0 0 14px rgba(139,92,246,0.18); }
-    .slot-cell-icon.quality-epic_ii::before {
+    .slot-cell-icon-inner img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+    .slot-cell-icon-inner.quality-epic { background: #1a0a2e; border-color: rgba(168,85,247,0.45); box-shadow: inset 0 0 10px rgba(168,85,247,0.12); }
+    .slot-cell-icon-inner.quality-epic_ii { background: #1a0a2e; border-color: rgba(139,92,246,0.55); box-shadow: inset 0 0 14px rgba(139,92,246,0.18); }
+    .slot-cell-icon-inner.quality-epic_ii::before {
       content: ''; position: absolute; inset: -40%;
       background: radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
                   radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
@@ -186,13 +194,13 @@
       66%  { transform: translate(-6%,8%)  scale(1.05); opacity: 0.9;  }
       100% { transform: translate(5%,5%)   scale(1.1);  opacity: 1;    }
     }
-    .slot-cell-icon.obtained {
+    .slot-cell-icon-inner.obtained {
       border-color: rgba(34,197,94,0.6) !important;
       box-shadow: 0 0 10px rgba(34,197,94,0.18), inset 0 0 6px rgba(34,197,94,0.08) !important;
     }
-    .slot-cell-icon.empty-slot { opacity: 0.2; border-style: dashed; font-size: 1.2rem; }
+    .slot-cell-icon-inner.empty-slot { opacity: 0.2; border-style: dashed; font-size: 1.2rem; }
     .slot-cell-icon.editable-slot { cursor: pointer; }
-    .slot-cell-icon.editable-slot:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .slot-cell-icon.editable-slot:hover .slot-cell-icon-inner { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
     .slot-obtained-badge {
       position: absolute; top: -4px; right: -4px;
       width: 17px; height: 17px; background: #22c55e;
@@ -222,7 +230,10 @@
 
     /* ── Item detail card (right panel) ── */
     .clb-item-card {
-      border-left: 1px solid var(--border);
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 1rem 1rem 1rem 0;
       padding: 1.25rem;
       overflow-y: auto;
       display: flex; flex-direction: column; gap: 0;
@@ -460,14 +471,14 @@
 
     /* ── Responsive ── */
     @media (max-width: 900px) {
-      .clb-body { grid-template-columns: 220px 1fr 220px 300px; }
+      .clb-body { grid-template-columns: 220px 1fr 220px 300px; height: 580px; }
       .slot-cell-icon { width: 46px; height: 46px; }
       .slot-cell-name { max-width: 120px; }
     }
     @media (max-width: 700px) {
-      .clb-body { grid-template-columns: 1fr; min-height: auto; }
+      .clb-body { grid-template-columns: 1fr; height: auto; }
       .loot-silhouette { display: none; }
-      .clb-item-card { border-left: none; border-top: 1px solid var(--border); }
+      .clb-item-card { margin: 0; border-radius: 0; border-top: 1px solid var(--border); }
       .loot-col-left { align-items: flex-start; }
       .loot-col-left .loot-slot-cell { flex-direction: row; }
       .loot-col-left .slot-cell-name  { text-align: left; }
@@ -899,18 +910,22 @@
 
         cell.className = 'loot-slot-cell' + (item ? ' has-item' : '') + (cell.dataset.slotId === activeSlotId ? ' active-slot' : '');
 
-        // Icon
+        // Icon — outer wrapper (unclipped, holds badge/hint) + inner clipped box
         const iconWrap = document.createElement('div');
-        iconWrap.className = 'slot-cell-icon' + (quality ? ` quality-${quality}` : '') + (obtained ? ' obtained' : '') + (!item ? ' empty-slot' : '') + (editable ? ' editable-slot' : '');
+        iconWrap.className = 'slot-cell-icon' + (editable ? ' editable-slot' : '');
+
+        const iconInner = document.createElement('div');
+        iconInner.className = 'slot-cell-icon-inner' + (quality ? ` quality-${quality}` : '') + (obtained ? ' obtained' : '') + (!item ? ' empty-slot' : '');
 
         if (item?.image) {
           const img = document.createElement('img');
           img.src = item.image; img.alt = item.name;
           img.style.cssText = 'position:relative;z-index:1;';
-          iconWrap.appendChild(img);
+          iconInner.appendChild(img);
         } else {
-          iconWrap.innerHTML = slotIconHtml(slotDef.id);
+          iconInner.innerHTML = slotIconHtml(slotDef.id);
         }
+        iconWrap.appendChild(iconInner);
 
         if (obtained) {
           const badge = document.createElement('div');
@@ -923,7 +938,7 @@
           const hint = document.createElement('div');
           hint.className = 'slot-edit-hint';
           hint.innerHTML = item ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
-          iconWrap.appendChild(hint);
+          iconInner.appendChild(hint);
         }
 
         // Text
