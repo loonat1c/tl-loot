@@ -131,15 +131,15 @@
       position: absolute;
       height: 100%; max-height: 520px;
       width: auto; object-fit: contain;
-      opacity: 0.08;
-      filter: drop-shadow(0 0 40px rgba(124,58,237,0.15));
+      opacity: 0.9;
+      filter: drop-shadow(0 0 40px rgba(124,58,237,0.25));
       pointer-events: none; user-select: none;
     }
     .loot-silhouette-placeholder {
       position: absolute;
       inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 7rem; opacity: 0.03;
+      font-size: 7rem; opacity: 0.05;
       pointer-events: none; user-select: none;
     }
 
@@ -232,11 +232,14 @@
       border-radius: 8px; margin-bottom: 0.75rem;
       font-size: 0.78rem; color: #4ade80; font-weight: 600;
     }
-    .lic-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
+
+    /* Top bar: icon + quality/level/type pills + wiki link */
+    .lic-topbar { display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 0.75rem; }
     .lic-img-wrap {
       width: 60px; height: 60px; border-radius: 10px; flex-shrink: 0;
       position: relative; overflow: hidden;
       background: #1a0a2e; border: 1px solid rgba(201,170,113,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-muted);
     }
     .lic-img-wrap img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
     .lic-img-wrap.quality-epic    { border-color: rgba(168,85,247,0.4); }
@@ -247,31 +250,76 @@
                   radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4) 0%, transparent 60%);
       animation: epic-fog 4s ease-in-out infinite alternate; z-index: 0;
     }
-    .lic-name { font-size: 0.98rem; font-weight: 700; color: #e2c98a; font-family: 'HeaderFont', var(--font); margin-bottom: 0.3rem; line-height: 1.3; }
-    .lic-meta { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-    .lic-badge { font-size: 0.65rem; padding: 0.12rem 0.5rem; border-radius: 4px; font-weight: 600; }
-    .lic-badge.slot  { color: #c9aa71; background: rgba(201,170,113,0.1); border: 1px solid rgba(201,170,113,0.25); }
-    .lic-badge.qual  { color: #c4b5fd; background: rgba(168,85,247,0.1);  border: 1px solid rgba(168,85,247,0.22); }
-    .lic-badge.level { color: var(--text-muted); background: var(--bg-card2); border: 1px solid var(--border); }
-    .lic-damage { font-size: 0.88rem; font-weight: 700; color: #e2c98a; padding: 0.38rem 0.6rem; background: rgba(201,170,113,0.07); border-radius: 8px; border: 1px solid rgba(201,170,113,0.18); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-    .lic-damage-label { font-weight: 400; color: var(--text-muted); font-size: 0.72rem; }
-    .lic-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem 1rem; padding: 0.45rem 0.6rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
-    .lic-stat { font-size: 0.76rem; display: flex; justify-content: space-between; gap: 0.4rem; }
+    .lic-topbar-right { flex: 1; min-width: 0; }
+    .lic-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.4rem; }
+    .lic-badge { font-size: 0.65rem; padding: 0.14rem 0.55rem; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .lic-badge.qual  { color: #c4b5fd; background: rgba(168,85,247,0.12);  border: 1px solid rgba(168,85,247,0.28); }
+    .lic-badge.level { color: #e2c98a; background: rgba(201,170,113,0.1); border: 1px solid rgba(201,170,113,0.25); }
+    .lic-badge.slot  { color: var(--text-muted); background: var(--bg-card2); border: 1px solid var(--border); text-transform: none; font-weight: 600; }
+    .lic-wiki-link {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.72rem; color: var(--accent-soft); text-decoration: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 0.15rem 0.55rem;
+      background: var(--bg-card2); margin-top: 0.15rem;
+    }
+    .lic-wiki-link:hover { border-color: var(--accent); }
+
+    .lic-name { font-size: 0.98rem; font-weight: 700; color: #e2c98a; font-family: 'HeaderFont', var(--font); margin-bottom: 0.75rem; line-height: 1.3; }
+
+    /* Damage / defense box */
+    .lic-damage-box { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem; }
+    .lic-damage-cell {
+      padding: 0.55rem 0.75rem; background: rgba(201,170,113,0.07);
+      border: 1px solid rgba(201,170,113,0.18); border-radius: 8px;
+    }
+    .lic-damage-cell-label { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 0.15rem; }
+    .lic-damage-cell-value { font-size: 1.1rem; font-weight: 700; color: #e2c98a; }
+
+    /* Power / effect callout */
+    .lic-effect { display: flex; gap: 0.6rem; padding: 0.55rem 0.65rem; background: rgba(168,85,247,0.06); border-radius: 8px; border: 1px solid rgba(168,85,247,0.18); margin-bottom: 0.6rem; }
+    .lic-effect-icon { width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(168,85,247,0.15); color: #c4b5fd; font-size: 0.95rem; }
+    .lic-effect img { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    .lic-effect-name { font-size: 0.76rem; font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
+    .lic-effect-desc { font-size: 0.73rem; color: var(--text-muted); line-height: 1.45; }
+
+    /* Extended attribute list */
+    .lic-stats { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+    .lic-stat { font-size: 0.82rem; display: flex; justify-content: space-between; gap: 0.4rem; padding: 0.1rem 0; }
     .lic-stat-label { color: var(--text-muted); }
-    .lic-stat-value { color: #e2c98a; font-weight: 600; }
+    .lic-stat-value { color: var(--text); font-weight: 600; }
+
+    .lic-section-title { font-size: 0.68rem; font-weight: 700; color: var(--text-faint, var(--text-muted)); text-transform: uppercase; letter-spacing: 0.5px; margin: 0.7rem 0 0.45rem; }
+
+    /* Equipment properties (СВОЙСТВА СНАРЯЖЕНИЯ) */
+    .lic-props-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.3rem; }
+    .lic-prop-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .lic-prop-dot { color: var(--accent-soft); font-size: 0.6rem; }
+    .lic-prop-label { flex: 1; color: var(--text); }
+    .lic-prop-value { color: #e2c98a; font-weight: 700; }
+    .lic-prop-lvl { font-size: 0.68rem; color: var(--text-muted); min-width: 32px; text-align: right; }
+    .lic-props { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+    .lic-prop-tag { background: var(--bg-card); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-muted); }
+
+    /* Set bonus */
     .lic-set-bonus { padding: 0.45rem 0.65rem; background: rgba(201,170,113,0.05); border-radius: 8px; border: 1px solid rgba(201,170,113,0.18); margin-bottom: 0.5rem; }
     .lic-set-name  { font-weight: 700; color: #c9aa71; font-size: 0.82rem; margin-bottom: 0.2rem; }
     .lic-set-piece { font-size: 0.73rem; color: var(--text-muted); }
     .lic-set-piece span { color: #8a6f3e; font-weight: 600; margin-right: 0.25rem; }
-    .lic-effect { display: flex; gap: 0.6rem; padding: 0.5rem 0.65rem; background: rgba(168,85,247,0.06); border-radius: 8px; border: 1px solid rgba(168,85,247,0.18); margin-bottom: 0.5rem; }
-    .lic-effect img { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
-    .lic-effect-name { font-size: 0.76rem; font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
-    .lic-effect-desc { font-size: 0.73rem; color: var(--text-muted); }
-    .lic-props { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
-    .lic-prop-tag { background: var(--bg-card); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-muted); }
+
+    /* Runes */
+    .lic-rune-row { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border-soft, var(--border)); font-size: 0.82rem; }
+    .lic-rune-row:last-child { border-bottom: none; }
+    .lic-rune-icon { width: 26px; height: 26px; border-radius: 6px; background: var(--bg-card2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent-soft); font-size: 0.85rem; flex-shrink: 0; }
+    .lic-rune-name { flex: 1; color: var(--text); font-weight: 600; }
+    .lic-rune-tier { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 0.12rem 0.5rem; border-radius: 10px; background: rgba(168,85,247,0.12); color: #c4b5fd; border: 1px solid rgba(168,85,247,0.25); }
+
     .lic-flavor { margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); font-style: italic; line-height: 1.5; }
     .lic-boss { margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); }
     .lic-boss img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(201,170,113,0.25); }
+
+    /* Footer stat line (synergy / perception / shield pen) */
+    .lic-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--text-muted); }
+    .lic-footer-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 0.15rem 0.55rem; border-radius: 10px; background: var(--accent-glow); color: var(--accent-soft); border: 1px solid var(--accent); }
 
     /* ── Footer actions ── */
     .clb-footer {
@@ -307,20 +355,21 @@
     .char-moderation-note, .char-moderation-feedback {
       margin-top: 0.75rem; padding: 0.65rem 0.85rem;
       background: var(--bg-card2); border-radius: 8px; font-size: 0.83rem; color: var(--text-muted);
+      display: flex; align-items: flex-start; gap: 0.5rem;
     }
     .char-moderation-note     { border-left: 3px solid var(--warning); }
     .char-moderation-feedback { border-left: 3px solid var(--danger); }
 
     /* ── Buttons ── */
     .btn-edit-char {
-      display: inline-flex; align-items: center; gap: 0.3rem;
+      display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.3rem 0.75rem; border-radius: 7px; border: 1px solid var(--border);
       font-size: 0.75rem; font-weight: 600; cursor: pointer;
       background: var(--bg-card2); color: var(--text); transition: border-color 0.15s;
     }
     .btn-edit-char:hover { border-color: var(--accent); }
     .btn-edit-approved {
-      display: inline-flex; align-items: center; gap: 0.3rem;
+      display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.3rem 0.75rem; border-radius: 7px; border: 1px solid var(--accent);
       font-size: 0.75rem; font-weight: 600; cursor: pointer;
       background: var(--accent-glow); color: var(--accent-soft); transition: all 0.15s;
@@ -329,7 +378,7 @@
 
     /* ── Empty state ── */
     .empty-state { text-align: center; padding: 3rem 2rem; border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 14px; color: var(--text-muted); }
-    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+    .empty-state .icon { font-size: 2.2rem; display: block; margin-bottom: 0.75rem; color: var(--text-muted); }
     .empty-state p { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; font-weight: 500; }
 
     /* ══════════════════════════════════════════════════
@@ -407,7 +456,6 @@
       .clb-body { grid-template-columns: 220px 1fr 300px; }
       .slot-cell-icon { width: 46px; height: 46px; }
       .slot-cell-name { max-width: 120px; }
-      .lic-stats { grid-template-columns: 1fr; }
     }
     @media (max-width: 700px) {
       .clb-body { grid-template-columns: 1fr; min-height: auto; }
@@ -433,7 +481,7 @@
 
   <!-- Profile header -->
   <div class="profile-header" id="profile-header">
-    <div class="profile-avatar" id="profile-avatar">👤</div>
+    <div class="profile-avatar" id="profile-avatar"><i class="fa-solid fa-user"></i></div>
     <div class="profile-info">
       <div class="profile-name-row">
         <h2 id="profile-name">Загрузка...</h2>
@@ -467,7 +515,7 @@
 
   <div id="characters-list">
     <div class="empty-state">
-      <span class="icon">🎮</span>
+      <span class="icon"><i class="fa-solid fa-gamepad"></i></span>
       <p>У вас пока нет персонажа</p>
       <small>Создайте персонажа, чтобы участвовать в рейдах</small>
     </div>
@@ -481,13 +529,13 @@
     <div class="modal-accent-bar"></div>
     <div class="modal-header">
       <div class="modal-header-left">
-        <div class="modal-icon" id="modal-char-icon">⚔️</div>
+        <div class="modal-icon" id="modal-char-icon"><i class="fa-solid fa-khanda"></i></div>
         <div>
           <h3 id="modal-char-title">Редактировать персонажа</h3>
           <div class="modal-subtitle" id="modal-char-subtitle">Изменения уйдут на модерацию</div>
         </div>
       </div>
-      <button class="btn-close" id="btn-char-close">✕</button>
+      <button class="btn-close" id="btn-char-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-char-id" />
@@ -515,16 +563,16 @@
     <div class="modal-accent-bar"></div>
     <div class="modal-header">
       <div class="modal-header-left">
-        <div class="modal-icon" id="picker-slot-icon">🎒</div>
+        <div class="modal-icon" id="picker-slot-icon"><i class="fa-solid fa-box-open"></i></div>
         <div>
           <h3 id="picker-slot-title">Выбор предмета</h3>
           <div class="modal-subtitle" id="picker-slot-subtitle">Слот</div>
         </div>
       </div>
-      <button class="btn-close" id="btn-picker-close">✕</button>
+      <button class="btn-close" id="btn-picker-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-      <input type="text" class="slot-picker-search" id="picker-search" placeholder="🔍 Поиск по названию..." autocomplete="off" />
+      <input type="text" class="slot-picker-search" id="picker-search" placeholder="Поиск по названию..." autocomplete="off" />
       <div class="slot-picker-list" id="picker-list"></div>
     </div>
     <div class="modal-footer">
@@ -583,23 +631,24 @@
   ];
   const ALL_LOOT_SLOTS = [...LOOT_SLOTS_LEFT, ...LOOT_SLOTS_RIGHT];
 
-  const SLOT_EMOJI = {
-    weapon1:'⚔️', weapon2:'🗡️', helmet:'🪖', chest:'🛡️',
-    gloves:'🧤', pants:'👖', boots:'👢', cloak:'🧥',
-    necklace:'📿', ring1:'💍', ring2:'💍', bracelet:'⌚', belt:'🔗',
+  // ── Строгие иконки слотов (Font Awesome, без эмодзи) ──
+  const SLOT_ICON = {
+    weapon1:'fa-khanda', weapon2:'fa-khanda', helmet:'fa-helmet-safety', chest:'fa-vest',
+    gloves:'fa-mitten', pants:'fa-socks', boots:'fa-shoe-prints', cloak:'fa-vest-patches',
+    necklace:'fa-gem', ring1:'fa-ring', ring2:'fa-ring', bracelet:'fa-circle-notch', belt:'fa-link',
   };
+  function slotIconHtml(slotId) { return `<i class="fa-solid ${SLOT_ICON[slotId] || 'fa-shield-halved'}"></i>`; }
 
   const ARMOR_SLOTS = ['helmet','cloak','chest','gloves','pants','boots'];
   function dmgLabel(slot) {
-    if (slot === 'weapon') return '🗡️ Урон';
-    if (ARMOR_SLOTS.includes(slot)) return '🛡️ Защита';
-    return '🛡️ Защ. (магия)';
+    if (slot === 'weapon') return 'Урон';
+    if (ARMOR_SLOTS.includes(slot)) return 'Защита';
+    return 'Защ. (магия)';
   }
   function qualityLabel(q) { return q === 'epic_ii' ? 'Эпическое II' : q === 'epic' ? 'Эпическое' : q || ''; }
   function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
-  function getWeaponIcon(id) {
-    return { bow:'🏹', staff:'🪄', wand:'✨', greatsword:'⚔️', sword_shield:'🛡️', spear:'🔱', crossbow:'🎯', daggers:'🗡️' }[id] || '⚔️';
-  }
+  const WEAPON_ICON = { bow:'fa-crosshairs', staff:'fa-wand-magic-sparkles', wand:'fa-wand-magic-sparkles', greatsword:'fa-khanda', sword_shield:'fa-shield-halved', spear:'fa-khanda', crossbow:'fa-crosshairs', daggers:'fa-khanda' };
+  function getWeaponIconHtml(id) { return `<i class="fa-solid ${WEAPON_ICON[id] || 'fa-khanda'}"></i>`; }
 
   // ── Load ──────────────────────────────────────────
   async function loadData() {
@@ -665,7 +714,7 @@
     if (!characters.length) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="icon">🎮</span>
+          <span class="icon"><i class="fa-solid fa-gamepad"></i></span>
           <p>У вас пока нет персонажа</p>
           <small>Создайте персонажа, чтобы участвовать в рейдах</small>
         </div>`;
@@ -684,10 +733,10 @@
     const canEdit       = status !== 'approved' || isEditPending;
 
     const statusLabel = {
-      pending:  isEditPending ? '✏️ Изменение на модерации' : '⏳ На модерации',
-      approved: '✅ Одобрен',
-      rejected: '❌ Отклонён',
-    }[displayStatus] || '⏳ На модерации';
+      pending:  isEditPending ? '<i class="fa-solid fa-pen-to-square"></i> Изменение на модерации' : '<i class="fa-solid fa-hourglass-half"></i> На модерации',
+      approved: '<i class="fa-solid fa-circle-check"></i> Одобрен',
+      rejected: '<i class="fa-solid fa-circle-xmark"></i> Отклонён',
+    }[displayStatus] || '<i class="fa-solid fa-hourglass-half"></i> На модерации';
 
     const block = document.createElement('div');
     block.className = `char-loot-block ${displayStatus}`;
@@ -719,7 +768,7 @@
     headerEl.className = 'clb-header';
     headerEl.innerHTML = `
       <div class="clb-header-left">
-        <div class="clb-char-icon">${getWeaponIcon(weaponTypes[0] || char.weapons?.[0] || '')}</div>
+        <div class="clb-char-icon">${getWeaponIconHtml(weaponTypes[0] || char.weapons?.[0] || '')}</div>
         <div>
           <div class="clb-char-name">${char.name}</div>
           <div class="clb-char-meta">
@@ -746,17 +795,17 @@
       pendingBody.innerHTML = `
         <div class="clb-info-grid">
           <div class="clb-info-block">
-            <span class="label">⚔️ Оружие</span>
+            <span class="label"><i class="fa-solid fa-khanda"></i> Оружие</span>
             <div style="display:flex;flex-wrap:wrap;gap:0.4rem">${weapons}</div>
           </div>
           <div class="clb-info-block">
-            <span class="label">📅 Создан</span>
+            <span class="label"><i class="fa-regular fa-calendar"></i> Создан</span>
             <div class="date-val">${date}</div>
           </div>
         </div>
-        ${char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : ''}
-        ${char.moderation_feedback ? `<div class="char-moderation-feedback">📝 Ответ: ${char.moderation_feedback}</div>` : ''}
-        ${isEditPending && char.edit_note ? `<div class="char-moderation-note">✏️ На модерации: ${char.edit_note}</div>` : ''}
+        ${char.moderation_note     ? `<div class="char-moderation-note"><i class="fa-solid fa-comment"></i> ${char.moderation_note}</div>` : ''}
+        ${char.moderation_feedback ? `<div class="char-moderation-feedback"><i class="fa-solid fa-pen-to-square"></i> Ответ: ${char.moderation_feedback}</div>` : ''}
+        ${isEditPending && char.edit_note ? `<div class="char-moderation-note"><i class="fa-solid fa-pen"></i> На модерации: ${char.edit_note}</div>` : ''}
       `;
       block.appendChild(pendingBody);
 
@@ -764,7 +813,7 @@
       if (canEdit) {
         const footer = document.createElement('div');
         footer.className = 'clb-footer';
-        footer.innerHTML = `<span></span><div class="clb-footer-actions"><button class="btn-edit-char" data-char-id="${char.id}">✏️ Редактировать</button></div>`;
+        footer.innerHTML = `<span></span><div class="clb-footer-actions"><button class="btn-edit-char" data-char-id="${char.id}"><i class="fa-solid fa-pen"></i> Редактировать</button></div>`;
         block.appendChild(footer);
         footer.querySelector('.btn-edit-char').addEventListener('click', () => openEditModal(char));
       }
@@ -789,14 +838,13 @@
     // Center silhouette
     const silhouette = document.createElement('div');
     silhouette.className = 'loot-silhouette';
-    // Вставь путь к силуэту:
-    silhouette.innerHTML = `<img src="/assets/img/profileimgwarrior.png" alt="" />`;
-    silhouette.innerHTML = `<div class="loot-silhouette-placeholder">👤</div>`;
+    silhouette.innerHTML = `<img src="/assets/img/profileimgwarrior.png" alt=""
+      onerror="this.remove(); this.parentElement.insertAdjacentHTML('beforeend', '&lt;div class=&quot;loot-silhouette-placeholder&quot;&gt;&lt;i class=&quot;fa-solid fa-user-large&quot;&gt;&lt;/i&gt;&lt;/div&gt;')" />`;
 
     // Right item card
     const cardEl = document.createElement('div');
     cardEl.className = 'clb-item-card empty-card';
-    cardEl.innerHTML = `<div style="opacity:0.4;font-size:2rem;margin-bottom:0.5rem">🎯</div><div>Наведите на слот</div>`;
+    cardEl.innerHTML = `<div style="opacity:0.4;font-size:2rem;margin-bottom:0.5rem"><i class="fa-solid fa-crosshairs"></i></div><div>Наведите на слот</div>`;
 
     bodyEl.appendChild(colLeft);
     bodyEl.appendChild(silhouette);
@@ -827,20 +875,20 @@
           img.style.cssText = 'position:relative;z-index:1;';
           iconWrap.appendChild(img);
         } else {
-          iconWrap.textContent = SLOT_EMOJI[slotDef.id] || '?';
+          iconWrap.innerHTML = slotIconHtml(slotDef.id);
         }
 
         if (obtained) {
           const badge = document.createElement('div');
           badge.className = 'slot-obtained-badge';
-          badge.textContent = '✓';
+          badge.innerHTML = '<i class="fa-solid fa-check"></i>';
           iconWrap.appendChild(badge);
         }
 
         if (editable) {
           const hint = document.createElement('div');
           hint.className = 'slot-edit-hint';
-          hint.textContent = item ? '✏️' : '+';
+          hint.innerHTML = item ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
           iconWrap.appendChild(hint);
         }
 
@@ -915,16 +963,19 @@
     });
     bodyEl.insertBefore(rightCol, cardEl);
 
-    // Show first item card
-    const firstFilled = ALL_LOOT_SLOTS.find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
-    if (firstFilled) {
-      const item = allItems.find(i => i.id === desired[firstFilled.id]);
+    // Show default item card — prefer weapon1, then weapon2, then first filled slot
+    const weaponDefault = ['weapon1', 'weapon2']
+      .map(id => LOOT_SLOTS_LEFT.find(s => s.id === id))
+      .find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
+    const defaultSlotDef = weaponDefault || ALL_LOOT_SLOTS.find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
+    if (defaultSlotDef) {
+      const item = allItems.find(i => i.id === desired[defaultSlotDef.id]);
       if (item) {
-        const obtained = wonItems[firstFilled.id] === desired[firstFilled.id];
+        const obtained = wonItems[defaultSlotDef.id] === desired[defaultSlotDef.id];
         setTimeout(() => {
-          const cell = block.querySelector(`[data-slot-id="${firstFilled.id}"]`);
-          if (cell) { cell.classList.add('active-slot'); activeSlotId = firstFilled.id; }
-          renderItemCard(item, obtained, firstFilled.label);
+          const cell = block.querySelector(`[data-slot-id="${defaultSlotDef.id}"]`);
+          if (cell) { cell.classList.add('active-slot'); activeSlotId = defaultSlotDef.id; }
+          renderItemCard(item, obtained, defaultSlotDef.label);
         }, 0);
       }
     }
@@ -937,28 +988,44 @@
       const effect  = item.effect || {};
       const setBonus = item.set_bonus || {};
       const props   = item.properties || [];
+      const runes   = item.runes || [];
+      const runesMax = item.runes_max || (runes.length ? runes.length : 3);
       const isWeapon = item.slot === 'weapon';
+      const weaponTypeLabel = item.weapon_type ? getWeaponLabel(item.weapon_type) : null;
+
+      // properties may be plain strings (legacy) or {label,value,level} objects
+      const richProps = props.filter(p => typeof p === 'object' && p !== null);
+      const plainProps = props.filter(p => typeof p === 'string');
 
       cardEl.className = 'clb-item-card';
       cardEl.innerHTML = `
-        ${obtained ? `<div class="lic-obtained-banner">✅ Получено — слот закрыт</div>` : ''}
-        <div class="lic-header">
+        ${obtained ? `<div class="lic-obtained-banner"><i class="fa-solid fa-circle-check"></i> Получено — слот закрыт</div>` : ''}
+        <div class="lic-topbar">
           <div class="lic-img-wrap ${quality ? `quality-${quality}` : ''}">
-            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : ''}
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : slotIconHtml(item.slot)}
           </div>
-          <div style="flex:1;min-width:0;">
-            <div class="lic-name">${item.name}</div>
+          <div class="lic-topbar-right">
             <div class="lic-meta">
-              <span class="lic-badge slot">${slotLabel}</span>
               ${quality ? `<span class="lic-badge qual">${qualityLabel(quality)}</span>` : ''}
               ${item.level ? `<span class="lic-badge level">Ур. ${item.level}</span>` : ''}
+              ${weaponTypeLabel ? `<span class="lic-badge slot">${weaponTypeLabel}</span>` : `<span class="lic-badge slot">${slotLabel}</span>`}
             </div>
+            ${item.wiki_url ? `<a class="lic-wiki-link" href="${item.wiki_url}" target="_blank" rel="noopener"><i class="fa-solid fa-book"></i> Где добыть — Вики</a>` : ''}
           </div>
         </div>
+        <div class="lic-name">${item.name}${item.level ? ` · ур. ${item.level}` : ''}</div>
         ${(item.damage_min || item.damage_max) ? `
-          <div class="lic-damage">
-            <span class="lic-damage-label">${dmgLabel(item.slot)}</span>
-            ${item.damage_min || ''}${item.damage_max ? ` — ${item.damage_max}` : ''}
+          <div class="lic-damage-box">
+            ${item.damage_max ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Макс. ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_max}</div></div>` : ''}
+            ${item.damage_min ? `<div class="lic-damage-cell"><div class="lic-damage-cell-label">Базовый ${dmgLabel(item.slot)}</div><div class="lic-damage-cell-value">${item.damage_min}</div></div>` : ''}
+          </div>` : ''}
+        ${isWeapon && (effect.name || effect.desc) ? `
+          <div class="lic-effect">
+            ${effect.image ? `<img src="${effect.image}" alt="effect" />` : `<div class="lic-effect-icon"><i class="fa-solid fa-bolt"></i></div>`}
+            <div>
+              ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
+              ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
+            </div>
           </div>` : ''}
         ${stats.length ? `
           <div class="lic-stats">
@@ -970,20 +1037,28 @@
             ${setBonus.piece2 ? `<div class="lic-set-piece"><span>(2):</span>${setBonus.piece2}</div>` : ''}
             ${setBonus.piece4 ? `<div class="lic-set-piece"><span>(4):</span>${setBonus.piece4}</div>` : ''}
           </div>` : ''}
-        ${isWeapon && (effect.name || effect.desc) ? `
-          <div class="lic-effect">
-            ${effect.image ? `<img src="${effect.image}" alt="effect" />` : ''}
-            <div>
-              ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
-              ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
-            </div>
+        ${richProps.length ? `
+          <div class="lic-section-title">Свойства снаряжения</div>
+          <div class="lic-props-list">
+            ${richProps.map(p => `<div class="lic-prop-row"><span class="lic-prop-dot"><i class="fa-solid fa-diamond"></i></span><span class="lic-prop-label">${p.label}</span><span class="lic-prop-value">${p.value ?? ''}</span>${p.level ? `<span class="lic-prop-lvl">ур.${p.level}</span>` : ''}</div>`).join('')}
           </div>` : ''}
-        ${props.length ? `<div class="lic-props">${props.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}</div>` : ''}
+        ${plainProps.length ? `<div class="lic-props">${plainProps.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}</div>` : ''}
+        ${runes.length ? `
+          <div class="lic-section-title">Руны (${runes.length}/${runesMax})</div>
+          <div class="lic-runes-list">
+            ${runes.map(r => `<div class="lic-rune-row"><span class="lic-rune-icon"><i class="fa-solid fa-gem"></i></span><span class="lic-rune-name">${r.name}</span>${r.tier ? `<span class="lic-rune-tier">${r.tier}</span>` : ''}</div>`).join('')}
+          </div>` : ''}
         ${item.description ? `<div class="lic-flavor">${item.description}</div>` : ''}
         ${boss ? `
           <div class="lic-boss">
-            ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '👹'}
+            ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '<i class="fa-solid fa-skull"></i>'}
             <span>${boss.name}</span>
+          </div>` : ''}
+        ${(item.has_synergy || item.perception || item.shield_penetration) ? `
+          <div class="lic-footer">
+            ${item.has_synergy ? `<span class="lic-footer-badge">Синергия</span>` : ''}
+            ${item.perception ? `<span>Восприятие ${item.perception}</span>` : ''}
+            ${item.shield_penetration ? `<span>Пробивание щита ${item.shield_penetration}%</span>` : ''}
           </div>` : ''}
       `;
     }
@@ -1027,9 +1102,9 @@
       const notesEl = document.createElement('div');
       notesEl.style.cssText = 'padding:0 1.5rem 1rem;';
       notesEl.innerHTML = `
-        ${char.moderation_note     ? `<div class="char-moderation-note">💬 ${char.moderation_note}</div>` : ''}
-        ${char.moderation_feedback ? `<div class="char-moderation-feedback">📝 Ответ: ${char.moderation_feedback}</div>` : ''}
-        ${isEditPending && char.edit_note ? `<div class="char-moderation-note">✏️ На модерации: ${char.edit_note}</div>` : ''}
+        ${char.moderation_note     ? `<div class="char-moderation-note"><i class="fa-solid fa-comment"></i> ${char.moderation_note}</div>` : ''}
+        ${char.moderation_feedback ? `<div class="char-moderation-feedback"><i class="fa-solid fa-pen-to-square"></i> Ответ: ${char.moderation_feedback}</div>` : ''}
+        ${isEditPending && char.edit_note ? `<div class="char-moderation-note"><i class="fa-solid fa-pen"></i> На модерации: ${char.edit_note}</div>` : ''}
       `;
       block.appendChild(notesEl);
     }
@@ -1066,7 +1141,7 @@
         if (canEdit || isApproved) {
           const editBtn = document.createElement('button');
           editBtn.className = isApproved ? 'btn-edit-approved' : 'btn-edit-char';
-          editBtn.textContent = isApproved ? '📝 Редактировать лут' : '✏️ Редактировать';
+          editBtn.innerHTML = isApproved ? '<i class="fa-solid fa-pen-to-square"></i> Редактировать лут' : '<i class="fa-solid fa-pen"></i> Редактировать';
           editBtn.addEventListener('click', () => {
             if (!isApproved) { openEditModal(char); return; }
             enterEditMode();
@@ -1076,7 +1151,7 @@
           if (!isApproved) {
             const nameBtn = document.createElement('button');
             nameBtn.className = 'btn-edit-char';
-            nameBtn.textContent = '✏️ Редактировать';
+            nameBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Редактировать';
             actions.innerHTML = '';
             nameBtn.addEventListener('click', () => openEditModal(char));
             actions.appendChild(nameBtn);
@@ -1166,7 +1241,7 @@
 
     titleEl.textContent    = slotDef.label;
     subtitleEl.textContent = slotDef.label;
-    iconEl.textContent     = SLOT_EMOJI[slotDef.id] || '🎒';
+    iconEl.innerHTML       = slotIconHtml(slotDef.id);
     searchEl.value         = '';
     confirmEl.disabled     = true;
     confirmEl.textContent  = 'Добавить';
@@ -1201,7 +1276,7 @@
       // Clear row
       const clearRow = document.createElement('div');
       clearRow.className = 'slot-picker-row clear-row' + (selectedItemId === null ? ' selected' : '');
-      clearRow.innerHTML = `<div style="font-size:1.2rem">✕</div><div><div class="slot-picker-name">Не выбрано</div><div class="slot-picker-sub">Очистить слот</div></div>`;
+      clearRow.innerHTML = `<div style="font-size:1.2rem"><i class="fa-solid fa-xmark"></i></div><div><div class="slot-picker-name">Не выбрано</div><div class="slot-picker-sub">Очистить слот</div></div>`;
       clearRow.addEventListener('click', () => {
         selectedItemId = null;
         confirmEl.disabled    = false;
@@ -1225,7 +1300,7 @@
         const slotLabel = SLOTS.find(s => s.id === item.slot)?.label || item.slot;
         row.innerHTML = `
           <div class="slot-picker-img ${q ? `quality-${q}` : ''}">
-            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : SLOT_EMOJI[slotDef.id] || '?'}
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : slotIconHtml(slotDef.id)}
           </div>
           <div>
             <div class="slot-picker-name ${q === 'epic_ii' ? 'epic2-name' : q === 'epic' ? 'epic-name' : ''}">${item.name}</div>
@@ -1277,7 +1352,7 @@
     document.getElementById('char-error').style.display = 'none';
     document.getElementById('modal-char-title').textContent    = char ? 'Редактировать персонажа' : 'Добавить персонажа';
     document.getElementById('modal-char-subtitle').textContent = char ? 'Изменения уйдут на модерацию' : 'Заполните данные';
-    document.getElementById('modal-char-icon').textContent     = char ? '✏️' : '⚔️';
+    document.getElementById('modal-char-icon').innerHTML       = char ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-khanda"></i>';
     document.getElementById('btn-char-save').textContent       = char ? 'Отправить на модерацию' : 'Создать персонажа';
     document.getElementById('modal-character').classList.remove('hidden');
     requestAnimationFrame(() => document.getElementById('modal-character').classList.add('open'));
