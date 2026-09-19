@@ -673,7 +673,379 @@
       border: 1px solid rgba(239,68,68,0.2);
     }
 
+    /* ══════════════════════════════════════════════════
+       LOOT DISPLAY
+    ══════════════════════════════════════════════════ */
+    .loot-display {
+      margin-top: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .loot-display-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .loot-display-body {
+      display: grid;
+      grid-template-columns: 1fr 200px 1fr;
+      min-height: 500px;
+    }
+
+    .loot-col {
+      padding: 1.25rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .loot-col-left  { align-items: flex-end; }
+    .loot-col-right { align-items: flex-start; }
+
+    .loot-silhouette {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .loot-silhouette img {
+      height: 480px;
+      width: auto;
+      object-fit: contain;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 24px rgba(124,58,237,0.2));
+    }
+
+    .loot-silhouette-placeholder {
+      height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.04);
+      font-size: 6rem;
+      user-select: none;
+    }
+
+    /* ── Ячейка слота ── */
+    .loot-slot-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 10px;
+      cursor: default;
+      transition: background 0.15s;
+      max-width: 210px;
+      width: 100%;
+    }
+
+    .loot-slot-cell.has-item { cursor: pointer; }
+    .loot-slot-cell.has-item:hover { background: rgba(255,255,255,0.04); }
+    .loot-slot-cell.active-slot { background: var(--accent-glow); }
+    .loot-col-left .loot-slot-cell { flex-direction: row-reverse; }
+
+    .slot-cell-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .slot-cell-icon img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .slot-cell-icon.quality-epic {
+      background: #1a0a2e;
+      border-color: rgba(168,85,247,0.45);
+      box-shadow: inset 0 0 10px rgba(168,85,247,0.12);
+    }
+
+    .slot-cell-icon.quality-epic_ii {
+      background: #1a0a2e;
+      border-color: rgba(139,92,246,0.55);
+      box-shadow: inset 0 0 14px rgba(139,92,246,0.18);
+    }
+
+    .slot-cell-icon.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+        radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4)  0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes epic-fog {
+      0%   { transform: translate(0%,0%)   scale(1);    opacity: 0.85; }
+      33%  { transform: translate(8%,-5%)  scale(1.08); opacity: 1;    }
+      66%  { transform: translate(-6%,8%)  scale(1.05); opacity: 0.9;  }
+      100% { transform: translate(5%,5%)   scale(1.1);  opacity: 1;    }
+    }
+
+    .slot-cell-icon.obtained {
+      border-color: rgba(34,197,94,0.6) !important;
+      box-shadow: 0 0 10px rgba(34,197,94,0.18), inset 0 0 6px rgba(34,197,94,0.08) !important;
+    }
+
+    .slot-cell-icon.empty-slot {
+      opacity: 0.25;
+      border-style: dashed;
+      font-size: 1.2rem;
+    }
+
+    .slot-obtained-badge {
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 17px; height: 17px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      color: #fff;
+      font-weight: 700;
+      z-index: 10;
+      border: 2px solid var(--bg-card);
+    }
+
+    .slot-cell-info { flex: 1; min-width: 0; }
+
+    .slot-cell-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+
+    .slot-cell-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+
+    .loot-col-left .slot-cell-name { text-align: right; }
+    .loot-col-left .slot-cell-label { text-align: right; }
+
+    .slot-cell-name.epic-name    { color: #c4b5fd; }
+    .slot-cell-name.epic2-name   { color: #a78bfa; }
+    .slot-cell-name.empty-name   { color: var(--text-muted); font-style: italic; font-weight: 400; font-size: 0.72rem; }
+    .slot-cell-name.obtained-name { color: #4ade80; }
+
+    /* ── Карточка предмета ── */
+    .loot-item-card {
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+    }
+
+    .loot-item-card.hidden { display: none; }
+
+    .lic-obtained-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.75rem;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      font-size: 0.78rem;
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .lic-header { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
+
+    .lic-img-wrap {
+      width: 60px; height: 60px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      background: #1a0a2e;
+      border: 1px solid rgba(201,170,113,0.3);
+    }
+
+    .lic-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      position: relative; z-index: 1;
+    }
+
+    .lic-img-wrap.quality-epic    { border-color: rgba(168,85,247,0.4); }
+    .lic-img-wrap.quality-epic_ii { border-color: rgba(139,92,246,0.5); }
+
+    .lic-img-wrap.quality-epic_ii::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(ellipse at 60% 40%, rgba(180,80,255,0.55) 0%, transparent 65%),
+        radial-gradient(ellipse at 30% 70%, rgba(120,40,220,0.4)  0%, transparent 60%);
+      animation: epic-fog 4s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    .lic-name {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #e2c98a;
+      font-family: 'HeaderFont', var(--font);
+      margin-bottom: 0.3rem;
+    }
+
+    .lic-meta { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+    .lic-badge {
+      font-size: 0.65rem;
+      padding: 0.12rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .lic-badge.slot  { color: #c9aa71; background: rgba(201,170,113,0.1); border: 1px solid rgba(201,170,113,0.25); }
+    .lic-badge.qual  { color: #c4b5fd; background: rgba(168,85,247,0.1);  border: 1px solid rgba(168,85,247,0.22); }
+    .lic-badge.level { color: var(--text-muted); background: var(--bg-card2); border: 1px solid var(--border); }
+
+    .lic-damage {
+      font-size: 0.88rem; font-weight: 700; color: #e2c98a;
+      padding: 0.38rem 0.6rem;
+      background: rgba(201,170,113,0.07);
+      border-radius: 8px;
+      border: 1px solid rgba(201,170,113,0.18);
+      margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    .lic-damage-label { font-weight: 400; color: var(--text-muted); font-size: 0.72rem; }
+
+    .lic-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.15rem 1rem;
+      padding: 0.45rem 0.6rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .lic-stat { font-size: 0.76rem; display: flex; justify-content: space-between; gap: 0.4rem; }
+    .lic-stat-label { color: var(--text-muted); }
+    .lic-stat-value { color: #e2c98a; font-weight: 600; }
+
+    .lic-set-bonus {
+      padding: 0.45rem 0.65rem;
+      background: rgba(201,170,113,0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(201,170,113,0.18);
+      margin-bottom: 0.5rem;
+    }
+
+    .lic-set-name  { font-weight: 700; color: #c9aa71; font-size: 0.82rem; margin-bottom: 0.2rem; }
+    .lic-set-piece { font-size: 0.73rem; color: var(--text-muted); }
+    .lic-set-piece span { color: #8a6f3e; font-weight: 600; margin-right: 0.25rem; }
+
+    .lic-effect {
+      display: flex; gap: 0.6rem;
+      padding: 0.5rem 0.65rem;
+      background: rgba(168,85,247,0.06);
+      border-radius: 8px;
+      border: 1px solid rgba(168,85,247,0.18);
+      margin-bottom: 0.5rem;
+    }
+
+    .lic-effect img { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    .lic-effect-name { font-size: 0.76rem; font-weight: 600; color: #c4b5fd; margin-bottom: 2px; }
+    .lic-effect-desc { font-size: 0.73rem; color: var(--text-muted); }
+
+    .lic-props { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
+    .lic-prop-tag {
+      background: var(--bg-card);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .lic-flavor {
+      margin-top: 0.45rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .lic-boss {
+      margin-top: 0.45rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .lic-boss img {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(201,170,113,0.25);
+    }
+
+    .lic-empty {
+      text-align: center;
+      padding: 1.25rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
     /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 720px) {
+      .loot-display-body { grid-template-columns: 1fr 70px 1fr; }
+      .loot-silhouette img { height: 360px; }
+      .loot-silhouette-placeholder { height: 360px; }
+      .slot-cell-icon { width: 42px; height: 42px; font-size: 1.1rem; }
+      .slot-cell-name { font-size: 0.7rem; max-width: 90px; }
+      .lic-stats { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 640px) {
       .profile-header { flex-direction: column; text-align: center; }
       .profile-name-row { justify-content: center; }
@@ -682,6 +1054,15 @@
       .char-info-grid  { grid-template-columns: 1fr; }
       .char-top        { flex-direction: column; }
       .char-actions    { justify-content: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      .loot-display-body { grid-template-columns: 1fr; }
+      .loot-silhouette { display: none; }
+      .loot-col-left { align-items: flex-start; }
+      .loot-col-left .loot-slot-cell { flex-direction: row; }
+      .loot-col-left .slot-cell-name { text-align: left; }
+      .loot-col-left .slot-cell-label { text-align: left; }
     }
   </style>
 </head>
@@ -878,6 +1259,7 @@
     renderProfile();
     renderCharacters();
     populateWeaponSelects();
+    renderLootDisplay();
   }
 
   async function loadCharacters() {
@@ -1310,6 +1692,35 @@
     // 3. Build loot grid — now weapon selects already have correct values
     const initialLoot = char?.desired_loot || {};
     buildLootSlots(initialLoot, initialLoot);
+
+    // 4. Блокируем слоты где дроп уже получен (won_items)
+    const wonItems = char?.won_items || {};
+    if (Object.keys(wonItems).length) {
+      // Небольшая задержка — ждём пока DOM отрисует слоты
+      setTimeout(() => {
+        document.querySelectorAll('#loot-selection .loot-slot').forEach(slot => {
+          const slotId = slot.dataset.slotId;
+          const itemId = initialLoot[slotId];
+          if (itemId && wonItems[slotId] === itemId) {
+            const display = slot.querySelector('.select-display');
+            if (display) {
+              display.style.cssText = `
+                pointer-events: none;
+                border-color: rgba(34,197,94,0.5);
+                background: rgba(34,197,94,0.05);
+                opacity: 0.75;
+              `;
+              const valEl = display.querySelector('.select-val');
+              if (valEl) valEl.style.color = '#4ade80';
+            }
+            const note = document.createElement('div');
+            note.style.cssText = 'font-size:0.62rem;color:#4ade80;margin-top:3px;padding-left:2px;';
+            note.textContent = '✅ Получено — слот закрыт';
+            slot.appendChild(note);
+          }
+        });
+      }, 50);
+    }
   }
 
   function openAddCharacter() {
@@ -1400,11 +1811,275 @@
       closeModal();
       await loadCharacters();
       renderCharacters();
+      renderLootDisplay();
     } catch(e) {
       showErr('Ошибка сохранения: ' + e.message);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Отправить на модерацию';
+    }
+  }
+
+  // ── Loot Display ──────────────────────────────────
+  const LD_SLOTS_LEFT = [
+    { id: 'weapon1',  label: 'Оружие 1'  },
+    { id: 'weapon2',  label: 'Оружие 2'  },
+    { id: 'helmet',   label: 'Шлем'      },
+    { id: 'chest',    label: 'Нагрудник' },
+    { id: 'gloves',   label: 'Перчатки'  },
+    { id: 'pants',    label: 'Поножи'    },
+    { id: 'boots',    label: 'Сапоги'    },
+  ];
+  const LD_SLOTS_RIGHT = [
+    { id: 'cloak',    label: 'Плащ'      },
+    { id: 'necklace', label: 'Ожерелье'  },
+    { id: 'ring1',    label: 'Кольцо 1'  },
+    { id: 'ring2',    label: 'Кольцо 2'  },
+    { id: 'bracelet', label: 'Браслет'   },
+    { id: 'belt',     label: 'Пояс'      },
+  ];
+
+  const LD_EMOJI = {
+    weapon1:'⚔️', weapon2:'🗡️', helmet:'🪖', chest:'🛡️',
+    gloves:'🧤', pants:'👖', boots:'👢', cloak:'🧥',
+    necklace:'📿', ring1:'💍', ring2:'💍', bracelet:'⌚', belt:'🔗',
+  };
+
+  const LD_ARMOR = ['helmet','cloak','chest','gloves','pants','boots'];
+
+  function ldDmgLabel(slot) {
+    if (slot === 'weapon') return '🗡️ Урон';
+    if (LD_ARMOR.includes(slot)) return '🛡️ Защита';
+    return '🛡️ Защ. (магия)';
+  }
+
+  function ldQualityLabel(q) {
+    return q === 'epic_ii' ? 'Эпическое II' : q === 'epic' ? 'Эпическое' : q || '';
+  }
+
+  function renderLootDisplay() {
+    // Берём одобренного персонажа
+    const char = characters.find(c => c.status === 'approved');
+    const existing = document.getElementById('ld-section');
+    if (existing) existing.remove();
+
+    if (!char) return;
+
+    const desired = char.desired_loot || {};
+    const wonItems = char.won_items || {};  // { weapon1: itemId, helmet: itemId, ... }
+
+    // Считаем статистику
+    const desiredCount = Object.values(desired).filter(Boolean).length;
+    const obtainedCount = Object.keys(desired).filter(k =>
+      desired[k] && wonItems[k] === desired[k]
+    ).length;
+
+    if (!desiredCount) return;
+
+    // ── Строим секцию ──
+    const wrap = document.createElement('div');
+    wrap.id = 'ld-section';
+    wrap.className = 'loot-display';
+
+    wrap.innerHTML = `
+      <div class="loot-display-header">
+        <span class="section-title">🎯 Желаемый лут</span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">
+          ${obtainedCount} / ${desiredCount} получено
+        </span>
+      </div>
+      <div class="loot-display-body">
+        <div class="loot-col loot-col-left"  id="ld-col-left"></div>
+        <div class="loot-silhouette" id="ld-silhouette">
+          <div class="loot-silhouette-placeholder">👤</div>
+        </div>
+        <div class="loot-col loot-col-right" id="ld-col-right"></div>
+      </div>
+      <div class="loot-item-card hidden" id="ld-item-card">
+        <div class="lic-empty">Наведите на слот чтобы увидеть детали</div>
+      </div>
+    `;
+
+    // Вставляем после .characters-section
+    document.querySelector('.characters-section').after(wrap);
+
+    // Силуэт — раскомментируй и вставь путь:
+    wrap.querySelector('#ld-silhouette').innerHTML =
+       `<img src="/assets/img/profileimgwarrior.png" alt="" />`;
+
+    function buildCell(slotDef) {
+      const itemId   = desired[slotDef.id];
+      const item     = itemId ? allItems.find(i => i.id === itemId) : null;
+      const obtained = !!(item && wonItems[slotDef.id] === itemId);
+      const quality  = item?.quality || '';
+
+      const cell = document.createElement('div');
+      cell.className = 'loot-slot-cell' + (item ? ' has-item' : '');
+      cell.dataset.slotId = slotDef.id;
+
+      // ── Иконка ──
+      const icon = document.createElement('div');
+      icon.className = 'slot-cell-icon';
+
+      if (!item) {
+        icon.classList.add('empty-slot');
+        icon.textContent = LD_EMOJI[slotDef.id] || '?';
+      } else {
+        if (quality) icon.classList.add(`quality-${quality}`);
+        if (obtained) icon.classList.add('obtained');
+
+        if (item.image) {
+          const img = document.createElement('img');
+          img.src = item.image;
+          img.alt = item.name;
+          img.style.cssText = 'position:relative;z-index:1;';
+          icon.appendChild(img);
+        } else {
+          icon.textContent = LD_EMOJI[slotDef.id] || '?';
+        }
+
+        if (obtained) {
+          const badge = document.createElement('div');
+          badge.className = 'slot-obtained-badge';
+          badge.textContent = '✓';
+          icon.appendChild(badge);
+        }
+      }
+
+      // ── Текст ──
+      const info = document.createElement('div');
+      info.className = 'slot-cell-info';
+
+      const label = document.createElement('div');
+      label.className = 'slot-cell-label';
+      label.textContent = slotDef.label;
+
+      const name = document.createElement('div');
+      name.className = 'slot-cell-name';
+      if (!item) {
+        name.classList.add('empty-name');
+        name.textContent = 'не выбрано';
+      } else if (obtained) {
+        name.classList.add('obtained-name');
+        name.textContent = item.name;
+      } else if (quality === 'epic_ii') {
+        name.classList.add('epic2-name');
+        name.textContent = item.name;
+      } else if (quality === 'epic') {
+        name.classList.add('epic-name');
+        name.textContent = item.name;
+      } else {
+        name.textContent = item.name;
+      }
+
+      info.appendChild(label);
+      info.appendChild(name);
+      cell.appendChild(icon);
+      cell.appendChild(info);
+
+      // ── Hover — показать карточку (не исчезает при уходе мыши) ──
+      if (item) {
+        cell.addEventListener('mouseenter', () => {
+          wrap.querySelectorAll('.loot-slot-cell').forEach(c => c.classList.remove('active-slot'));
+          cell.classList.add('active-slot');
+          renderItemCard(item, obtained, slotDef.label);
+        });
+      }
+
+      return cell;
+    }
+
+    const colLeft  = wrap.querySelector('#ld-col-left');
+    const colRight = wrap.querySelector('#ld-col-right');
+    LD_SLOTS_LEFT.forEach(s  => colLeft.appendChild(buildCell(s)));
+    LD_SLOTS_RIGHT.forEach(s => colRight.appendChild(buildCell(s)));
+
+    // Показать первый заполненный слот сразу
+    const firstSlot = [...LD_SLOTS_LEFT, ...LD_SLOTS_RIGHT]
+      .find(s => desired[s.id] && allItems.find(i => i.id === desired[s.id]));
+    if (firstSlot) {
+      const firstCell = wrap.querySelector(`[data-slot-id="${firstSlot.id}"]`);
+      if (firstCell) {
+        firstCell.classList.add('active-slot');
+        const item = allItems.find(i => i.id === desired[firstSlot.id]);
+        if (item) renderItemCard(item, wonItems[firstSlot.id] === desired[firstSlot.id], firstSlot.label);
+      }
+    }
+
+    function renderItemCard(item, obtained, slotLabel) {
+      const card = wrap.querySelector('#ld-item-card');
+      card.classList.remove('hidden');
+
+      const boss    = allBosses.find(b => b.id === item.boss_id);
+      const quality = item.quality || '';
+      const stats   = item.stats || [];
+      const effect  = item.effect || {};
+      const setBonus = item.set_bonus || {};
+      const props   = item.properties || [];
+      const isWeapon = item.slot === 'weapon';
+
+      card.innerHTML = `
+        ${obtained ? `
+          <div class="lic-obtained-banner">✅ Получено — этот слот закрыт</div>
+        ` : ''}
+        <div class="lic-header">
+          <div class="lic-img-wrap ${quality ? `quality-${quality}` : ''}">
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="position:relative;z-index:1;" />` : ''}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="lic-name">${item.name}</div>
+            <div class="lic-meta">
+              <span class="lic-badge slot">${slotLabel}</span>
+              ${quality ? `<span class="lic-badge qual">${ldQualityLabel(quality)}</span>` : ''}
+              ${item.level ? `<span class="lic-badge level">Ур. ${item.level}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        ${(item.damage_min || item.damage_max) ? `
+          <div class="lic-damage">
+            <span class="lic-damage-label">${ldDmgLabel(item.slot)}</span>
+            ${item.damage_min || ''}${item.damage_max ? ` — ${item.damage_max}` : ''}
+          </div>` : ''}
+
+        ${stats.length ? `
+          <div class="lic-stats">
+            ${stats.map(s => `
+              <div class="lic-stat">
+                <span class="lic-stat-label">${s.label || s}</span>
+                <span class="lic-stat-value">${s.value || ''}</span>
+              </div>`).join('')}
+          </div>` : ''}
+
+        ${!isWeapon && setBonus.name ? `
+          <div class="lic-set-bonus">
+            <div class="lic-set-name">${setBonus.name}</div>
+            ${setBonus.piece2 ? `<div class="lic-set-piece"><span>(2):</span>${setBonus.piece2}</div>` : ''}
+            ${setBonus.piece4 ? `<div class="lic-set-piece"><span>(4):</span>${setBonus.piece4}</div>` : ''}
+          </div>` : ''}
+
+        ${isWeapon && (effect.name || effect.desc) ? `
+          <div class="lic-effect">
+            ${effect.image ? `<img src="${effect.image}" alt="effect" />` : ''}
+            <div>
+              ${effect.name ? `<div class="lic-effect-name">${effect.name}</div>` : ''}
+              ${effect.desc ? `<div class="lic-effect-desc">${effect.desc}</div>` : ''}
+            </div>
+          </div>` : ''}
+
+        ${props.length ? `
+          <div class="lic-props">
+            ${props.map(p => `<span class="lic-prop-tag">${p}</span>`).join('')}
+          </div>` : ''}
+
+        ${item.description ? `<div class="lic-flavor">${item.description}</div>` : ''}
+
+        ${boss ? `
+          <div class="lic-boss">
+            ${boss.icon ? `<img src="/assets/img/bosses/${boss.icon}" alt="${boss.name}" />` : '👹'}
+            <span>${boss.name}</span>
+          </div>` : ''}
+      `;
     }
   }
 
