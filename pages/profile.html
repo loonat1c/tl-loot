@@ -104,11 +104,18 @@
       border-radius: 20px; border: 1px solid var(--border);
     }
     .clb-progress span { color: var(--success); font-weight: 700; }
+    .btn-loot-edit-top {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-size: 0.85rem;
+    }
+    .btn-loot-edit-top:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-soft); }
 
     /* ── Loot layout: slots + silhouette + card ── */
     .clb-body {
       display: grid;
-      grid-template-columns: 260px 1fr 360px;
+      grid-template-columns: 280px 1fr 280px 380px;
       min-height: 480px;
       position: relative;
     }
@@ -453,7 +460,7 @@
 
     /* ── Responsive ── */
     @media (max-width: 900px) {
-      .clb-body { grid-template-columns: 220px 1fr 300px; }
+      .clb-body { grid-template-columns: 220px 1fr 220px 300px; }
       .slot-cell-icon { width: 46px; height: 46px; }
       .slot-cell-name { max-width: 120px; }
     }
@@ -631,13 +638,30 @@
   ];
   const ALL_LOOT_SLOTS = [...LOOT_SLOTS_LEFT, ...LOOT_SLOTS_RIGHT];
 
-  // ── Строгие иконки слотов (Font Awesome, без эмодзи) ──
+  // ── Иконки слотов ──────────────────────────────────
+  // Чтобы использовать свою картинку вместо стандартной иконки — впишите
+  // прямую ссылку на неё в поле "url" (PNG/SVG/WEBP). Если "url" пустой,
+  // используется иконка Font Awesome из поля "fa".
   const SLOT_ICON = {
-    weapon1:'fa-khanda', weapon2:'fa-khanda', helmet:'fa-helmet-safety', chest:'fa-vest',
-    gloves:'fa-mitten', pants:'fa-socks', boots:'fa-shoe-prints', cloak:'fa-vest-patches',
-    necklace:'fa-gem', ring1:'fa-ring', ring2:'fa-ring', bracelet:'fa-circle-notch', belt:'fa-link',
+    weapon1:  { url: '', fa: 'fa-khanda' },
+    weapon2:  { url: '', fa: 'fa-khanda' },
+    helmet:   { url: '', fa: 'fa-helmet-safety' },
+    chest:    { url: '', fa: 'fa-vest' },
+    gloves:   { url: '', fa: 'fa-mitten' },
+    pants:    { url: '', fa: 'fa-socks' },
+    boots:    { url: '', fa: 'fa-shoe-prints' },
+    cloak:    { url: '', fa: 'fa-vest-patches' },
+    necklace: { url: '', fa: 'fa-gem' },
+    ring1:    { url: '', fa: 'fa-ring' },
+    ring2:    { url: '', fa: 'fa-ring' },
+    bracelet: { url: '', fa: 'fa-circle-notch' },
+    belt:     { url: '', fa: 'fa-link' },
   };
-  function slotIconHtml(slotId) { return `<i class="fa-solid ${SLOT_ICON[slotId] || 'fa-shield-halved'}"></i>`; }
+  function slotIconHtml(slotId) {
+    const cfg = SLOT_ICON[slotId];
+    if (cfg?.url) return `<img src="${cfg.url}" alt="" style="width:60%;height:60%;object-fit:contain;" />`;
+    return `<i class="fa-solid ${cfg?.fa || 'fa-shield-halved'}"></i>`;
+  }
 
   const ARMOR_SLOTS = ['helmet','cloak','chest','gloves','pants','boots'];
   function dmgLabel(slot) {
@@ -647,8 +671,22 @@
   }
   function qualityLabel(q) { return q === 'epic_ii' ? 'Эпическое II' : q === 'epic' ? 'Эпическое' : q || ''; }
   function getWeaponLabel(id) { return WEAPONS.find(w => w.id === id)?.label || id; }
-  const WEAPON_ICON = { bow:'fa-crosshairs', staff:'fa-wand-magic-sparkles', wand:'fa-wand-magic-sparkles', greatsword:'fa-khanda', sword_shield:'fa-shield-halved', spear:'fa-khanda', crossbow:'fa-crosshairs', daggers:'fa-khanda' };
-  function getWeaponIconHtml(id) { return `<i class="fa-solid ${WEAPON_ICON[id] || 'fa-khanda'}"></i>`; }
+  // Иконки типов оружия — та же схема: своя ссылка в "url", иначе Font Awesome.
+  const WEAPON_ICON = {
+    bow:          { url: '', fa: 'fa-crosshairs' },
+    staff:        { url: '', fa: 'fa-wand-magic-sparkles' },
+    wand:         { url: '', fa: 'fa-wand-magic-sparkles' },
+    greatsword:   { url: '', fa: 'fa-khanda' },
+    sword_shield: { url: '', fa: 'fa-shield-halved' },
+    spear:        { url: '', fa: 'fa-khanda' },
+    crossbow:     { url: '', fa: 'fa-crosshairs' },
+    daggers:      { url: '', fa: 'fa-khanda' },
+  };
+  function getWeaponIconHtml(id) {
+    const cfg = WEAPON_ICON[id];
+    if (cfg?.url) return `<img src="${cfg.url}" alt="" style="width:60%;height:60%;object-fit:contain;" />`;
+    return `<i class="fa-solid ${cfg?.fa || 'fa-khanda'}"></i>`;
+  }
 
   // ── Load ──────────────────────────────────────────
   async function loadData() {
@@ -781,9 +819,11 @@
       </div>
       <div class="clb-header-right">
         ${desiredCount ? `<span class="clb-progress"><span>${obtainedCount}</span> / ${desiredCount} получено</span>` : ''}
+        ${(canEdit || isApproved) ? `<button class="btn-loot-edit-top" id="btn-edit-top-${char.id}" title="${isApproved ? 'Редактировать лут' : 'Редактировать персонажа'}"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
       </div>
     `;
     block.appendChild(headerEl);
+    const editTopBtn = headerEl.querySelector('.btn-loot-edit-top');
 
     // If pending/rejected and no loot yet — simple view
     if (!isApproved && !Object.keys(desired).length) {
@@ -809,14 +849,8 @@
       `;
       block.appendChild(pendingBody);
 
-      // Footer
-      if (canEdit) {
-        const footer = document.createElement('div');
-        footer.className = 'clb-footer';
-        footer.innerHTML = `<span></span><div class="clb-footer-actions"><button class="btn-edit-char" data-char-id="${char.id}"><i class="fa-solid fa-pen"></i> Редактировать</button></div>`;
-        block.appendChild(footer);
-        footer.querySelector('.btn-edit-char').addEventListener('click', () => openEditModal(char));
-      }
+      // Edit action lives in the header now (top-right), not in a footer
+      if (canEdit && editTopBtn) editTopBtn.addEventListener('click', () => openEditModal(char));
 
       container.appendChild(block);
       return;
@@ -1135,31 +1169,19 @@
         footer.appendChild(note);
         footer.appendChild(actions);
       } else {
-        const emptySpan = document.createElement('span');
-        const actions = document.createElement('div');
-        actions.className = 'clb-footer-actions';
-        if (canEdit || isApproved) {
-          const editBtn = document.createElement('button');
-          editBtn.className = isApproved ? 'btn-edit-approved' : 'btn-edit-char';
-          editBtn.innerHTML = isApproved ? '<i class="fa-solid fa-pen-to-square"></i> Редактировать лут' : '<i class="fa-solid fa-pen"></i> Редактировать';
-          editBtn.addEventListener('click', () => {
-            if (!isApproved) { openEditModal(char); return; }
-            enterEditMode();
-          });
-          actions.appendChild(editBtn);
-
-          if (!isApproved) {
-            const nameBtn = document.createElement('button');
-            nameBtn.className = 'btn-edit-char';
-            nameBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Редактировать';
-            actions.innerHTML = '';
-            nameBtn.addEventListener('click', () => openEditModal(char));
-            actions.appendChild(nameBtn);
-          }
-        }
-        footer.appendChild(emptySpan);
-        footer.appendChild(actions);
+        // Nothing shown here while not editing — the edit action lives
+        // in the header (top-right), not tucked away at the bottom.
+        footer.innerHTML = '';
       }
+    }
+
+    // Header edit button drives both "edit loot" (approved) and
+    // "edit character" (pending/rejected) from the same top-right icon.
+    if (editTopBtn) {
+      editTopBtn.addEventListener('click', () => {
+        if (!isApproved) { openEditModal(char); return; }
+        enterEditMode();
+      });
     }
 
     function enterEditMode() {
