@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Пересчёт won_items — разовый скрипт</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body { padding: 2rem; max-width: 760px; margin: 0 auto; }
+    #log { white-space: pre-wrap; font-family: monospace; font-size: 0.82rem;
+           background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px;
+           padding: 1rem; margin-top: 1rem; max-height: 60vh; overflow-y: auto; }
+    .warn { color: var(--warning); }
+    .ok { color: var(--success); }
+    .err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <h2>Пересчёт won_items + чистка loot_history</h2>
+  <p class="text-muted">
+    Разово пересобирает <code>won_items</code> у каждого персонажа с нуля из текущих
+    рейдов → траёв → дропов, учитывая <strong>только победы в основной очереди</strong>
+    и только по дропам, которые ещё реально существуют. Заодно удаляет записи
+    <code>loot_history</code>, которые ссылаются на уже удалённые траи/дропы.
+    <br><br>
+    Закрывает разом обе проблемы: слоты, залоченные победой в дополнительной
+    очереди, и слоты, которые остались залоченными после удаления трая с выигрышем.
+    Скрипт идемпотентен — можно запускать сколько угодно раз, если снова
+    что-то разъедется.
+  </p>
+  <p><strong>Доступ только для админа.</strong> После использования удалите этот файл.</p>
+  <button class="btn btn-primary" id="btn-run">Запустить пересчёт</button>
+  <button class="btn btn-ghost" id="btn-dry-run">Проверить (без записи)</button>
+  <div id="log"></div>
+
+  <script type="module">
+    import { initAuth, authReady, isAdmin, currentUser } from "../js/modules/auth.js";
+    import { getRaids, getRaidTries, getTryDrops } from "../js/modules/raids.js";
+    import { collection, doc, getDocs, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { db } from "../js/firebase.js";
+
+    await initAuth();
+    await authReady;
+
+    const logEl = document.getElementById('log');
+    function log(msg, cls) {
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    if (!currentUser || !isAdmin()) {
+      document.getElementById('btn-run').disabled = true;
+      document.getElementById('btn-dry-run').disabled = true;
+      log('Доступ запрещён: нужен админ-аккаунт.', 'err');
+    }
+
+    async function loadCharacters() {
+      const snap = await getDocs(collection(db, 'characters'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    // Та же логика подбора ключа слота, что и в confirmRollWinner() (raids.html)
+    function resolveWonKey(char, itemId, itemSlot) {
+      const desired = char.desired_loot || {};
+      const key = Object.keys(desired).find(k => desired[k] === itemId);
+      return key || itemSlot;
+    }
+
+    function sameMap(a, b) {
+      const ak = Object.keys(a), bk = Object.keys(b);
+      if (ak.length !== bk.length) return false;
+      return ak.every(k => a[k] === b[k]);
+    }
+
+    async function run(dryRun) {
+      document.getElementById('btn-run').disabled = true;
+      document.getElementById('btn-dry-run').disabled = true;
+      logEl.innerHTML = '';
+      log(dryRun ? 'Проверка (без записи)…' : 'Запуск пересчёта…');
+
+      const characters = await loadCharacters();
+      const charById = new Map(characters.map(c => [c.id, c]));
+
+      const raids = (await getRaids()).filter(r => !r.deleted);
+      log(`Рейдов (не удалённых): ${raids.length}`);
+
+      // ── Проход 1: собираем живые дропы-победы (только main-очередь) ──
+      // и параллельно карту существующих дропов для чистки loot_history.
+      const newWonByChar = new Map(); // charId -> { slotKey: itemId }
+      const liveDropKeys = new Set(); // "raidId/tryId/dropId" — для сверки с loot_history
+
+      for (const raid of raids) {
+        const tries = await getRaidTries(raid.id);
+        for (const t of tries) {
+          const drops = await getTryDrops(raid.id, t.id);
+          for (const d of drops) {
+            liveDropKeys.add(`${raid.id}/${t.id}/${d.id}`);
+            if (!d.winner_player_id || !d.item_id) continue;
+            if ((d.roll_type || 'main') !== 'main') continue; // доп. очередь слот не блокирует
+
+            const char = charById.get(d.winner_player_id);
+            if (!char) { log(`  ⚠ Персонаж ${d.winner_player_id} не найден (предмет "${d.item_name}")`, 'warn'); continue; }
+
+            const key = resolveWonKey(char, d.item_id, d.item_slot);
+            if (!newWonByChar.has(char.id)) newWonByChar.set(char.id, {});
+            newWonByChar.get(char.id)[key] = d.item_id;
+          }
+        }
+      }
+
+      // ── Проход 2: сравниваем с текущим won_items и готовим обновления ──
+      let charsToUpdate = 0;
+      for (const char of characters) {
+        const current = char.won_items || {};
+        const fresh = newWonByChar.get(char.id) || {};
+        if (!sameMap(current, fresh)) {
+          charsToUpdate++;
+          log(`  → ${char.name}: won_items ${JSON.stringify(current)} → ${JSON.stringify(fresh)}`);
+        }
+      }
+      log(`\nПерсонажей, у кого won_items изменится: ${charsToUpdate}`, charsToUpdate ? 'ok' : '');
+
+      // ── Проход 3: orphaned loot_history (ссылается на несуществующий дроп) ──
+      const historySnap = await getDocs(collection(db, 'loot_history'));
+      const orphanedHistoryDocs = [];
+      historySnap.docs.forEach(d => {
+        const h = d.data();
+        if (h.raid_deleted) return; // уже помечена мягко удалённой — не трогаем
+        const key = `${h.raid_id}/${h.try_id}/${h.drop_id}`;
+        if (!liveDropKeys.has(key)) orphanedHistoryDocs.push(d);
+      });
+      log(`Записей loot_history, ссылающихся на удалённые дропы: ${orphanedHistoryDocs.length}`, orphanedHistoryDocs.length ? 'warn' : '');
+
+      if (dryRun) {
+        log('\nЭто был dry-run — ничего не записано. Нажмите "Запустить пересчёт" чтобы применить.', 'warn');
+        document.getElementById('btn-run').disabled = false;
+        document.getElementById('btn-dry-run').disabled = false;
+        return;
+      }
+
+      // ── Запись ──
+      if (charsToUpdate) {
+        const entries = characters.filter(c => !sameMap(c.won_items || {}, newWonByChar.get(c.id) || {}));
+        const CHUNK = 400;
+        for (let i = 0; i < entries.length; i += CHUNK) {
+          const batch = writeBatch(db);
+          entries.slice(i, i + CHUNK).forEach(c => {
+            batch.update(doc(db, 'characters', c.id), { won_items: newWonByChar.get(c.id) || {} });
+          });
+          await batch.commit();
+          log(`Записана партия персонажей ${i / CHUNK + 1}`, 'ok');
+        }
+      }
+
+      if (orphanedHistoryDocs.length) {
+        const CHUNK = 400;
+        for (let i = 0; i < orphanedHistoryDocs.length; i += CHUNK) {
+          const batch = writeBatch(db);
+          orphanedHistoryDocs.slice(i, i + CHUNK).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+          log(`Удалена партия loot_history ${i / CHUNK + 1}`, 'ok');
+        }
+      }
+
+      log('\nГотово. Обновите страницы профиля и рейдов — лишние блокировки должны сняться.', 'ok');
+      document.getElementById('btn-run').disabled = false;
+      document.getElementById('btn-dry-run').disabled = false;
+    }
+
+    document.getElementById('btn-run').addEventListener('click', () => run(false));
+    document.getElementById('btn-dry-run').addEventListener('click', () => run(true));
+  </script>
+</body>
+</html>
