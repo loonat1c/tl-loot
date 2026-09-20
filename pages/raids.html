@@ -278,7 +278,7 @@
       <div class="roll-modal-item-info">
         <div class="roll-modal-item-icon" id="roll-item-icon-container">
           <img id="roll-item-img" src="" alt="" style="display:none;" />
-          <i id="roll-item-icon-fallback" class="fa-solid fa-dice" style="font-size:1.6rem;color:var(--accent-soft);"></i>
+          <span id="roll-item-icon-fallback" style="font-size:1.8rem;">🎲</span>
         </div>
         <div>
           <div class="roll-modal-item-name" id="roll-item-name">—</div>
@@ -900,11 +900,10 @@
     const isRolling = raid?.status === 'rolling';
     const boss = allBosses.find(b => b.id === d.boss_id);
     const bossIcon = boss?.icon ? `/assets/img/bosses/${boss.icon}` : null;
-    let rollBtnClass = 'roll-btn', rollBtnIcon = 'fa-dice', rollBtnTitle = 'Открыть окно ролла';
-    if (hasWinner) { rollBtnClass += ' finished'; rollBtnIcon = 'fa-chart-simple'; rollBtnTitle = 'Просмотр результатов'; }
-    else if (isClosed) { rollBtnIcon = 'fa-lock'; rollBtnTitle = 'Рейд закрыт'; }
-    else if (isRolling) { rollBtnClass += ' rolling'; rollBtnIcon = 'fa-dice'; rollBtnTitle = 'Идёт ролл'; }
-    const rollBtnText = `<i class="fa-solid ${rollBtnIcon}"></i>`;
+    let rollBtnClass = 'roll-btn', rollBtnText = '🎲', rollBtnTitle = 'Открыть окно ролла';
+    if (hasWinner) { rollBtnClass += ' finished'; rollBtnText = '<i class="fa-solid fa-chart-simple"></i>'; rollBtnTitle = 'Просмотр результатов'; }
+    else if (isClosed) { rollBtnText = '<i class="fa-solid fa-lock"></i>'; rollBtnTitle = 'Рейд закрыт'; }
+    else if (isRolling) { rollBtnClass += ' rolling'; rollBtnText = '🎲'; rollBtnTitle = 'Идёт ролл'; }
     const qualityClass = d.item_quality ? ` quality-${d.item_quality}` : '';
     return `
       <div class="drop-row">
@@ -914,7 +913,7 @@
           <div class="drop-detail">${slotLabel} · ${lucentIcon()} ${(d.lucent_value_snapshot||0).toLocaleString()} L${d.property ? `<span class="drop-property"><i class="fa-solid fa-diamond" style="font-size:0.6rem"></i> ${d.property}</span>` : ''}</div>
           ${boss ? `<div class="drop-boss-tag">${bossIcon ? `<img src="${bossIcon}" />` : ''}${boss.name}</div>` : ''}
         </div>
-        <div class="drop-winner">${hasWinner ? `<strong>${d.winner_nickname}</strong><span>${d.roll_type === 'main' ? 'Основная' : 'Дополнительная'}</span>` : `<span class="no-winner">${isRolling ? '<i class="fa-solid fa-dice"></i> Ролл...' : 'Ожидает ролла'}</span>`}</div>
+        <div class="drop-winner">${hasWinner ? `<strong>${d.winner_nickname}</strong><span>${d.roll_type === 'main' ? 'Основная' : 'Дополнительная'}</span>` : `<span class="no-winner">${isRolling ? '🎲 Ролл...' : 'Ожидает ролла'}</span>`}</div>
         <div class="drop-actions">
           <button class="${rollBtnClass}" onclick="openRollModal('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}','${slotLabel}','${d.property||''}','${d.item_slot||''}','${d.item_quality||''}')" title="${rollBtnTitle}">${rollBtnText}</button>
           ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteDrop('${raidId}','${tryId}','${d.id}','${d.item_name.replace(/'/g,"\\'")}')">Удалить</button>` : ''}
@@ -1453,7 +1452,7 @@
       const isMe = p.playerId === rollState.currentPlayerId;
       const row = document.createElement('div');
       row.className = 'roll-player-row joined-row';
-      row.innerHTML = `<span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">В ролле</span><span class="roll-dice-result"><span class="dice-rolling"><i class="fa-solid fa-dice"></i></span> ${p._animRoll ?? '—'}</span>`;
+      row.innerHTML = `<span class="roll-player-name">${p.nickname}${isMe ? '<span class="roll-player-you">(вы)</span>' : ''}</span><span class="roll-player-status">В ролле</span><span class="roll-dice-result"><span class="dice-rolling">🎲</span> ${p._animRoll ?? '—'}</span>`;
       list.appendChild(row);
     });
   }
@@ -1509,7 +1508,7 @@
       const row = document.createElement('div');
       row.className = `roll-player-row ${isWinner ? 'winner-row' : 'joined-row'}`;
       let dice = '';
-      if (rollState.isRolling && !hasRoll) dice = '<span class="roll-dice-result pending-dice"><span class="dice-rolling"><i class="fa-solid fa-dice"></i></span></span>';
+      if (rollState.isRolling && !hasRoll) dice = '<span class="roll-dice-result pending-dice"><span class="dice-rolling">🎲</span></span>';
       else if (hasRoll) dice = `<span class="roll-dice-result ${isWinner ? 'winner-dice' : ''}">${p.roll}</span>`;
       else dice = '<span class="roll-dice-result pending-dice">—</span>';
       const removeBtn = canRemove ? `<button class="btn-remove-from-roll" onclick="removeFromRoll('${p.playerId}')" title="Убрать из ролла"><i class="fa-solid fa-xmark"></i></button>` : '';
