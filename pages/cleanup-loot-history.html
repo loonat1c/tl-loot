@@ -64,8 +64,9 @@
         groups.get(key).push(d);
       }
 
-      const deletes = [];   // ссылки на удаление
-      const rewrites = [];  // {ref, data}: записи, которые нужно переложить в doc(drop_id)
+      const deletes = [];   // ссылки на удаление (дубли + старые документы после переноса)
+      const realDupes = []; // настоящие дубли, только для отчёта
+      const rewrites = [];  // записи, которые нужно переложить в doc(drop_id)
       let dupGroups = 0;
 
       for (const [key, list] of groups) {
@@ -78,21 +79,21 @@
 
         if (list.length > 1) {
           dupGroups++;
-          sorted.slice(1).forEach(d => { if (!(isDrop && d.id === dropId && keep.id !== dropId)) deletes.push(d); });
+          sorted.slice(1).forEach(d => {
+            realDupes.push(d);
+            if (!(isDrop && d.id === dropId && keep.id !== dropId)) deletes.push(d);
+          });
         }
 
         // Чтобы следующее закрытие рейда не создало новый дубль,
         // запись должна лежать под id = drop_id
         if (isDrop && keep.id !== dropId) {
           rewrites.push({ dropId, keep });
-          // старый документ keep тоже удаляем после переноса
-          deletes.push(keep);
+          deletes.push(keep); // старый документ удаляем после переноса
         }
-        // если среди дублей уже есть doc с id = drop_id, а keep другой — выше мы его не удалили,
-        // значит он перезапишется данными keep (одинаковый смысл, раннее время)
       }
 
-      return { total: docs.length, dupGroups, deletes, rewrites };
+      return { total: docs.length, dupGroups, deletes, rewrites, realDupes };
     }
 
     btnScan.addEventListener('click', async () => {
@@ -102,11 +103,10 @@
         plan = await buildPlan();
         log(`Всего документов: ${plan.total}`);
         log(`Групп с дублями: ${plan.dupGroups}`);
-        log(`К удалению: ${plan.deletes.length}`);
-        log(`К переносу под id = drop_id: ${plan.rewrites.length}`);
-        plan.deletes.slice(0, 40).forEach(d =>
-          log(`  удалить ${d.id} (${d.data.player_nickname || d.data.player_id} — ${d.data.item_name || d.data.item_id})`));
-        if (plan.deletes.length > 40) log(`  ... и ещё ${plan.deletes.length - 40}`);
+        log(`Настоящих дублей к удалению: ${plan.realDupes.length}`);
+        log(`Записей к переносу под id = drop_id (данные сохраняются): ${plan.rewrites.length}`);
+        plan.realDupes.forEach(d =>
+          log(`  дубль ${d.id} (${d.data.player_nickname || d.data.player_id} — ${d.data.item_name || d.data.item_id})`));
         btnRun.disabled = plan.deletes.length === 0 && plan.rewrites.length === 0;
         if (btnRun.disabled) log('Дублей нет, чистить нечего.');
       } catch (e) {
@@ -118,7 +118,7 @@
 
     btnRun.addEventListener('click', async () => {
       if (!plan) return;
-      if (!confirm(`Удалить ${plan.deletes.length} документов и перенести ${plan.rewrites.length}? Отменить будет нельзя.`)) return;
+      if (!confirm(`Удалить ${plan.realDupes.length} дублей и перенести ${plan.rewrites.length} записей? Отменить будет нельзя.`)) return;
       btnRun.disabled = true; btnScan.disabled = true;
       try {
         // Сначала переносим (set под id = drop_id), потом удаляем.
@@ -141,7 +141,7 @@
           await batch.commit();
           log(`Выполнено ${Math.min(i + CHUNK, ops.length)} из ${ops.length}`);
         }
-        log('Готово. Нажмите «Проверить» ещё раз: должно быть 0 дублей.');
+        log('Готово. Нажмите «Проверить» ещё раз: настоящих дублей должно быть 0.');
         plan = null;
       } catch (e) {
         log('Ошибка: ' + e.message);
