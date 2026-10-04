@@ -479,8 +479,9 @@ export async function closeRaid(raidId, attendedIds, allPlayerIds) {
       
       for (const drop of drops) {
         if (drop.winner_player_id && drop.winner_nickname) {
-          const historyRef = collection(db, "loot_history");
-          const historyDocRef = doc(historyRef);
+          // id документа = id дропа, поэтому повторное закрытие
+          // рейда перезаписывает запись, а не создаёт дубль
+          const historyDocRef = doc(db, "loot_history", drop.id);
           
           batch.set(historyDocRef, {
             raid_id: raidId,
