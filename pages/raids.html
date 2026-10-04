@@ -579,12 +579,11 @@
     try {
       const index = await getGlobalWinsIndex();
       wins.push(...(index.get(playerId) || []));
-    } catch (e) { console.warn('Ошибка индекса:', e); }
-    console.log('wins', playerId, wins.map(w => ({ r: w.raid_id, i: w.item_id, t: w.won_at })));
+   } catch (e) { console.warn('Ошибка индекса:', e); }
     const unique = [];
     const seen = new Set();
     for (const w of wins) {
-      const key = `${w.raid_id || ''}_${w.item_id || ''}_${w.won_at || ''}`;
+      const key = `${w.raid_id || ''}_${w.item_id || ''}`;
       if (!seen.has(key)) { seen.add(key); unique.push(w); }
     }
     return unique;
@@ -602,12 +601,11 @@
     try {
       const index = await getGlobalWinsIndex();
       wins.push(...(index.get(playerId) || []).filter(w => w.raid_id === activeRaid.id));
-    } catch (e) {}
- console.log('wins', playerId, wins.map(w => ({ r: w.raid_id, i: w.item_id, t: w.won_at })));
+     } catch (e) {}
     const unique = [];
     const seen = new Set();
     for (const w of wins) {
-      const key = `${w.raid_id || ''}_${w.item_id || ''}_${w.won_at || ''}`;
+      const key = `${w.raid_id || ''}_${w.item_id || ''}`;
       if (!seen.has(key)) { seen.add(key); unique.push(w); }
     }
     return unique;
