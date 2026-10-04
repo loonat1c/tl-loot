@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Очистка loot_history</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f1220; color: #e2e8f0; max-width: 820px; margin: 2rem auto; padding: 0 1rem; }
+    button { padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid #7c3aed; background: #1e1b3a; color: #e2e8f0; cursor: pointer; font-size: 0.95rem; margin-right: 0.5rem; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.danger { border-color: #ef4444; }
+    pre { background: #151a2e; border: 1px solid #2a3047; border-radius: 8px; padding: 1rem; white-space: pre-wrap; max-height: 460px; overflow-y: auto; font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+  <h2>Очистка дублей в loot_history</h2>
+  <p>Сначала нажмите «Проверить»: ничего не меняется, только показывается план. Потом «Удалить дубли».</p>
+  <button id="btn-scan">Проверить</button>
+  <button id="btn-run" class="danger" disabled>Удалить дубли</button>
+  <pre id="log">Готово к проверке.</pre>
+
+  <script type="module">
+    import { initAuth, authReady, isAdmin, currentUser } from "../js/modules/auth.js";
+    import { db } from "../js/firebase.js";
+    import {
+      collection, getDocs, doc, writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    await initAuth();
+    await authReady;
+
+    const logEl = document.getElementById('log');
+    const btnScan = document.getElementById('btn-scan');
+    const btnRun = document.getElementById('btn-run');
+    const log = (t) => { logEl.textContent += '\n' + t; logEl.scrollTop = logEl.scrollHeight; };
+
+    if (!currentUser || !isAdmin()) {
+      logEl.textContent = 'Нужен вход под админом.';
+      btnScan.disabled = true;
+      throw new Error('not admin');
+    }
+
+    let plan = null;
+
+    function ms(v) {
+      if (!v) return 0;
+      if (typeof v.toMillis === 'function') return v.toMillis();
+      const t = new Date(v).getTime();
+      return isNaN(t) ? 0 : t;
+    }
+
+    async function buildPlan() {
+      const snap = await getDocs(collection(db, 'loot_history'));
+      const docs = snap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
+      // Группа = один дроп. Если drop_id нет (старые записи) — рейд + игрок + предмет.
+      const groups = new Map();
+      for (const d of docs) {
+        const x = d.data;
+        const key = x.drop_id
+          ? `drop:${x.drop_id}`
+          : `legacy:${x.raid_id}|${x.player_id}|${x.item_id}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(d);
+      }
+
+      const deletes = [];   // ссылки на удаление
+      const rewrites = [];  // {ref, data}: записи, которые нужно переложить в doc(drop_id)
+      let dupGroups = 0;
+
+      for (const [key, list] of groups) {
+        const isDrop = key.startsWith('drop:');
+        const dropId = isDrop ? key.slice(5) : null;
+
+        // Оставляем самую раннюю запись (исходная победа)
+        const sorted = [...list].sort((a, b) => ms(a.data.won_at) - ms(b.data.won_at));
+        const keep = sorted[0];
+
+        if (list.length > 1) {
+          dupGroups++;
+          sorted.slice(1).forEach(d => { if (!(isDrop && d.id === dropId && keep.id !== dropId)) deletes.push(d); });
+        }
+
+        // Чтобы следующее закрытие рейда не создало новый дубль,
+        // запись должна лежать под id = drop_id
+        if (isDrop && keep.id !== dropId) {
+          rewrites.push({ dropId, keep });
+          // старый документ keep тоже удаляем после переноса
+          deletes.push(keep);
+        }
+        // если среди дублей уже есть doc с id = drop_id, а keep другой — выше мы его не удалили,
+        // значит он перезапишется данными keep (одинаковый смысл, раннее время)
+      }
+
+      return { total: docs.length, dupGroups, deletes, rewrites };
+    }
+
+    btnScan.addEventListener('click', async () => {
+      btnScan.disabled = true; btnRun.disabled = true;
+      logEl.textContent = 'Читаю loot_history...';
+      try {
+        plan = await buildPlan();
+        log(`Всего документов: ${plan.total}`);
+        log(`Групп с дублями: ${plan.dupGroups}`);
+        log(`К удалению: ${plan.deletes.length}`);
+        log(`К переносу под id = drop_id: ${plan.rewrites.length}`);
+        plan.deletes.slice(0, 40).forEach(d =>
+          log(`  удалить ${d.id} (${d.data.player_nickname || d.data.player_id} — ${d.data.item_name || d.data.item_id})`));
+        if (plan.deletes.length > 40) log(`  ... и ещё ${plan.deletes.length - 40}`);
+        btnRun.disabled = plan.deletes.length === 0 && plan.rewrites.length === 0;
+        if (btnRun.disabled) log('Дублей нет, чистить нечего.');
+      } catch (e) {
+        log('Ошибка: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+      }
+    });
+
+    btnRun.addEventListener('click', async () => {
+      if (!plan) return;
+      if (!confirm(`Удалить ${plan.deletes.length} документов и перенести ${plan.rewrites.length}? Отменить будет нельзя.`)) return;
+      btnRun.disabled = true; btnScan.disabled = true;
+      try {
+        // Сначала переносим (set под id = drop_id), потом удаляем.
+        const ops = [];
+        plan.rewrites.forEach(r => ops.push({ type: 'set', ref: doc(db, 'loot_history', r.dropId), data: r.keep.data }));
+        const rewrittenIds = new Set(plan.rewrites.map(r => r.dropId));
+        plan.deletes.forEach(d => {
+          // не удаляем документ, который только что записали под тем же id
+          if (rewrittenIds.has(d.id)) return;
+          ops.push({ type: 'delete', ref: d.ref });
+        });
+
+        const CHUNK = 400;
+        for (let i = 0; i < ops.length; i += CHUNK) {
+          const batch = writeBatch(db);
+          ops.slice(i, i + CHUNK).forEach(o => {
+            if (o.type === 'set') batch.set(o.ref, o.data);
+            else batch.delete(o.ref);
+          });
+          await batch.commit();
+          log(`Выполнено ${Math.min(i + CHUNK, ops.length)} из ${ops.length}`);
+        }
+        log('Готово. Нажмите «Проверить» ещё раз: должно быть 0 дублей.');
+        plan = null;
+      } catch (e) {
+        log('Ошибка: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
